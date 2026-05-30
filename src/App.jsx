@@ -169,7 +169,7 @@ const T = {
     deleteConfirm:"삭제하시겠습니까?", deleteProjConfirm:"이 프로젝트를 삭제하시겠습니까? 관련 데이터도 모두 삭제됩니다.",
   },
   "ja": {
-    appName:"劇団交通・宿泊管理システム", logout:"ログアウト", print:"印刷", members:"メンバー管理", back:"戻る",
+    appName:"映像制作 交通・宿泊管理システム", logout:"ログアウト", print:"印刷", members:"メンバー管理", back:"戻る",
     loginTitle:"ログインしてください", loginEmail:"メールアドレス", loginPw:"パスワード", loginBtn:"ログイン", loginHint:"アクセス権は管理者から招待されます",
     projects:"プロジェクト一覧", newProject:"＋ 新規プロジェクト", openProject:"開く →", projectName:"プロジェクト名", projectDesc:"説明（任意）",
     create:"作成", creating:"作成中…", cancel:"キャンセル", save:"保存", edit:"編集", delete:"削除", add:"＋ 追加",
@@ -520,8 +520,19 @@ function ProjectSelector({ user, lang, onLangChange, onSelect }) {
   const load = async () => {
     setLoading(true);
     try {
-      const up = await api.get("user_projects", `&user_id=eq.${user.id}&select=*,projects(*)`);
-      setProjects(up);
+      // 先取 user_projects，再取對應的 projects
+      const up = await api.get("user_projects", `&user_id=eq.${user.id}`);
+      if (up.length > 0) {
+        const projIds = up.map(r => r.project_id).join(",");
+        const projs = await sb(`projects?id=in.(${projIds})`);
+        const merged = up.map(r => ({
+          ...r,
+          projects: projs.find(p => p.id === r.project_id) || null,
+        }));
+        setProjects(merged);
+      } else {
+        setProjects([]);
+      }
     } catch (e) { showToast("Error: " + e.message); }
     setLoading(false);
   };
@@ -590,7 +601,7 @@ function ProjectSelector({ user, lang, onLangChange, onSelect }) {
                       <span style={{ fontSize:11, color:"#9ca3af" }}>{up.projects?.created_at ? new Date(up.projects.created_at).toLocaleDateString() : ""}</span>
                     </div>
                     <div style={{ display:"flex", gap:8 }}>
-                      <button onClick={() => onSelect(up.projects, up.role)}
+                      <button onClick={() => { if (up.projects) onSelect(up.projects, up.role); else onSelect({ id: up.project_id, name: up.project_name || "専案" }, up.role); }}
                         style={{ flex:1, background:"#2563eb", color:"white", border:"none", borderRadius:8, padding:"8px", fontWeight:700, cursor:"pointer", fontSize:13 }}>
                         {t.openProject}
                       </button>
