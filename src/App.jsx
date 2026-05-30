@@ -380,8 +380,8 @@ function FlightForm({ init, onSave, onClose, t }) {
 }
 
 function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t }) {
-  const blank = { hotel_id:"", room_type:"Single", room_custom:"", check_in:"", check_out:"", base_price:"" };
-  const [f, setF] = useState(init ? { ...init, hotel_id:init.hotel_id||"" } : blank);
+  const blank = { hotel_id:"", room_type:"Single", room_custom:"", check_in:"", check_out:"", base_price:"", stay_label:"" };
+  const [f, setF] = useState(init ? { ...init, hotel_id:init.hotel_id||"", stay_label:init.stay_label||"" } : blank);
   const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
   const nights = diffDays(f.check_in, f.check_out);
   const { totalAmount, breakdown } = useMemo(() => {
@@ -401,6 +401,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t }) {
   return (
     <div>
       <div className="grid grid-cols-2 gap-3">
+        <Field label="段落ラベル / 段落標籤"><input className={inp} value={f.stay_label} onChange={set("stay_label")} placeholder="例：勘景期、拍攝期、後期…" /></Field>
         <Field label={t.hotel}>
           <select className={inp} value={f.hotel_id} onChange={set("hotel_id")}>
             <option value="">-- {t.hotel} --</option>
@@ -413,7 +414,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t }) {
         <Field label={t.checkOut}><input type="date" className={inp} value={f.check_out||""} onChange={set("check_out")} /></Field>
         <Field label={t.basePrice}><input type="number" className={inp} value={f.base_price} onChange={set("base_price")} /></Field>
         <Field label={t.nights}><input className={inp} value={nights||""} readOnly style={{ background:"#f5f5f5" }} /></Field>
-        <Field label={t.totalAmt}><input className={inp} value={totalAmount?`$${totalAmount.toLocaleString()}`:"—"} readOnly style={{ background:"#f5f5f5", fontWeight:700, color:"#2563eb" }} /></Field>
+        <Field label={t.totalAmt}><input className={inp} value={totalAmount?`${totalAmount.toLocaleString()}`:"—"} readOnly style={{ background:"#f5f5f5", fontWeight:700, color:"#2563eb" }} /></Field>
       </div>
       {breakdown.length > 0 && (
         <div style={{ marginTop:10, background:"#f8fafc", borderRadius:8, padding:10 }}>
@@ -673,9 +674,9 @@ function ProjectApp({ project, userRole, user, lang, onLangChange, onBack }) {
   const allDepts = useMemo(() => [...new Set(persons.map(p => p.dept).filter(Boolean))], [persons]);
   const getStatus = useCallback((id) => {
     const f = flights.find(fl => fl.person_id === id);
-    const s = stays.find(st => st.person_id === id);
+    const pStays = stays.filter(st => st.person_id === id);
     const hasF = f && f.airline && f.flight_no;
-    const hasS = s && s.hotel_id && s.check_in && s.check_out;
+    const hasS = pStays.length > 0 && pStays.some(s => s.hotel_id && s.check_in && s.check_out);
     if (hasF && hasS) return "arranged";
     if (hasF || hasS) return "partial";
     return "none";
@@ -693,10 +694,13 @@ function ProjectApp({ project, userRole, user, lang, onLangChange, onBack }) {
   const hotelStats = useMemo(() => {
     const map = {};
     hotels.forEach(h => { map[h.id] = { guests:0, rooms:0, total:0 }; });
+    // 每筆 stay 都計算（多段式）
     stays.forEach(s => {
       if (!s.hotel_id) return;
       if (!map[s.hotel_id]) map[s.hotel_id] = { guests:0, rooms:0, total:0 };
-      map[s.hotel_id].guests += 1; map[s.hotel_id].rooms += 1; map[s.hotel_id].total += (s.total_amount||0);
+      map[s.hotel_id].guests += 1;
+      map[s.hotel_id].rooms += 1;
+      map[s.hotel_id].total += (s.total_amount||0);
     });
     return map;
   }, [stays, hotels]);
@@ -723,14 +727,31 @@ function ProjectApp({ project, userRole, user, lang, onLangChange, onBack }) {
       showToast(t.saved); setFlightModal(null);
     } catch (e) { showToast("Error: " + e.message); }
   };
+  // stays 改為多筆，用 person_id 查詢所有段落
+  const getPersonStays = useCallback((pid) => stays.filter(s => s.person_id === pid), [stays]);
+  const getPersonTotalStay = useCallback((pid) => stays.filter(s => s.person_id === pid).reduce((sum, s) => sum + (s.total_amount||0), 0), [stays]);
+
   const saveStay = async f => {
     try {
-      const existing = stays.find(s => s.person_id === stayModal.pid);
-      const data = { ...f, person_id:stayModal.pid, project_id:pid };
-      if (existing) { const [r] = await api.update("stays", existing.id, data); setStays(s => s.map(x => x.id===existing.id?r:x)); }
-      else { const [r] = await api.insert("stays", data); setStays(s => [...s, r]); }
+      const data = { ...f, person_id: stayModal.pid, project_id: pid };
+      if (stayModal.stayId) {
+        // 編輯現有段落
+        const [r] = await api.update("stays", stayModal.stayId, data);
+        setStays(s => s.map(x => x.id === stayModal.stayId ? r : x));
+      } else {
+        // 新增新段落
+        const [r] = await api.insert("stays", data);
+        setStays(s => [...s, r]);
+      }
       showToast(t.saved); setStayModal(null);
     } catch (e) { showToast("Error: " + e.message); }
+  };
+
+  const deleteStay = async id => {
+    if (!window.confirm(t.deleteConfirm)) return;
+    await api.delete("stays", id);
+    setStays(s => s.filter(x => x.id !== id));
+    showToast(t.deleted);
   };
   const saveHotel = async f => {
     try {
@@ -917,34 +938,84 @@ function ProjectApp({ project, userRole, user, lang, onLangChange, onBack }) {
                     <DeptFilter depts={allDepts} value={deptC} onChange={setDeptC} allLabel={t.allDept} />
                   </div>
                 </div>
-                <div style={{ overflowX:"auto", marginBottom:28 }}>
-                  <table style={tblW}>
-                    <thead><tr style={thead}>{[t.no,t.dept,t.nameKanji,t.hotel,t.roomType,t.checkIn,t.checkOut,t.nights,t.totalAmt,t.roommate,t.status,t.action].map(h => <th key={h} style={thS}>{h}</th>)}</tr></thead>
-                    <tbody>
-                      {rows.map((p, i) => {
-                        const s = stays.find(st => st.person_id===p.id); const hasS = s&&s.hotel_id&&s.check_in;
-                        const roomLabel = s?.room_type==="Custom"?(s.room_custom||"Custom"):s?.room_type;
-                        return (
-                          <tr key={p.id}>
-                            <td style={tdS(i)}>{p.id}</td><td style={tdS(i)}>{p.dept}</td>
-                            <td style={{ ...tdS(i), fontWeight:p.importance===3?700:400, color:p.importance===3?"#dc2626":"inherit" }}>{p.name_kanji}</td>
-                            <td style={tdS(i)}>{s?getHotelName(s.hotel_id):"—"}</td>
-                            <td style={tdS(i)}>{roomLabel||"—"}</td>
-                            <td style={tdS(i)}>{fmt(s?.check_in)}</td><td style={tdS(i)}>{fmt(s?.check_out)}</td>
-                            <td style={tdS(i)}>{s?.nights||"—"}</td>
-                            <td style={{ ...tdS(i), fontWeight:700, color:"#2563eb" }}>{s?.total_amount?`$${s.total_amount.toLocaleString()}`:"—"}</td>
-                            <td style={tdS(i)}>{getRoommateNames(p.id)?<span style={{ fontSize:11,background:"#fef3c7",color:"#92400e",borderRadius:4,padding:"2px 7px" }}>🛏 {getRoommateNames(p.id)}</span>:<span style={{ fontSize:11,color:"#9ca3af" }}>{t.singleRoom}</span>}</td>
-                            <td style={tdS(i)}>{hasS?<span style={{ padding:"2px 8px",borderRadius:20,background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:700 }}>{t.hotelDone}</span>:<span style={{ padding:"2px 8px",borderRadius:20,background:"#f3f4f6",color:"#9ca3af",fontSize:11 }}>{t.hotelNone}</span>}</td>
-                            <td style={{ ...tdS(i), whiteSpace:"nowrap" }}>
-                              {canEdit&&<><button style={aBtn} onClick={() => setStayModal({ pid:p.id, data:s||null })}>{hasS?t.edit:t.add}</button>
-                              <button style={{ ...eBtn, marginLeft:4 }} onClick={() => setRoommateModal({ pid:p.id })}>🛏</button></>}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+
+                {/* 多段式入住 — 每人一個卡片 */}
+                <div style={{ display:"flex", flexDirection:"column", gap:14, marginBottom:28 }}>
+                  {rows.map(p => {
+                    const pStays = getPersonStays(p.id);
+                    const pTotal = getPersonTotalStay(p.id);
+                    const hasAny = pStays.length > 0;
+                    const status = getStatus(p.id);
+                    return (
+                      <div key={p.id} style={{ background:"white", borderRadius:12, boxShadow:"0 2px 8px rgba(0,0,0,.08)", overflow:"hidden" }}>
+                        {/* 人員標題列 */}
+                        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 16px", background:"#f8fafc", borderBottom:"1px solid #e5e7eb" }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                            <div style={{ fontWeight:700, fontSize:14, color:p.importance===3?"#dc2626":"#1e3a8a" }}>
+                              {p.name_kanji}
+                              {p.importance===3 && <span style={{ marginLeft:6, fontSize:10, background:"#fee2e2", color:"#dc2626", borderRadius:4, padding:"1px 5px" }}>★★★</span>}
+                            </div>
+                            <span style={{ fontSize:12, color:"#6b7280" }}>{p.dept}</span>
+                            {status==="arranged" && <span style={{ padding:"2px 8px", borderRadius:20, background:"#d1fae5", color:"#065f46", fontSize:11, fontWeight:700 }}>{t.arranged}</span>}
+                            {status==="partial"  && <span style={{ padding:"2px 8px", borderRadius:20, background:"#fef3c7", color:"#92400e", fontSize:11, fontWeight:700 }}>{t.partial}</span>}
+                            {status==="none"     && <span style={{ padding:"2px 8px", borderRadius:20, background:"#f3f4f6", color:"#9ca3af", fontSize:11 }}>{t.unArranged}</span>}
+                          </div>
+                          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                            {pTotal > 0 && <span style={{ fontWeight:700, color:"#2563eb", fontSize:14 }}>${pTotal.toLocaleString()}</span>}
+                            {canEdit && (
+                              <button onClick={() => setStayModal({ pid:p.id, stayId:null, data:null })}
+                                style={{ background:"#2563eb", color:"white", border:"none", borderRadius:7, padding:"5px 12px", fontWeight:700, cursor:"pointer", fontSize:12 }}>
+                                ＋ {t.checkIn}段落
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 住宿段落列表 */}
+                        {pStays.length === 0 ? (
+                          <div style={{ padding:"12px 16px", fontSize:12, color:"#9ca3af" }}>{t.noData}</div>
+                        ) : (
+                          <div style={{ overflowX:"auto" }}>
+                            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
+                              <thead><tr style={{ background:"#e5e7eb" }}>
+                                {["段落", t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate, t.action].map(h =>
+                                  <th key={h} style={{ padding:"7px 10px", textAlign:"left", fontWeight:600, color:"#374151", whiteSpace:"nowrap" }}>{h}</th>
+                                )}
+                              </tr></thead>
+                              <tbody>
+                                {pStays.map((s, si) => {
+                                  const roomLabel = s.room_type==="Custom"?(s.room_custom||"Custom"):s.room_type;
+                                  return (
+                                    <tr key={s.id} style={{ borderBottom:"1px solid #e5e7eb" }}>
+                                      <td style={{ padding:"8px 10px" }}>
+                                        <span style={{ background:"#eff6ff", color:"#1d4ed8", borderRadius:6, padding:"2px 8px", fontWeight:700, fontSize:11 }}>
+                                          {s.stay_label || `第${si+1}段`}
+                                        </span>
+                                      </td>
+                                      <td style={{ padding:"8px 10px" }}>{getHotelName(s.hotel_id)}</td>
+                                      <td style={{ padding:"8px 10px" }}>{roomLabel||"—"}</td>
+                                      <td style={{ padding:"8px 10px", whiteSpace:"nowrap" }}>{fmt(s.check_in)}</td>
+                                      <td style={{ padding:"8px 10px", whiteSpace:"nowrap" }}>{fmt(s.check_out)}</td>
+                                      <td style={{ padding:"8px 10px" }}>{s.nights||"—"}</td>
+                                      <td style={{ padding:"8px 10px", fontWeight:700, color:"#2563eb" }}>{s.total_amount?`${s.total_amount.toLocaleString()}`:"—"}</td>
+                                      <td style={{ padding:"8px 10px" }}>{getRoommateNames(p.id)||<span style={{ color:"#9ca3af" }}>{t.singleRoom}</span>}</td>
+                                      <td style={{ padding:"8px 10px", whiteSpace:"nowrap" }}>
+                                        {canEdit && <button style={eBtn} onClick={() => setStayModal({ pid:p.id, stayId:s.id, data:s })}>{t.edit}</button>}
+                                        {canDelete && <button style={dBtn} onClick={() => deleteStay(s.id)}>{t.delete}</button>}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+
+                {/* 飯店統計 */}
                 <div>
                   <h3 style={{ fontSize:15, fontWeight:700, color:"#1e3a8a", marginBottom:12 }}>{t.hotelStats}</h3>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:14 }}>
