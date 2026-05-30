@@ -3,11 +3,15 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 const SUPABASE_URL = "https://knoudnzjnfkfhiizgcna.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OdfFFai3Ac1NgbelUPlYXQ_8R8IDAhA";
 
+let _token = null;
+const setToken = t => { _token = t; };
+
 const sb = async (path, opts = {}) => {
+  const authHeader = _token ? `Bearer ${_token}` : `Bearer ${SUPABASE_KEY}`;
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
       apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
+      Authorization: authHeader,
       "Content-Type": "application/json",
       Prefer: opts.prefer || "return=representation",
     },
