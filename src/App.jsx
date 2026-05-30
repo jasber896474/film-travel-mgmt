@@ -520,19 +520,15 @@ function ProjectSelector({ user, lang, onLangChange, onSelect }) {
   const load = async () => {
     setLoading(true);
     try {
-      // 先取 user_projects，再取對應的 projects
       const up = await api.get("user_projects", `&user_id=eq.${user.id}`);
-      if (up.length > 0) {
-        const projIds = up.map(r => r.project_id).join(",");
-        const projs = await sb(`projects?id=in.(${projIds})`);
-        const merged = up.map(r => ({
-          ...r,
-          projects: projs.find(p => p.id === r.project_id) || null,
-        }));
-        setProjects(merged);
-      } else {
-        setProjects([]);
-      }
+      if (up.length === 0) { setProjects([]); setLoading(false); return; }
+      const projIds = up.map(r => r.project_id);
+      const projs = await sb(`projects?id=in.(${projIds.join(",")})`);
+      const merged = up.map(r => ({
+        ...r,
+        projects: projs.find(p => p.id === r.project_id) || { id: r.project_id, name: "（名前なし）", description: "" },
+      }));
+      setProjects(merged);
     } catch (e) { showToast("Error: " + e.message); }
     setLoading(false);
   };
@@ -592,7 +588,7 @@ function ProjectSelector({ user, lang, onLangChange, onSelect }) {
                 <div key={up.id} style={{ background:"white", borderRadius:14, boxShadow:"0 2px 12px rgba(0,0,0,.08)", overflow:"hidden" }}>
                   <div style={{ background:"linear-gradient(135deg,#1e3a8a,#2563eb)", padding:"20px 20px 16px", color:"white" }}>
                     <div style={{ fontSize:28, marginBottom:8 }}>🎬</div>
-                    <div style={{ fontWeight:700, fontSize:16, marginBottom:4 }}>{up.projects?.name}</div>
+                    <div style={{ fontWeight:700, fontSize:16, marginBottom:4 }}>{up.projects?.name || "—"}</div>
                     {up.projects?.description && <div style={{ fontSize:12, opacity:.8 }}>{up.projects.description}</div>}
                   </div>
                   <div style={{ padding:"14px 20px" }}>
@@ -601,7 +597,7 @@ function ProjectSelector({ user, lang, onLangChange, onSelect }) {
                       <span style={{ fontSize:11, color:"#9ca3af" }}>{up.projects?.created_at ? new Date(up.projects.created_at).toLocaleDateString() : ""}</span>
                     </div>
                     <div style={{ display:"flex", gap:8 }}>
-                      <button onClick={() => { if (up.projects) onSelect(up.projects, up.role); else onSelect({ id: up.project_id, name: up.project_name || "専案" }, up.role); }}
+                      <button onClick={() => onSelect(up.projects, up.role)}
                         style={{ flex:1, background:"#2563eb", color:"white", border:"none", borderRadius:8, padding:"8px", fontWeight:700, cursor:"pointer", fontSize:13 }}>
                         {t.openProject}
                       </button>
