@@ -1257,13 +1257,18 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
   // CRUD
   const savePerson=async f=>{
     try{
+      // 空的日期欄位必須傳 null，不能傳 ""（Supabase date 型別不接受空字串）
+      const data={...f,
+        dob:f.dob||null,
+        passport_exp:f.passport_exp||null,
+      };
       // 無必填限制：任何欄位填一個即可儲存
       if(personModal.mode==="add"){
         const sortOrder=persons.length;
-        const[r]=await api.insert("persons",{...f,project_id:pid,sort_order:sortOrder});
+        const[r]=await api.insert("persons",{...data,project_id:pid,sort_order:sortOrder});
         setPersons(p=>[...p,r]);
       }else{
-        const[r]=await api.update("persons",personModal.data.id,f);
+        const[r]=await api.update("persons",personModal.data.id,data);
         setPersons(p=>p.map(x=>x.id===personModal.data.id?r:x));
       }
       showToast(t.saved);setPersonModal(null);
