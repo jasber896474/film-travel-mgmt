@@ -1,4 +1,22 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>劇組交通住宿管理系統</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useMemo, useCallback, useEffect, useRef } = React;
+
 
 const SUPABASE_URL = "https://knoudnzjnfkfhiizgcna.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OdfFFai3Ac1NgbelUPlYXQ_8R8IDAhA";
@@ -404,8 +422,7 @@ function PersonForm({init,onSave,onClose,t}){
         <Field label={<span>{t.passport} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.passport||""} onChange={set("passport")}/></Field>
         <Field label={<span>{t.dob} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input type="date" style={inpStyle} value={f.dob||""} onChange={set("dob")}/></Field>
         <Field label={<span>{t.passportExp} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}>
-          <input type="date" style={inpStyle} value={f.passport_exp||""} onChange={set("passport_exp")}
-            style={passportWarning(f.passport_exp)?{borderColor:"red",color:"red"}:{}}/>
+          <input type="date" style={{...inpStyle,...(passportWarning(f.passport_exp)?{borderColor:J.shu,color:J.shu}:{})}} value={f.passport_exp||""} onChange={set("passport_exp")}/>
           {passportWarning(f.passport_exp)&&<p style={{color:J.shu,fontSize:10,marginTop:4,letterSpacing:"0.04em"}}>{t.passportWarn}</p>}
         </Field>
         <Field label={<span>{t.diet} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.diet||""} onChange={set("diet")}/></Field>
@@ -483,7 +500,7 @@ function HotelStayForm({init,hotels,pricingRules,onSave,onClose,t}){
         <Field label={t.checkIn}><input type="date" style={inpStyle} value={f.check_in||""} onChange={set("check_in")}/></Field>
         <Field label={t.checkOut}><input type="date" style={inpStyle} value={f.check_out||""} onChange={set("check_out")}/></Field>
         <Field label={t.basePrice}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")} placeholder="0"/></Field>
-        <Field label={t.nights}><input style={inpStyle} value={nights||""} readOnly style={{background:J.washi}}/></Field>
+        <Field label={t.nights}><input style={{...inpStyle,background:J.washi,textAlign:"center"}} value={nights||""} readOnly/></Field>
         <Field label={t.totalAmt}><input style={inpStyle} value={totalAmount?`$${totalAmount.toLocaleString()}`:"—"} readOnly style={{background:J.washi,fontWeight:700,color:J.asagi}}/></Field>
       </div>
       {breakdown.length>0&&(
@@ -1146,8 +1163,8 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
   // CRUD
   const savePerson=async f=>{
     try{
+      // 無必填限制：任何欄位填一個即可儲存
       if(personModal.mode==="add"){
-        // 功能四-1: assign sort_order for new person
         const sortOrder=persons.length;
         const[r]=await api.insert("persons",{...f,project_id:pid,sort_order:sortOrder});
         setPersons(p=>[...p,r]);
@@ -1560,8 +1577,8 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                           <div style={{overflowX:"auto"}}>
                             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
                               <thead><tr style={{background:J.keisenL}}>
-                                {[t.staySegment,t.hotel,t.roomType,t.checkIn,t.checkOut,t.nights,t.totalAmt,t.roommate,t.action].map(h=>
-                                  <th key={h} style={{padding:"7px 12px",textAlign:"left",fontWeight:600,color:J.sumi,whiteSpace:"nowrap"}}>{h}</th>
+                                {[t.staySegment,t.hotel,t.roomType,t.checkIn,t.checkOut,t.nights,t.totalAmt,t.roommate,t.action].map((h,hi)=>
+                                  <th key={h} style={{padding:"7px 12px",textAlign:hi===5?"center":"left",fontWeight:600,color:J.sumi,whiteSpace:"nowrap"}}>{h}</th>
                                 )}
                               </tr></thead>
                               <tbody>
@@ -1716,7 +1733,7 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
 }
 
 // ─── Root ─────────────────────────────────────────────────────
-export default function App(){
+function App(){
   const [token,   setToken]   =useState(null);
   const [user,    setUser]    =useState(null);
   const [isOwner, setIsOwner] =useState(false);
@@ -1758,3 +1775,10 @@ export default function App(){
   if(!project) return <ProjectSelector user={user} isOwner={isOwner} lang={lang} onLangChange={handleLangChange} onSelect={handleSelectProject}/>;
   return <ProjectApp project={project} userRole={isOwner?"owner":userRole} user={user} isOwner={isOwner} lang={lang} onLangChange={handleLangChange} onBack={handleBack}/>;
 }
+
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App/>);
+  </script>
+</body>
+</html>
