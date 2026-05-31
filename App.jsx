@@ -820,6 +820,7 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
   const [saving,setSaving]=useState(false);
   const [requests,setRequests]=useState([]);
   const [reqLoading,setReqLoading]=useState(false);
+  const [approveModal,setApproveModal]=useState(null); // {req, projectId, role}
   const [toastMsg,showToast]=useToast();
 
   const load=async()=>{
@@ -847,7 +848,7 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
     setReqLoading(false);
   };
 
-  useEffect(()=>{load();loadRequests();},[]);
+  useEffect(()=>{load();if(isOwner) loadRequests();},[isOwner]);
 
   const createProject=async()=>{
     if(!newName.trim()) return;
@@ -878,31 +879,38 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
     }catch(e){showToast("Error: "+e.message);}
   };
 
-  const approveRequest=async(req)=>{
+  const openApproveModal=async(req)=>{
+    // 先載入所有專案供選擇
+    try{
+      const allProjs=await api.get("projects");
+      setApproveModal({req, projects:allProjs, projectId:allProjs[0]?.id||"", role:"viewer"});
+    }catch(e){showToast("Error: "+e.message);}
+  };
+
+  const confirmApprove=async()=>{
+    const {req,projectId,role}=approveModal;
+    if(!projectId){showToast("請選擇專案");return;}
     try{
       await api.update("user_requests",req.id,{status:"approved"});
-      // BUG FIX: auto-add to first project as viewer if user_id exists and not yet a member
       if(req.user_id){
-        try{
-          const existing=await api.get("user_projects",`&user_id=eq.${req.user_id}`);
-          if(existing.length===0){
-            const allProjs=await api.get("projects");
-            if(allProjs.length>0){
-              await api.insert("user_projects",{user_id:req.user_id,project_id:allProjs[0].id,role:"viewer"});
-            }
-          }
-        }catch(e2){console.warn("auto-add member failed:",e2.message);}
+        const existing=await api.get("user_projects",`&user_id=eq.${req.user_id}&project_id=eq.${projectId}`);
+        if(existing.length===0){
+          await api.insert("user_projects",{user_id:req.user_id,project_id:projectId,role});
+        }else{
+          await api.update("user_projects",existing[0].id,{role});
+        }
       }
-      showToast(`✓ ${req.email} ${t.saved}`);
+      showToast(`✓ ${req.email} 已批准`);
+      setApproveModal(null);
       loadRequests();
     }catch(e){showToast("Error: "+e.message);}
   };
 
   const rejectRequest=async(req)=>{
-    if(!window.confirm(`${req.email} の申請を拒否しますか？`)) return;
+    if(!window.confirm(`確定拒絕 ${req.email} 的申請？`)) return;
     try{
       await api.update("user_requests",req.id,{status:"rejected"});
-      showToast(`${req.email} を拒否しました`);
+      showToast(`已拒絕 ${req.email}`);
       loadRequests();
     }catch(e){showToast("Error: "+e.message);}
   };
@@ -955,7 +963,7 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
                       <div style={{fontSize:11,color:J.usunezumi,marginTop:4}}>{new Date(req.created_at).toLocaleString("zh-TW")}</div>
                     </div>
                     <div style={{display:"flex",gap:8}}>
-                      <button onClick={()=>approveRequest(req)} style={{background:J.moegi,color:J.washi,border:"none",borderRadius:2,padding:"7px 16px",fontWeight:600,cursor:"pointer",fontSize:12,letterSpacing:"0.08em"}}>承認</button>
+                      <button onClick={()=>openApproveModal(req)} style={{background:J.moegi,color:J.washi,border:"none",borderRadius:2,padding:"7px 16px",fontWeight:600,cursor:"pointer",fontSize:12,letterSpacing:"0.08em"}}>批准</button>
                       <button onClick={()=>rejectRequest(req)} style={{...dBtn,padding:"7px 16px",fontSize:12,letterSpacing:"0.08em"}}>拒否</button>
                     </div>
                   </div>
@@ -1010,6 +1018,37 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
           )
         )}
       </div>
+
+      {/* 批准對話框：選擇專案 + 角色 */}
+      {approveModal&&(
+        <Modal title="批准申請" onClose={()=>setApproveModal(null)}>
+          <div style={{marginBottom:16,padding:"12px 16px",background:J.washi,borderRadius:2,border:"1px solid "+J.keisenL}}>
+            <div style={{fontWeight:600,fontSize:13,color:J.sumi}}>{approveModal.req.display_name||"（未填姓名）"}</div>
+            <div style={{fontSize:12,color:J.nezumi,marginTop:2}}>{approveModal.req.email}</div>
+          </div>
+          <Field label="指定專案">
+            <select style={inpStyle} value={approveModal.projectId}
+              onChange={e=>setApproveModal(m=>({...m,projectId:e.target.value}))}>
+              {approveModal.projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </Field>
+          <Field label="權限角色">
+            <select style={inpStyle} value={approveModal.role}
+              onChange={e=>setApproveModal(m=>({...m,role:e.target.value}))}>
+              <option value="viewer">👁 只讀（Viewer）— 只能查看</option>
+              <option value="editor">✏️ 編輯（Editor）— 可新增修改</option>
+              <option value="admin">🔑 管理員（Admin）— 可刪除管理成員</option>
+            </select>
+          </Field>
+          <div style={{fontSize:11,color:J.nezumi,marginBottom:16,padding:"8px 12px",background:"rgba(74,127,165,.06)",borderRadius:2,borderLeft:"2px solid "+J.asagi}}>
+            批准後可在「成員管理」隨時調整專案與角色。
+          </div>
+          <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:8}}>
+            <button onClick={()=>setApproveModal(null)} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,color:J.nezumi,background:J.shiro}}>取消</button>
+            <button onClick={confirmApprove} style={pBtn(false)}>確認批准</button>
+          </div>
+        </Modal>
+      )}
 
       {showNew&&(
         <Modal title={t.newProject} onClose={()=>setShowNew(false)}>
