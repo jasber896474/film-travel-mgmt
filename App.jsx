@@ -342,15 +342,15 @@ function Field({label,children}){
   );
 }
 
-const inpStyle={width:"100%",border:"1px solid "+J.keisenM,borderRadius:2,padding:"9px 12px",fontSize:13,outline:"none",boxSizing:"border-box" as const,background:J.shiro,color:J.sumi,transition:"border-color .2s",fontFamily:"'Noto Sans JP',sans-serif"};
-const thS={padding:"10px 14px",textAlign:"left" as const,whiteSpace:"nowrap" as const,fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase" as const};
-const tdS=i=>({padding:"10px 14px",fontSize:12,background:i%2===0?J.shiro:J.washi,borderBottom:"1px solid "+J.keisenL,verticalAlign:"middle" as const,color:J.sumi});
-const tblW={width:"100%",borderCollapse:"collapse" as const,background:J.shiro,borderRadius:2,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,.06), 0 0 0 1px "+J.keisenL};
+const inpStyle={width:"100%",border:"1px solid "+J.keisenM,borderRadius:2,padding:"9px 12px",fontSize:13,outline:"none",boxSizing:"border-box",background:J.shiro,color:J.sumi,transition:"border-color .2s",fontFamily:"'Noto Sans JP',sans-serif"};
+const thS={padding:"10px 14px",textAlign:"left",whiteSpace:"nowrap",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase"};
+const tdS=i=>({padding:"10px 14px",fontSize:12,background:i%2===0?J.shiro:J.washi,borderBottom:"1px solid "+J.keisenL,verticalAlign:"middle",color:J.sumi});
+const tblW={width:"100%",borderCollapse:"collapse",background:J.shiro,borderRadius:2,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,.06), 0 0 0 1px "+J.keisenL};
 const thead={background:J.sumi,color:J.washi};
-const eBtn={marginRight:6,fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",background:J.shiro,color:J.sumi,whiteSpace:"nowrap" as const,letterSpacing:"0.04em",transition:"all .15s"};
-const dBtn={fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid rgba(192,57,43,.3)",cursor:"pointer",background:"rgba(192,57,43,.05)",color:J.shu,whiteSpace:"nowrap" as const,letterSpacing:"0.04em"};
-const aBtn={fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid rgba(61,107,94,.35)",cursor:"pointer",background:"rgba(61,107,94,.08)",color:J.moegi,whiteSpace:"nowrap" as const,letterSpacing:"0.04em"};
-const pBtn=(dis)=>({background:dis?J.usunezumi:J.moegi,color:dis?J.nezumi:J.washi,border:"none",borderRadius:2,padding:"9px 20px",fontWeight:600,cursor:dis?"not-allowed":"pointer",fontSize:13,whiteSpace:"nowrap" as const,letterSpacing:"0.06em",transition:"background .2s"});
+const eBtn={marginRight:6,fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",background:J.shiro,color:J.sumi,whiteSpace:"nowrap",letterSpacing:"0.04em",transition:"all .15s"};
+const dBtn={fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid rgba(192,57,43,.3)",cursor:"pointer",background:"rgba(192,57,43,.05)",color:J.shu,whiteSpace:"nowrap",letterSpacing:"0.04em"};
+const aBtn={fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid rgba(61,107,94,.35)",cursor:"pointer",background:"rgba(61,107,94,.08)",color:J.moegi,whiteSpace:"nowrap",letterSpacing:"0.04em"};
+const pBtn=(dis)=>({background:dis?J.usunezumi:J.moegi,color:dis?J.nezumi:J.washi,border:"none",borderRadius:2,padding:"9px 20px",fontWeight:600,cursor:dis?"not-allowed":"pointer",fontSize:13,whiteSpace:"nowrap",letterSpacing:"0.06em",transition:"background .2s"});
 
 function Toast({msg}){ return msg?<div style={{position:"fixed",top:24,right:24,zIndex:999,background:J.sumi,color:J.washi,borderRadius:2,padding:"11px 22px",fontSize:12,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,.25)",letterSpacing:"0.06em",borderLeft:"3px solid "+J.moegi2}}>{msg}</div>:null; }
 function useToast(){ const [m,setM]=useState(""); const show=useCallback(s=>{setM(s);setTimeout(()=>setM(""),3000);},[]);return[m,show]; }
