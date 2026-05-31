@@ -285,23 +285,49 @@ const starLabel = s => s===3?"★★★":s===2?"★★":s===1?"★":"";
 const IMPORTANCE  = [3,2,1,0];
 const CABIN       = ["Economy","Premium Economy","Business","First"];
 const ROOM_TYPES  = ["Single","Twin","Double","Suite","Deluxe","Custom"];
-const ROLE_COLORS = {
-  owner:  {background:"#fef3c7",color:"#92400e"},
-  admin:  {background:"#fee2e2",color:"#dc2626"},
-  editor: {background:"#dbeafe",color:"#1d4ed8"},
-  viewer: {background:"#f3f4f6",color:"#6b7280"},
+// ─── 日本美学 Design System ─────────────────────────────────
+// Palette: 和紙 washi cream, 墨 sumi ink, 朱 vermillion, 青磁 celadon
+const J = {
+  // 基本色
+  sumi:    "#1a1a1e",   // 墨 ink black
+  washi:   "#f7f4ef",   // 和紙 warm cream
+  shiro:   "#fafaf8",   // 白 off-white
+  moegi:   "#3d6b5e",   // 萌葱 deep teal-green
+  moegi2:  "#5a9e8c",   // 萌葱 light
+  shu:     "#c0392b",   // 朱 vermillion
+  shu2:    "#e74c3c",   // 朱 light
+  kincha:  "#b8860b",   // 金茶 golden
+  asagi:   "#4a7fa5",   // 浅葱 sky blue
+  fuji:    "#7b6fa5",   // 藤 wisteria
+  nezumi:  "#8c8c96",   // 鼠 grey
+  usunezumi:"#c8c8d0",  // 薄鼠 light grey
+  // 線・罫線
+  keisenL: "rgba(26,26,30,0.08)",
+  keisenM: "rgba(26,26,30,0.14)",
+  // 背景
+  bg:      "#f2efe8",   // 古紙 aged paper
+  bgCard:  "#fafaf8",
 };
 
-// ─── UI primitives ───────────────────────────────────────────
+const ROLE_COLORS = {
+  owner:  {background:"rgba(250,220,100,.12)",color:J.kincha,border:"1px solid #f0d080"},
+  admin:  {background:"rgba(192,57,43,.08)",color:J.shu,border:"1px solid #f0a0a0"},
+  editor: {background:"rgba(61,107,94,.1)",color:J.moegi,border:"1px solid #9cbf9c"},
+  viewer: {background:J.washi,color:J.nezumi,border:"1px solid #c0c0cc"},
+};
+
+// ─── UI primitives (和の美学) ────────────────────────────────
+// Google Fonts: Noto Serif JP + Noto Sans JP
+
 function Modal({title,onClose,children,wide}){
   return(
-    <div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.45)"}}>
-      <div style={{background:"white",borderRadius:16,boxShadow:"0 20px 60px rgba(0,0,0,.3)",width:"100%",maxWidth:wide?700:560,maxHeight:"90vh",overflowY:"auto",margin:"0 16px"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 24px",borderBottom:"1px solid #e5e7eb"}}>
-          <h2 style={{fontWeight:700,fontSize:16,color:"#1e3a8a",margin:0}}>{title}</h2>
-          <button onClick={onClose} style={{background:"none",border:"none",fontSize:24,cursor:"pointer",color:"#9ca3af",lineHeight:1}}>×</button>
+    <div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(10,10,14,0.6)",backdropFilter:"blur(3px)"}}>
+      <div style={{background:J.shiro,borderRadius:2,boxShadow:"0 32px 80px rgba(0,0,0,.22), 0 0 0 1px "+J.keisenM,width:"100%",maxWidth:wide?720:560,maxHeight:"90vh",overflowY:"auto",margin:"0 16px",border:"1px solid "+J.keisenL}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 28px",borderBottom:"1px solid "+J.keisenL,background:J.washi}}>
+          <h2 style={{fontWeight:600,fontSize:15,color:J.sumi,margin:0,letterSpacing:"0.06em",fontFamily:"'Noto Serif JP',serif"}}>{title}</h2>
+          <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:J.nezumi,lineHeight:1,padding:"2px 6px",borderRadius:2,transition:"color .2s"}} onMouseEnter={e=>e.target.style.color=J.sumi} onMouseLeave={e=>e.target.style.color=J.nezumi}>╳</button>
         </div>
-        <div style={{padding:24}}>{children}</div>
+        <div style={{padding:"24px 28px"}}>{children}</div>
       </div>
     </div>
   );
@@ -309,32 +335,32 @@ function Modal({title,onClose,children,wide}){
 
 function Field({label,children}){
   return(
-    <div style={{marginBottom:12}}>
-      <label style={{display:"block",fontSize:11,fontWeight:600,color:"#6b7280",marginBottom:4}}>{label}</label>
+    <div style={{marginBottom:14}}>
+      <label style={{display:"block",fontSize:10,fontWeight:600,color:J.nezumi,marginBottom:5,letterSpacing:"0.12em",textTransform:"uppercase"}}>{label}</label>
       {children}
     </div>
   );
 }
 
-const inpStyle={width:"100%",border:"1px solid #d1d5db",borderRadius:8,padding:"8px 12px",fontSize:13,outline:"none",boxSizing:"border-box" as const};
-const thS = {padding:"10px 12px",textAlign:"left",whiteSpace:"nowrap",fontSize:12,fontWeight:700};
-const tdS = i=>({padding:"9px 12px",fontSize:12,background:i%2===0?"#fff":"#f8fafc",borderBottom:"1px solid #e5e7eb",verticalAlign:"middle"});
-const tblW = {width:"100%",borderCollapse:"collapse",background:"white",borderRadius:12,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,0,0,.08)"};
-const thead = {background:"#1e3a8a",color:"white"};
-const eBtn  = {marginRight:6,fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #d1d5db",cursor:"pointer",background:"white",whiteSpace:"nowrap"};
-const dBtn  = {fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #fecaca",cursor:"pointer",background:"#fff5f5",color:"#dc2626",whiteSpace:"nowrap"};
-const aBtn  = {fontSize:11,padding:"4px 10px",borderRadius:6,border:"1px solid #bfdbfe",cursor:"pointer",background:"#eff6ff",color:"#2563eb",whiteSpace:"nowrap"};
-const pBtn  = (dis)=>({background:dis?"#93c5fd":"#2563eb",color:"white",border:"none",borderRadius:8,padding:"8px 18px",fontWeight:700,cursor:dis?"not-allowed":"pointer",fontSize:13,whiteSpace:"nowrap"});
+const inpStyle={width:"100%",border:"1px solid "+J.keisenM,borderRadius:2,padding:"9px 12px",fontSize:13,outline:"none",boxSizing:"border-box" as const,background:J.shiro,color:J.sumi,transition:"border-color .2s",fontFamily:"'Noto Sans JP',sans-serif"};
+const thS={padding:"10px 14px",textAlign:"left" as const,whiteSpace:"nowrap" as const,fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase" as const};
+const tdS=i=>({padding:"10px 14px",fontSize:12,background:i%2===0?J.shiro:J.washi,borderBottom:"1px solid "+J.keisenL,verticalAlign:"middle" as const,color:J.sumi});
+const tblW={width:"100%",borderCollapse:"collapse" as const,background:J.shiro,borderRadius:2,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,.06), 0 0 0 1px "+J.keisenL};
+const thead={background:J.sumi,color:J.washi};
+const eBtn={marginRight:6,fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",background:J.shiro,color:J.sumi,whiteSpace:"nowrap" as const,letterSpacing:"0.04em",transition:"all .15s"};
+const dBtn={fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid rgba(192,57,43,.3)",cursor:"pointer",background:"rgba(192,57,43,.05)",color:J.shu,whiteSpace:"nowrap" as const,letterSpacing:"0.04em"};
+const aBtn={fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid rgba(61,107,94,.35)",cursor:"pointer",background:"rgba(61,107,94,.08)",color:J.moegi,whiteSpace:"nowrap" as const,letterSpacing:"0.04em"};
+const pBtn=(dis)=>({background:dis?J.usunezumi:J.moegi,color:dis?J.nezumi:J.washi,border:"none",borderRadius:2,padding:"9px 20px",fontWeight:600,cursor:dis?"not-allowed":"pointer",fontSize:13,whiteSpace:"nowrap" as const,letterSpacing:"0.06em",transition:"background .2s"});
 
-function Toast({msg}){ return msg?<div style={{position:"fixed",top:20,right:20,zIndex:999,background:"#1e3a8a",color:"white",borderRadius:10,padding:"10px 20px",fontSize:13,fontWeight:600,boxShadow:"0 4px 20px rgba(0,0,0,.2)"}}>{msg}</div>:null; }
+function Toast({msg}){ return msg?<div style={{position:"fixed",top:24,right:24,zIndex:999,background:J.sumi,color:J.washi,borderRadius:2,padding:"11px 22px",fontSize:12,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,.25)",letterSpacing:"0.06em",borderLeft:"3px solid "+J.moegi2}}>{msg}</div>:null; }
 function useToast(){ const [m,setM]=useState(""); const show=useCallback(s=>{setM(s);setTimeout(()=>setM(""),3000);},[]);return[m,show]; }
 
 function SearchBar({value,onChange,placeholder}){
   return(
     <div style={{position:"relative",flex:1,minWidth:160}}>
-      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#9ca3af"}}>🔍</span>
+      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:J.nezumi,fontSize:13}}>⌕</span>
       <input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder||"検索…"}
-        style={{width:"100%",border:"1px solid #d1d5db",borderRadius:8,padding:"7px 10px 7px 30px",fontSize:13,outline:"none",boxSizing:"border-box"}}/>
+        style={{...inpStyle,paddingLeft:32,borderRadius:2}}/>
     </div>
   );
 }
@@ -342,7 +368,7 @@ function SearchBar({value,onChange,placeholder}){
 function DeptFilter({depts,value,onChange,allLabel}){
   return(
     <select value={value} onChange={e=>onChange(e.target.value)}
-      style={{border:"1px solid #d1d5db",borderRadius:8,padding:"7px 10px",fontSize:13,background:"white",minWidth:110}}>
+      style={{...inpStyle,minWidth:110,width:"auto",cursor:"pointer"}}>
       <option value="">{allLabel||"全部門"}</option>
       {depts.map(d=><option key={d} value={d}>{d}</option>)}
     </select>
@@ -352,8 +378,8 @@ function DeptFilter({depts,value,onChange,allLabel}){
 function LangSwitcher({lang,onChange}){
   return(
     <select value={lang} onChange={e=>onChange(e.target.value)}
-      style={{background:"rgba(255,255,255,0.15)",color:"white",border:"1px solid rgba(255,255,255,.35)",borderRadius:8,padding:"6px 10px",fontSize:13,cursor:"pointer",outline:"none"}}>
-      {Object.entries(LANGS).map(([k,v])=><option key={k} value={k} style={{background:"#1e3a8a",color:"white"}}>{v}</option>)}
+      style={{background:"rgba(250,250,248,0.12)",color:J.washi,border:"1px solid rgba(250,250,248,.25)",borderRadius:2,padding:"6px 10px",fontSize:12,cursor:"pointer",outline:"none",letterSpacing:"0.04em"}}>
+      {Object.entries(LANGS).map(([k,v])=><option key={k} value={k} style={{background:"#1a1a1e",color:"#fafaf8"}}>{v}</option>)}
     </select>
   );
 }
@@ -375,17 +401,17 @@ function PersonForm({init,onSave,onClose,t}){
             {IMPORTANCE.map(i=><option key={i} value={i}>{i===0?"—":starLabel(i)}</option>)}
           </select>
         </Field>
-        <Field label={<span>{t.passport} <span style={{fontSize:10,color:"#9ca3af",fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.passport||""} onChange={set("passport")}/></Field>
-        <Field label={<span>{t.dob} <span style={{fontSize:10,color:"#9ca3af",fontWeight:400}}>Optional</span></span>}><input type="date" style={inpStyle} value={f.dob||""} onChange={set("dob")}/></Field>
-        <Field label={<span>{t.passportExp} <span style={{fontSize:10,color:"#9ca3af",fontWeight:400}}>Optional</span></span>}>
+        <Field label={<span>{t.passport} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.passport||""} onChange={set("passport")}/></Field>
+        <Field label={<span>{t.dob} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input type="date" style={inpStyle} value={f.dob||""} onChange={set("dob")}/></Field>
+        <Field label={<span>{t.passportExp} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}>
           <input type="date" style={inpStyle} value={f.passport_exp||""} onChange={set("passport_exp")}
             style={passportWarning(f.passport_exp)?{borderColor:"red",color:"red"}:{}}/>
-          {passportWarning(f.passport_exp)&&<p style={{color:"red",fontSize:11,marginTop:4}}>{t.passportWarn}</p>}
+          {passportWarning(f.passport_exp)&&<p style={{color:J.shu,fontSize:10,marginTop:4,letterSpacing:"0.04em"}}>{t.passportWarn}</p>}
         </Field>
-        <Field label={<span>{t.diet} <span style={{fontSize:10,color:"#9ca3af",fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.diet||""} onChange={set("diet")}/></Field>
+        <Field label={<span>{t.diet} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.diet||""} onChange={set("diet")}/></Field>
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #d1d5db",cursor:"pointer"}}>{t.cancel}</button>
+        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
         <button onClick={()=>onSave(f)} style={pBtn(false)}>{t.save}</button>
       </div>
     </div>
@@ -413,7 +439,7 @@ function FlightForm({init,onSave,onClose,t}){
         <Field label={t.cabinBag}><input style={inpStyle} value={f.cabin_bag} onChange={set("cabin_bag")} placeholder="10kg"/></Field>
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #d1d5db",cursor:"pointer"}}>{t.cancel}</button>
+        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
         <button onClick={()=>onSave(f)} style={pBtn(false)}>{t.save}</button>
       </div>
     </div>
@@ -457,24 +483,24 @@ function HotelStayForm({init,hotels,pricingRules,onSave,onClose,t}){
         <Field label={t.checkIn}><input type="date" style={inpStyle} value={f.check_in||""} onChange={set("check_in")}/></Field>
         <Field label={t.checkOut}><input type="date" style={inpStyle} value={f.check_out||""} onChange={set("check_out")}/></Field>
         <Field label={t.basePrice}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")} placeholder="0"/></Field>
-        <Field label={t.nights}><input style={inpStyle} value={nights||""} readOnly style={{background:"#f5f5f5"}}/></Field>
-        <Field label={t.totalAmt}><input style={inpStyle} value={totalAmount?`$${totalAmount.toLocaleString()}`:"—"} readOnly style={{background:"#f5f5f5",fontWeight:700,color:"#2563eb"}}/></Field>
+        <Field label={t.nights}><input style={inpStyle} value={nights||""} readOnly style={{background:J.washi}}/></Field>
+        <Field label={t.totalAmt}><input style={inpStyle} value={totalAmount?`$${totalAmount.toLocaleString()}`:"—"} readOnly style={{background:J.washi,fontWeight:700,color:J.asagi}}/></Field>
       </div>
       {breakdown.length>0&&(
-        <div style={{marginTop:10,background:"#f8fafc",borderRadius:8,padding:10}}>
-          <div style={{fontSize:11,fontWeight:700,color:"#6b7280",marginBottom:6}}>{t.breakdownTitle}</div>
+        <div style={{marginTop:10,background:J.washi,borderRadius:8,padding:10}}>
+          <div style={{fontSize:9,fontWeight:600,color:J.nezumi,marginBottom:6,letterSpacing:"0.14em",textTransform:"uppercase"}}>{t.breakdownTitle}</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
             {breakdown.map(b=>(
-              <span key={b.date} style={{fontSize:11,padding:"2px 7px",borderRadius:4,background:b.fromRule?"#dbeafe":"#f3f4f6",color:b.fromRule?"#1d4ed8":"#374151",border:b.fromRule?"1px solid #93c5fd":"1px solid #e5e7eb"}}>
+              <span key={b.date} style={{fontSize:10,padding:"3px 8px",borderRadius:1,background:b.fromRule?"rgba(74,127,165,.1)":J.washi,color:b.fromRule?J.asagi:J.nezumi,border:b.fromRule?"1px solid rgba(74,127,165,.3)":"1px solid "+J.keisenL}}>
                 {b.date.slice(5)} ${b.price.toLocaleString()}{b.fromRule?" *":""}
               </span>
             ))}
           </div>
         </div>
       )}
-      {!canSave&&<p style={{fontSize:12,color:"#dc2626",marginTop:8}}>※ {t.stayRequired}</p>}
+      {!canSave&&<p style={{fontSize:11,color:J.shu,marginTop:8,letterSpacing:"0.04em"}}>※ {t.stayRequired}</p>}
       <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #d1d5db",cursor:"pointer"}}>{t.cancel}</button>
+        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
         <button onClick={()=>onSave({...f,nights,total_amount:totalAmount,base_price:f.base_price===""?null:+f.base_price})} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
       </div>
     </div>
@@ -491,7 +517,7 @@ function HotelMasterForm({init,onSave,onClose,t}){
       <Field label={t.hotelAddr}><input style={inpStyle} value={f.address} onChange={set("address")}/></Field>
       <Field label={t.hotelTel}><input style={inpStyle} value={f.tel} onChange={set("tel")}/></Field>
       <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #d1d5db",cursor:"pointer"}}>{t.cancel}</button>
+        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
         <button onClick={()=>onSave(f)} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
       </div>
     </div>
@@ -505,7 +531,7 @@ function PricingRuleForm({init,hotelId,hotelName,onSave,onClose,t}){
   const final=(+f.base_price||0)+(+f.importance_surcharge||0)+(+f.holiday_surcharge||0);
   return(
     <div>
-      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"8px 14px",marginBottom:14,fontSize:13,color:"#1d4ed8"}}>🏨 {hotelName}</div>
+      <div style={{background:"rgba(74,127,165,.08)",border:"1px solid #bfdbfe",borderRadius:8,padding:"8px 14px",marginBottom:14,fontSize:13,color:J.asagi}}>🏨 {hotelName}</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
         <Field label={t.date}><input type="date" style={inpStyle} value={f.date||""} onChange={set("date")}/></Field>
         <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={set("room_type")}>{ROOM_TYPES.map(r=><option key={r}>{r}</option>)}</select></Field>
@@ -513,10 +539,10 @@ function PricingRuleForm({init,hotelId,hotelName,onSave,onClose,t}){
         <Field label={`${t.basePriceShort} ($)`}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")}/></Field>
         <Field label={`${t.importanceSurcharge} ($)`}><input type="number" min="0" style={inpStyle} value={f.importance_surcharge} onChange={set("importance_surcharge")}/></Field>
         <Field label={`${t.holidaySurcharge} ($)`}><input type="number" min="0" style={inpStyle} value={f.holiday_surcharge} onChange={set("holiday_surcharge")}/></Field>
-        <Field label={t.finalPrice}><input style={inpStyle} value={`$${final.toLocaleString()}`} readOnly style={{background:"#f5f5f5",fontWeight:700,color:"#2563eb"}}/></Field>
+        <Field label={t.finalPrice}><input style={inpStyle} value={`$${final.toLocaleString()}`} readOnly style={{background:J.washi,fontWeight:700,color:J.asagi}}/></Field>
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #d1d5db",cursor:"pointer"}}>{t.cancel}</button>
+        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
         <button onClick={()=>onSave({...f,hotel_id:hotelId,final_price:final,base_price:+f.base_price||0,importance_surcharge:+f.importance_surcharge||0,holiday_surcharge:+f.holiday_surcharge||0})} disabled={!f.date} style={pBtn(!f.date)}>{t.save}</button>
       </div>
     </div>
@@ -532,19 +558,19 @@ function RoommateModal({pid,persons,roommates,onSave,onClose,t}){
     <Modal title={`${t.roommateSet} — ${person?.name_kanji||""}`} onClose={onClose}>
       <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:300,overflowY:"auto"}}>
         {persons.filter(p=>p.id!==pid).map(p=>(
-          <label key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,cursor:"pointer",border:`1px solid ${selected.includes(p.id)?"#2563eb":"#e5e7eb"}`,background:selected.includes(p.id)?"#eff6ff":"white"}}>
+          <label key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:2,cursor:"pointer",border:`1px solid ${selected.includes(p.id)?J.moegi:J.keisenM}`,background:selected.includes(p.id)?"rgba(61,107,94,.06)":J.shiro,transition:"all .15s"}}>
             <input type="checkbox" checked={selected.includes(p.id)} onChange={()=>toggle(p.id)}/>
-            <span style={{fontWeight:600,fontSize:13}}>{p.name_kanji}</span>
-            <span style={{fontSize:12,color:"#6b7280"}}>{p.last_roman} {p.first_roman} / {p.dept}</span>
+            <span style={{fontWeight:600,fontSize:13,fontFamily:"'Noto Serif JP',serif",color:J.sumi}}>{p.name_kanji}</span>
+            <span style={{fontSize:12,color:J.nezumi}}>{p.last_roman} {p.first_roman} / {p.dept}</span>
           </label>
         ))}
-        {persons.filter(p=>p.id!==pid).length===0&&<p style={{color:"#9ca3af",fontSize:13}}>{t.noData}</p>}
+        {persons.filter(p=>p.id!==pid).length===0&&<p style={{color:J.usunezumi,fontSize:13}}>{t.noData}</p>}
       </div>
-      <div style={{marginTop:12,padding:"8px 12px",background:"#f8fafc",borderRadius:8,fontSize:12,color:"#374151"}}>
+      <div style={{marginTop:12,padding:"10px 14px",background:J.washi,borderRadius:2,fontSize:12,color:J.sumi,borderLeft:"2px solid "+J.moegi,letterSpacing:"0.04em"}}>
         {selected.length===0?t.roommateNone:selected.map(id=>persons.find(p=>p.id===id)?.name_kanji).filter(Boolean).join("、")}
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #d1d5db",cursor:"pointer"}}>{t.cancel}</button>
+        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
         <button onClick={()=>onSave(pid,selected)} style={pBtn(false)}>{t.save}</button>
       </div>
     </Modal>
@@ -600,12 +626,12 @@ function MemberManager({project,user,isOwner,onClose,t}){
   return(
     <Modal title={`👥 ${t.members} — ${project.name}`} onClose={onClose} wide>
       <Toast msg={toastMsg}/>
-      <div style={{background:"#f8fafc",borderRadius:10,padding:16,marginBottom:20}}>
-        <div style={{fontWeight:700,fontSize:13,color:"#374151",marginBottom:6}}>＋ {t.memberAdd}</div>
-        <div style={{fontSize:12,color:"#6b7280",marginBottom:10}}>{t.memberUidHint}</div>
+      <div style={{background:J.washi,borderRadius:2,padding:18,marginBottom:20,border:"1px solid "+J.keisenL}}>
+        <div style={{fontWeight:600,fontSize:11,color:J.sumi,marginBottom:8,letterSpacing:"0.1em"}}>＋ {t.memberAdd}</div>
+        <div style={{fontSize:12,color:J.nezumi,marginBottom:10}}>{t.memberUidHint}</div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           <input style={inpStyle} value={userId} onChange={e=>setUserId(e.target.value)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style={{flex:2,minWidth:200}}/>
-          <select value={role} onChange={e=>setRole(e.target.value)} style={{border:"1px solid #d1d5db",borderRadius:8,padding:"7px 10px",fontSize:13,background:"white"}}>
+          <select value={role} onChange={e=>setRole(e.target.value)} style={{border:"1px solid #d1d5db",borderRadius:8,padding:"7px 10px",fontSize:13,background:J.shiro}}>
             <option value="admin">{t.role_admin}</option>
             <option value="editor">{t.role_editor}</option>
             <option value="viewer">{t.role_viewer}</option>
@@ -613,24 +639,24 @@ function MemberManager({project,user,isOwner,onClose,t}){
           <button onClick={addMember} disabled={saving||!userId.trim()} style={pBtn(saving||!userId.trim())}>{saving?"…":"追加"}</button>
         </div>
       </div>
-      <div style={{fontWeight:700,fontSize:13,color:"#374151",marginBottom:10}}>{t.memberCurrent.replace("{n}",members.length)}</div>
-      {loading?<div style={{textAlign:"center",padding:20,color:"#9ca3af"}}>…</div>:(
+      <div style={{fontWeight:600,fontSize:11,color:J.sumi,marginBottom:12,letterSpacing:"0.1em"}}>{t.memberCurrent.replace("{n}",members.length)}</div>
+      {loading?<div style={{textAlign:"center",padding:20,color:J.usunezumi}}>…</div>:(
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {members.map(m=>{
             const isMe=m.user_id===user.id;
             const canModify=!isMe&&(isOwner||m.role!=="admin");
             return(
-              <div key={m.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",background:"white",borderRadius:10,border:"1px solid #e5e7eb"}}>
+              <div key={m.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",background:J.shiro,borderRadius:2,border:"1px solid "+J.keisenL}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                     <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20,...(ROLE_COLORS[m.role]||ROLE_COLORS.viewer)}}>{t[`role_${m.role}`]||m.role}</span>
-                    {isMe&&<span style={{fontSize:11,background:"#f0fdf4",color:"#16a34a",borderRadius:20,padding:"2px 8px",fontWeight:600}}>自分</span>}
+                    {isMe&&<span style={{fontSize:9,background:"rgba(61,107,94,.1)",color:J.moegi,borderRadius:1,padding:"2px 8px",fontWeight:600,letterSpacing:"0.06em"}}>自分</span>}
                   </div>
-                  <div style={{fontSize:11,color:"#9ca3af",fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.user_id}</div>
+                  <div style={{fontSize:11,color:J.usunezumi,fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.user_id}</div>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:12,flexShrink:0}}>
                   {canModify&&(
-                    <select value={m.role} onChange={e=>changeRole(m.id,e.target.value)} style={{border:"1px solid #d1d5db",borderRadius:6,padding:"4px 8px",fontSize:12,background:"white",cursor:"pointer"}}>
+                    <select value={m.role} onChange={e=>changeRole(m.id,e.target.value)} style={{border:"1px solid #d1d5db",borderRadius:6,padding:"4px 8px",fontSize:12,background:J.shiro,cursor:"pointer"}}>
                       <option value="admin">{t.role_admin}</option>
                       <option value="editor">{t.role_editor}</option>
                       <option value="viewer">{t.role_viewer}</option>
@@ -643,10 +669,10 @@ function MemberManager({project,user,isOwner,onClose,t}){
           })}
         </div>
       )}
-      <div style={{marginTop:20,padding:"12px 14px",background:"#fefce8",borderRadius:8,border:"1px solid #fde68a"}}>
-        <div style={{fontSize:12,fontWeight:700,color:"#92400e",marginBottom:4}}>💡 {t.memberUidLabel}</div>
-        <div style={{fontSize:12,color:"#92400e",lineHeight:1.6}}>
-          <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" style={{color:"#1d4ed8"}}>Supabase Dashboard</a> {t.memberUidInfo}
+      <div style={{marginTop:20,padding:"14px 16px",background:"rgba(184,134,11,.05)",borderRadius:2,border:"1px solid rgba(184,134,11,.2)"}}>
+        <div style={{fontSize:10,fontWeight:600,color:J.kincha,marginBottom:6,letterSpacing:"0.1em"}}>{t.memberUidLabel}</div>
+        <div style={{fontSize:12,color:J.kincha,lineHeight:1.6}}>
+          <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" style={{color:J.asagi}}>Supabase Dashboard</a> {t.memberUidInfo}
         </div>
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",marginTop:16}}>
@@ -701,19 +727,19 @@ function LoginScreen({onLogin}){
     setLoading(false);
   };
 
-  const card={background:"white",borderRadius:16,padding:40,width:400,boxShadow:"0 20px 60px rgba(0,0,0,0.3)",maxHeight:"90vh",overflowY:"auto"};
-  const wrap={minHeight:"100vh",background:"linear-gradient(135deg,#1e3a8a,#2563eb)",display:"flex",alignItems:"center",justifyContent:"center"};
+  const card={background:J.shiro,borderRadius:2,padding:"40px 44px",width:420,boxShadow:"0 40px 100px rgba(0,0,0,.18), 0 0 0 1px "+J.keisenM,maxHeight:"90vh",overflowY:"auto"};
+  const wrap={minHeight:"100vh",background:J.sumi,backgroundImage:"radial-gradient(ellipse at 20% 50%, rgba(61,107,94,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(74,127,165,0.1) 0%, transparent 50%)",display:"flex",alignItems:"center",justifyContent:"center"};
 
   if(mode==="verify") return (
     <div style={wrap}><div style={card}>
       <div style={{textAlign:"center",marginBottom:24}}>
         <div style={{fontSize:48}}>📧</div>
-        <div style={{fontSize:18,fontWeight:800,color:"#1e3a8a",marginTop:8}}>{t.verifyTitle}</div>
-        <div style={{fontSize:13,color:"#6b7280",marginTop:8,lineHeight:1.8}}>
+        <div style={{fontSize:18,fontWeight:800,color:J.sumi,marginTop:8}}>{t.verifyTitle}</div>
+        <div style={{fontSize:13,color:J.nezumi,marginTop:8,lineHeight:1.8}}>
           {t.verifyTitle}: <strong>{email}</strong>
         </div>
       </div>
-      <div style={{background:"#eff6ff",borderRadius:8,padding:12,marginBottom:16,fontSize:12,color:"#1d4ed8"}}>💡 {t.verifyHint}</div>
+      <div style={{background:"rgba(74,127,165,.08)",borderRadius:8,padding:12,marginBottom:16,fontSize:12,color:J.asagi}}>💡 {t.verifyHint}</div>
       <button onClick={()=>{setMode("login");reset();}} style={{...pBtn(false),width:"100%",padding:12,fontSize:14}}>{t.toLoginBtn}</button>
     </div></div>
   );
@@ -721,32 +747,33 @@ function LoginScreen({onLogin}){
   return (
     <div style={wrap}><div style={card}>
       <div style={{textAlign:"center",marginBottom:24}}>
-        <div style={{fontSize:36}}>🎬</div>
-        <div style={{fontSize:18,fontWeight:800,color:"#1e3a8a",marginTop:8}}>{t.appName}</div>
-        <div style={{fontSize:12,color:"#9ca3af",marginTop:4}}>{mode==="login"?t.loginTitle:t.registerTitle}</div>
+        <div style={{fontSize:28,letterSpacing:"-0.02em",fontFamily:"'Noto Serif JP',serif",color:J.sumi,fontWeight:300}}>映</div>
+        <div style={{fontSize:17,fontWeight:600,color:J.sumi,marginTop:6,letterSpacing:"0.1em",fontFamily:"'Noto Serif JP',serif"}}>{t.appName}</div>
+        <div style={{fontSize:11,color:J.nezumi,marginTop:6,letterSpacing:"0.16em",textTransform:"uppercase"}}>{mode==="login"?t.loginTitle:t.registerTitle}</div>
+        <div style={{width:32,height:1,background:J.moegi,margin:"12px auto 0"}}></div>
       </div>
-      <div style={{marginBottom:16}}>
-        <select value={lang} onChange={e=>setLang(e.target.value)} style={{width:"100%",border:"1px solid #d1d5db",borderRadius:8,padding:"8px 12px",fontSize:13,background:"white",outline:"none",cursor:"pointer"}}>
+      <div style={{marginBottom:20}}>
+        <select value={lang} onChange={e=>setLang(e.target.value)} style={{...inpStyle,cursor:"pointer"}}>
           {Object.entries(LANGS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
         </select>
       </div>
-      <div style={{display:"flex",background:"#f3f4f6",borderRadius:8,padding:4,marginBottom:20}}>
+      <div style={{display:"flex",background:J.washi,borderRadius:2,padding:3,marginBottom:24,border:"1px solid "+J.keisenL}}>
         {[["login",t.loginBtn],["register",t.registerTitle]].map(([m,label])=>(
           <button key={m} onClick={()=>{setMode(m);reset();}}
-            style={{flex:1,padding:"8px",borderRadius:6,border:"none",cursor:"pointer",fontWeight:mode===m?700:400,
-              background:mode===m?"white":"transparent",color:mode===m?"#1e3a8a":"#6b7280",
-              boxShadow:mode===m?"0 1px 4px rgba(0,0,0,.1)":"none",fontSize:13}}>
+            style={{flex:1,padding:"8px 12px",borderRadius:1,border:"none",cursor:"pointer",fontWeight:mode===m?700:400,
+              background:mode===m?J.shiro:"transparent",color:mode===m?J.sumi:J.nezumi,
+              boxShadow:mode===m?"0 1px 3px rgba(0,0,0,.1)":"none",fontSize:12,letterSpacing:"0.08em",transition:"all .2s"}}>
             {label}
           </button>
         ))}
       </div>
-      {error&&<div style={{background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"8px 12px",fontSize:13,marginBottom:14}}>{error}</div>}
+      {error&&<div style={{background:"rgba(192,57,43,.06)",color:J.shu,borderRadius:2,padding:"10px 14px",fontSize:12,marginBottom:16,borderLeft:"2px solid "+J.shu,letterSpacing:"0.04em"}}>{error}</div>}
       {mode==="login"?(
         <>
           <Field label={t.loginEmail}><input style={inpStyle} type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/></Field>
           <Field label={t.loginPw}><input style={inpStyle} type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/></Field>
-          <button onClick={handleLogin} disabled={loading} style={{...pBtn(loading),width:"100%",marginTop:8,fontSize:15,padding:12}}>{loading?"…":t.loginBtn}</button>
-          <p style={{fontSize:11,color:"#9ca3af",textAlign:"center",marginTop:16}}>{t.loginHint}</p>
+          <button onClick={handleLogin} disabled={loading} style={{...pBtn(loading),width:"100%",marginTop:8,fontSize:14,padding:"13px",letterSpacing:"0.12em"}}>{loading?"…":t.loginBtn}</button>
+          <p style={{fontSize:10,color:J.nezumi,textAlign:"center",marginTop:16,letterSpacing:"0.08em",lineHeight:1.8}}>{t.loginHint}</p>
         </>
       ):(
         <>
@@ -756,7 +783,7 @@ function LoginScreen({onLogin}){
           <Field label="お名前（任意）"><input style={inpStyle} value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="例：田中太郎"/></Field>
           <Field label="申請メッセージ（任意）"><textarea style={inpStyle} value={message} onChange={e=>setMessage(e.target.value)} placeholder="所属・役職など" rows={2} style={{resize:"none"}}/></Field>
           <button onClick={handleRegister} disabled={loading} style={{...pBtn(loading),width:"100%",marginTop:8,fontSize:15,padding:12}}>{loading?"…":t.registerBtn}</button>
-          <p style={{fontSize:11,color:"#9ca3af",textAlign:"center",marginTop:12,lineHeight:1.6}}>
+          <p style={{fontSize:11,color:J.usunezumi,textAlign:"center",marginTop:12,lineHeight:1.6}}>
             {t.verifyHint}
           </p>
         </>
@@ -864,18 +891,21 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
   };
 
   return(
-    <div style={{minHeight:"100vh",background:"#f0f4f8"}}>
+    <div style={{minHeight:"100vh",background:J.bg}}>
       <Toast msg={toastMsg}/>
-      <div style={{background:"linear-gradient(135deg,#1e3a8a,#2563eb)",padding:"16px 24px",color:"white",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-        <div>
-          <div style={{fontSize:18,fontWeight:800}}>🎬 {t.appName}</div>
-          <div style={{fontSize:11,opacity:.75}}>{user.email}{isOwner&&<span style={{marginLeft:8,padding:"1px 8px",borderRadius:10,background:"rgba(255,255,255,0.2)",fontSize:10}}>{t.role_owner}</span>}</div>
+      <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg, rgba(61,107,94,.2) 0%, transparent 100%)",padding:"16px 28px",color:J.washi,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8,borderBottom:"1px solid rgba(250,250,248,.08)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:16}}>
+          <div style={{fontSize:22,fontWeight:200,letterSpacing:"-0.04em",fontFamily:"'Noto Serif JP',serif",color:J.washi}}>映</div>
+          <div>
+            <div style={{fontSize:15,fontWeight:600,letterSpacing:"0.08em",fontFamily:"'Noto Serif JP',serif"}}>{t.appName}</div>
+            <div style={{fontSize:10,opacity:.55,marginTop:1,letterSpacing:"0.12em"}}>{user.email}{isOwner&&<span style={{marginLeft:8,padding:"1px 8px",borderRadius:1,background:"rgba(250,250,248,0.15)",fontSize:9,letterSpacing:"0.1em"}}>{t.role_owner}</span>}</div>
+          </div>
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <LangSwitcher lang={lang} onChange={onLangChange}/>
           <button onClick={()=>{api.logout();window.location.reload();}}
-            style={{background:"rgba(255,255,255,0.15)",color:"white",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"7px 14px",fontWeight:600,cursor:"pointer",fontSize:12}}>
-            🔒 {t.logout}
+            style={{background:"rgba(250,250,248,0.1)",color:J.washi,border:"1px solid rgba(250,250,248,.2)",borderRadius:2,padding:"7px 14px",fontWeight:400,cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>
+            {t.logout}
           </button>
         </div>
       </div>
@@ -884,31 +914,32 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
       {isOwner&&(
         <div style={{maxWidth:900,margin:"0 auto",padding:"24px 16px 0"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <h2 style={{fontSize:17,fontWeight:700,color:"#1e3a8a",margin:0}}>
-              📋 登録申請
-              {requests.length>0&&<span style={{marginLeft:8,background:"#dc2626",color:"white",borderRadius:20,padding:"2px 8px",fontSize:12}}>{requests.length}</span>}
+            <h2 style={{fontSize:13,fontWeight:600,color:J.sumi,margin:0,letterSpacing:"0.1em",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{width:3,height:16,background:J.kincha,display:"inline-block",borderRadius:1}}></span>
+              登録申請
+              {requests.length>0&&<span style={{marginLeft:4,background:J.shu,color:J.washi,borderRadius:1,padding:"1px 7px",fontSize:10,fontWeight:700,letterSpacing:"0.06em"}}>{requests.length}</span>}
             </h2>
-            <button onClick={loadRequests} style={{fontSize:12,padding:"5px 12px",borderRadius:6,border:"1px solid #d1d5db",cursor:"pointer",background:"white"}}>🔄 更新</button>
+            <button onClick={loadRequests} style={{...eBtn,fontSize:11}}>↻ 更新</button>
           </div>
-          {reqLoading?<div style={{color:"#9ca3af",fontSize:13}}>…</div>:(
+          {reqLoading?<div style={{color:J.usunezumi,fontSize:13}}>…</div>:(
             requests.length===0?(
-              <div style={{background:"white",borderRadius:12,padding:"16px",textAlign:"center",color:"#9ca3af",fontSize:13,boxShadow:"0 2px 8px rgba(0,0,0,.06)",marginBottom:16}}>待審核の申請はありません</div>
+              <div style={{background:J.shiro,borderRadius:12,padding:"16px",textAlign:"center",color:J.usunezumi,fontSize:13,boxShadow:"0 2px 8px rgba(0,0,0,.06)",marginBottom:16}}>待審核の申請はありません</div>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
                 {requests.map(req=>(
-                  <div key={req.id} style={{background:"white",borderRadius:12,padding:"14px 16px",boxShadow:"0 2px 8px rgba(0,0,0,.08)",borderLeft:"4px solid #f59e0b",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
+                  <div key={req.id} style={{background:J.shiro,borderRadius:2,padding:"14px 18px",boxShadow:"0 1px 4px rgba(0,0,0,.06)",borderLeft:"3px solid "+J.kincha,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
-                        <span style={{fontWeight:700,fontSize:14,color:"#1e3a8a"}}>{req.display_name||"（名前未記入）"}</span>
-                        <span style={{fontSize:12,color:"#6b7280"}}>{req.email}</span>
-                        <span style={{fontSize:11,background:"#fef3c7",color:"#92400e",borderRadius:20,padding:"2px 8px",fontWeight:600}}>⏳ 審核待ち</span>
+                        <span style={{fontWeight:700,fontSize:14,color:J.sumi}}>{req.display_name||"（名前未記入）"}</span>
+                        <span style={{fontSize:12,color:J.nezumi}}>{req.email}</span>
+                        <span style={{fontSize:11,background:"rgba(250,220,100,.12)",color:J.kincha,borderRadius:20,padding:"2px 8px",fontWeight:600}}>⏳ 審核待ち</span>
                       </div>
-                      {req.message&&<div style={{fontSize:12,color:"#6b7280",background:"#f9fafb",borderRadius:6,padding:"4px 8px",marginTop:4}}>💬 {req.message}</div>}
-                      <div style={{fontSize:11,color:"#9ca3af",marginTop:4}}>{new Date(req.created_at).toLocaleString("zh-TW")}</div>
+                      {req.message&&<div style={{fontSize:12,color:J.nezumi,background:J.washi,borderRadius:6,padding:"4px 8px",marginTop:4}}>💬 {req.message}</div>}
+                      <div style={{fontSize:11,color:J.usunezumi,marginTop:4}}>{new Date(req.created_at).toLocaleString("zh-TW")}</div>
                     </div>
                     <div style={{display:"flex",gap:8}}>
-                      <button onClick={()=>approveRequest(req)} style={{background:"#16a34a",color:"white",border:"none",borderRadius:8,padding:"8px 16px",fontWeight:700,cursor:"pointer",fontSize:13}}>✓ 承認</button>
-                      <button onClick={()=>rejectRequest(req)} style={{...dBtn,padding:"8px 16px",fontSize:13}}>✗ 拒否</button>
+                      <button onClick={()=>approveRequest(req)} style={{background:J.moegi,color:J.washi,border:"none",borderRadius:2,padding:"7px 16px",fontWeight:600,cursor:"pointer",fontSize:12,letterSpacing:"0.08em"}}>承認</button>
+                      <button onClick={()=>rejectRequest(req)} style={{...dBtn,padding:"7px 16px",fontSize:12,letterSpacing:"0.08em"}}>拒否</button>
                     </div>
                   </div>
                 ))}
@@ -920,31 +951,34 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
 
       {/* 專案列表 */}
       <div style={{maxWidth:900,margin:"0 auto",padding:"32px 16px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-          <h2 style={{fontSize:20,fontWeight:800,color:"#1e3a8a",margin:0}}>📁 {t.projects}</h2>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:28}}>
+          <h2 style={{fontSize:18,fontWeight:300,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:12}}>
+            <span style={{width:2,height:20,background:J.moegi,display:"inline-block"}}></span>
+            {t.projects}
+          </h2>
           <button onClick={()=>setShowNew(true)} style={pBtn(false)}>{t.newProject}</button>
         </div>
-        {loading?<div style={{textAlign:"center",padding:40,color:"#9ca3af"}}>…</div>:(
+        {loading?<div style={{textAlign:"center",padding:40,color:J.usunezumi}}>…</div>:(
           projects.length===0?(
-            <div style={{textAlign:"center",padding:60,background:"white",borderRadius:16,boxShadow:"0 2px 8px rgba(0,0,0,.08)"}}>
-              <div style={{fontSize:48,marginBottom:12}}>📂</div>
-              <div style={{fontSize:16,fontWeight:600,color:"#374151",marginBottom:8}}>{t.noProject}</div>
-              <div style={{fontSize:13,color:"#9ca3af",marginBottom:20}}>{t.noProjectHint}</div>
+            <div style={{textAlign:"center",padding:"60px 40px",background:J.shiro,borderRadius:2,border:"1px solid "+J.keisenL}}>
+              <div style={{fontSize:32,fontWeight:200,color:J.usunezumi,marginBottom:16,fontFamily:"'Noto Serif JP',serif",letterSpacing:"0.2em"}}>無</div>
+              <div style={{fontSize:15,fontWeight:400,color:J.sumi,marginBottom:8,letterSpacing:"0.1em",fontFamily:"'Noto Serif JP',serif"}}>{t.noProject}</div>
+              <div style={{fontSize:12,color:J.nezumi,marginBottom:24,letterSpacing:"0.06em"}}>{t.noProjectHint}</div>
               <button onClick={()=>setShowNew(true)} style={pBtn(false)}>{t.firstProject}</button>
             </div>
           ):(
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
               {projects.map(up=>(
-                <div key={up.id} style={{background:"white",borderRadius:14,boxShadow:"0 2px 12px rgba(0,0,0,.08)",overflow:"hidden"}}>
-                  <div style={{background:"linear-gradient(135deg,#1e3a8a,#2563eb)",padding:"20px 20px 16px",color:"white"}}>
-                    <div style={{fontSize:28,marginBottom:8}}>🎬</div>
+                <div key={up.id} style={{background:J.shiro,borderRadius:2,boxShadow:"0 2px 12px rgba(0,0,0,.06), 0 0 0 1px "+J.keisenL,overflow:"hidden",transition:"transform .2s, box-shadow .2s"}}>
+                  <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg, rgba(61,107,94,.25) 0%, transparent 80%)",padding:"20px 20px 16px",color:J.washi}}>
+                    <div style={{fontSize:11,letterSpacing:"0.2em",color:"rgba(250,250,248,.4)",marginBottom:10,fontFamily:"'Noto Serif JP',serif",textTransform:"uppercase"}}>PROJECT</div>
                     <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>{up.projects?.name||"—"}</div>
                     {up.projects?.description&&<div style={{fontSize:12,opacity:.8}}>{up.projects.description}</div>}
                   </div>
                   <div style={{padding:"14px 20px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                      <span style={{fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:20,...(ROLE_COLORS[up.role]||ROLE_COLORS.viewer)}}>{t[`role_${up.role}`]||up.role}</span>
-                      <span style={{fontSize:11,color:"#9ca3af"}}>{up.projects?.created_at?new Date(up.projects.created_at).toLocaleDateString():""}</span>
+                      <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:1,letterSpacing:"0.06em",...(ROLE_COLORS[up.role]||ROLE_COLORS.viewer)}}>{t[`role_${up.role}`]||up.role}</span>
+                      <span style={{fontSize:11,color:J.usunezumi}}>{up.projects?.created_at?new Date(up.projects.created_at).toLocaleDateString():""}</span>
                     </div>
                     <div style={{display:"flex",gap:8}}>
                       <button onClick={()=>onSelect(up.projects,up.role)} style={{flex:1,...pBtn(false),padding:"8px",fontSize:13}}>{t.openProject}</button>
@@ -965,7 +999,7 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
           <Field label={`${t.projectName} *`}><input style={inpStyle} value={newName} onChange={e=>setNewName(e.target.value)}/></Field>
           <Field label={t.projectDesc}><input style={inpStyle} value={newDesc} onChange={e=>setNewDesc(e.target.value)}/></Field>
           <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-            <button onClick={()=>setShowNew(false)} style={{padding:"8px 16px",borderRadius:8,border:"1px solid #d1d5db",cursor:"pointer"}}>{t.cancel}</button>
+            <button onClick={()=>setShowNew(false)} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
             <button onClick={createProject} disabled={saving||!newName.trim()} style={pBtn(saving||!newName.trim())}>{saving?t.creating:t.create}</button>
           </div>
         </Modal>
@@ -1239,50 +1273,50 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
   };
 
   const statusBadge=s=>{
-    if(s==="arranged") return<span style={{padding:"2px 8px",borderRadius:20,background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:700}}>{t.arranged}</span>;
-    if(s==="partial")  return<span style={{padding:"2px 8px",borderRadius:20,background:"#fef3c7",color:"#92400e",fontSize:11,fontWeight:700}}>{t.partial}</span>;
-    return<span style={{padding:"2px 8px",borderRadius:20,background:"#f3f4f6",color:"#9ca3af",fontSize:11}}>{t.unArranged}</span>;
+    if(s==="arranged") return<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(61,107,94,.1)",color:J.moegi,fontSize:10,fontWeight:600,letterSpacing:"0.06em",border:"1px solid rgba(61,107,94,.25)"}}>{t.arranged}</span>;
+    if(s==="partial")  return<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(184,134,11,.1)",color:J.kincha,fontSize:10,fontWeight:600,letterSpacing:"0.06em",border:"1px solid rgba(184,134,11,.25)"}}>{t.partial}</span>;
+    return<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(140,140,150,.08)",color:J.nezumi,fontSize:10,letterSpacing:"0.06em",border:"1px solid "+J.keisenM}}>{t.unArranged}</span>;
   };
 
   return(
-    <div style={{fontFamily:"system-ui,sans-serif",minHeight:"100vh",background:"#f0f4f8"}}>
+    <div style={{fontFamily:"'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif",minHeight:"100vh",background:J.bg}}>
       <Toast msg={toastMsg}/>
-      <div style={{background:"linear-gradient(135deg,#1e3a8a,#2563eb)",padding:"14px 24px",color:"white",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <button onClick={onBack} style={{background:"rgba(255,255,255,0.15)",color:"white",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:13}}>← {t.back}</button>
+      <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg, rgba(61,107,94,.18) 0%, transparent 100%)",padding:"14px 24px",color:J.washi,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8,borderBottom:"1px solid rgba(250,250,248,.06)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <button onClick={onBack} style={{background:"rgba(250,250,248,0.1)",color:J.washi,border:"1px solid rgba(250,250,248,.2)",borderRadius:2,padding:"6px 12px",cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>← {t.back}</button>
           <div>
-            <div style={{fontSize:17,fontWeight:800}}>🎬 {project.name}</div>
-            <div style={{fontSize:11,opacity:.75}}>☁ {user.email} · <span style={{padding:"1px 8px",borderRadius:10,background:"rgba(255,255,255,0.2)",fontSize:10}}>{isOwner?t.role_owner:(t[`role_${userRole}`]||userRole)}</span></div>
+            <div style={{fontSize:15,fontWeight:600,letterSpacing:"0.08em",fontFamily:"'Noto Serif JP',serif"}}>{project.name}</div>
+            <div style={{fontSize:10,opacity:.5,marginTop:1,letterSpacing:"0.1em"}}>{user.email} · <span style={{padding:"1px 7px",borderRadius:1,background:"rgba(250,250,248,0.15)",fontSize:9,letterSpacing:"0.06em"}}>{isOwner?t.role_owner:(t[`role_${userRole}`]||userRole)}</span></div>
           </div>
         </div>
-        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           <LangSwitcher lang={lang} onChange={onLangChange}/>
           {(isOwner||canDelete)&&(
-            <button onClick={()=>setShowMembers(true)} style={{background:"rgba(255,255,255,0.15)",color:"white",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"7px 14px",fontWeight:600,cursor:"pointer",fontSize:12}}>👥 {t.members}</button>
+            <button onClick={()=>setShowMembers(true)} style={{background:"rgba(250,250,248,0.1)",color:J.washi,border:"1px solid rgba(250,250,248,.2)",borderRadius:2,padding:"6px 13px",fontWeight:400,cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>{t.members}</button>
           )}
-          <button onClick={()=>window.print()} style={{background:"rgba(255,255,255,0.15)",color:"white",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"7px 14px",fontWeight:600,cursor:"pointer",fontSize:12}}>🖨 {t.print}</button>
+          <button onClick={()=>window.print()} style={{background:"rgba(250,250,248,0.1)",color:J.washi,border:"1px solid rgba(250,250,248,.2)",borderRadius:2,padding:"6px 13px",fontWeight:400,cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>{t.print}</button>
         </div>
       </div>
 
-      <div className="no-print" style={{background:"white",borderBottom:"2px solid #e5e7eb",display:"flex",paddingLeft:14,overflowX:"auto"}}>
+      <div className="no-print" style={{background:J.shiro,borderBottom:"1px solid "+J.keisenL,display:"flex",paddingLeft:16,overflowX:"auto"}}>
         {TABS.map(tb=>(
           <button key={tb.id} onClick={()=>setTab(tb.id)}
-            style={{padding:"11px 18px",fontWeight:tab===tb.id?700:400,color:tab===tb.id?"#2563eb":"#6b7280",borderBottom:tab===tb.id?"3px solid #2563eb":"3px solid transparent",background:"none",border:"none",cursor:"pointer",fontSize:13,whiteSpace:"nowrap"}}>
+            style={{padding:"12px 20px",fontWeight:tab===tb.id?600:400,color:tab===tb.id?J.moegi:J.nezumi,borderBottom:tab===tb.id?"2px solid "+J.moegi:"2px solid transparent",background:"none",border:"none",borderBottom:tab===tb.id?"2px solid "+J.moegi:"2px solid transparent",cursor:"pointer",fontSize:12,whiteSpace:"nowrap",letterSpacing:"0.06em",transition:"color .2s",fontFamily:"'Noto Sans JP',sans-serif"}}>
             {tb.label}
           </button>
         ))}
       </div>
 
-      {loading?<div style={{textAlign:"center",padding:40,color:"#6b7280"}}>…</div>:(
-        <div style={{padding:"18px 14px",maxWidth:1280,margin:"0 auto"}}>
+      {loading?<div style={{textAlign:"center",padding:60,color:J.nezumi,fontSize:12,letterSpacing:"0.2em"}}>読み込み中…</div>:(
+        <div style={{padding:"24px 20px",maxWidth:1320,margin:"0 auto"}}>
 
           {/* TAB A: 工作人員列表 */}
           {tab==="A"&&(()=>{
             const rows=filterPersons(searchA,deptA);
             return(
               <div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-                  <h2 style={{fontSize:17,fontWeight:700,color:"#1e3a8a",margin:0}}>{t.staffList}</h2>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+                  <h2 style={{fontSize:14,fontWeight:400,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:10}}><span style={{width:2,height:14,background:J.moegi,display:"inline-block"}}></span>{t.staffList}</h2>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
                     <SearchBar value={searchA} onChange={setSearchA} placeholder={t.searchStaff}/>
                     <DeptFilter depts={allDepts} value={deptA} onChange={setDeptA} allLabel={t.allDept}/>
@@ -1318,24 +1352,24 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                             onDragOver={e=>e.preventDefault()}
                             style={{cursor:canEdit?"grab":"default"}}>
                             {/* 功能四-1: 自動編號（全局序號） */}
-                            <td style={{...tdS(i),color:"#9ca3af",fontSize:11,textAlign:"center"}}>
+                            <td style={{...tdS(i),color:J.usunezumi,fontSize:11,textAlign:"center"}}>
                               {canEdit&&<span style={{marginRight:2,opacity:0.35,fontSize:10}}>⠿</span>}
                               {persons.indexOf(p)+1}
                             </td>
                             <td style={{...tdS(i),maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.dept}</td>
-                            <td style={{...tdS(i),fontWeight:p.importance===3?700:400,color:p.importance===3?"#dc2626":"inherit",whiteSpace:"nowrap"}}>
-                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:4,fontSize:10,background:"#fee2e2",color:"#dc2626",borderRadius:4,padding:"1px 5px"}}>★★★</span>}
+                            <td style={{...tdS(i),fontWeight:p.importance===3?700:400,color:p.importance===3?J.shu:"inherit",whiteSpace:"nowrap"}}>
+                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
                             </td>
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>{p.last_roman} {p.first_roman}</td>
-                            <td style={{...tdS(i),color:p.importance===3?"#dc2626":p.importance===2?"#d97706":"#6b7280",textAlign:"center"}}>{starLabel(p.importance)||"—"}</td>
+                            <td style={{...tdS(i),color:p.importance===3?J.shu:p.importance===2?J.kincha:J.nezumi,textAlign:"center"}}>{starLabel(p.importance)||"—"}</td>
                             {/* 功能三-3: 狀態含同室者 */}
                             <td style={tdS(i)}>
                               {statusBadge(st)}
-                              {rm&&<div style={{fontSize:10,color:"#6b7280",marginTop:3}}>🛏 {t.roommateWith.replace("{name}",rm)}</div>}
+                              {rm&&<div style={{fontSize:10,color:J.nezumi,marginTop:3}}>🛏 {t.roommateWith.replace("{name}",rm)}</div>}
                             </td>
                             <td style={tdS(i)}>{p.passport||"—"}</td>
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>{fmt(p.dob)}</td>
-                            <td style={{...tdS(i),color:warn?"#dc2626":"inherit",fontWeight:warn?700:400,whiteSpace:"nowrap"}}>{fmt(p.passport_exp)}{warn&&" ⚠"}</td>
+                            <td style={{...tdS(i),color:warn?J.shu:"inherit",fontWeight:warn?600:400,whiteSpace:"nowrap"}}>{fmt(p.passport_exp)}{warn&&" ⚠"}</td>
                             <td style={{...tdS(i),maxWidth:100,overflow:"hidden",textOverflow:"ellipsis"}}>{p.diet||"—"}</td>
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>
                               {canEdit&&<button style={eBtn} onClick={()=>setPersonModal({mode:"edit",data:p})}>{t.edit}</button>}
@@ -1344,7 +1378,7 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                           </tr>
                         );
                       })}
-                      {rows.length===0&&<tr><td colSpan={11} style={{padding:20,textAlign:"center",color:"#9ca3af"}}>{t.noData}</td></tr>}
+                      {rows.length===0&&<tr><td colSpan={11} style={{padding:20,textAlign:"center",color:J.usunezumi}}>{t.noData}</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -1357,21 +1391,21 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
             const rows=filterFlightPersons(searchB,deptB);
             return(
               <div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:8}}>
-                  <h2 style={{fontSize:17,fontWeight:700,color:"#1e3a8a",margin:0}}>{t.flightMgmt}</h2>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+                  <h2 style={{fontSize:14,fontWeight:400,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:10}}><span style={{width:2,height:14,background:J.asagi,display:"inline-block"}}></span>{t.flightMgmt}</h2>
                   <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
                     <SearchBar value={searchB} onChange={setSearchB} placeholder={t.searchFlight}/>
                     <DeptFilter depts={allDepts} value={deptB} onChange={setDeptB} allLabel={t.allDept}/>
                     {/* 功能二: 進階搜尋切換 */}
                     <button onClick={()=>setShowFlightAdvanced(v=>!v)}
-                      style={{...eBtn,margin:0,background:showFlightAdvanced?"#eff6ff":"white",color:showFlightAdvanced?"#2563eb":"#374151",borderColor:showFlightAdvanced?"#bfdbfe":"#d1d5db"}}>
+                      style={{...eBtn,margin:0,background:showFlightAdvanced?"rgba(74,127,165,.08)":J.shiro,color:showFlightAdvanced?J.asagi:J.sumi,borderColor:showFlightAdvanced?"rgba(74,127,165,.2)":J.keisenM}}>
                       🔍 {showFlightAdvanced?"▲":"▼"}
                     </button>
                   </div>
                 </div>
                 {/* 功能二: 進階搜尋面板 */}
                 {showFlightAdvanced&&(
-                  <div style={{background:"#f8fafc",borderRadius:10,padding:"12px 16px",marginBottom:12,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(155px,1fr))",gap:8}}>
+                  <div style={{background:J.washi,borderRadius:2,padding:"14px 18px",marginBottom:14,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(155px,1fr))",gap:10,border:"1px solid "+J.keisenL}}>
                     {[
                       [searchBRoman,setSearchBRoman,t.nameRoman],
                       [searchBAirline,setSearchBAirline,t.airline],
@@ -1384,15 +1418,15 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                       [searchBCabinBag,setSearchBCabinBag,t.cabinBag],
                     ].map(([val,setter,label])=>(
                       <div key={label}>
-                        <div style={{fontSize:10,color:"#6b7280",marginBottom:3,fontWeight:600}}>{label}</div>
+                        <div style={{fontSize:9,color:J.nezumi,marginBottom:4,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase"}}>{label}</div>
                         <input value={val} onChange={e=>setter(e.target.value)} placeholder={`${label}…`}
-                          style={{width:"100%",border:"1px solid #d1d5db",borderRadius:6,padding:"5px 8px",fontSize:12,outline:"none",boxSizing:"border-box"}}/>
+                          style={{...inpStyle,padding:"6px 10px",fontSize:12}}/>
                       </div>
                     ))}
                     <div>
-                      <div style={{fontSize:10,color:"#6b7280",marginBottom:3,fontWeight:600}}>{t.searchStatus}</div>
+                      <div style={{fontSize:9,color:J.nezumi,marginBottom:4,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase"}}>{t.searchStatus}</div>
                       <select value={searchBStatus} onChange={e=>setSearchBStatus(e.target.value)}
-                        style={{width:"100%",border:"1px solid #d1d5db",borderRadius:6,padding:"5px 8px",fontSize:12,background:"white"}}>
+                        style={{...inpStyle,padding:"6px 10px",fontSize:12,cursor:"pointer"}}>
                         <option value="">{t.allStatus}</option>
                         <option value="arranged">{t.arranged_short}</option>
                         <option value="partial">{t.partial_short}</option>
@@ -1429,10 +1463,10 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                         const f=flights.find(fl=>fl.person_id===p.id);const hasF=f&&f.airline;
                         return(
                           <tr key={p.id}>
-                            <td style={{...tdS(i),textAlign:"center",color:"#9ca3af",fontSize:11}}>{persons.indexOf(p)+1}</td>
+                            <td style={{...tdS(i),textAlign:"center",color:J.usunezumi,fontSize:11}}>{persons.indexOf(p)+1}</td>
                             <td style={{...tdS(i),maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.dept}</td>
-                            <td style={{...tdS(i),fontWeight:p.importance===3?700:400,color:p.importance===3?"#dc2626":"inherit",whiteSpace:"nowrap"}}>
-                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:4,fontSize:10,background:"#fee2e2",color:"#dc2626",borderRadius:4,padding:"1px 5px"}}>★★★</span>}
+                            <td style={{...tdS(i),fontWeight:p.importance===3?700:400,color:p.importance===3?J.shu:"inherit",whiteSpace:"nowrap"}}>
+                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
                             </td>
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>{p.last_roman} {p.first_roman}</td>
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>{f?.airline||"—"}</td>
@@ -1444,14 +1478,14 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>{f?`${f.arr_airport}${f.arr_terminal?" T"+f.arr_terminal:""}`:"—"}</td>
                             <td style={{...tdS(i),whiteSpace:"nowrap",fontSize:11}}>{f?.arr_time?new Date(f.arr_time).toLocaleString("zh-TW",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"—"}</td>
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>{f?`${f.checked_bag||"—"} / ${f.cabin_bag||"—"}`:"—"}</td>
-                            <td style={tdS(i)}>{hasF?<span style={{padding:"2px 8px",borderRadius:20,background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>{t.flightDone}</span>:<span style={{padding:"2px 8px",borderRadius:20,background:"#f3f4f6",color:"#9ca3af",fontSize:11,whiteSpace:"nowrap"}}>{t.flightNone}</span>}</td>
+                            <td style={tdS(i)}>{hasF?<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(61,107,94,.1)",color:J.moegi,fontSize:10,fontWeight:600,whiteSpace:"nowrap",letterSpacing:"0.04em",border:"1px solid rgba(61,107,94,.2)"}}>{t.flightDone}</span>:<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(140,140,150,.08)",color:J.nezumi,fontSize:10,whiteSpace:"nowrap",letterSpacing:"0.04em",border:"1px solid "+J.keisenM}}>{t.flightNone}</span>}</td>
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>
                               {canEdit&&<button style={aBtn} onClick={()=>setFlightModal({pid:p.id,data:f||null})}>{hasF?t.edit:t.addFlight}</button>}
                             </td>
                           </tr>
                         );
                       })}
-                      {rows.length===0&&<tr><td colSpan={15} style={{padding:20,textAlign:"center",color:"#9ca3af"}}>{t.noData}</td></tr>}
+                      {rows.length===0&&<tr><td colSpan={15} style={{padding:20,textAlign:"center",color:J.usunezumi}}>{t.noData}</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -1464,34 +1498,34 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
             const rows=filterHotelPersons(searchC,deptC);
             return(
               <div>
-                <div style={{background:"linear-gradient(90deg,#1e3a8a,#2563eb)",color:"white",borderRadius:12,padding:"13px 20px",marginBottom:18,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg,rgba(61,107,94,.2) 0%,transparent 100%)",color:J.washi,borderRadius:2,padding:"14px 22px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",border:"1px solid rgba(250,250,248,.06)"}}>
                   <div style={{fontSize:14,fontWeight:600}}>{t.totalCost}</div>
                   <div style={{fontSize:24,fontWeight:900}}>${totalHotelCost.toLocaleString()}</div>
                 </div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:8}}>
-                  <h2 style={{fontSize:17,fontWeight:700,color:"#1e3a8a",margin:0}}>{t.hotelMgmt}</h2>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+                  <h2 style={{fontSize:14,fontWeight:400,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:10}}><span style={{width:2,height:14,background:J.kincha,display:"inline-block"}}></span>{t.hotelMgmt}</h2>
                   <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
                     <SearchBar value={searchC} onChange={setSearchC} placeholder={t.searchHotel}/>
                     <DeptFilter depts={allDepts} value={deptC} onChange={setDeptC} allLabel={t.allDept}/>
                     {/* 功能一: 進階搜尋切換 */}
                     <button onClick={()=>setShowHotelAdvanced(v=>!v)}
-                      style={{...eBtn,margin:0,background:showHotelAdvanced?"#eff6ff":"white",color:showHotelAdvanced?"#2563eb":"#374151",borderColor:showHotelAdvanced?"#bfdbfe":"#d1d5db"}}>
+                      style={{...eBtn,margin:0,background:showHotelAdvanced?"rgba(74,127,165,.08)":J.shiro,color:showHotelAdvanced?J.asagi:J.sumi,borderColor:showHotelAdvanced?"rgba(74,127,165,.2)":J.keisenM}}>
                       🔍 {showHotelAdvanced?"▲":"▼"}
                     </button>
                   </div>
                 </div>
                 {/* 功能一: 飯店進階搜尋面板 */}
                 {showHotelAdvanced&&(
-                  <div style={{background:"#f8fafc",borderRadius:10,padding:"12px 16px",marginBottom:12,display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end"}}>
+                  <div style={{background:J.washi,borderRadius:2,padding:"14px 18px",marginBottom:14,display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end",border:"1px solid "+J.keisenL}}>
                     <div>
-                      <div style={{fontSize:10,color:"#6b7280",marginBottom:3,fontWeight:600}}>{t.hotelName}</div>
+                      <div style={{fontSize:9,color:J.nezumi,marginBottom:4,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase"}}>{t.hotelName}</div>
                       <input value={searchCHotel} onChange={e=>setSearchCHotel(e.target.value)} placeholder={t.searchHotelName}
-                        style={{border:"1px solid #d1d5db",borderRadius:6,padding:"5px 8px",fontSize:12,outline:"none",width:160}}/>
+                        style={{...inpStyle,padding:"6px 10px",fontSize:12,width:160}}/>
                     </div>
                     <div>
-                      <div style={{fontSize:10,color:"#6b7280",marginBottom:3,fontWeight:600}}>{t.roomType}</div>
+                      <div style={{fontSize:9,color:J.nezumi,marginBottom:4,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase"}}>{t.roomType}</div>
                       <input value={searchCRoomType} onChange={e=>setSearchCRoomType(e.target.value)} placeholder={t.searchRoomType}
-                        style={{border:"1px solid #d1d5db",borderRadius:6,padding:"5px 8px",fontSize:12,outline:"none",width:140}}/>
+                        style={{...inpStyle,padding:"6px 10px",fontSize:12,width:140}}/>
                     </div>
                     <button onClick={()=>{setSearchCHotel("");setSearchCRoomType("");}}
                       style={{...dBtn,fontSize:12,padding:"5px 12px"}}>{t.clearFilter}</button>
@@ -1503,31 +1537,31 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                     const pTotal=getPersonTotal(p.id);
                     const rm=getRoommateNames(p.id);
                     return(
-                      <div key={p.id} style={{background:"white",borderRadius:12,boxShadow:"0 2px 8px rgba(0,0,0,.08)",overflow:"hidden"}}>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",background:"#f8fafc",borderBottom:"1px solid #e5e7eb",flexWrap:"wrap",gap:8}}>
+                      <div key={p.id} style={{background:J.shiro,borderRadius:2,boxShadow:"0 1px 6px rgba(0,0,0,.06)",overflow:"hidden",border:"1px solid "+J.keisenL}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 18px",background:J.washi,borderBottom:"1px solid "+J.keisenL,flexWrap:"wrap",gap:8}}>
                           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                            <span style={{fontWeight:700,fontSize:14,color:p.importance===3?"#dc2626":"#1e3a8a"}}>
-                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:4,fontSize:10,background:"#fee2e2",color:"#dc2626",borderRadius:4,padding:"1px 5px"}}>★★★</span>}
+                            <span style={{fontWeight:600,fontSize:13,color:p.importance===3?J.shu:J.sumi,letterSpacing:"0.04em",fontFamily:"'Noto Serif JP',serif"}}>
+                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
                             </span>
-                            <span style={{fontSize:12,color:"#6b7280"}}>{p.dept}</span>
+                            <span style={{fontSize:12,color:J.nezumi}}>{p.dept}</span>
                             {statusBadge(getStatus(p.id))}
                             {/* 功能三-3: 同室者顯示 */}
-                            {rm&&<span style={{fontSize:11,color:"#6b7280",background:"#f0fdf4",padding:"2px 8px",borderRadius:20,border:"1px solid #bbf7d0"}}>🛏 {t.roommateWith.replace("{name}",rm)}</span>}
+                            {rm&&<span style={{fontSize:11,color:J.nezumi,background:"rgba(61,107,94,.07)",padding:"2px 8px",borderRadius:20,border:"1px solid #bbf7d0"}}>🛏 {t.roommateWith.replace("{name}",rm)}</span>}
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
-                            {pTotal>0&&<span style={{fontWeight:700,color:"#2563eb",fontSize:14}}>${pTotal.toLocaleString()}</span>}
+                            {pTotal>0&&<span style={{fontWeight:700,color:J.asagi,fontSize:14}}>${pTotal.toLocaleString()}</span>}
                             {canEdit&&<button onClick={()=>setStayModal({pid:p.id,stayId:null,data:null})} style={{...pBtn(false),padding:"5px 12px",fontSize:12}}>{t.addSegment}</button>}
                             {canEdit&&<button onClick={()=>setRoommateModal({pid:p.id})} style={{...eBtn,margin:0}} title={t.roommateSet}>🛏</button>}
                           </div>
                         </div>
                         {pStays.length===0?(
-                          <div style={{padding:"12px 16px",fontSize:12,color:"#9ca3af"}}>{t.noData}</div>
+                          <div style={{padding:"14px 18px",fontSize:11,color:J.nezumi,letterSpacing:"0.06em",fontStyle:"italic"}}>{t.noData}</div>
                         ):(
                           <div style={{overflowX:"auto"}}>
                             <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                              <thead><tr style={{background:"#e5e7eb"}}>
+                              <thead><tr style={{background:J.keisenL}}>
                                 {[t.staySegment,t.hotel,t.roomType,t.checkIn,t.checkOut,t.nights,t.totalAmt,t.roommate,t.action].map(h=>
-                                  <th key={h} style={{padding:"7px 12px",textAlign:"left",fontWeight:600,color:"#374151",whiteSpace:"nowrap"}}>{h}</th>
+                                  <th key={h} style={{padding:"7px 12px",textAlign:"left",fontWeight:600,color:J.sumi,whiteSpace:"nowrap"}}>{h}</th>
                                 )}
                               </tr></thead>
                               <tbody>
@@ -1535,14 +1569,14 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                                   const rl=s.room_type==="Custom"?(s.room_custom||"Custom"):s.room_type;
                                   return(
                                     <tr key={s.id} style={{borderBottom:"1px solid #e5e7eb"}}>
-                                      <td style={{padding:"8px 12px"}}><span style={{background:"#eff6ff",color:"#1d4ed8",borderRadius:6,padding:"2px 8px",fontWeight:700,fontSize:11}}>{s.stay_label||`#${si+1}`}</span></td>
+                                      <td style={{padding:"8px 12px"}}><span style={{background:"rgba(74,127,165,.1)",color:J.asagi,borderRadius:1,padding:"2px 8px",fontWeight:600,fontSize:10,letterSpacing:"0.06em"}}>{s.stay_label||`#${si+1}`}</span></td>
                                       <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{getHotelName(s.hotel_id)}</td>
                                       <td style={{padding:"8px 12px"}}>{rl||"—"}</td>
                                       <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{fmt(s.check_in)}</td>
                                       <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{fmt(s.check_out)}</td>
                                       <td style={{padding:"8px 12px",textAlign:"center"}}>{s.nights||"—"}</td>
-                                      <td style={{padding:"8px 12px",fontWeight:700,color:"#2563eb"}}>{s.total_amount?`$${s.total_amount.toLocaleString()}`:"—"}</td>
-                                      <td style={{padding:"8px 12px"}}>{getRoommateNames(p.id)||<span style={{color:"#9ca3af"}}>{t.singleRoom}</span>}</td>
+                                      <td style={{padding:"8px 12px",fontWeight:700,color:J.asagi}}>{s.total_amount?`$${s.total_amount.toLocaleString()}`:"—"}</td>
+                                      <td style={{padding:"8px 12px"}}>{getRoommateNames(p.id)||<span style={{color:J.usunezumi}}>{t.singleRoom}</span>}</td>
                                       <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>
                                         {canEdit&&<button style={eBtn} onClick={()=>setStayModal({pid:p.id,stayId:s.id,data:s})}>{t.edit}</button>}
                                         {canDelete&&<button style={dBtn} onClick={()=>deleteStay(s.id)}>{t.delete}</button>}
@@ -1557,20 +1591,20 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                       </div>
                     );
                   })}
-                  {rows.length===0&&<div style={{padding:20,textAlign:"center",color:"#9ca3af"}}>{t.noData}</div>}
+                  {rows.length===0&&<div style={{padding:20,textAlign:"center",color:J.usunezumi}}>{t.noData}</div>}
                 </div>
                 <div>
-                  <h3 style={{fontSize:15,fontWeight:700,color:"#1e3a8a",marginBottom:12}}>{t.hotelStats}</h3>
+                  <h3 style={{fontSize:12,fontWeight:600,color:J.sumi,marginBottom:14,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:8}}><span style={{width:2,height:12,background:J.asagi,display:"inline-block"}}></span>{t.hotelStats}</h3>
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
                     {hotels.map(h=>{
                       const st=hotelStats[h.id]||{guests:0,rooms:0,total:0};
                       return(
-                        <div key={h.id} style={{background:"white",borderRadius:12,padding:16,boxShadow:"0 2px 8px rgba(0,0,0,.08)",borderLeft:"4px solid #2563eb"}}>
-                          <div style={{fontWeight:700,fontSize:13,color:"#1e3a8a",marginBottom:10}}>🏨 {h.name}</div>
+                        <div key={h.id} style={{background:J.shiro,borderRadius:2,padding:18,boxShadow:"0 1px 4px rgba(0,0,0,.05)",borderLeft:"3px solid "+J.asagi,border:"1px solid "+J.keisenL,borderLeft:"3px solid "+J.asagi}}>
+                          <div style={{fontWeight:600,fontSize:12,color:J.sumi,marginBottom:12,letterSpacing:"0.06em",fontFamily:"'Noto Serif JP',serif"}}>{h.name}</div>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
-                            <div style={{background:"#eff6ff",borderRadius:8,padding:"8px 4px"}}><div style={{fontSize:20,fontWeight:900,color:"#2563eb"}}>{st.guests}</div><div style={{fontSize:10,color:"#6b7280"}}>{t.guestCount}</div></div>
-                            <div style={{background:"#f0fdf4",borderRadius:8,padding:"8px 4px"}}><div style={{fontSize:20,fontWeight:900,color:"#16a34a"}}>{st.rooms}</div><div style={{fontSize:10,color:"#6b7280"}}>{t.roomCount}</div></div>
-                            <div style={{background:"#fefce8",borderRadius:8,padding:"8px 4px"}}><div style={{fontSize:14,fontWeight:900,color:"#ca8a04"}}>${st.total.toLocaleString()}</div><div style={{fontSize:10,color:"#6b7280"}}>{t.totalSpend}</div></div>
+                            <div style={{background:"rgba(74,127,165,.07)",borderRadius:1,padding:"10px 4px"}}><div style={{fontSize:22,fontWeight:300,color:J.asagi,fontFamily:"'Noto Serif JP',serif"}}>{st.guests}</div><div style={{fontSize:10,color:J.nezumi}}>{t.guestCount}</div></div>
+                            <div style={{background:"rgba(61,107,94,.07)",borderRadius:1,padding:"10px 4px"}}><div style={{fontSize:22,fontWeight:300,color:J.moegi,fontFamily:"'Noto Serif JP',serif"}}>{st.rooms}</div><div style={{fontSize:10,color:J.nezumi}}>{t.roomCount}</div></div>
+                            <div style={{background:"rgba(184,134,11,.07)",borderRadius:1,padding:"10px 4px"}}><div style={{fontSize:13,fontWeight:600,color:J.kincha,fontFamily:"'Noto Serif JP',serif"}}>${st.total.toLocaleString()}</div><div style={{fontSize:10,color:J.nezumi}}>{t.totalSpend}</div></div>
                           </div>
                         </div>
                       );
@@ -1587,8 +1621,8 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
             const fh=hotels.filter(h=>!kw||[h.name,h.address,h.tel].some(v=>(v||"").toLowerCase().includes(kw)));
             return(
               <div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
-                  <h2 style={{fontSize:17,fontWeight:700,color:"#1e3a8a",margin:0}}>{t.hotelList}</h2>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+                  <h2 style={{fontSize:14,fontWeight:400,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:10}}><span style={{width:2,height:14,background:J.fuji,display:"inline-block"}}></span>{t.hotelList}</h2>
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <SearchBar value={searchD} onChange={setSearchD} placeholder={t.searchHotelList}/>
                     {canEdit&&<button onClick={()=>setHotelModal({mode:"add",data:null})} style={pBtn(false)}>{t.addHotel}</button>}
@@ -1598,12 +1632,12 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                   {fh.map(h=>{
                     const hRules=[...pricingRules.filter(r=>+r.hotel_id===h.id)].sort((a,b)=>a.date>b.date?1:-1);
                     return(
-                      <div key={h.id} style={{background:"white",borderRadius:12,boxShadow:"0 2px 8px rgba(0,0,0,.08)",overflow:"hidden"}}>
-                        <div style={{borderLeft:"4px solid #2563eb",padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                      <div key={h.id} style={{background:J.shiro,borderRadius:2,boxShadow:"0 1px 6px rgba(0,0,0,.06)",overflow:"hidden",border:"1px solid "+J.keisenL}}>
+                        <div style={{borderLeft:"3px solid "+J.fuji,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                           <div>
-                            <div style={{fontWeight:700,fontSize:15,color:"#1e3a8a",marginBottom:4}}>🏨 {h.name}</div>
-                            <div style={{fontSize:12,color:"#6b7280"}}>📍 {h.address}</div>
-                            <div style={{fontSize:12,color:"#6b7280"}}>📞 {h.tel}</div>
+                            <div style={{fontWeight:600,fontSize:14,color:J.sumi,marginBottom:4,letterSpacing:"0.04em",fontFamily:"'Noto Serif JP',serif"}}>🏨 {h.name}</div>
+                            <div style={{fontSize:12,color:J.nezumi}}>📍 {h.address}</div>
+                            <div style={{fontSize:12,color:J.nezumi}}>📞 {h.tel}</div>
                           </div>
                           {canEdit&&(
                             <div style={{display:"flex",gap:8,marginLeft:12}}>
@@ -1612,15 +1646,15 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                             </div>
                           )}
                         </div>
-                        <div style={{borderTop:"1px solid #e5e7eb",padding:"12px 16px",background:"#fafafa"}}>
+                        <div style={{borderTop:"1px solid "+J.keisenL,padding:"14px 18px",background:J.washi}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                            <div style={{fontSize:13,fontWeight:700,color:"#374151"}}>{t.datePrice}</div>
-                            {canEdit&&<button onClick={()=>setPriceModal({mode:"add",data:null,hotelId:h.id,hotelName:h.name})} style={{background:"#2563eb",color:"white",border:"none",borderRadius:7,padding:"4px 12px",fontWeight:700,cursor:"pointer",fontSize:12}}>{t.addRule}</button>}
+                            <div style={{fontSize:11,fontWeight:600,color:J.sumi,letterSpacing:"0.1em"}}>{t.datePrice}</div>
+                            {canEdit&&<button onClick={()=>setPriceModal({mode:"add",data:null,hotelId:h.id,hotelName:h.name})} style={{background:J.fuji,color:J.washi,border:"none",borderRadius:2,padding:"5px 12px",fontWeight:600,cursor:"pointer",fontSize:11,letterSpacing:"0.06em"}}>{t.addRule}</button>}
                           </div>
-                          {hRules.length===0?<p style={{color:"#9ca3af",fontSize:12,margin:0}}>{t.noData}</p>:(
+                          {hRules.length===0?<p style={{color:J.usunezumi,fontSize:12,margin:0}}>{t.noData}</p>:(
                             <div style={{overflowX:"auto"}}>
                               <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                                <thead><tr style={{background:"#e5e7eb"}}>
+                                <thead><tr style={{background:J.keisenL}}>
                                   {[t.date,t.roomType,t.basePriceShort,t.importanceSurcharge,t.holidaySurcharge,t.finalPrice,t.action].map(l=>
                                     <th key={l} style={{padding:"6px 10px",textAlign:"left",fontWeight:600}}>{l}</th>
                                   )}
@@ -1633,7 +1667,7 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                                       <td style={{padding:"6px 10px"}}>${(+r.base_price||0).toLocaleString()}</td>
                                       <td style={{padding:"6px 10px"}}>${(+r.importance_surcharge||0).toLocaleString()}</td>
                                       <td style={{padding:"6px 10px"}}>${(+r.holiday_surcharge||0).toLocaleString()}</td>
-                                      <td style={{padding:"6px 10px",fontWeight:700,color:"#2563eb"}}>${(+r.final_price||0).toLocaleString()}</td>
+                                      <td style={{padding:"6px 10px",fontWeight:700,color:J.asagi}}>${(+r.final_price||0).toLocaleString()}</td>
                                       <td style={{padding:"6px 10px",whiteSpace:"nowrap"}}>
                                         {canEdit&&<button style={eBtn} onClick={()=>setPriceModal({mode:"edit",data:r,hotelId:h.id,hotelName:h.name})}>{t.edit}</button>}
                                         {canDelete&&<button style={dBtn} onClick={()=>deletePricing(r.id)}>{t.delete}</button>}
@@ -1648,7 +1682,7 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                       </div>
                     );
                   })}
-                  {fh.length===0&&<p style={{color:"#9ca3af",fontSize:13}}>{t.noData}</p>}
+                  {fh.length===0&&<p style={{color:J.usunezumi,fontSize:13}}>{t.noData}</p>}
                 </div>
               </div>
             );
@@ -1664,7 +1698,19 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
       {roommateModal&&<RoommateModal pid={roommateModal.pid} persons={persons} roommates={roommates} onSave={saveRoommates} onClose={()=>setRoommateModal(null)} t={t}/>}
       {showMembers&&<MemberManager project={project} user={user} isOwner={isOwner} onClose={()=>setShowMembers(false)} t={t}/>}
 
-      <style>{`@media print{.no-print{display:none!important}body{background:white}@page{size:A4 landscape;margin:10mm}}`}</style>
+      <style>{`
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;600&family=Noto+Sans+JP:wght@300;400;600&display=swap');
+  *{box-sizing:border-box}
+  body{font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif!important}
+  input,select,textarea{font-family:'Noto Sans JP',sans-serif!important}
+  input:focus,select:focus,textarea:focus{border-color:#3d6b5e!important;outline:none;box-shadow:0 0 0 2px rgba(61,107,94,0.12)!important}
+  button:hover{opacity:0.85}
+  table tr:hover td{background:rgba(61,107,94,0.04)!important}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(26,26,30,0.15);border-radius:3px}
+  @media print{.no-print{display:none!important}body{background:white}@page{size:A4 landscape;margin:10mm}}
+`}</style>
     </div>
   );
 }
@@ -1699,6 +1745,15 @@ export default function App(){
   const handleSelectProject=(proj,role)=>{setProject(proj);setUserRole(role);};
   const handleBack=()=>{setProject(null);setUserRole(null);};
 
+  // Inject Japanese fonts
+  if(typeof document!=="undefined"){
+    if(!document.getElementById("jp-fonts")){
+      const l=document.createElement("link");
+      l.id="jp-fonts";l.rel="stylesheet";
+      l.href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;600&family=Noto+Sans+JP:wght@300;400;600&display=swap";
+      document.head.appendChild(l);
+    }
+  }
   if(!token) return <LoginScreen onLogin={handleLogin}/>;
   if(!project) return <ProjectSelector user={user} isOwner={isOwner} lang={lang} onLangChange={handleLangChange} onSelect={handleSelectProject}/>;
   return <ProjectApp project={project} userRole={isOwner?"owner":userRole} user={user} isOwner={isOwner} lang={lang} onLangChange={handleLangChange} onBack={handleBack}/>;
