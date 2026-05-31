@@ -1204,7 +1204,7 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
   // 中優先6: useMemo 快取航班篩選結果
   const filteredFlightPersons=useMemo(()=>persons.filter(p=>{
     const fl=flights.find(x=>x.person_id===p.id);
-    const kw=q.toLowerCase();
+    const kw=searchB.toLowerCase();
     const nameOk=!kw||[p.name_kanji,p.last_roman,p.first_roman,p.dept].some(v=>(v||"").toLowerCase().includes(kw));
     const romanOk=!searchBRoman||[p.last_roman,p.first_roman].some(v=>(v||"").toLowerCase().includes(searchBRoman.toLowerCase()));
     const airlineOk=!searchBAirline||(fl?.airline||"").toLowerCase().includes(searchBAirline.toLowerCase());
@@ -1223,7 +1223,7 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
 
   // 中優先6: useMemo 快取飯店篩選結果
   const filteredHotelPersons=useMemo(()=>persons.filter(p=>{
-    const kw=q.toLowerCase();
+    const kw=searchC.toLowerCase();
     const nameOk=!kw||[p.name_kanji,p.last_roman,p.first_roman,p.dept].some(v=>(v||"").toLowerCase().includes(kw));
     const pStays=stays.filter(s=>s.person_id===p.id);
     const hotelOk=!searchCHotel||pStays.some(s=>{
