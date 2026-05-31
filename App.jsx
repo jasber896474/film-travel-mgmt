@@ -4,19 +4,15 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>劇組交通住宿管理系統</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif}
-  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif}</style>
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel">
+  <script type="text/babel" data-presets="react,env">
     const { useState, useMemo, useCallback, useEffect, useRef } = React;
-
 
 const SUPABASE_URL = "https://knoudnzjnfkfhiizgcna.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OdfFFai3Ac1NgbelUPlYXQ_8R8IDAhA";
@@ -34,6 +30,14 @@ const sb = async (path, opts = {}) => {
     },
     ...opts,
   });
+  // 高優先3: Session 過期攔截 - 401/403 自動登出
+  if(res.status===401||res.status===403){
+    _token=null;
+    localStorage.removeItem("sb_token");
+    alert("登入已過期，請重新登入");
+    window.location.reload();
+    return [];
+  }
   if (!res.ok) { const e = await res.text(); throw new Error(e); }
   const txt = await res.text();
   return txt ? JSON.parse(txt) : [];
@@ -107,7 +111,7 @@ const T = {
     searchHotelName:"搜尋飯店名稱…",searchRoomType:"搜尋房型…",
     searchRoman:"羅馬拼音",searchStatus:"安排狀態",allStatus:"全部狀態",
     arranged_short:"已安排",unArranged_short:"未安排",partial_short:"部分完成",
-    clearFilter:"✕ 清除",
+    clearFilter:"✕ 清除",exportCSV:"⬇ 匯出 CSV",passportAlert:"⚠ 護照即將到期",noRequests:"目前沒有待審核申請",pendingBadge:"待審核",approveTitle:"批准申請",approveProject:"指定專案",approveRole:"權限角色",approveNote:"批准後可在「成員管理」隨時調整。",confirmApproveBtn:"確認批准",deptCostTitle:"各部門住宿費用",bulkDeleteBtn:"刪除選取",minOneField:"請至少填寫一個欄位",checkoutAfterCheckin:"退房日期必須晚於入住日期",
     errEmailPw:"請輸入電子郵件和密碼",errPwMatch:"密碼不一致",errPwLen:"密碼請輸入6位以上",
     registerTitle:"新帳號申請",registerBtn:"申請登入",verifyTitle:"驗證信已發送",verifyHint:"管理員審核通過後即可存取專案。",toLoginBtn:"返回登入畫面",
     memberAdd:"新增成員",memberCurrent:"目前成員（{n} 人）",memberAlready:"此用戶已是成員",memberSelf:"無法移除自己",
@@ -151,7 +155,7 @@ const T = {
     searchHotelName:"搜索饭店名称…",searchRoomType:"搜索房型…",
     searchRoman:"罗马拼音",searchStatus:"安排状态",allStatus:"全部状态",
     arranged_short:"已安排",unArranged_short:"未安排",partial_short:"部分完成",
-    clearFilter:"✕ 清除",
+    clearFilter:"✕ 清除",exportCSV:"⬇ 导出 CSV",passportAlert:"⚠ 护照即将到期",noRequests:"暂无待审核申请",pendingBadge:"待审核",approveTitle:"批准申请",approveProject:"指定项目",approveRole:"权限角色",approveNote:"批准后可在「成员管理」随时调整。",confirmApproveBtn:"确认批准",deptCostTitle:"各部门住宿费用",bulkDeleteBtn:"删除选取",minOneField:"请至少填写一个栏位",checkoutAfterCheckin:"退房日期必须晚于入住日期",
     errEmailPw:"请输入电子邮件和密码",errPwMatch:"密码不一致",errPwLen:"密码请输入6位以上",
     registerTitle:"新账号申请",registerBtn:"申请登录",verifyTitle:"验证邮件已发送",verifyHint:"管理员审核通过后即可访问项目。",toLoginBtn:"返回登录界面",
     memberAdd:"新增成员",memberCurrent:"当前成员（{n} 人）",memberAlready:"该用户已是成员",memberSelf:"无法移除自己",
@@ -195,7 +199,7 @@ const T = {
     searchHotelName:"Search hotel name…",searchRoomType:"Search room type…",
     searchRoman:"Romanized",searchStatus:"Status",allStatus:"All Status",
     arranged_short:"Arranged",unArranged_short:"Pending",partial_short:"Partial",
-    clearFilter:"✕ Clear",
+    clearFilter:"✕ Clear",exportCSV:"⬇ Export CSV",passportAlert:"⚠ Passport expiring soon",noRequests:"No pending requests",pendingBadge:"Pending",approveTitle:"Approve Request",approveProject:"Assign Project",approveRole:"Role",approveNote:"Role can be changed later in Member Management.",confirmApproveBtn:"Confirm Approve",deptCostTitle:"Cost by Department",bulkDeleteBtn:"Delete Selected",minOneField:"Please fill in at least one field",checkoutAfterCheckin:"Check-out must be after check-in",
     errEmailPw:"Please enter email and password",errPwMatch:"Passwords do not match",errPwLen:"Password must be at least 6 characters",
     registerTitle:"Register Account",registerBtn:"Request Access",verifyTitle:"Verification Email Sent",verifyHint:"You can access projects after admin approval.",toLoginBtn:"Back to Login",
     memberAdd:"Add Member",memberCurrent:"Current Members ({n})",memberAlready:"This user is already a member",memberSelf:"Cannot remove yourself",
@@ -239,7 +243,7 @@ const T = {
     searchHotelName:"호텔명 검색…",searchRoomType:"객실 유형 검색…",
     searchRoman:"로마자",searchStatus:"배정 상태",allStatus:"전체 상태",
     arranged_short:"완료",unArranged_short:"미배정",partial_short:"일부 완료",
-    clearFilter:"✕ 초기화",
+    clearFilter:"✕ 초기화",exportCSV:"⬇ CSV 내보내기",passportAlert:"⚠ 여권 만료 임박",noRequests:"대기 중인 신청 없음",pendingBadge:"검토 중",approveTitle:"신청 승인",approveProject:"프로젝트 지정",approveRole:"권한 역할",approveNote:"멤버 관리에서 언제든지 변경 가능합니다.",confirmApproveBtn:"승인 확인",deptCostTitle:"부서별 숙박 비용",bulkDeleteBtn:"선택 삭제",minOneField:"최소 한 항목을 입력하세요",checkoutAfterCheckin:"퇴실일은 입실일 이후여야 합니다",
     errEmailPw:"이메일과 비밀번호를 입력해주세요",errPwMatch:"비밀번호가 일치하지 않습니다",errPwLen:"비밀번호는 6자 이상이어야 합니다",
     registerTitle:"계정 신청",registerBtn:"접근 요청",verifyTitle:"인증 이메일 발송",verifyHint:"관리자 승인 후 프로젝트에 접근할 수 있습니다.",toLoginBtn:"로그인으로 돌아가기",
     memberAdd:"멤버 추가",memberCurrent:"현재 멤버 ({n}명)",memberAlready:"이미 멤버입니다",memberSelf:"자신을 삭제할 수 없습니다",
@@ -283,7 +287,7 @@ const T = {
     searchHotelName:"ホテル名で検索…",searchRoomType:"部屋タイプで検索…",
     searchRoman:"ローマ字",searchStatus:"手配状況",allStatus:"全て",
     arranged_short:"手配済",unArranged_short:"未手配",partial_short:"一部完了",
-    clearFilter:"✕ クリア",
+    clearFilter:"✕ クリア",exportCSV:"⬇ CSVエクスポート",passportAlert:"⚠ パスポート期限間近",noRequests:"申請はありません",pendingBadge:"審査待ち",approveTitle:"申請を承認",approveProject:"プロジェクト指定",approveRole:"権限ロール",approveNote:"メンバー管理でいつでも変更できます。",confirmApproveBtn:"承認を確定",deptCostTitle:"部門別宿泊費用",bulkDeleteBtn:"選択削除",minOneField:"少なくとも1つ入力してください",checkoutAfterCheckin:"チェックアウトはチェックインより後の日付にしてください",
     errEmailPw:"メールアドレスとパスワードを入力してください",errPwMatch:"パスワードが一致しません",errPwLen:"パスワードは6文字以上にしてください",
     registerTitle:"新規アカウント登録",registerBtn:"登録して申請する",verifyTitle:"確認メールを送信しました",verifyHint:"管理者の承認後にプロジェクトにアクセスできます。",toLoginBtn:"ログイン画面へ",
     memberAdd:"メンバー追加",memberCurrent:"現在のメンバー（{n}名）",memberAlready:"このユーザーはすでに追加されています",memberSelf:"自分自身は削除できません",
@@ -373,6 +377,14 @@ const pBtn=(dis)=>({background:dis?J.usunezumi:J.moegi,color:dis?J.nezumi:J.wash
 function Toast({msg}){ return msg?<div style={{position:"fixed",top:24,right:24,zIndex:999,background:J.sumi,color:J.washi,borderRadius:2,padding:"11px 22px",fontSize:12,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,.25)",letterSpacing:"0.06em",borderLeft:"3px solid "+J.moegi2}}>{msg}</div>:null; }
 function useToast(){ const [m,setM]=useState(""); const show=useCallback(s=>{setM(s);setTimeout(()=>setM(""),3000);},[]);return[m,show]; }
 
+// 中優先8: 搜尋高亮 helper
+function Highlight({text,query}){
+  if(!query||!text) return <span>{text||""}</span>;
+  const idx=String(text).toLowerCase().indexOf(query.toLowerCase());
+  if(idx<0) return <span>{text}</span>;
+  return <span>{String(text).slice(0,idx)}<mark style={{background:"rgba(184,134,11,.25)",color:"inherit",borderRadius:1,padding:"0 1px"}}>{String(text).slice(idx,idx+query.length)}</mark>{String(text).slice(idx+query.length)}</span>;
+}
+
 function SearchBar({value,onChange,placeholder}){
   return(
     <div style={{position:"relative",flex:1,minWidth:160}}>
@@ -407,11 +419,13 @@ function PersonForm({init,onSave,onClose,t}){
   const blank={dept:"",name_kanji:"",last_roman:"",first_roman:"",importance:0,passport:"",dob:"",passport_exp:"",diet:""};
   const [f,setF]=useState(init?{...blank,...init}:blank);
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
+  // 至少填一個文字欄位才能儲存（importance 是 select 預設有值，不算）
+  const canSave=[f.dept,f.name_kanji,f.last_roman,f.first_roman,f.passport,f.dob,f.passport_exp,f.diet].some(v=>(v||"").trim()!=="");
   return(
     <div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        <Field label={t.dept}><input style={inpStyle} value={f.dept} onChange={set("dept")}/></Field>
-        <Field label={t.nameKanji}><input style={inpStyle} value={f.name_kanji} onChange={set("name_kanji")}/></Field>
+        <Field label={t.dept}><input style={inpStyle} value={f.dept} onChange={set("dept")} maxLength={50}/></Field>
+        <Field label={t.nameKanji}><input style={inpStyle} value={f.name_kanji} onChange={set("name_kanji")} maxLength={50}/></Field>
         <Field label={`${t.nameRoman}（姓）`}><input style={inpStyle} value={f.last_roman} onChange={set("last_roman")}/></Field>
         <Field label={`${t.nameRoman}（名）`}><input style={inpStyle} value={f.first_roman} onChange={set("first_roman")}/></Field>
         <Field label={t.importance}>
@@ -419,17 +433,18 @@ function PersonForm({init,onSave,onClose,t}){
             {IMPORTANCE.map(i=><option key={i} value={i}>{i===0?"—":starLabel(i)}</option>)}
           </select>
         </Field>
-        <Field label={<span>{t.passport} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.passport||""} onChange={set("passport")}/></Field>
+        <Field label={<span>{t.passport} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.passport||""} onChange={set("passport")} maxLength={20}/></Field>
         <Field label={<span>{t.dob} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input type="date" style={inpStyle} value={f.dob||""} onChange={set("dob")}/></Field>
         <Field label={<span>{t.passportExp} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}>
           <input type="date" style={{...inpStyle,...(passportWarning(f.passport_exp)?{borderColor:J.shu,color:J.shu}:{})}} value={f.passport_exp||""} onChange={set("passport_exp")}/>
           {passportWarning(f.passport_exp)&&<p style={{color:J.shu,fontSize:10,marginTop:4,letterSpacing:"0.04em"}}>{t.passportWarn}</p>}
         </Field>
-        <Field label={<span>{t.diet} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.diet||""} onChange={set("diet")}/></Field>
+        <Field label={<span>{t.diet} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.diet||""} onChange={set("diet")} maxLength={100}/></Field>
       </div>
+      {!canSave&&<p style={{fontSize:11,color:J.shu,marginTop:10,letterSpacing:"0.04em"}}>{`※ ${t.minOneField}`}</p>}
       <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
         <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
-        <button onClick={()=>onSave(f)} style={pBtn(false)}>{t.save}</button>
+        <button onClick={()=>canSave&&onSave(f)} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
       </div>
     </div>
   );
@@ -941,14 +956,14 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
             <h2 style={{fontSize:13,fontWeight:600,color:J.sumi,margin:0,letterSpacing:"0.1em",display:"flex",alignItems:"center",gap:10}}>
               <span style={{width:3,height:16,background:J.kincha,display:"inline-block",borderRadius:1}}></span>
-              登録申請
+              {t.approveTitle}
               {requests.length>0&&<span style={{marginLeft:4,background:J.shu,color:J.washi,borderRadius:1,padding:"1px 7px",fontSize:10,fontWeight:700,letterSpacing:"0.06em"}}>{requests.length}</span>}
             </h2>
             <button onClick={loadRequests} style={{...eBtn,fontSize:11}}>↻ 更新</button>
           </div>
           {reqLoading?<div style={{color:J.usunezumi,fontSize:13}}>…</div>:(
             requests.length===0?(
-              <div style={{background:J.shiro,borderRadius:12,padding:"16px",textAlign:"center",color:J.usunezumi,fontSize:13,boxShadow:"0 2px 8px rgba(0,0,0,.06)",marginBottom:16}}>待審核の申請はありません</div>
+              <div style={{background:J.shiro,borderRadius:12,padding:"16px",textAlign:"center",color:J.usunezumi,fontSize:13,boxShadow:"0 2px 8px rgba(0,0,0,.06)",marginBottom:16}}>{t.noRequests}</div>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
                 {requests.map(req=>(
@@ -957,7 +972,7 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
                       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
                         <span style={{fontWeight:700,fontSize:14,color:J.sumi}}>{req.display_name||"（名前未記入）"}</span>
                         <span style={{fontSize:12,color:J.nezumi}}>{req.email}</span>
-                        <span style={{fontSize:11,background:"rgba(250,220,100,.12)",color:J.kincha,borderRadius:20,padding:"2px 8px",fontWeight:600}}>⏳ 審核待ち</span>
+                        <span style={{fontSize:11,background:"rgba(250,220,100,.12)",color:J.kincha,borderRadius:20,padding:"2px 8px",fontWeight:600}}>{t.pendingBadge}</span>
                       </div>
                       {req.message&&<div style={{fontSize:12,color:J.nezumi,background:J.washi,borderRadius:6,padding:"4px 8px",marginTop:4}}>💬 {req.message}</div>}
                       <div style={{fontSize:11,color:J.usunezumi,marginTop:4}}>{new Date(req.created_at).toLocaleString("zh-TW")}</div>
@@ -1026,13 +1041,13 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
             <div style={{fontWeight:600,fontSize:13,color:J.sumi}}>{approveModal.req.display_name||"（未填姓名）"}</div>
             <div style={{fontSize:12,color:J.nezumi,marginTop:2}}>{approveModal.req.email}</div>
           </div>
-          <Field label="指定專案">
+          <Field label={t.approveProject}>
             <select style={inpStyle} value={approveModal.projectId}
               onChange={e=>setApproveModal(m=>({...m,projectId:e.target.value}))}>
               {approveModal.projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </Field>
-          <Field label="權限角色">
+          <Field label={t.approveRole}>
             <select style={inpStyle} value={approveModal.role}
               onChange={e=>setApproveModal(m=>({...m,role:e.target.value}))}>
               <option value="viewer">👁 只讀（Viewer）— 只能查看</option>
@@ -1041,11 +1056,11 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
             </select>
           </Field>
           <div style={{fontSize:11,color:J.nezumi,marginBottom:16,padding:"8px 12px",background:"rgba(74,127,165,.06)",borderRadius:2,borderLeft:"2px solid "+J.asagi}}>
-            批准後可在「成員管理」隨時調整專案與角色。
+            {t.approveNote}
           </div>
           <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:8}}>
             <button onClick={()=>setApproveModal(null)} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,color:J.nezumi,background:J.shiro}}>取消</button>
-            <button onClick={confirmApprove} style={pBtn(false)}>確認批准</button>
+            <button onClick={confirmApprove} style={pBtn(false)}>{t.confirmApproveBtn}</button>
           </div>
         </Modal>
       )}
@@ -1105,6 +1120,26 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
   // 功能四-1,2: 拖移排序
   const dragItem=useRef(null);
   const dragOver=useRef(null);
+  // 低優先11: 批次選取
+  const [selectedIds,setSelectedIds]=useState([]);
+  const toggleSelect=useCallback(id=>setSelectedIds(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]),[]);
+  const selectAll=useCallback(ids=>setSelectedIds(s=>s.length===ids.length?[]:ids),[]);
+  const bulkDelete=useCallback(async()=>{
+    if(!selectedIds.length) return;
+    if(!window.confirm(`確定刪除選取的 ${selectedIds.length} 人？此操作無法復原。`)) return;
+    for(const id of selectedIds){
+      await Promise.all([api.deleteWhere("flights","person_id",id),api.deleteWhere("stays","person_id",id),api.deleteWhere("roommates","person_id",id),api.deleteWhere("roommates","partner_id",id)]);
+      await api.delete("persons",id);
+    }
+    const remaining=persons.filter(p=>!selectedIds.includes(p.id));
+    await Promise.all(remaining.map((p,i)=>p.sort_order!==i?api.update("persons",p.id,{sort_order:i}):Promise.resolve()));
+    setPersons(remaining.map((p,i)=>({...p,sort_order:i})));
+    setFlights(f=>f.filter(x=>!selectedIds.includes(x.person_id)));
+    setStays(s=>s.filter(x=>!selectedIds.includes(x.person_id)));
+    setRoommates(r=>r.filter(x=>!selectedIds.includes(x.person_id)&&!selectedIds.includes(x.partner_id)));
+    setSelectedIds([]);
+    showToast(`已刪除 ${selectedIds.length} 人`);
+  },[selectedIds,persons,flights,stays,roommates]);
 
   const [personModal,  setPersonModal]  =useState(null);
   const [flightModal,  setFlightModal]  =useState(null);
@@ -1141,14 +1176,33 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
     return"none";
   },[flights,stays]);
 
+  // 中優先7: CSV 匯出
+  const exportCSV=useCallback(()=>{
+    const headers=["編號","部門","姓名（漢字）","羅馬拼音","重要度","護照號碼","出生年月日","護照效期","飲食限制","狀態","航空公司","航班號","艙等","PNR","出發機場","出發時間","抵達機場","抵達時間","託運行李","手提行李","飯店","房型","入住日期","退房日期","住宿天數","金額","同室者"];
+    const rows=persons.map((p,i)=>{
+      const fl=flights.find(x=>x.person_id===p.id);
+      const pStays=stays.filter(x=>x.person_id===p.id);
+      const s=pStays[0];
+      const hotelName=s?hotels.find(h=>h.id==s.hotel_id)?.name||"":"";
+      const rm=roommates.filter(r=>r.person_id===p.id).map(r=>persons.find(x=>x.id===r.partner_id)?.name_kanji||"").filter(Boolean).join("/");
+      const st=getStatus(p.id)==="arranged"?"已安排":getStatus(p.id)==="partial"?"部分完成":"未安排";
+      return [i+1,p.dept||"",p.name_kanji||"",`${p.last_roman||""} ${p.first_roman||""}`.trim(),p.importance||0,p.passport||"",p.dob||"",p.passport_exp||"",p.diet||"",st,fl?.airline||"",fl?.flight_no||"",fl?.cabin||"",fl?.pnr||"",fl?.dep_airport||"",fl?.dep_time||"",fl?.arr_airport||"",fl?.arr_time||"",fl?.checked_bag||"",fl?.cabin_bag||"",hotelName,s?.room_type||"",s?.check_in||"",s?.check_out||"",s?.nights||"",s?.total_amount||"",rm];
+    });
+    const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+ '"').join(",")).join("\n");
+    const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=`staff_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+    URL.revokeObjectURL(url);
+  },[persons,flights,stays,hotels,roommates,getStatus]);
+
   const filterPersons=(q,dept)=>persons.filter(p=>{
     const kw=q.toLowerCase();
     const ok=!kw||[p.name_kanji,p.last_roman,p.first_roman,p.dept,p.passport,p.diet].some(v=>(v||"").toLowerCase().includes(kw));
     return ok&&(!dept||p.dept===dept);
   });
 
-  // 功能二: 航班多條件搜尋
-  const filterFlightPersons=(q,dept)=>persons.filter(p=>{
+  // 中優先6: useMemo 快取航班篩選結果
+  const filteredFlightPersons=useMemo(()=>persons.filter(p=>{
     const fl=flights.find(x=>x.person_id===p.id);
     const kw=q.toLowerCase();
     const nameOk=!kw||[p.name_kanji,p.last_roman,p.first_roman,p.dept].some(v=>(v||"").toLowerCase().includes(kw));
@@ -1163,11 +1217,12 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
     const cabinBagOk=!searchBCabinBag||(fl?.cabin_bag||"").toLowerCase().includes(searchBCabinBag.toLowerCase());
     const st=getStatus(p.id);
     const statusOk=!searchBStatus||(searchBStatus==="arranged"?st==="arranged":searchBStatus==="partial"?st==="partial":st==="none");
-    return nameOk&&romanOk&&airlineOk&&flightNoOk&&cabinOk&&pnrOk&&depOk&&arrOk&&checkedOk&&cabinBagOk&&statusOk&&(!dept||p.dept===dept);
-  });
+    const deptOk=!deptB||p.dept===deptB;
+    return nameOk&&romanOk&&airlineOk&&flightNoOk&&cabinOk&&pnrOk&&depOk&&arrOk&&checkedOk&&cabinBagOk&&statusOk&&deptOk;
+  }),[persons,flights,searchB,deptB,searchBRoman,searchBAirline,searchBFlightNo,searchBCabin,searchBPnr,searchBDepAirport,searchBArrAirport,searchBChecked,searchBCabinBag,searchBStatus,getStatus]);
 
-  // 功能一: 飯店多條件搜尋
-  const filterHotelPersons=(q,dept)=>persons.filter(p=>{
+  // 中優先6: useMemo 快取飯店篩選結果
+  const filteredHotelPersons=useMemo(()=>persons.filter(p=>{
     const kw=q.toLowerCase();
     const nameOk=!kw||[p.name_kanji,p.last_roman,p.first_roman,p.dept].some(v=>(v||"").toLowerCase().includes(kw));
     const pStays=stays.filter(s=>s.person_id===p.id);
@@ -1179,8 +1234,8 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
       const rt=s.room_type==="Custom"?(s.room_custom||""):(s.room_type||"");
       return rt.toLowerCase().includes(searchCRoomType.toLowerCase());
     });
-    return nameOk&&hotelOk&&roomTypeOk&&(!dept||p.dept===dept);
-  });
+    return nameOk&&hotelOk&&roomTypeOk&&(!deptC||p.dept===deptC);
+  }),[persons,stays,hotels,searchC,deptC,searchCHotel,searchCRoomType]);
 
   const getHotelName =id=>hotels.find(h=>h.id==id)?.name||"—";
   const getPersonStays=useCallback(id=>stays.filter(s=>s.person_id===id),[stays]);
@@ -1218,7 +1273,6 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
   const deletePerson=async id=>{
     if(!window.confirm(t.deleteConfirm)) return;
     try{
-      // BUG FIX: cascade delete flights/stays/roommates from DB before deleting person
       await Promise.all([
         api.deleteWhere("flights","person_id",id),
         api.deleteWhere("stays","person_id",id),
@@ -1226,7 +1280,12 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
         api.deleteWhere("roommates","partner_id",id),
       ]);
       await api.delete("persons",id);
-      setPersons(p=>p.filter(x=>x.id!==id));
+      // 高優先1: 刪除後重新排序 sort_order，避免序號跳號
+      const remaining=persons.filter(x=>x.id!==id);
+      await Promise.all(remaining.map((p,i)=>
+        p.sort_order!==i ? api.update("persons",p.id,{sort_order:i}) : Promise.resolve()
+      ));
+      setPersons(remaining.map((p,i)=>({...p,sort_order:i})));
       setFlights(f=>f.filter(x=>x.person_id!==id));
       setStays(s=>s.filter(x=>x.person_id!==id));
       setRoommates(r=>r.filter(x=>x.person_id!==id&&x.partner_id!==id));
@@ -1246,10 +1305,33 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
 
   const saveStay=async f=>{
     if(!f.hotel_id||!f.check_in||!f.check_out){showToast(t.stayRequired);return;}
+    // 高優先2: 住宿退房必須晚於入住
+    if(f.check_out<=f.check_in){showToast(t.checkoutAfterCheckin);return;}
     try{
       const data={...f,person_id:stayModal.pid,project_id:pid,base_price:f.base_price===""||f.base_price===null?null:+f.base_price,nights:f.nights||0,total_amount:f.total_amount||0};
-      if(stayModal.stayId){const[r]=await api.update("stays",stayModal.stayId,data);setStays(s=>s.map(x=>x.id===stayModal.stayId?r:x));}
-      else{const[r]=await api.insert("stays",data);setStays(s=>[...s,r]);}
+      let saved;
+      if(stayModal.stayId){const[r]=await api.update("stays",stayModal.stayId,data);setStays(s=>s.map(x=>x.id===stayModal.stayId?r:x));saved=r;}
+      else{const[r]=await api.insert("stays",data);setStays(s=>[...s,r]);saved=r;}
+      // 高優先2: 同室者住宿自動同步
+      const myRoommates=roommates.filter(r=>r.person_id===stayModal.pid);
+      if(myRoommates.length>0){
+        const partnerNames=myRoommates.map(r=>persons.find(p=>p.id===r.partner_id)?.name_kanji||"").filter(Boolean).join("、");
+        const doSync=window.confirm(`與 ${partnerNames} 同室，是否同步更新他們的住宿資料（飯店、房型、日期、費用）？`);
+        if(doSync){
+          const syncData={hotel_id:data.hotel_id,room_type:data.room_type,room_custom:data.room_custom,check_in:data.check_in,check_out:data.check_out,stay_label:data.stay_label,nights:data.nights,base_price:data.base_price,total_amount:data.total_amount,project_id:pid};
+          for(const rm of myRoommates){
+            const partnerStay=stays.find(s=>s.person_id===rm.partner_id&&(stayModal.stayId?s.id===stayModal.stayId:s.stay_label===data.stay_label));
+            if(partnerStay){
+              const[r]=await api.update("stays",partnerStay.id,{...syncData,person_id:rm.partner_id});
+              setStays(s=>s.map(x=>x.id===partnerStay.id?r:x));
+            }else{
+              const[r]=await api.insert("stays",{...syncData,person_id:rm.partner_id});
+              setStays(s=>[...s,r]);
+            }
+          }
+          showToast(`✓ 已同步 ${partnerNames} 的住宿`);
+        }
+      }
       showToast(t.saved);setStayModal(null);
     }catch(e){showToast("Error: "+e.message);}
   };
@@ -1376,7 +1458,13 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                   <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
                     <SearchBar value={searchA} onChange={setSearchA} placeholder={t.searchStaff}/>
                     <DeptFilter depts={allDepts} value={deptA} onChange={setDeptA} allLabel={t.allDept}/>
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <button onClick={exportCSV} style={{...eBtn,fontSize:12,padding:"7px 14px"}}>{t.exportCSV}</button>
+                    {canEdit&&selectedIds.length>0&&(
+                      <button onClick={bulkDelete} style={{...dBtn,fontSize:12,padding:"7px 14px"}}>{t.bulkDeleteBtn}（{selectedIds.length}）</button>
+                    )}
                     {canEdit&&<button onClick={()=>setPersonModal({mode:"add",data:null})} style={pBtn(false)}>{t.add}</button>}
+                  </div>
                   </div>
                 </div>
                 <div style={{overflowX:"auto"}}>
@@ -1412,11 +1500,11 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                               {canEdit&&<span style={{marginRight:2,opacity:0.35,fontSize:10}}>⠿</span>}
                               {persons.indexOf(p)+1}
                             </td>
-                            <td style={{...tdS(i),maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.dept}</td>
+                            <td style={{...tdS(i),maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><Highlight text={p.dept} query={searchA}/></td>
                             <td style={{...tdS(i),fontWeight:p.importance===3?700:400,color:p.importance===3?J.shu:"inherit",whiteSpace:"nowrap"}}>
-                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
+                              <Highlight text={p.name_kanji} query={searchA}/>{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
                             </td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>{p.last_roman} {p.first_roman}</td>
+                            <td style={{...tdS(i),whiteSpace:"nowrap"}}><Highlight text={`${p.last_roman||""} ${p.first_roman||""}`.trim()} query={searchA}/></td>
                             <td style={{...tdS(i),color:p.importance===3?J.shu:p.importance===2?J.kincha:J.nezumi,textAlign:"center"}}>{starLabel(p.importance)||"—"}</td>
                             {/* 功能三-3: 狀態含同室者 */}
                             <td style={tdS(i)}>
@@ -1444,7 +1532,7 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
 
           {/* TAB B: 航班管理 */}
           {tab==="B"&&(()=>{
-            const rows=filterFlightPersons(searchB,deptB);
+            const rows=filteredFlightPersons;
             return(
               <div>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
@@ -1522,9 +1610,9 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                             <td style={{...tdS(i),textAlign:"center",color:J.usunezumi,fontSize:11}}>{persons.indexOf(p)+1}</td>
                             <td style={{...tdS(i),maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.dept}</td>
                             <td style={{...tdS(i),fontWeight:p.importance===3?700:400,color:p.importance===3?J.shu:"inherit",whiteSpace:"nowrap"}}>
-                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
+                              <Highlight text={p.name_kanji} query={searchB}/>{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
                             </td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>{p.last_roman} {p.first_roman}</td>
+                            <td style={{...tdS(i),whiteSpace:"nowrap"}}><Highlight text={`${p.last_roman||""} ${p.first_roman||""}`.trim()} query={searchB}/></td>
                             <td style={{...tdS(i),whiteSpace:"nowrap"}}>{f?.airline||"—"}</td>
                             <td style={tdS(i)}>{f?.flight_no||"—"}</td>
                             <td style={tdS(i)}>{f?.cabin||"—"}</td>
@@ -1551,7 +1639,7 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
 
           {/* TAB C: 飯店管理 */}
           {tab==="C"&&(()=>{
-            const rows=filterHotelPersons(searchC,deptC);
+            const rows=filteredHotelPersons;
             return(
               <div>
                 <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg,rgba(61,107,94,.2) 0%,transparent 100%)",color:J.washi,borderRadius:2,padding:"14px 22px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",border:"1px solid rgba(250,250,248,.06)"}}>
@@ -1597,9 +1685,9 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 18px",background:J.washi,borderBottom:"1px solid "+J.keisenL,flexWrap:"wrap",gap:8}}>
                           <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                             <span style={{fontWeight:600,fontSize:13,color:p.importance===3?J.shu:J.sumi,letterSpacing:"0.04em",fontFamily:"'Noto Serif JP',serif"}}>
-                              {p.name_kanji}{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
+                              <Highlight text={p.name_kanji} query={searchC}/>{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
                             </span>
-                            <span style={{fontSize:12,color:J.nezumi}}>{p.dept}</span>
+                            <span style={{fontSize:12,color:J.nezumi}}><Highlight text={p.dept} query={searchC}/></span>
                             {statusBadge(getStatus(p.id))}
                             {/* 功能三-3: 同室者顯示 */}
                             {rm&&<span style={{fontSize:11,color:J.nezumi,background:"rgba(61,107,94,.07)",padding:"2px 8px",borderRadius:20,border:"1px solid #bbf7d0"}}>🛏 {t.roommateWith.replace("{name}",rm)}</span>}
@@ -1650,7 +1738,31 @@ function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
                   {rows.length===0&&<div style={{padding:20,textAlign:"center",color:J.usunezumi}}>{t.noData}</div>}
                 </div>
                 <div>
-                  <h3 style={{fontSize:12,fontWeight:600,color:J.sumi,marginBottom:14,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:8}}><span style={{width:2,height:12,background:J.asagi,display:"inline-block"}}></span>{t.hotelStats}</h3>
+                  {/* 低優先10: 部門費用統計 */}
+              {(()=>{
+                const deptTotals={};
+                stays.forEach(s=>{
+                  const p=persons.find(x=>x.id===s.person_id);
+                  const dept=p?.dept||"未分組";
+                  deptTotals[dept]=(deptTotals[dept]||0)+(s.total_amount||0);
+                });
+                const entries=Object.entries(deptTotals).sort((a,b)=>b[1]-a[1]);
+                if(!entries.length) return null;
+                return(
+                  <div style={{marginBottom:20}}>
+                    <h3 style={{fontSize:12,fontWeight:600,color:J.sumi,marginBottom:10,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:8}}><span style={{width:2,height:12,background:J.kincha,display:"inline-block"}}></span>{t.deptCostTitle}</h3>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8}}>
+                      {entries.map(([dept,total])=>(
+                        <div key={dept} style={{background:J.shiro,border:"1px solid "+J.keisenL,borderRadius:2,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <span style={{fontSize:11,color:J.nezumi,letterSpacing:"0.04em"}}>{dept}</span>
+                          <span style={{fontSize:13,fontWeight:600,color:J.kincha}}>${total.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              <h3 style={{fontSize:12,fontWeight:600,color:J.sumi,marginBottom:14,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:8}}><span style={{width:2,height:12,background:J.asagi,display:"inline-block"}}></span>{t.hotelStats}</h3>
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
                     {hotels.map(h=>{
                       const st=hotelStats[h.id]||{guests:0,rooms:0,total:0};
@@ -1814,7 +1926,6 @@ function App(){
   if(!project) return <ProjectSelector user={user} isOwner={isOwner} lang={lang} onLangChange={handleLangChange} onSelect={handleSelectProject}/>;
   return <ProjectApp project={project} userRole={isOwner?"owner":userRole} user={user} isOwner={isOwner} lang={lang} onLangChange={handleLangChange} onBack={handleBack}/>;
 }
-
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App/>);
