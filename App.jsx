@@ -419,8 +419,8 @@ function PersonForm({init,onSave,onClose,t}){
   const blank={dept:"",name_kanji:"",last_roman:"",first_roman:"",importance:0,passport:"",dob:"",passport_exp:"",diet:""};
   const [f,setF]=useState(init?{...blank,...init}:blank);
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
-  // 至少填一個文字欄位才能儲存（importance 是 select 預設有值，不算）
-  const canSave=[f.dept,f.name_kanji,f.last_roman,f.first_roman,f.passport,f.dob,f.passport_exp,f.diet].some(v=>(v||"").trim()!=="");
+  // 只要填寫部門、姓名漢字、羅馬拼音姓、羅馬拼音名其中一個即可儲存
+  const canSave=[f.dept,f.name_kanji,f.last_roman,f.first_roman].some(v=>(v||"").trim()!=="");
   return(
     <div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
