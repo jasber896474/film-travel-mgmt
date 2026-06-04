@@ -236,7 +236,10 @@ const T = {
     checkedBag: "託運行李", cabinBag: "手提行李", flightDone: "已安排", flightNone: "未安排", addFlight: "輸入",
     hotel: "飯店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房價/晚", nights: "天數", totalAmt: "合計",
     roommate: "同室者", singleRoom: "單人房", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同室設定", roommateNone: "無（單人房）",
-    totalCost: "飯店總費用", hotelStats: "各飯店統計", guestCount: "入住人次", roomCount: "客室數", roomOccupancy: "每房人數", totalSpend: "總費用",
+    totalCost: "飯店總費用", hotelStats: "各飯店統計", hotelStatsByDate: "日期別飯店統計",
+    hotelStatsByDateHint: "人數與房數依住宿一覽；當日費用依飯店主檔「日期別房價」，同房號或同室者只計一筆（以該房第一位在住者的房型對應當日房費）。",
+    statsPickDate: "選擇日期", statsDaySummary: "{date}：{guests} 人 · {rooms} 間房 · {cost}（{hotels} 間飯店）", noStayDates: "尚無住宿日期可統計",
+    guestCount: "入住人次", guestCountDay: "當日人數", roomCount: "客室數", roomCountDay: "當日房數", totalSpendDay: "當日費用", roomOccupancy: "每房人數", totalSpend: "總費用",
     datePrice: "日期別房價", addRule: "新增規則", addHotel: "新增飯店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "節日加算", finalPrice: "最終房價",
     hotelName: "飯店名稱", hotelAddr: "地址", hotelTel: "電話", targetHotel: "對象飯店", customRoomType: "自訂房型", breakdownTitle: "每日房價明細",
@@ -309,7 +312,10 @@ const T = {
     checkedBag: "托运行李", cabinBag: "手提行李", flightDone: "已安排", flightNone: "未安排", addFlight: "录入",
     hotel: "饭店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房价/晚", nights: "天数", totalAmt: "合计",
     roommate: "同住者", singleRoom: "单人间", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同住设置", roommateNone: "无（单人间）",
-    totalCost: "饭店总费用", hotelStats: "各饭店统计", guestCount: "入住人次", roomCount: "客房数", roomOccupancy: "每房人数", totalSpend: "总费用",
+    totalCost: "饭店总费用", hotelStats: "各饭店统计", hotelStatsByDate: "日期别饭店统计",
+    hotelStatsByDateHint: "人数与房数依住宿一览；当日费用依饭店主档「日期别房价」，同房号或同室者只计一笔。",
+    statsPickDate: "选择日期", statsDaySummary: "{date}：{guests} 人 · {rooms} 间房 · {cost}（{hotels} 间饭店）", noStayDates: "尚无住宿日期可统计",
+    guestCount: "入住人次", guestCountDay: "当日人数", roomCount: "客房数", roomCountDay: "当日房数", totalSpendDay: "当日费用", roomOccupancy: "每房人数", totalSpend: "总费用",
     datePrice: "日期别房价", addRule: "新增规则", addHotel: "新增饭店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "节日加算", finalPrice: "最终房价",
     hotelName: "饭店名称", hotelAddr: "地址", hotelTel: "电话", targetHotel: "对象饭店", customRoomType: "自定义房型", breakdownTitle: "每日房价明细",
@@ -381,7 +387,10 @@ const T = {
     checkedBag: "Checked", cabinBag: "Cabin", flightDone: "Arranged", flightNone: "Pending", addFlight: "Input",
     hotel: "Hotel", roomType: "Room Type", checkIn: "Check-in", checkOut: "Check-out", basePrice: "Base/night", nights: "Nights", totalAmt: "Total",
     roommate: "Roommate", singleRoom: "Single", hotelDone: "Arranged", hotelNone: "Pending", roommateSet: "Roommate", roommateNone: "None (Single)",
-    totalCost: "Total Hotel Cost", hotelStats: "Hotel Statistics", guestCount: "Guest-nights", roomCount: "Rooms", roomOccupancy: "Per room", totalSpend: "Total",
+    totalCost: "Total Hotel Cost", hotelStats: "Hotel Statistics", hotelStatsByDate: "Daily hotel stats",
+    hotelStatsByDateHint: "Auto-calculated from the stay list. Pick a date to see crew headcount and room count per hotel that night.",
+    statsPickDate: "Date", statsDaySummary: "{date}: {guests} guests · {rooms} rooms · {cost} ({hotels} hotel(s))", noStayDates: "No stay dates to summarize",
+    guestCount: "Guest-nights", guestCountDay: "Guests", roomCount: "Rooms", roomCountDay: "Rooms", totalSpendDay: "Cost", roomOccupancy: "Per room", totalSpend: "Total",
     datePrice: "Date Pricing", addRule: "Add Rule", addHotel: "Add Hotel", date: "Date", basePriceShort: "Base",
     importanceSurcharge: "Priority Sur.", holidaySurcharge: "Holiday Sur.", finalPrice: "Final",
     hotelName: "Hotel Name", hotelAddr: "Address", hotelTel: "Phone", targetHotel: "Hotel", customRoomType: "Custom Type", breakdownTitle: "Daily Breakdown",
@@ -451,7 +460,10 @@ const T = {
     checkedBag: "위탁", cabinBag: "기내", flightDone: "완료", flightNone: "미배정", addFlight: "입력",
     hotel: "호텔", roomType: "객실", checkIn: "체크인", checkOut: "체크아웃", basePrice: "기본/박", nights: "박数", totalAmt: "합계",
     roommate: "룸메이트", singleRoom: "1인실", hotelDone: "완료", hotelNone: "미배정", roommateSet: "룸메이트", roommateNone: "없음",
-    totalCost: "호텔 총비용", hotelStats: "호텔별 통계", guestCount: "투숙 인원", roomCount: "객실 수", roomOccupancy: "객실당", totalSpend: "총비용",
+    totalCost: "호텔 총비용", hotelStats: "호텔별 통계", hotelStatsByDate: "일자별 호텔 통계",
+    hotelStatsByDateHint: "숙박 목록에서 자동 계산합니다. 날짜를 선택하면 해당 밤 호텔별 인원·객실 수가 표시됩니다.",
+    statsPickDate: "날짜 선택", statsDaySummary: "{date}: {guests}명 · {rooms}실 · {cost} ({hotels}개 호텔)", noStayDates: "통계할 숙박 일자가 없습니다",
+    guestCount: "투숙 인원", guestCountDay: "당일 인원", roomCount: "객실 수", roomCountDay: "당일 객실", totalSpendDay: "당일 비용", roomOccupancy: "객실당", totalSpend: "총비용",
     datePrice: "날짜별 요금", addRule: "규칙 추가", addHotel: "호텔 추가", date: "날짜", basePriceShort: "기본",
     importanceSurcharge: "중요도", holidaySurcharge: "특별일", finalPrice: "최종",
     hotelName: "호텔명", hotelAddr: "주소", hotelTel: "전화", targetHotel: "호텔", customRoomType: "사용자 정의", breakdownTitle: "일별 내역",
@@ -520,7 +532,10 @@ const T = {
     checkedBag: "預け", cabinBag: "機内", flightDone: "済", flightNone: "未", addFlight: "入力",
     hotel: "ホテル", roomType: "部屋", checkIn: "IN", checkOut: "OUT", basePrice: "基本/泊", nights: "泊数", totalAmt: "合計",
     roommate: "同室者", singleRoom: "個室", hotelDone: "済", hotelNone: "未", roommateSet: "同室設定", roommateNone: "なし",
-    totalCost: "ホテル総費用", hotelStats: "ホテル別", guestCount: "宿泊者数", roomCount: "客室数", roomOccupancy: "1室あたり", totalSpend: "総費用",
+    totalCost: "ホテル総費用", hotelStats: "ホテル別", hotelStatsByDate: "日付別ホテル統計",
+    hotelStatsByDateHint: "宿泊一覧から自動集計。日付を選ぶと、その夜のホテル別人数・部屋数を表示します。",
+    statsPickDate: "日付", statsDaySummary: "{date}：{guests}名・{rooms}室・{cost}（{hotels}ホテル）", noStayDates: "集計できる宿泊日がありません",
+    guestCount: "宿泊者数", guestCountDay: "当日人数", roomCount: "客室数", roomCountDay: "当日室数", totalSpendDay: "当日費用", roomOccupancy: "1室あたり", totalSpend: "総費用",
     datePrice: "日付別料金", addRule: "追加", addHotel: "ホテル追加", date: "日付", basePriceShort: "基本",
     importanceSurcharge: "重要度", holidaySurcharge: "祝日", finalPrice: "最終",
     hotelName: "ホテル名", hotelAddr: "住所", hotelTel: "電話", targetHotel: "対象", customRoomType: "カスタム", breakdownTitle: "日別",
@@ -767,7 +782,7 @@ const STAY_COL_WIDTHS = [32, 80, 96, 58, 64, 60, 50, 68, 68, 34, 70, 88];
 const staffColWidths = (withCheckbox) => (withCheckbox
   ? [32, 32, 80, 96, 54, 44, 76, 68, 68, 72, 88]
   : [32, 80, 96, 54, 44, 76, 68, 68, 72, 88]);
-const HOTEL_STATS_COL_WIDTHS = ["36%", "18%", "18%", "28%"];
+const HOTEL_STATS_COL_WIDTHS = ["34%", "18%", "18%", "30%"];
 
 function ThemeToggle({ theme, onChange, t }) {
   return (
@@ -822,12 +837,84 @@ function buildRoommateGroups(roommates) {
   return groups;
 }
 
-function stayRoomKey(stay, personId, groups) {
+function roommateGroupKey(personId, groups) {
   let groupKey = String(personId);
   Object.entries(groups).forEach(([, members]) => {
     if (members.has(personId)) groupKey = [...members].sort((a, b) => a - b).join(",");
   });
-  return `${stay.hotel_id}|${stay.check_in}|${stay.check_out}|${groupKey}`;
+  return groupKey;
+}
+
+function stayRoomKey(stay, personId, groups) {
+  return `${stay.hotel_id}|${stay.check_in}|${stay.check_out}|${roommateGroupKey(personId, groups)}`;
+}
+
+function collectStayNightDates(stays) {
+  const set = new Set();
+  stays.forEach((s) => {
+    if (!s.check_in || !s.check_out || !s.hotel_id) return;
+    const n = diffDays(s.check_in, s.check_out);
+    for (let i = 0; i < n; i++) {
+      const d = parseLocalDate(s.check_in);
+      d.setDate(d.getDate() + i);
+      set.add(localDateStr(d));
+    }
+  });
+  return [...set].sort();
+}
+
+function stayActiveOnDate(stay, dateStr) {
+  if (!stay.hotel_id || !stay.check_in || !stay.check_out) return false;
+  return stay.check_in <= dateStr && dateStr < stay.check_out;
+}
+
+function stayNightRoomKey(stay, groups) {
+  const rn = (stay.room_number || "").trim();
+  if (rn) return `${stay.hotel_id}|r:${rn}`;
+  return `${stay.hotel_id}|g:${roommateGroupKey(stay.person_id, groups)}`;
+}
+
+function stayRoomLabel(stay) {
+  return stay.room_type === "Custom" ? (stay.room_custom || "").trim() : (stay.room_type || "Single");
+}
+
+function pricingRuleMatchesRoom(rule, roomLabel) {
+  return rule.room_type === roomLabel || (rule.room_type === "Custom" && rule.room_custom === roomLabel);
+}
+
+function findPricingRule(pricingRules, hotelId, dateStr, roomLabel) {
+  return pricingRules.find((r) => +r.hotel_id === +hotelId && r.date === dateStr && pricingRuleMatchesRoom(r, roomLabel));
+}
+
+/** 該入住夜房費：飯店主檔「日期別房價」；無規則時 fallback 該筆住宿的基本房價 */
+function stayNightPriceFromRules(stay, dateStr, pricingRules) {
+  if (!stayActiveOnDate(stay, dateStr)) return 0;
+  const rule = findPricingRule(pricingRules, stay.hotel_id, dateStr, stayRoomLabel(stay));
+  if (rule) return +rule.final_price || 0;
+  return +stay.base_price || 0;
+}
+
+/** 指定入住夜：各飯店當日人數、房數、費用（費用：同房號或同室者只計一筆主檔房價） */
+function computeHotelStatsForDate(stays, roommates, dateStr, pricingRules) {
+  const groups = buildRoommateGroups(roommates);
+  const byHotel = {};
+  stays.forEach((s) => {
+    if (!stayActiveOnDate(s, dateStr)) return;
+    const hid = s.hotel_id;
+    if (!byHotel[hid]) byHotel[hid] = { guestIds: new Set(), roomKeys: new Set(), chargedRooms: new Set(), cost: 0 };
+    byHotel[hid].guestIds.add(s.person_id);
+    const rk = stayNightRoomKey(s, groups);
+    byHotel[hid].roomKeys.add(rk);
+    if (!byHotel[hid].chargedRooms.has(rk)) {
+      byHotel[hid].chargedRooms.add(rk);
+      byHotel[hid].cost += stayNightPriceFromRules(s, dateStr, pricingRules);
+    }
+  });
+  const out = {};
+  Object.entries(byHotel).forEach(([hid, v]) => {
+    out[hid] = { guests: v.guestIds.size, rooms: v.roomKeys.size, cost: v.cost };
+  });
+  return out;
 }
 
 function computeHotelStats(stays, roommates) {
@@ -1276,7 +1363,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
     for (let i = 0; i < nights; i++) {
       const d = parseLocalDate(f.check_in); d.setDate(d.getDate() + i);
       const ds = localDateStr(d);
-      const rule = pricingRules.find((r) => +r.hotel_id === +f.hotel_id && r.date === ds && (r.room_type === roomLabel || (r.room_type === "Custom" && r.room_custom === roomLabel)));
+      const rule = findPricingRule(pricingRules, f.hotel_id, ds, roomLabel);
       const price = rule ? (+rule.final_price || 0) : (+f.base_price || 0);
       total += price; bd.push({ date: ds, price, fromRule: !!rule });
     }
@@ -2038,6 +2125,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [deptC, setDeptC] = useState("");
   const [searchCHotel, setSearchCHotel] = useState("");
   const [searchCRoom, setSearchCRoom] = useState("");
+  const [statsDate, setStatsDate] = useState("");
   const [searchD, setSearchD] = useState("");
   const [showFlightAdv, setShowFlightAdv] = useState(false);
   const [searchBRoman, setSearchBRoman] = useState("");
@@ -2138,6 +2226,41 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   // 員工編號：純依列表順序（拖移後即更新）
   const personIndex = useMemo(() => Object.fromEntries(persons.map((x, i) => [x.id, i + 1])), [persons]);
   const hotelStatsMap = useMemo(() => computeHotelStats(stays, roommates), [stays, roommates]);
+  const stayNightDates = useMemo(() => collectStayNightDates(stays), [stays]);
+  const hotelStatsByDateMap = useMemo(
+    () => (statsDate ? computeHotelStatsForDate(stays, roommates, statsDate, pricingRules) : {}),
+    [stays, roommates, statsDate, pricingRules],
+  );
+  const hotelStatsDayRows = useMemo(() => hotels
+    .map((h) => ({ hotel: h, st: hotelStatsByDateMap[h.id] || { guests: 0, rooms: 0, cost: 0 } }))
+    .filter(({ st }) => st.guests > 0)
+    .sort((a, b) => b.st.guests - a.st.guests || (a.hotel.name || "").localeCompare(b.hotel.name || "")),
+  [hotels, hotelStatsByDateMap]);
+  const hotelStatsDayTotals = useMemo(() => hotelStatsDayRows.reduce(
+    (acc, { st }) => ({
+      guests: acc.guests + st.guests,
+      rooms: acc.rooms + st.rooms,
+      cost: acc.cost + st.cost,
+      hotels: acc.hotels + 1,
+    }),
+    { guests: 0, rooms: 0, cost: 0, hotels: 0 },
+  ), [hotelStatsDayRows]);
+  const hotelStatsDayCostFmt = useMemo(
+    () => formatMoney(convertMoney(hotelStatsDayTotals.cost, project), project, lang),
+    [hotelStatsDayTotals.cost, project, lang],
+  );
+  useEffect(() => {
+    if (!stayNightDates.length) {
+      setStatsDate("");
+      return;
+    }
+    setStatsDate((prev) => {
+      if (prev && stayNightDates.includes(prev)) return prev;
+      const today = todayStr();
+      if (stayNightDates.includes(today)) return today;
+      return stayNightDates[0];
+    });
+  }, [stayNightDates]);
   const totalHotelCost = useMemo(() => stays.reduce((s, st) => s + (st.total_amount || 0), 0), [stays]);
 
   const personsWithNoTrips = useMemo(() => {
@@ -3049,41 +3172,80 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       </div>
                     );
                   })()}
-                  <div style={{ marginTop: 28 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <div style={{ marginTop: 28, padding: "16px 18px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
-                      <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStats}</h3>
+                      <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStatsByDate}</h3>
                     </div>
-                    <div style={{ overflowX: "auto" }}>
-                      <table style={tblW} className="data-table hotel-stats-table">
-                        <colgroup>
-                          {HOTEL_STATS_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
-                        </colgroup>
-                        <thead><tr style={thead}>
+                    <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 12 }}>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickDate}</label>
+                      <select
+                        style={{ ...inpStyle, minWidth: 168, maxWidth: "100%" }}
+                        value={statsDate}
+                        disabled={!stayNightDates.length}
+                        onChange={(e) => setStatsDate(e.target.value)}
+                      >
+                        {!stayNightDates.length && <option value="">{t.noStayDates}</option>}
+                        {stayNightDates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)} ({d})</option>)}
+                      </select>
+                    </div>
+                    {statsDate && hotelStatsDayRows.length > 0 && (
+                      <>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
                           {[
-                            { h: t.hotelName, align: "left" },
-                            { h: t.guestCount, align: "right" },
-                            { h: t.roomCount, align: "right" },
-                            { h: t.totalSpend, align: "right" },
-                          ].map(({ h, align }) => <th key={h} style={{ ...thS, textAlign: align }}>{h}</th>)}
-                        </tr></thead>
-                        <tbody>
-                          {hotels.map((h) => {
-                            const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0 };
-                            return (
-                              <tr key={h.id}>
-                                <td style={tdEllipsis({ fontWeight: 600 })} title={h.name}>{h.name}</td>
+                            { label: t.guestCountDay, value: hotelStatsDayTotals.guests },
+                            { label: t.roomCountDay, value: hotelStatsDayTotals.rooms },
+                            { label: t.totalSpendDay, value: hotelStatsDayCostFmt, isMoney: true },
+                          ].map(({ label, value, isMoney }) => (
+                            <div key={label} style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 6, padding: "12px 14px", textAlign: "center" }}>
+                              <div style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
+                              <div style={{ fontSize: isMoney ? 15 : 22, fontWeight: 700, color: "var(--sumi)", fontVariantNumeric: "tabular-nums", fontFamily: isMoney ? "'Noto Serif JP',serif" : "inherit" }}>{value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: "var(--moegi)", margin: "0 0 12px" }}>
+                          {t.statsDaySummary
+                            .replace("{date}", fmtDate(statsDate, lang))
+                            .replace("{guests}", String(hotelStatsDayTotals.guests))
+                            .replace("{rooms}", String(hotelStatsDayTotals.rooms))
+                            .replace("{cost}", hotelStatsDayCostFmt)
+                            .replace("{hotels}", String(hotelStatsDayTotals.hotels))}
+                        </p>
+                      </>
+                    )}
+                    {statsDate && hotelStatsDayRows.length === 0 && (
+                      <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.noData}</p>
+                    )}
+                    {statsDate && hotelStatsDayRows.length > 0 && (
+                      <div style={{ overflowX: "auto", background: "var(--shiro)", borderRadius: 6, border: "1px solid var(--keisenL)" }}>
+                        <table style={tblW} className="data-table hotel-stats-table">
+                          <colgroup>
+                            {HOTEL_STATS_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
+                          </colgroup>
+                          <thead><tr style={thead}>
+                            {[
+                              { h: t.hotelName, align: "left" },
+                              { h: t.guestCountDay, align: "right" },
+                              { h: t.roomCountDay, align: "right" },
+                              { h: t.totalSpendDay, align: "right" },
+                            ].map(({ h, align }) => <th key={h} style={{ ...thS, textAlign: align }}>{h}</th>)}
+                          </tr></thead>
+                          <tbody>
+                            {hotelStatsDayRows.map(({ hotel, st }) => (
+                              <tr key={hotel.id}>
+                                <td style={tdEllipsis({ fontWeight: 600 })} title={hotel.name}>{hotel.name}</td>
                                 <td style={tdS({ textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{st.guests}</td>
                                 <td style={tdS({ textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{st.rooms}</td>
                                 <td className="td-amt" style={tdS({ textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600 })}>
-                                  {formatMoney(convertMoney(st.total, project), project, lang)}
+                                  {formatMoney(convertMoney(st.cost, project), project, lang)}
                                 </td>
                               </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
