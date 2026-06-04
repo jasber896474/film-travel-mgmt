@@ -224,7 +224,7 @@ const T = {
     staffList: "工作人員列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "飯店清單",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配車", progressOf: "{done}/{total}",
     no: "編號", dept: "部門", nameKanji: "姓名（漢字）", nameRoman: "羅馬拼音", importance: "重要度",
-    status: "安排狀態", passport: "護照號碼", dob: "出生年月日", passportExp: "護照效期", diet: "飲食限制", action: "操作", select: "選取",
+    status: "安排狀態", passport: "護照 / ID Card", dob: "出生年月日", passportExp: "護照效期", diet: "飲食限制", action: "操作", select: "選取",
     arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩餘不足180天",
     addStaff: "新增工作人員", editStaff: "編輯工作人員",
     airline: "航空公司", flightNo: "航班號", cabin: "艙等", pnr: "訂位代號",
@@ -269,6 +269,8 @@ const T = {
     currencySettings: "幣別設定", baseCurrency: "計價幣別", displayCurrency: "顯示幣別", exchangeRate: "匯率", exchangeRateHint: "1 單位計價幣 = ? 顯示幣",
     currencyTWD: "台幣 TWD", currencyJPY: "日圓 JPY", optional: "選填", loading: "載入中…", resultsCount: "顯示 {n} / {total} 人", activeFilters: "使用中篩選",
     refresh: "更新", noName: "（未填姓名）", approved: "已批准 {email}", rejected: "已拒絕 {email}",
+    licensePlate: "車牌號碼", pickupTime: "乘車時刻", pickupLocation: "乘車地點", vehicleArrivalTime: "到達時刻", vehicleArrivalLocation: "到達地點", vehicleNote: "備考",
+    stayMgmt: "住宿分配清冊",
   },
   "zh-CN": {
     appName: "剧组交通住宿管理系统", logout: "登出", print: "打印", members: "成员管理", back: "返回", settings: "项目设定",
@@ -284,7 +286,7 @@ const T = {
     staffList: "工作人员列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "饭店列表",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配车", progressOf: "{done}/{total}",
     no: "编号", dept: "部门", nameKanji: "姓名（汉字）", nameRoman: "罗马拼音", importance: "重要度",
-    status: "安排状态", passport: "护照号码", dob: "出生年月日", passportExp: "护照效期", diet: "饮食限制", action: "操作", select: "选取",
+    status: "安排状态", passport: "护照 / ID Card", dob: "出生年月日", passportExp: "护照效期", diet: "饮食限制", action: "操作", select: "选取",
     arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩余不足180天",
     addStaff: "新增工作人员", editStaff: "编辑工作人员",
     airline: "航空公司", flightNo: "航班号", cabin: "舱位", pnr: "订座代号",
@@ -329,6 +331,8 @@ const T = {
     currencySettings: "币别设定", baseCurrency: "计价币别", displayCurrency: "显示币别", exchangeRate: "汇率", exchangeRateHint: "1 单位计价币 = ? 显示币",
     currencyTWD: "台币 TWD", currencyJPY: "日元 JPY", optional: "选填", loading: "加载中…", resultsCount: "显示 {n} / {total} 人", activeFilters: "使用中筛选",
     refresh: "更新", noName: "（未填姓名）", approved: "已批准 {email}", rejected: "已拒绝 {email}",
+    licensePlate: "车牌号码", pickupTime: "乘车时刻", pickupLocation: "乘车地点", vehicleArrivalTime: "到达时刻", vehicleArrivalLocation: "到达地点", vehicleNote: "备注",
+    stayMgmt: "住宿分配清册",
   },
   en: {
     appName: "Production Travel & Accommodation", logout: "Logout", print: "Print", members: "Members", back: "Back", settings: "Settings",
@@ -344,7 +348,7 @@ const T = {
     staffList: "Staff List", flightMgmt: "Flight Management", hotelMgmt: "Accommodation", hotelList: "Hotel List",
     progressFlight: "Flights", progressHotel: "Hotels", progressVehicle: "Unassigned", progressOf: "{done}/{total}",
     no: "No.", dept: "Dept", nameKanji: "Name", nameRoman: "Romanized", importance: "Priority",
-    status: "Status", passport: "Passport", dob: "DOB", passportExp: "Expiry", diet: "Dietary", action: "Actions", select: "Select",
+    status: "Status", passport: "Passport / ID Card", dob: "DOB", passportExp: "Expiry", diet: "Dietary", action: "Actions", select: "Select",
     arranged: "Arranged", partial: "Partial", unArranged: "Pending", passportWarn: "Expires within 180 days",
     addStaff: "Add Staff", editStaff: "Edit Staff",
     airline: "Airline", flightNo: "Flight No.", cabin: "Cabin", pnr: "PNR",
@@ -389,6 +393,8 @@ const T = {
     currencySettings: "Currency", baseCurrency: "Base currency", displayCurrency: "Display currency", exchangeRate: "Rate", exchangeRateHint: "1 base = ? display",
     currencyTWD: "TWD", currencyJPY: "JPY", optional: "Optional", loading: "Loading…", resultsCount: "Showing {n} / {total}", activeFilters: "Active filters",
     refresh: "Refresh", noName: "(No name)", approved: "Approved {email}", rejected: "Rejected {email}",
+    licensePlate: "License Plate", pickupTime: "Pickup Time", pickupLocation: "Pickup Location", vehicleArrivalTime: "Arrival Time", vehicleArrivalLocation: "Arrival Location", vehicleNote: "Note",
+    stayMgmt: "Accommodation List",
   },
   ko: {
     appName: "제작진 교통·숙박 관리", logout: "로그아웃", print: "인쇄", members: "멤버", back: "뒤로", settings: "설정",
@@ -404,7 +410,7 @@ const T = {
     staffList: "스태프 목록", flightMgmt: "항공 관리", hotelMgmt: "숙박 관리", hotelList: "호텔 목록",
     progressFlight: "항공", progressHotel: "숙박", progressVehicle: "미배정", progressOf: "{done}/{total}",
     no: "번호", dept: "부서", nameKanji: "이름", nameRoman: "로마자", importance: "중요도",
-    status: "상태", passport: "여권", dob: "생년월일", passportExp: "만료", diet: "식이", action: "작업", select: "선택",
+    status: "상태", passport: "여권 / ID Card", dob: "생년월일", passportExp: "만료", diet: "식단", action: "작업", select: "선택",
     arranged: "완료", partial: "일부", unArranged: "미배정", passportWarn: "180일 미만",
     addStaff: "스태프 추가", editStaff: "스태프 편집",
     airline: "항공사", flightNo: "편명", cabin: "좌석", pnr: "PNR",
@@ -433,22 +439,23 @@ const T = {
     regionTW: "대만", regionJP: "일본", regionKR: "한국", regionUS: "미국",
     typeMinivan: "8인승", typeBus: "20인승", typeTruckCanvas: "트럭(천막)", typeTruckSteel: "트럭(철제)", typeComingSoon: "추후", typeCustom: "사용자 정의",
     selectDriver: "운전기사…", selectPassenger: "탑승자…", noVehicle: "차량 없음", noVehicleHint: "차량 추가",
-    vehicleNamePlaceholder: "예: 감독차", maxPassengers: "定員", passengers_unit: "명",
-    totalVehicles: "차량", totalAssigned: "배정", totalUnassigned: "미배정", vehicleFull: "定員 초과",
-    segmentLabel: "구간", segmentPlaceholder: "예:早班, 收工", segmentMorning: "早班", segmentEvening: "收工", segmentTransfer: "転場", segmentCustom: "カスタム",
-    personTrips: "乗車区間", addTrip: "区間追加", removeTrip: "削除",
+    vehicleNamePlaceholder: "예: 감독차, 제작차", maxPassengers: "최대 탑승 인원", passengers_unit: "명",
+    totalVehicles: "차량 수", totalAssigned: "배정 인원", totalUnassigned: "미배정 인원", vehicleFull: "정원 초과",
+    segmentLabel: "구간", segmentPlaceholder: "예: 오전 출발, 종료, 이동", segmentMorning: "오전 출발", segmentEvening: "종료", segmentTransfer: "이동", segmentCustom: "사용자 정의",
+    personTrips: "탑승 구간", addTrip: "구간 추가", removeTrip: "삭제",
     forgotPw: "비밀번호 찾기", forgotPwTitle: "비밀번호 재설정", forgotPwHint: "이메일을 입력하면 재설정 링크를 보내드립니다",
     forgotPwSent: "재설정 이메일 발송됨", forgotPwSentHint: "받은 편지함을 확인하고 링크를 클릭하세요", forgotPwBtn: "재설정 링크 보내기",
     resetPwTitle: "새 비밀번호 설정", newPw: "새 비밀번호", confirmNewPw: "비밀번호 확인", resetPwBtn: "비밀번호 업데이트",
     resetPwSuccess: "비밀번호가 업데이트되었습니다. 다시 로그인하세요.", backToLogin: "로그인으로 돌아가기",
     langSelectLabel: "언어 선택 (로그인 후 고정)", langLockHint: "로그인 후 언어가 고정됩니다. 변경하려면 다시 로그인하세요.",
-    errEmailPw: "이메일과 비밀번호 입력", errPwMatch: "비밀번호 불일치", errPwLen: "6자 이상",
-    memberAdd: "멤버 추가", memberCurrent: "멤버 ({n})", memberAlready: "이미 멤버", memberSelf: "본인 삭제 불가",
-    memberUidHint: "User ID 입력", memberUidLabel: "User ID 확인", memberUidInfo: "→ Authentication → Users", memberAddBtn: "추가",
-    stayRequired: "호텔과 날짜 입력", syncRoommateTitle: "룸메이트 동기화", syncRoommateMsg: "동기화하시겠습니까?",
-    currencySettings: "通貨", baseCurrency: "基準通貨", displayCurrency: "表示通貨", exchangeRate: "レート", exchangeRateHint: "1 基準 = ? 表示",
-    currencyTWD: "TWD", currencyJPY: "JPY", optional: "任意", loading: "読み込み中…", resultsCount: "{n} / {total}", activeFilters: "フィルター",
-    refresh: "更新", noName: "（名前なし）", approved: "承認 {email}", rejected: "拒否 {email}",
+    errEmailPw: "이메일과 비밀번호를 입력하세요", errPwMatch: "비밀번호가 일치하지 않습니다", errPwLen: "6자 이상 입력하세요",
+    memberAdd: "멤버 추가", memberCurrent: "현재 멤버 ({n}명)", memberAlready: "이미 멤버입니다", memberSelf: "본인은 삭제할 수 없습니다",
+    memberUidHint: "Supabase Authentication의 User ID를 입력하세요.", memberUidLabel: "User ID 확인 방법", memberUidInfo: "→ Authentication → Users → UUID 복사", memberAddBtn: "추가",
+    stayRequired: "호텔과 날짜를 입력하세요", syncRoommateTitle: "룸메이트 동기화", syncRoommateMsg: "룸메이트의 호텔·객실·날짜를 동기화하시겠습니까?",
+    currencySettings: "통화 설정", baseCurrency: "기준 통화", displayCurrency: "표시 통화", exchangeRate: "환율", exchangeRateHint: "1 기준 = ? 표시",
+    currencyTWD: "대만 달러 TWD", currencyJPY: "일본 엔 JPY", optional: "선택사항", loading: "로딩 중…", resultsCount: "{n} / {total}명", activeFilters: "활성 필터",
+    refresh: "새로고침", noName: "（이름 없음）", approved: "승인됨 {email}", rejected: "거절됨 {email}",
+    licensePlate: "번호판", pickupTime: "탑승 시각", pickupLocation: "탑승 장소", vehicleArrivalTime: "도착 시각", vehicleArrivalLocation: "도착 장소", vehicleNote: "메모",
   },
   ja: {
     appName: "制作 交通・宿泊管理", logout: "ログアウト", print: "印刷", members: "メンバー", back: "戻る", settings: "設定",
@@ -464,7 +471,7 @@ const T = {
     staffList: "スタッフ", flightMgmt: "フライト管理", hotelMgmt: "宿泊管理", hotelList: "ホテル",
     progressFlight: "フライト", progressHotel: "宿泊", progressVehicle: "未配車", progressOf: "{done}/{total}",
     no: "No.", dept: "部署", nameKanji: "氏名", nameRoman: "ローマ字", importance: "重要度",
-    status: "状況", passport: "パスポート", dob: "生年月日", passportExp: "有効期限", diet: "食事", action: "操作", select: "選択",
+    status: "状況", passport: "パスポート / ID", dob: "生年月日", passportExp: "有効期限", diet: "食事制限", action: "操作", select: "選択",
     arranged: "手配済", partial: "一部", unArranged: "未手配", passportWarn: "180日未満",
     addStaff: "追加", editStaff: "編集",
     airline: "航空会社", flightNo: "便名", cabin: "クラス", pnr: "PNR",
@@ -509,6 +516,8 @@ const T = {
     currencySettings: "通貨", baseCurrency: "基準", displayCurrency: "表示", exchangeRate: "レート", exchangeRateHint: "1 基準 = ? 表示",
     currencyTWD: "TWD", currencyJPY: "JPY", optional: "任意", loading: "読込中…", resultsCount: "{n} / {total}", activeFilters: "フィルター",
     refresh: "更新", noName: "（未記入）", approved: "承認 {email}", rejected: "拒否 {email}",
+    licensePlate: "ナンバープレート", pickupTime: "乗車時刻", pickupLocation: "乗車地", vehicleArrivalTime: "到着時刻", vehicleArrivalLocation: "到着地", vehicleNote: "備考",
+    stayMgmt: "宿泊割当一覧",
   },
 };
 
@@ -826,7 +835,7 @@ function ProgressBar({ t, stats }) {
 function VehicleForm({ init, onSave, onClose, t }) {
   const regionLabel = (key) => t["region" + key] || key;
   const typeLabel = (key) => ({ minivan: t.typeMinivan, bus: t.typeBus, truckCanvas: t.typeTruckCanvas, truckSteel: t.typeTruckSteel, custom: t.typeCustom }[key] || key);
-  const blank = { name: "", regionKey: "TW", typeKey: "minivan", capacity: VEHICLE_DEFAULT_CAPACITY.minivan, customCapacity: 4 };
+  const blank = { name: "", regionKey: "TW", typeKey: "minivan", capacity: VEHICLE_DEFAULT_CAPACITY.minivan, customCapacity: 4, license_plate: "", pickup_time: "", pickup_location: "", arrival_time: "", arrival_location: "", note: "" };
   const [f, setF] = useState(() => {
     if (!init) return blank;
     const tk = init.type_key || init.typeKey || "minivan";
@@ -850,9 +859,17 @@ function VehicleForm({ init, onSave, onClose, t }) {
         type: typeLabel(f.typeKey),
         typeKey: f.typeKey,
         capacity: isCustom ? f.customCapacity : f.capacity,
+        license_plate: f.license_plate || "",
+        pickup_time: f.pickup_time || "",
+        pickup_location: f.pickup_location || "",
+        arrival_time: f.arrival_time || "",
+        arrival_location: f.arrival_location || "",
+        note: f.note || "",
       });
     } finally { setSaving(false); }
   };
+
+  const inp2 = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 };
 
   return (
     <div>
@@ -889,6 +906,38 @@ function VehicleForm({ init, onSave, onClose, t }) {
           {Array.from({ length: 40 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} {t.passengers_unit}</option>)}
         </select>
       </Field>
+
+      <div style={{ marginTop: 16, padding: "12px 14px", background: J.washi, borderRadius: 6, border: "1px solid " + J.keisenL }}>
+        <p style={{ fontSize: 11, color: J.nezumi, margin: "0 0 10px" }}>──── {t.licensePlate} / {t.pickupTime} / {t.vehicleNote} ────</p>
+        <div style={inp2}>
+          <Field label={t.licensePlate}>
+            <input style={inpStyle} value={f.license_plate} onChange={(e) => setF((p) => ({ ...p, license_plate: e.target.value }))} placeholder="AB-1234" maxLength={20} />
+          </Field>
+          <Field label={""}>
+            <div style={{ height: "100%"}} />
+          </Field>
+        </div>
+        <div style={inp2}>
+          <Field label={t.pickupTime}>
+            <input style={inpStyle} type="time" value={f.pickup_time} onChange={(e) => setF((p) => ({ ...p, pickup_time: e.target.value }))} />
+          </Field>
+          <Field label={t.vehicleArrivalTime}>
+            <input style={inpStyle} type="time" value={f.arrival_time} onChange={(e) => setF((p) => ({ ...p, arrival_time: e.target.value }))} />
+          </Field>
+        </div>
+        <div style={inp2}>
+          <Field label={t.pickupLocation}>
+            <input style={inpStyle} value={f.pickup_location} onChange={(e) => setF((p) => ({ ...p, pickup_location: e.target.value }))} maxLength={60} />
+          </Field>
+          <Field label={t.vehicleArrivalLocation}>
+            <input style={inpStyle} value={f.arrival_location} onChange={(e) => setF((p) => ({ ...p, arrival_location: e.target.value }))} maxLength={60} />
+          </Field>
+        </div>
+        <Field label={t.vehicleNote}>
+          <input style={inpStyle} value={f.note} onChange={(e) => setF((p) => ({ ...p, note: e.target.value }))} maxLength={100} />
+        </Field>
+      </div>
+
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
         <button type="button" onClick={onClose} style={{ padding: "9px 18px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={handleSave} disabled={saving || !canSave} style={pBtn(saving || !canSave)}>{saving ? "…" : t.save}</button>
@@ -1991,6 +2040,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
         type_key: f.typeKey || "minivan",
         capacity: f.capacity || 4,
         project_id: pid,
+        license_plate: f.license_plate || null,
+        pickup_time: f.pickup_time || null,
+        pickup_location: f.pickup_location || null,
+        arrival_time: f.arrival_time || null,
+        arrival_location: f.arrival_location || null,
+        note: f.note || null,
       };
       if (vehicleModal.mode === "add") {
         const [r] = await api.insert("vehicles", { ...safeFields, driver_id: null, passenger_ids: null, assignments: [] });
@@ -2100,14 +2155,23 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
   };
 
   const exportVehicleCSV = () => {
-    const headers = ["No.", t.vehicleName, t.vehicleRegion, t.vehicleType, t.maxPassengers, "角色 / Role", "成員 / Member", "部門 / Dept"];
+    const headers = [
+      "No.", t.vehicleName, t.vehicleRegion, t.vehicleType, t.maxPassengers,
+      t.licensePlate, t.pickupTime, t.pickupLocation, t.vehicleArrivalTime, t.vehicleArrivalLocation, t.vehicleNote,
+      t.no, t.dept, t.nameKanji, t.nameRoman, t.driver,
+    ];
+    const emptyTrip = ["", "", "", "", "", ""];
     const rows = vehicles.flatMap((v, vi) => {
       const assigns = getAssignmentsForVehicle(v.id);
       const no = String(vi + 1).padStart(2, "0");
-      if (!assigns.length) return [[no, v.name, v.region, v.type, v.capacity || 4, "", "", ""]];
-      return assigns.map((a) => {
+      const tripInfo = [v.license_plate || "", v.pickup_time || "", v.pickup_location || "", v.arrival_time || "", v.arrival_location || "", v.note || ""];
+      if (!assigns.length) return [[no, v.name, v.region, v.type, v.capacity || 4, ...tripInfo, "", "", "", "", ""]];
+      return assigns.map((a, ai) => {
         const p = persons.find((x) => x.id === a.person_id);
-        return [no, v.name, v.region, v.type, v.capacity || 4, a.role === "driver" ? t.driver : t.passengers, p?.name_kanji || "", p?.dept || ""];
+        const pNo = p ? personIndex[p.id] : "";
+        const isDriver = a.role === "driver";
+        const vCols = ai === 0 ? [no, v.name, v.region, v.type, v.capacity || 4, ...tripInfo] : ["", "", "", "", "", ...emptyTrip];
+        return [...vCols, pNo, p?.dept || "", p?.name_kanji || "", `${p?.last_roman || ""} ${p?.first_roman || ""}`.trim(), isDriver ? t.driver : ""];
       });
     });
     downloadCSV([headers, ...rows], `vehicles_${todayStr()}.csv`);
@@ -2318,8 +2382,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                       const arrDT = fmtFlightDateTime(fl?.arr_time, lang);
                       const dtCell = (dt) => dt ? (
                         <div>
-                          <div style={{ fontSize: 11, color: J.nezumi }}>{dt.date}</div>
-                          <div style={{ fontSize: 12, fontWeight: 600 }}>{dt.time}</div>
+                          <div style={{ fontSize: 11, fontWeight: 500 }}>{dt.date}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700 }}>{dt.time}</div>
                         </div>
                       ) : "—";
                       const depApt = fl?.dep_airport || "—";
@@ -2641,13 +2705,25 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                                 <div style={{ height: 3, width: pct + "%", background: isFull ? "#ff6b6b" : J.moegi2, borderRadius: 2, transition: "width .4s" }} />
                               </div>
                             </div>
+                            {(v.license_plate || v.pickup_time || v.pickup_location || v.arrival_time || v.arrival_location || v.note) && (
+                              <div style={{ padding: "8px 14px", background: J.washi, borderBottom: "1px solid " + J.keisenL, fontSize: 11, color: J.nezumi, lineHeight: 1.7 }}>
+                                {v.license_plate && <span style={{ marginRight: 12, fontWeight: 600, color: J.sumi }}>🚗 {v.license_plate}</span>}
+                                {(v.pickup_time || v.pickup_location) && <span style={{ marginRight: 12 }}>{v.pickup_time && <strong>{v.pickup_time}</strong>}{v.pickup_location && ` ${v.pickup_location}`}</span>}
+                                {(v.arrival_time || v.arrival_location) && <span style={{ marginRight: 12 }}>→ {v.arrival_time && <strong>{v.arrival_time}</strong>}{v.arrival_location && ` ${v.arrival_location}`}</span>}
+                                {v.note && <span style={{ color: J.nezumi, fontStyle: "italic" }}>📝 {v.note}</span>}
+                              </div>
+                            )}
                             <div style={{ padding: "12px 14px" }}>
                               {assigns.map((a) => {
                                 const p = persons.find((x) => x.id === a.person_id);
                                 if (!p) return null;
                                 return (
-                                  <div key={a.id || `${a.person_id}-${a.role}-${a.segment_label}`} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid " + J.keisenL, fontSize: 12 }}>
-                                    <span><strong>{a.role === "driver" ? t.driver : t.passengers}</strong> · {p.name_kanji}{a.segment_label ? ` (${a.segment_label})` : ""}</span>
+                                  <div key={a.id || `${a.person_id}-${a.role}-${a.segment_label}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid " + J.keisenL, fontSize: 12 }}>
+                                    <div>
+                                      <span style={{ fontWeight: 600 }}>{p.name_kanji}</span>
+                                      {p.dept && <span style={{ fontSize: 10.5, color: J.nezumi, marginLeft: 6 }}>{p.dept}</span>}
+                                      {a.role === "driver" && <span style={{ fontSize: 9.5, color: J.moegi, fontWeight: 700, marginLeft: 6, padding: "1px 5px", background: J.moegi3, borderRadius: 3 }}>{t.driver}</span>}
+                                    </div>
                                     {canEdit && <button type="button" style={dBtn} onClick={() => removeAssignment(a)}>×</button>}
                                   </div>
                                 );
