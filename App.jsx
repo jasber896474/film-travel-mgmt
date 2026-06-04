@@ -1,25 +1,24 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>劇組交通住宿管理系統</title>
-  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
-  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif}</style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel" data-presets="react,env">
-    const { useState, useMemo, useCallback, useEffect, useRef } = React;
+const { useState, useMemo, useCallback, useEffect, useRef } = React;
 
 const SUPABASE_URL = "https://knoudnzjnfkfhiizgcna.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OdfFFai3Ac1NgbelUPlYXQ_8R8IDAhA";
-const OWNER_ID    = "006bf3d7-934c-4a86-a14c-17757334b618";
+const OWNER_ID = "006bf3d7-934c-4a86-a14c-17757334b618";
 let _token = null;
 
-// ─── API layer ──────────────────────────────────────────────
+const SESSION_KEY = "sb_session";
+
+const saveSession = (res) => {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    access_token: res.access_token,
+    refresh_token: res.refresh_token,
+    expires_at: Date.now() + (res.expires_in || 3600) * 1000,
+  }));
+};
+const clearSession = () => {
+  _token = null;
+  localStorage.removeItem(SESSION_KEY);
+};
+
 const sb = async (path, opts = {}) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
@@ -30,1048 +29,1410 @@ const sb = async (path, opts = {}) => {
     },
     ...opts,
   });
-  // 高優先3: Session 過期攔截 - 401/403 自動登出
-  if(res.status===401||res.status===403){
-    _token=null;
-    localStorage.removeItem("sb_token");
-    alert("登入已過期，請重新登入");
-    window.location.reload();
+  if (res.status === 401 || res.status === 403) {
+    clearSession();
+    if (typeof window.__onSessionExpired === "function") window.__onSessionExpired();
     return [];
   }
-  if (!res.ok) { const e = await res.text(); throw new Error(e); }
+  if (!res.ok) {
+    const e = await res.text();
+    throw new Error(e);
+  }
   const txt = await res.text();
   return txt ? JSON.parse(txt) : [];
 };
 
+const authFetch = (path, body) =>
+  fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then((r) => r.json());
+
 const api = {
-  login: (email, pw) =>
-    fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password: pw }),
-    }).then(r => r.json()),
-
-  signup: (email, pw) =>
-    fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-      method: "POST",
-      headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password: pw }),
-    }).then(r => r.json()),
-
+  login: (email, pw) => authFetch("token?grant_type=password", { email, password: pw }),
+  signup: (email, pw) => authFetch("signup", { email, password: pw }),
+  refresh: (refresh_token) => authFetch("token?grant_type=refresh_token", { refresh_token }),
   logout: () =>
     fetch(`${SUPABASE_URL}/auth/v1/logout`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${_token}` },
     }),
-
-  get:         (table, filter)   => sb(`${table}?select=*${filter || ""}`),
-  insert:      (table, data)     => sb(table, { method: "POST", body: JSON.stringify(data) }),
-  update:      (table, id, data) => sb(`${table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(data) }),
-  delete:      (table, id)       => sb(`${table}?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }),
+  getUser: () =>
+    fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${_token}` },
+    }).then((r) => (r.ok ? r.json() : null)),
+  get: (table, filter) => sb(`${table}?select=*${filter || ""}`),
+  insert: (table, data) => sb(table, { method: "POST", body: JSON.stringify(data) }),
+  update: (table, id, data) => sb(`${table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  delete: (table, id) => sb(`${table}?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }),
   deleteWhere: (table, col, val) => sb(`${table}?${col}=eq.${val}`, { method: "DELETE", prefer: "return=minimal" }),
 };
 
+// ─── 本地日期（避免 UTC 偏移）────────────────────────────────
+const pad2 = (n) => String(n).padStart(2, "0");
+const localDateStr = (d = new Date()) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const localDateTimeStr = (d = new Date()) => {
+  d = new Date(d);
+  d.setSeconds(0, 0);
+  return `${localDateStr(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
+const parseLocalDate = (s) => {
+  if (!s) return null;
+  const [y, m, d] = s.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+const fmtDate = (d, lang) => {
+  if (!d) return "—";
+  const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
+  return parseLocalDate(String(d).slice(0, 10)).toLocaleDateString(loc);
+};
+const diffDays = (a, b) => {
+  if (!a || !b) return 0;
+  const da = parseLocalDate(a);
+  const db = parseLocalDate(b);
+  return Math.max(0, Math.round((db - da) / 86400000));
+};
+const todayStr = () => localDateStr();
+const todayDT = () => localDateTimeStr();
+const passportWarning = (exp) => {
+  if (!exp) return false;
+  const e = parseLocalDate(exp);
+  return (e - new Date()) / 86400000 < 180;
+};
+
+const CURRENCY_SYMBOL = { TWD: "NT$", JPY: "¥", USD: "$" };
+const formatMoney = (amount, project, lang) => {
+  const n = +amount || 0;
+  const cur = project?.display_currency || project?.base_currency || "TWD";
+  const sym = CURRENCY_SYMBOL[cur] || cur + " ";
+  const loc = lang?.startsWith("en") ? "en-US" : "zh-TW";
+  return `${sym}${n.toLocaleString(loc)}`;
+};
+const convertMoney = (amount, project) => {
+  const n = +amount || 0;
+  const base = project?.base_currency || "TWD";
+  const disp = project?.display_currency || base;
+  const rate = +project?.exchange_rate || 1;
+  if (base === disp) return n;
+  return Math.round(n * rate);
+};
+
+function useDebounced(value, ms = 280) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return v;
+}
+
+function useToast() {
+  const [m, setM] = useState("");
+  const show = useCallback((s) => {
+    setM(s);
+    setTimeout(() => setM(""), 3500);
+  }, []);
+  return [m, show];
+}
+
+async function resolveIsSystemOwner(userId) {
+  if (OWNER_ID && userId === OWNER_ID) return true;
+  try {
+    const rows = await api.get("user_projects", `&user_id=eq.${userId}&role=eq.owner`);
+    return rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 // ─── i18n ───────────────────────────────────────────────────
-const LANGS = { "zh-TW":"繁體中文", "zh-CN":"简体中文", en:"English", ko:"한국어", ja:"日本語" };
+const LANGS = { "zh-TW": "繁體中文", "zh-CN": "简体中文", en: "English", ko: "한국어", ja: "日本語" };
 
 const T = {
-  "zh-TW":{
-    appName:"劇組交通住宿管理系統",logout:"登出",print:"列印",members:"成員管理",back:"返回",
-    loginTitle:"請登入",loginEmail:"電子郵件",loginPw:"密碼",loginBtn:"登入",loginHint:"存取權限由管理員邀請授予",
-    projects:"專案列表",newProject:"＋ 新增專案",openProject:"開啟 →",projectName:"專案名稱",projectDesc:"說明（選填）",
-    create:"建立",creating:"建立中…",cancel:"取消",save:"儲存",edit:"編輯",delete:"刪除",add:"＋ 新增",
-    saved:"✓ 已儲存",deleted:"已刪除",
-    tabStaff:"👤 工作人員列表",tabFlight:"✈ 航班管理",tabHotel:"🏨 飯店管理",tabHotelList:"📋 飯店清單",
-    staffList:"工作人員列表",flightMgmt:"✈ 航班管理",hotelMgmt:"飯店管理",hotelList:"📋 飯店清單",
-    no:"編號",dept:"部門",nameKanji:"姓名（漢字）",nameRoman:"羅馬拼音",importance:"重要度",
-    status:"安排狀態",passport:"護照號碼",dob:"出生年月日",passportExp:"護照效期",diet:"飲食限制",action:"操作",
-    arranged:"✓ 已安排",partial:"⚡ 部分完成",unArranged:"— 未安排",passportWarn:"⚠ 剩餘不足180天",
-    addStaff:"新增工作人員",editStaff:"編輯工作人員",
-    airline:"航空公司",flightNo:"航班號",cabin:"艙等",pnr:"訂位代號(PNR)",
-    depAirport:"出發機場",depTerminal:"出發航廈",depTime:"出發時間",
-    arrAirport:"抵達機場",arrTerminal:"抵達航廈",arrTime:"抵達時間",
-    checkedBag:"託運行李",cabinBag:"手提行李",flightDone:"✓ 已安排",flightNone:"未安排",addFlight:"＋ 輸入",
-    hotel:"飯店",roomType:"房型",checkIn:"入住日期",checkOut:"退房日期",
-    basePrice:"基本房價($/晚)",nights:"住宿天數",totalAmt:"合計金額($)",
-    roommate:"同室者",singleRoom:"單人房",hotelDone:"✓ 已安排",hotelNone:"未安排",
-    roommateSet:"同室設定",roommateNone:"無（單人房）",
-    totalCost:"🏨 飯店總費用（全員合計）",
-    hotelStats:"📊 各飯店統計",guestCount:"入住人數",roomCount:"客室數",totalSpend:"總費用",
-    datePrice:"📅 日期別房價設定",addRule:"＋ 新增規則",addHotel:"＋ 新增飯店",
-    date:"日期",basePriceShort:"基本",importanceSurcharge:"重要度加算",holidaySurcharge:"節日加算",finalPrice:"最終房價",
-    hotelName:"飯店名稱",hotelAddr:"地址",hotelTel:"電話",
-    targetHotel:"對象飯店",customRoomType:"自訂房型",breakdownTitle:"每日房價明細",
-    noData:"無資料",searchStaff:"搜尋姓名・部門・護照…",searchFlight:"搜尋姓名・航空公司…",
-    searchHotel:"搜尋姓名・飯店…",searchHotelList:"搜尋飯店名・地址・電話…",
-    allDept:"全部門",role_owner:"👑 擁有者",role_admin:"管理員",role_editor:"編輯",role_viewer:"唯讀",
-    noProject:"尚無專案",noProjectHint:"建立新專案，或等待管理員邀請",firstProject:"＋ 建立第一個專案",
-    deleteConfirm:"確定刪除？",deleteProjConfirm:"確定刪除此專案？所有相關資料也會一併刪除。",
-    staySegment:"住宿段落",addSegment:"＋ 新增住宿段",
-    roommateWith:"與 {name} 同室",
-    searchHotelName:"搜尋飯店名稱…",searchRoomType:"搜尋房型…",
-    searchRoman:"羅馬拼音",searchStatus:"安排狀態",allStatus:"全部狀態",
-    arranged_short:"已安排",unArranged_short:"未安排",partial_short:"部分完成",
-    clearFilter:"✕ 清除",exportCSV:"⬇ 匯出 CSV",passportAlert:"⚠ 護照即將到期",noRequests:"目前沒有待審核申請",pendingBadge:"待審核",approveTitle:"批准申請",approveProject:"指定專案",approveRole:"權限角色",approveNote:"批准後可在「成員管理」隨時調整。",confirmApproveBtn:"確認批准",deptCostTitle:"各部門住宿費用",bulkDeleteBtn:"刪除選取",minOneField:"請至少填寫一個欄位",checkoutAfterCheckin:"退房日期必須晚於入住日期",
-    errEmailPw:"請輸入電子郵件和密碼",errPwMatch:"密碼不一致",errPwLen:"密碼請輸入6位以上",
-    registerTitle:"新帳號申請",registerBtn:"申請登入",verifyTitle:"驗證信已發送",verifyHint:"管理員審核通過後即可存取專案。",toLoginBtn:"返回登入畫面",
-    memberAdd:"新增成員",memberCurrent:"目前成員（{n} 人）",memberAlready:"此用戶已是成員",memberSelf:"無法移除自己",
-    memberUidHint:"請輸入 Supabase Authentication 的 User ID。",memberUidLabel:"如何查詢 User ID",
-    memberUidInfo:"Supabase Dashboard → Authentication → Users → 複製目標 UUID",memberAddBtn:"加入",
-    stayRequired:"請選擇飯店並填寫入住/退房日期",
+  "zh-TW": {
+    appName: "劇組交通住宿管理系統", logout: "登出", print: "列印", members: "成員管理", back: "返回", settings: "專案設定",
+    loginTitle: "請登入", loginEmail: "電子郵件", loginPw: "密碼", loginBtn: "登入", loginHint: "存取權限由管理員邀請授予",
+    registerTitle: "新帳號申請", registerBtn: "申請登入", registerName: "姓名（選填）", registerMessage: "申請訊息（選填）", registerMessagePh: "所屬・職務等", registerPwConfirm: "確認密碼",
+    verifyTitle: "驗證信已發送", verifyHint: "管理員審核通過後即可存取專案。", verifyContact: "若有急件請聯絡系統管理員。", toLoginBtn: "返回登入",
+    sessionExpiredTitle: "登入已過期", sessionExpiredMsg: "請重新登入以繼續操作。", sessionExpiredBtn: "重新登入",
+    projects: "專案列表", newProject: "新增專案", openProject: "開啟", projectName: "專案名稱", projectDesc: "說明（選填）",
+    create: "建立", creating: "建立中…", cancel: "取消", save: "儲存", edit: "編輯", delete: "刪除", add: "新增",
+    saved: "已儲存", deleted: "已刪除", confirm: "確認",
+    tabStaff: "工作人員", tabFlight: "航班", tabAccommodation: "住宿", tabVehicle: "配車",
+    subStay: "住宿一覽", subHotels: "飯店主檔",
+    staffList: "工作人員列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "飯店清單",
+    progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配車", progressOf: "{done}/{total}",
+    no: "編號", dept: "部門", nameKanji: "姓名（漢字）", nameRoman: "羅馬拼音", importance: "重要度",
+    status: "安排狀態", passport: "護照號碼", dob: "出生年月日", passportExp: "護照效期", diet: "飲食限制", action: "操作", select: "選取",
+    arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩餘不足180天",
+    addStaff: "新增工作人員", editStaff: "編輯工作人員",
+    airline: "航空公司", flightNo: "航班號", cabin: "艙等", pnr: "訂位代號",
+    depAirport: "出發機場", depTerminal: "出發航廈", depTime: "出發時間", arrAirport: "抵達機場", arrTerminal: "抵達航廈", arrTime: "抵達時間",
+    checkedBag: "託運行李", cabinBag: "手提行李", flightDone: "已安排", flightNone: "未安排", addFlight: "輸入",
+    hotel: "飯店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房價/晚", nights: "天數", totalAmt: "合計",
+    roommate: "同室者", singleRoom: "單人房", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同室設定", roommateNone: "無（單人房）",
+    totalCost: "飯店總費用", hotelStats: "各飯店統計", guestCount: "入住人次", roomCount: "客室數", roomOccupancy: "每房人數", totalSpend: "總費用",
+    datePrice: "日期別房價", addRule: "新增規則", addHotel: "新增飯店", date: "日期", basePriceShort: "基本",
+    importanceSurcharge: "重要度加算", holidaySurcharge: "節日加算", finalPrice: "最終房價",
+    hotelName: "飯店名稱", hotelAddr: "地址", hotelTel: "電話", targetHotel: "對象飯店", customRoomType: "自訂房型", breakdownTitle: "每日房價明細",
+    noData: "無資料", searchStaff: "搜尋姓名・部門・護照…", searchFlight: "搜尋姓名・航空公司…", searchHotel: "搜尋姓名・飯店…", searchHotelList: "搜尋飯店名・地址…",
+    allDept: "全部門", role_owner: "擁有者", role_admin: "管理員", role_editor: "編輯", role_viewer: "唯讀", me: "本人",
+    noProject: "尚無專案", noProjectHint: "建立新專案，或等待管理員邀請", firstProject: "建立第一個專案",
+    deleteConfirm: "確定刪除？", deleteProjConfirm: "確定刪除此專案？所有相關資料也會一併刪除。",
+    bulkDeleteConfirm: "確定刪除選取的 {n} 人？此操作無法復原。",
+    staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "與 {name} 同室",
+    searchHotelName: "搜尋飯店…", searchRoomType: "搜尋房型…", searchRoman: "羅馬拼音", searchStatus: "安排狀態", allStatus: "全部狀態",
+    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除篩選", exportCSV: "匯出 CSV",
+    noRequests: "目前沒有待審核申請", pendingBadge: "待審核", approveTitle: "批准申請", approve: "批准", reject: "拒絕", rejectConfirm: "確定拒絕 {email} 的申請？",
+    approveProject: "指定專案", approveRole: "權限角色", approveNote: "批准後可在「成員管理」隨時調整。", confirmApproveBtn: "確認批准", selectProject: "請選擇專案",
+    roleViewerDesc: "唯讀 — 僅能查看", roleEditorDesc: "編輯 — 可新增修改", roleAdminDesc: "管理員 — 可刪除與成員管理",
+    deptCostTitle: "各部門住宿費用", bulkDeleteBtn: "刪除選取", minOneField: "請至少填寫一個欄位", checkoutAfterCheckin: "退房日期必須晚於入住日期",
+    vehicleMgmt: "配車管理", addVehicle: "新增車輛", editVehicle: "編輯車輛", vehicleName: "車輛名稱", vehicleRegion: "地區", vehicleType: "車輛類型",
+    driver: "司機", passengers: "乘客", addPassenger: "新增乘客", unassigned: "未配車人員", unassignedHint: "尚未指派至任何車輛段落",
+    regionTW: "台灣", regionJP: "日本", regionKR: "韓國", regionUS: "美國",
+    typeMinivan: "8人座", typeBus: "20人座", typeTruckCanvas: "2人座卡車帆布", typeTruckSteel: "2人座卡車鐵殼", typeComingSoon: "（待追加）", typeCustom: "自定義",
+    selectDriver: "選擇司機…", selectPassenger: "選擇人員…", noVehicle: "尚無車輛", noVehicleHint: "點擊「新增車輛」開始配置",
+    vehicleNamePlaceholder: "例：導演車、製片車", maxPassengers: "搭車人數上限", passengers_unit: "人",
+    totalVehicles: "車輛數", totalAssigned: "已配車人次", totalUnassigned: "未配車人數", vehicleFull: "已達車輛容量上限",
+    segmentLabel: "段落", segmentPlaceholder: "例：早班去程、收工返程", segmentMorning: "早班", segmentEvening: "收工", segmentTransfer: "轉場", segmentCustom: "自訂",
+    personTrips: "乘車段落", addTrip: "新增乘車段", removeTrip: "移除",
+    errEmailPw: "請輸入電子郵件和密碼", errPwMatch: "密碼不一致", errPwLen: "密碼請輸入6位以上",
+    memberAdd: "新增成員", memberCurrent: "目前成員（{n} 人）", memberAlready: "此用戶已是成員", memberSelf: "無法移除自己",
+    memberUidHint: "請輸入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查詢 User ID", memberUidInfo: "→ Authentication → Users → 複製 UUID", memberAddBtn: "加入",
+    stayRequired: "請選擇飯店並填寫入住/退房日期", syncRoommateTitle: "同步同室者住宿", syncRoommateMsg: "是否同步更新同室者的飯店、房型與日期？",
+    currencySettings: "幣別設定", baseCurrency: "計價幣別", displayCurrency: "顯示幣別", exchangeRate: "匯率", exchangeRateHint: "1 單位計價幣 = ? 顯示幣",
+    currencyTWD: "台幣 TWD", currencyJPY: "日圓 JPY", optional: "選填", loading: "載入中…", resultsCount: "顯示 {n} / {total} 人", activeFilters: "使用中篩選",
+    refresh: "更新", noName: "（未填姓名）", approved: "已批准 {email}", rejected: "已拒絕 {email}",
   },
-  "zh-CN":{
-    appName:"剧组交通住宿管理系统",logout:"登出",print:"打印",members:"成员管理",back:"返回",
-    loginTitle:"请登录",loginEmail:"电子邮件",loginPw:"密码",loginBtn:"登录",loginHint:"访问权限由管理员邀请授予",
-    projects:"项目列表",newProject:"＋ 新建项目",openProject:"打开 →",projectName:"项目名称",projectDesc:"说明（选填）",
-    create:"创建",creating:"创建中…",cancel:"取消",save:"保存",edit:"编辑",delete:"删除",add:"＋ 新增",
-    saved:"✓ 已保存",deleted:"已删除",
-    tabStaff:"👤 工作人员列表",tabFlight:"✈ 航班管理",tabHotel:"🏨 饭店管理",tabHotelList:"📋 饭店列表",
-    staffList:"工作人员列表",flightMgmt:"✈ 航班管理",hotelMgmt:"饭店管理",hotelList:"📋 饭店列表",
-    no:"编号",dept:"部门",nameKanji:"姓名（汉字）",nameRoman:"罗马拼音",importance:"重要度",
-    status:"安排状态",passport:"护照号码",dob:"出生年月日",passportExp:"护照效期",diet:"饮食限制",action:"操作",
-    arranged:"✓ 已安排",partial:"⚡ 部分完成",unArranged:"— 未安排",passportWarn:"⚠ 剩余不足180天",
-    addStaff:"新增工作人员",editStaff:"编辑工作人员",
-    airline:"航空公司",flightNo:"航班号",cabin:"舱位",pnr:"订座代号(PNR)",
-    depAirport:"出发机场",depTerminal:"出发航站",depTime:"出发时间",
-    arrAirport:"到达机场",arrTerminal:"到达航站",arrTime:"到达时间",
-    checkedBag:"托运行李",cabinBag:"手提行李",flightDone:"✓ 已安排",flightNone:"未安排",addFlight:"＋ 录入",
-    hotel:"饭店",roomType:"房型",checkIn:"入住日期",checkOut:"退房日期",
-    basePrice:"基本房价($/晚)",nights:"住宿天数",totalAmt:"合计金额($)",
-    roommate:"同住者",singleRoom:"单人间",hotelDone:"✓ 已安排",hotelNone:"未安排",
-    roommateSet:"同住设置",roommateNone:"无（单人间）",
-    totalCost:"🏨 饭店总费用（全员合计）",
-    hotelStats:"📊 各饭店统计",guestCount:"入住人数",roomCount:"客房数",totalSpend:"总费用",
-    datePrice:"📅 日期别房价设置",addRule:"＋ 新增规则",addHotel:"＋ 新增饭店",
-    date:"日期",basePriceShort:"基本",importanceSurcharge:"重要度加算",holidaySurcharge:"节日加算",finalPrice:"最终房价",
-    hotelName:"饭店名称",hotelAddr:"地址",hotelTel:"电话",
-    targetHotel:"对象饭店",customRoomType:"自定义房型",breakdownTitle:"每日房价明细",
-    noData:"无数据",searchStaff:"搜索姓名・部门・护照…",searchFlight:"搜索姓名・航空公司…",
-    searchHotel:"搜索姓名・饭店…",searchHotelList:"搜索饭店名・地址・电话…",
-    allDept:"全部门",role_owner:"👑 所有者",role_admin:"管理员",role_editor:"编辑",role_viewer:"只读",
-    noProject:"暂无项目",noProjectHint:"创建新项目，或等待管理员邀请",firstProject:"＋ 创建第一个项目",
-    deleteConfirm:"确定删除？",deleteProjConfirm:"确定删除此项目？所有相关数据也会一并删除。",
-    staySegment:"住宿段落",addSegment:"＋ 新增住宿段",
-    roommateWith:"与 {name} 同住",
-    searchHotelName:"搜索饭店名称…",searchRoomType:"搜索房型…",
-    searchRoman:"罗马拼音",searchStatus:"安排状态",allStatus:"全部状态",
-    arranged_short:"已安排",unArranged_short:"未安排",partial_short:"部分完成",
-    clearFilter:"✕ 清除",exportCSV:"⬇ 导出 CSV",passportAlert:"⚠ 护照即将到期",noRequests:"暂无待审核申请",pendingBadge:"待审核",approveTitle:"批准申请",approveProject:"指定项目",approveRole:"权限角色",approveNote:"批准后可在「成员管理」随时调整。",confirmApproveBtn:"确认批准",deptCostTitle:"各部门住宿费用",bulkDeleteBtn:"删除选取",minOneField:"请至少填写一个栏位",checkoutAfterCheckin:"退房日期必须晚于入住日期",
-    errEmailPw:"请输入电子邮件和密码",errPwMatch:"密码不一致",errPwLen:"密码请输入6位以上",
-    registerTitle:"新账号申请",registerBtn:"申请登录",verifyTitle:"验证邮件已发送",verifyHint:"管理员审核通过后即可访问项目。",toLoginBtn:"返回登录界面",
-    memberAdd:"新增成员",memberCurrent:"当前成员（{n} 人）",memberAlready:"该用户已是成员",memberSelf:"无法移除自己",
-    memberUidHint:"请输入 Supabase Authentication 的 User ID。",memberUidLabel:"如何查询 User ID",
-    memberUidInfo:"Supabase Dashboard → Authentication → Users → 复制目标 UUID",memberAddBtn:"加入",
-    stayRequired:"请选择饭店并填写入住/退房日期",
+  "zh-CN": {
+    appName: "剧组交通住宿管理系统", logout: "登出", print: "打印", members: "成员管理", back: "返回", settings: "项目设定",
+    loginTitle: "请登录", loginEmail: "电子邮件", loginPw: "密码", loginBtn: "登录", loginHint: "访问权限由管理员邀请授予",
+    registerTitle: "新账号申请", registerBtn: "申请登录", registerName: "姓名（选填）", registerMessage: "申请消息（选填）", registerMessagePh: "所属・职务等", registerPwConfirm: "确认密码",
+    verifyTitle: "验证邮件已发送", verifyHint: "管理员审核通过后即可访问项目。", verifyContact: "如有急件请联系系统管理员。", toLoginBtn: "返回登录",
+    sessionExpiredTitle: "登录已过期", sessionExpiredMsg: "请重新登录以继续操作。", sessionExpiredBtn: "重新登录",
+    projects: "项目列表", newProject: "新建项目", openProject: "打开", projectName: "项目名称", projectDesc: "说明（选填）",
+    create: "创建", creating: "创建中…", cancel: "取消", save: "保存", edit: "编辑", delete: "删除", add: "新增",
+    saved: "已保存", deleted: "已删除", confirm: "确认",
+    tabStaff: "工作人员", tabFlight: "航班", tabAccommodation: "住宿", tabVehicle: "配车",
+    subStay: "住宿一览", subHotels: "饭店主档",
+    staffList: "工作人员列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "饭店列表",
+    progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配车", progressOf: "{done}/{total}",
+    no: "编号", dept: "部门", nameKanji: "姓名（汉字）", nameRoman: "罗马拼音", importance: "重要度",
+    status: "安排状态", passport: "护照号码", dob: "出生年月日", passportExp: "护照效期", diet: "饮食限制", action: "操作", select: "选取",
+    arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩余不足180天",
+    addStaff: "新增工作人员", editStaff: "编辑工作人员",
+    airline: "航空公司", flightNo: "航班号", cabin: "舱位", pnr: "订座代号",
+    depAirport: "出发机场", depTerminal: "出发航站", depTime: "出发时间", arrAirport: "到达机场", arrTerminal: "到达航站", arrTime: "到达时间",
+    checkedBag: "托运行李", cabinBag: "手提行李", flightDone: "已安排", flightNone: "未安排", addFlight: "录入",
+    hotel: "饭店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房价/晚", nights: "天数", totalAmt: "合计",
+    roommate: "同住者", singleRoom: "单人间", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同住设置", roommateNone: "无（单人间）",
+    totalCost: "饭店总费用", hotelStats: "各饭店统计", guestCount: "入住人次", roomCount: "客房数", roomOccupancy: "每房人数", totalSpend: "总费用",
+    datePrice: "日期别房价", addRule: "新增规则", addHotel: "新增饭店", date: "日期", basePriceShort: "基本",
+    importanceSurcharge: "重要度加算", holidaySurcharge: "节日加算", finalPrice: "最终房价",
+    hotelName: "饭店名称", hotelAddr: "地址", hotelTel: "电话", targetHotel: "对象饭店", customRoomType: "自定义房型", breakdownTitle: "每日房价明细",
+    noData: "无数据", searchStaff: "搜索姓名・部门・护照…", searchFlight: "搜索姓名・航空公司…", searchHotel: "搜索姓名・饭店…", searchHotelList: "搜索饭店名・地址…",
+    allDept: "全部门", role_owner: "所有者", role_admin: "管理员", role_editor: "编辑", role_viewer: "只读", me: "本人",
+    noProject: "暂无项目", noProjectHint: "创建新项目，或等待管理员邀请", firstProject: "创建第一个项目",
+    deleteConfirm: "确定删除？", deleteProjConfirm: "确定删除此项目？所有相关数据也会一并删除。",
+    bulkDeleteConfirm: "确定删除选取的 {n} 人？此操作无法复原。",
+    staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "与 {name} 同住",
+    searchHotelName: "搜索饭店…", searchRoomType: "搜索房型…", searchRoman: "罗马拼音", searchStatus: "安排状态", allStatus: "全部状态",
+    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除筛选", exportCSV: "导出 CSV",
+    noRequests: "暂无待审核申请", pendingBadge: "待审核", approveTitle: "批准申请", approve: "批准", reject: "拒绝", rejectConfirm: "确定拒绝 {email} 的申请？",
+    approveProject: "指定项目", approveRole: "权限角色", approveNote: "批准后可在「成员管理」随时调整。", confirmApproveBtn: "确认批准", selectProject: "请选择项目",
+    roleViewerDesc: "只读 — 仅能查看", roleEditorDesc: "编辑 — 可新增修改", roleAdminDesc: "管理员 — 可删除与成员管理",
+    deptCostTitle: "各部门住宿费用", bulkDeleteBtn: "删除选取", minOneField: "请至少填写一个栏位", checkoutAfterCheckin: "退房日期必须晚于入住日期",
+    vehicleMgmt: "配车管理", addVehicle: "新增车辆", editVehicle: "编辑车辆", vehicleName: "车辆名称", vehicleRegion: "地区", vehicleType: "车辆类型",
+    driver: "司机", passengers: "乘客", addPassenger: "新增乘客", unassigned: "未配车人员", unassignedHint: "尚未指派至任何车辆段落",
+    regionTW: "台湾", regionJP: "日本", regionKR: "韩国", regionUS: "美国",
+    typeMinivan: "8座", typeBus: "20座", typeTruckCanvas: "2座卡车帆布", typeTruckSteel: "2座卡车铁壳", typeComingSoon: "（待追加）", typeCustom: "自定义",
+    selectDriver: "选择司机…", selectPassenger: "选择人员…", noVehicle: "暂无车辆", noVehicleHint: "点击「新增车辆」开始配置",
+    vehicleNamePlaceholder: "例：导演车、制片车", maxPassengers: "乘坐人数上限", passengers_unit: "人",
+    totalVehicles: "车辆数", totalAssigned: "已配车人次", totalUnassigned: "未配车人数", vehicleFull: "已达车辆容量上限",
+    segmentLabel: "段落", segmentPlaceholder: "例：早班去程、收工返程", segmentMorning: "早班", segmentEvening: "收工", segmentTransfer: "转场", segmentCustom: "自定义",
+    personTrips: "乘车段落", addTrip: "新增乘车段", removeTrip: "移除",
+    errEmailPw: "请输入电子邮件和密码", errPwMatch: "密码不一致", errPwLen: "密码请输入6位以上",
+    memberAdd: "新增成员", memberCurrent: "当前成员（{n} 人）", memberAlready: "该用户已是成员", memberSelf: "无法移除自己",
+    memberUidHint: "请输入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查询 User ID", memberUidInfo: "→ Authentication → Users → 复制 UUID", memberAddBtn: "加入",
+    stayRequired: "请选择饭店并填写入住/退房日期", syncRoommateTitle: "同步同住者住宿", syncRoommateMsg: "是否同步更新同住者的饭店、房型与日期？",
+    currencySettings: "币别设定", baseCurrency: "计价币别", displayCurrency: "显示币别", exchangeRate: "汇率", exchangeRateHint: "1 单位计价币 = ? 显示币",
+    currencyTWD: "台币 TWD", currencyJPY: "日元 JPY", optional: "选填", loading: "加载中…", resultsCount: "显示 {n} / {total} 人", activeFilters: "使用中筛选",
+    refresh: "更新", noName: "（未填姓名）", approved: "已批准 {email}", rejected: "已拒绝 {email}",
   },
-  en:{
-    appName:"Production Travel & Accommodation System",logout:"Logout",print:"Print",members:"Members",back:"Back",
-    loginTitle:"Please Login",loginEmail:"Email",loginPw:"Password",loginBtn:"Login",loginHint:"Access is granted by admin invitation",
-    projects:"Projects",newProject:"+ New Project",openProject:"Open →",projectName:"Project Name",projectDesc:"Description (optional)",
-    create:"Create",creating:"Creating…",cancel:"Cancel",save:"Save",edit:"Edit",delete:"Delete",add:"+ Add",
-    saved:"✓ Saved",deleted:"Deleted",
-    tabStaff:"👤 Staff List",tabFlight:"✈ Flights",tabHotel:"🏨 Hotels",tabHotelList:"📋 Hotel List",
-    staffList:"Staff List",flightMgmt:"✈ Flight Management",hotelMgmt:"Hotel Management",hotelList:"📋 Hotel List",
-    no:"No.",dept:"Dept",nameKanji:"Name (Kanji)",nameRoman:"Romanized",importance:"Priority",
-    status:"Status",passport:"Passport No.",dob:"Date of Birth",passportExp:"Expiry",diet:"Dietary",action:"Actions",
-    arranged:"✓ Arranged",partial:"⚡ Partial",unArranged:"— Pending",passportWarn:"⚠ Expires within 180 days",
-    addStaff:"Add Staff",editStaff:"Edit Staff",
-    airline:"Airline",flightNo:"Flight No.",cabin:"Cabin",pnr:"PNR",
-    depAirport:"Dep. Airport",depTerminal:"Dep. Terminal",depTime:"Dep. Time",
-    arrAirport:"Arr. Airport",arrTerminal:"Arr. Terminal",arrTime:"Arr. Time",
-    checkedBag:"Checked Bag",cabinBag:"Cabin Bag",flightDone:"✓ Arranged",flightNone:"Pending",addFlight:"+ Input",
-    hotel:"Hotel",roomType:"Room Type",checkIn:"Check-in",checkOut:"Check-out",
-    basePrice:"Base Price ($/night)",nights:"Nights",totalAmt:"Total ($)",
-    roommate:"Roommate",singleRoom:"Single",hotelDone:"✓ Arranged",hotelNone:"Pending",
-    roommateSet:"Roommate Setting",roommateNone:"None (Single)",
-    totalCost:"🏨 Total Hotel Cost (All Staff)",
-    hotelStats:"📊 Hotel Statistics",guestCount:"Guests",roomCount:"Rooms",totalSpend:"Total Cost",
-    datePrice:"📅 Date-based Pricing",addRule:"+ Add Rule",addHotel:"+ Add Hotel",
-    date:"Date",basePriceShort:"Base",importanceSurcharge:"Priority Sur.",holidaySurcharge:"Holiday Sur.",finalPrice:"Final Price",
-    hotelName:"Hotel Name",hotelAddr:"Address",hotelTel:"Phone",
-    targetHotel:"Target Hotel",customRoomType:"Custom Room Type",breakdownTitle:"Daily Breakdown",
-    noData:"No data",searchStaff:"Search name, dept, passport…",searchFlight:"Search name, airline…",
-    searchHotel:"Search name, hotel…",searchHotelList:"Search hotel name, address…",
-    allDept:"All Depts",role_owner:"👑 Owner",role_admin:"Admin",role_editor:"Editor",role_viewer:"Viewer",
-    noProject:"No Projects",noProjectHint:"Create a new project or wait for an admin invitation",firstProject:"+ Create First Project",
-    deleteConfirm:"Confirm delete?",deleteProjConfirm:"Delete this project? All related data will be deleted.",
-    staySegment:"Stay Segment",addSegment:"+ Add Stay Segment",
-    roommateWith:"Sharing with {name}",
-    searchHotelName:"Search hotel name…",searchRoomType:"Search room type…",
-    searchRoman:"Romanized",searchStatus:"Status",allStatus:"All Status",
-    arranged_short:"Arranged",unArranged_short:"Pending",partial_short:"Partial",
-    clearFilter:"✕ Clear",exportCSV:"⬇ Export CSV",passportAlert:"⚠ Passport expiring soon",noRequests:"No pending requests",pendingBadge:"Pending",approveTitle:"Approve Request",approveProject:"Assign Project",approveRole:"Role",approveNote:"Role can be changed later in Member Management.",confirmApproveBtn:"Confirm Approve",deptCostTitle:"Cost by Department",bulkDeleteBtn:"Delete Selected",minOneField:"Please fill in at least one field",checkoutAfterCheckin:"Check-out must be after check-in",
-    errEmailPw:"Please enter email and password",errPwMatch:"Passwords do not match",errPwLen:"Password must be at least 6 characters",
-    registerTitle:"Register Account",registerBtn:"Request Access",verifyTitle:"Verification Email Sent",verifyHint:"You can access projects after admin approval.",toLoginBtn:"Back to Login",
-    memberAdd:"Add Member",memberCurrent:"Current Members ({n})",memberAlready:"This user is already a member",memberSelf:"Cannot remove yourself",
-    memberUidHint:"Enter the User ID from Supabase Authentication.",memberUidLabel:"How to find User ID",
-    memberUidInfo:"Supabase Dashboard → Authentication → Users → Copy target UUID",memberAddBtn:"Add",
-    stayRequired:"Please select a hotel and fill in check-in/check-out dates",
+  en: {
+    appName: "Production Travel & Accommodation", logout: "Logout", print: "Print", members: "Members", back: "Back", settings: "Settings",
+    loginTitle: "Please Login", loginEmail: "Email", loginPw: "Password", loginBtn: "Login", loginHint: "Access is granted by admin invitation",
+    registerTitle: "Register Account", registerBtn: "Request Access", registerName: "Name (optional)", registerMessage: "Message (optional)", registerMessagePh: "Dept, role, etc.", registerPwConfirm: "Confirm password",
+    verifyTitle: "Verification Email Sent", verifyHint: "You can access projects after admin approval.", verifyContact: "For urgent requests, contact your system administrator.", toLoginBtn: "Back to Login",
+    sessionExpiredTitle: "Session Expired", sessionExpiredMsg: "Please sign in again to continue.", sessionExpiredBtn: "Sign In Again",
+    projects: "Projects", newProject: "New Project", openProject: "Open", projectName: "Project Name", projectDesc: "Description (optional)",
+    create: "Create", creating: "Creating…", cancel: "Cancel", save: "Save", edit: "Edit", delete: "Delete", add: "Add",
+    saved: "Saved", deleted: "Deleted", confirm: "Confirm",
+    tabStaff: "Staff", tabFlight: "Flights", tabAccommodation: "Hotels", tabVehicle: "Vehicles",
+    subStay: "Stay List", subHotels: "Hotel Master",
+    staffList: "Staff List", flightMgmt: "Flight Management", hotelMgmt: "Accommodation", hotelList: "Hotel List",
+    progressFlight: "Flights", progressHotel: "Hotels", progressVehicle: "Unassigned", progressOf: "{done}/{total}",
+    no: "No.", dept: "Dept", nameKanji: "Name", nameRoman: "Romanized", importance: "Priority",
+    status: "Status", passport: "Passport", dob: "DOB", passportExp: "Expiry", diet: "Dietary", action: "Actions", select: "Select",
+    arranged: "Arranged", partial: "Partial", unArranged: "Pending", passportWarn: "Expires within 180 days",
+    addStaff: "Add Staff", editStaff: "Edit Staff",
+    airline: "Airline", flightNo: "Flight No.", cabin: "Cabin", pnr: "PNR",
+    depAirport: "Dep. Airport", depTerminal: "Dep. Terminal", depTime: "Dep. Time", arrAirport: "Arr. Airport", arrTerminal: "Arr. Terminal", arrTime: "Arr. Time",
+    checkedBag: "Checked", cabinBag: "Cabin", flightDone: "Arranged", flightNone: "Pending", addFlight: "Input",
+    hotel: "Hotel", roomType: "Room Type", checkIn: "Check-in", checkOut: "Check-out", basePrice: "Base/night", nights: "Nights", totalAmt: "Total",
+    roommate: "Roommate", singleRoom: "Single", hotelDone: "Arranged", hotelNone: "Pending", roommateSet: "Roommate", roommateNone: "None (Single)",
+    totalCost: "Total Hotel Cost", hotelStats: "Hotel Statistics", guestCount: "Guest-nights", roomCount: "Rooms", roomOccupancy: "Per room", totalSpend: "Total",
+    datePrice: "Date Pricing", addRule: "Add Rule", addHotel: "Add Hotel", date: "Date", basePriceShort: "Base",
+    importanceSurcharge: "Priority Sur.", holidaySurcharge: "Holiday Sur.", finalPrice: "Final",
+    hotelName: "Hotel Name", hotelAddr: "Address", hotelTel: "Phone", targetHotel: "Hotel", customRoomType: "Custom Type", breakdownTitle: "Daily Breakdown",
+    noData: "No data", searchStaff: "Search name, dept…", searchFlight: "Search name, airline…", searchHotel: "Search name, hotel…", searchHotelList: "Search hotels…",
+    allDept: "All Depts", role_owner: "Owner", role_admin: "Admin", role_editor: "Editor", role_viewer: "Viewer", me: "You",
+    noProject: "No Projects", noProjectHint: "Create a project or wait for an invitation", firstProject: "Create First Project",
+    deleteConfirm: "Confirm delete?", deleteProjConfirm: "Delete this project and all related data?",
+    bulkDeleteConfirm: "Delete {n} selected staff? This cannot be undone.",
+    staySegment: "Stay Segment", addSegment: "Add Stay", roommateWith: "With {name}",
+    searchHotelName: "Search hotel…", searchRoomType: "Search room type…", searchRoman: "Romanized", searchStatus: "Status", allStatus: "All",
+    arranged_short: "Done", unArranged_short: "Pending", partial_short: "Partial", clearFilter: "Clear filters", exportCSV: "Export CSV",
+    noRequests: "No pending requests", pendingBadge: "Pending", approveTitle: "Approve", approve: "Approve", reject: "Reject", rejectConfirm: "Reject {email}?",
+    approveProject: "Project", approveRole: "Role", approveNote: "Role can be changed later in Members.", confirmApproveBtn: "Confirm", selectProject: "Select a project",
+    roleViewerDesc: "Viewer — read only", roleEditorDesc: "Editor — edit data", roleAdminDesc: "Admin — delete & members",
+    deptCostTitle: "Cost by Department", bulkDeleteBtn: "Delete Selected", minOneField: "Fill at least one field", checkoutAfterCheckin: "Check-out must be after check-in",
+    vehicleMgmt: "Vehicles", addVehicle: "Add Vehicle", editVehicle: "Edit Vehicle", vehicleName: "Name", vehicleRegion: "Region", vehicleType: "Type",
+    driver: "Driver", passengers: "Passengers", addPassenger: "Add passenger", unassigned: "Unassigned", unassignedHint: "Not on any trip segment",
+    regionTW: "Taiwan", regionJP: "Japan", regionKR: "Korea", regionUS: "USA",
+    typeMinivan: "8-Seater", typeBus: "20-Seater", typeTruckCanvas: "2-Seat Truck (Canvas)", typeTruckSteel: "2-Seat Truck (Steel)", typeComingSoon: "(Soon)", typeCustom: "Custom",
+    selectDriver: "Select driver…", selectPassenger: "Select person…", noVehicle: "No vehicles", noVehicleHint: "Add a vehicle to start",
+    vehicleNamePlaceholder: "e.g. Director car", maxPassengers: "Max onboard", passengers_unit: "pax",
+    totalVehicles: "Vehicles", totalAssigned: "Trip assignments", totalUnassigned: "Unassigned", vehicleFull: "Vehicle at capacity",
+    segmentLabel: "Segment", segmentPlaceholder: "e.g. Morning, Wrap, Transfer", segmentMorning: "Morning", segmentEvening: "Wrap", segmentTransfer: "Transfer", segmentCustom: "Custom",
+    personTrips: "Trip segments", addTrip: "Add segment", removeTrip: "Remove",
+    errEmailPw: "Enter email and password", errPwMatch: "Passwords do not match", errPwLen: "Password must be at least 6 characters",
+    memberAdd: "Add Member", memberCurrent: "Members ({n})", memberAlready: "Already a member", memberSelf: "Cannot remove yourself",
+    memberUidHint: "Enter User ID from Supabase Auth.", memberUidLabel: "Find User ID", memberUidInfo: "→ Authentication → Users → copy UUID", memberAddBtn: "Add",
+    stayRequired: "Select hotel and dates", syncRoommateTitle: "Sync roommates", syncRoommateMsg: "Sync hotel, room type and dates for roommates?",
+    currencySettings: "Currency", baseCurrency: "Base currency", displayCurrency: "Display currency", exchangeRate: "Rate", exchangeRateHint: "1 base = ? display",
+    currencyTWD: "TWD", currencyJPY: "JPY", optional: "Optional", loading: "Loading…", resultsCount: "Showing {n} / {total}", activeFilters: "Active filters",
+    refresh: "Refresh", noName: "(No name)", approved: "Approved {email}", rejected: "Rejected {email}",
   },
-  ko:{
-    appName:"제작진 교통·숙박 관리 시스템",logout:"로그아웃",print:"인쇄",members:"멤버 관리",back:"뒤로",
-    loginTitle:"로그인하세요",loginEmail:"이메일",loginPw:"비밀번호",loginBtn:"로그인",loginHint:"접근 권한은 관리자의 초대로 부여됩니다",
-    projects:"프로젝트 목록",newProject:"＋ 새 프로젝트",openProject:"열기 →",projectName:"프로젝트명",projectDesc:"설명 (선택)",
-    create:"생성",creating:"생성 중…",cancel:"취소",save:"저장",edit:"편집",delete:"삭제",add:"＋ 추가",
-    saved:"✓ 저장됨",deleted:"삭제됨",
-    tabStaff:"👤 스태프 목록",tabFlight:"✈ 항공편",tabHotel:"🏨 호텔",tabHotelList:"📋 호텔 목록",
-    staffList:"스태프 목록",flightMgmt:"✈ 항공편 관리",hotelMgmt:"호텔 관리",hotelList:"📋 호텔 목록",
-    no:"번호",dept:"부서",nameKanji:"이름(한자)",nameRoman:"로마자",importance:"중요도",
-    status:"배정 상태",passport:"여권 번호",dob:"생년월일",passportExp:"만료일",diet:"식이 제한",action:"작업",
-    arranged:"✓ 완료",partial:"⚡ 일부 완료",unArranged:"— 미배정",passportWarn:"⚠ 만료 180일 미만",
-    addStaff:"스태프 추가",editStaff:"스태프 편집",
-    airline:"항공사",flightNo:"편명",cabin:"좌석 등급",pnr:"예약 코드(PNR)",
-    depAirport:"출발 공항",depTerminal:"출발 터미널",depTime:"출발 시각",
-    arrAirport:"도착 공항",arrTerminal:"도착 터미널",arrTime:"도착 시각",
-    checkedBag:"위탁 수하물",cabinBag:"기내 수하물",flightDone:"✓ 완료",flightNone:"미배정",addFlight:"＋ 입력",
-    hotel:"호텔",roomType:"객실 유형",checkIn:"체크인",checkOut:"체크아웃",
-    basePrice:"기본 요금($/박)",nights:"숙박 일수",totalAmt:"합계($)",
-    roommate:"룸메이트",singleRoom:"1인실",hotelDone:"✓ 완료",hotelNone:"미배정",
-    roommateSet:"룸메이트 설정",roommateNone:"없음 (1인실)",
-    totalCost:"🏨 호텔 총비용 (전원 합계)",
-    hotelStats:"📊 호텔별 통계",guestCount:"투숙 인원",roomCount:"객실 수",totalSpend:"총비용",
-    datePrice:"📅 날짜별 요금 설정",addRule:"＋ 규칙 추가",addHotel:"＋ 호텔 추가",
-    date:"날짜",basePriceShort:"기본",importanceSurcharge:"중요도 할증",holidaySurcharge:"특별일 할증",finalPrice:"최종 요금",
-    hotelName:"호텔명",hotelAddr:"주소",hotelTel:"전화",
-    targetHotel:"대상 호텔",customRoomType:"사용자 정의 객실",breakdownTitle:"일별 요금 내역",
-    noData:"데이터 없음",searchStaff:"이름・부서・여권 검색…",searchFlight:"이름・항공사 검색…",
-    searchHotel:"이름・호텔 검색…",searchHotelList:"호텔명・주소・전화 검색…",
-    allDept:"전체 부서",role_owner:"👑 소유자",role_admin:"관리자",role_editor:"편집자",role_viewer:"열람만",
-    noProject:"프로젝트 없음",noProjectHint:"새 프로젝트를 생성하거나 관리자 초대를 기다리세요",firstProject:"＋ 첫 프로젝트 생성",
-    deleteConfirm:"삭제하시겠습니까?",deleteProjConfirm:"이 프로젝트를 삭제하시겠습니까? 관련 데이터도 모두 삭제됩니다.",
-    staySegment:"숙박 구간",addSegment:"＋ 숙박 구간 추가",
-    roommateWith:"{name}과 동실",
-    searchHotelName:"호텔명 검색…",searchRoomType:"객실 유형 검색…",
-    searchRoman:"로마자",searchStatus:"배정 상태",allStatus:"전체 상태",
-    arranged_short:"완료",unArranged_short:"미배정",partial_short:"일부 완료",
-    clearFilter:"✕ 초기화",exportCSV:"⬇ CSV 내보내기",passportAlert:"⚠ 여권 만료 임박",noRequests:"대기 중인 신청 없음",pendingBadge:"검토 중",approveTitle:"신청 승인",approveProject:"프로젝트 지정",approveRole:"권한 역할",approveNote:"멤버 관리에서 언제든지 변경 가능합니다.",confirmApproveBtn:"승인 확인",deptCostTitle:"부서별 숙박 비용",bulkDeleteBtn:"선택 삭제",minOneField:"최소 한 항목을 입력하세요",checkoutAfterCheckin:"퇴실일은 입실일 이후여야 합니다",
-    errEmailPw:"이메일과 비밀번호를 입력해주세요",errPwMatch:"비밀번호가 일치하지 않습니다",errPwLen:"비밀번호는 6자 이상이어야 합니다",
-    registerTitle:"계정 신청",registerBtn:"접근 요청",verifyTitle:"인증 이메일 발송",verifyHint:"관리자 승인 후 프로젝트에 접근할 수 있습니다.",toLoginBtn:"로그인으로 돌아가기",
-    memberAdd:"멤버 추가",memberCurrent:"현재 멤버 ({n}명)",memberAlready:"이미 멤버입니다",memberSelf:"자신을 삭제할 수 없습니다",
-    memberUidHint:"Supabase Authentication의 User ID를 입력하세요.",memberUidLabel:"User ID 확인 방법",
-    memberUidInfo:"Supabase Dashboard → Authentication → Users → UUID 복사",memberAddBtn:"추가",
-    stayRequired:"호텔을 선택하고 체크인/체크아웃 날짜를 입력하세요",
+  ko: {
+    appName: "제작진 교통·숙박 관리", logout: "로그아웃", print: "인쇄", members: "멤버", back: "뒤로", settings: "설정",
+    loginTitle: "로그인", loginEmail: "이메일", loginPw: "비밀번호", loginBtn: "로그인", loginHint: "관리자 초대로 접근 권한이 부여됩니다",
+    registerTitle: "계정 신청", registerBtn: "접근 요청", registerName: "이름 (선택)", registerMessage: "메시지 (선택)", registerMessagePh: "부서, 직무 등", registerPwConfirm: "비밀번호 확인",
+    verifyTitle: "인증 메일 발송", verifyHint: "관리자 승인 후 프로젝트에 접근할 수 있습니다.", verifyContact: "긴급한 경우 시스템 관리자에게 연락하세요.", toLoginBtn: "로그인으로",
+    sessionExpiredTitle: "세션 만료", sessionExpiredMsg: "계속하려면 다시 로그인하세요.", sessionExpiredBtn: "다시 로그인",
+    projects: "프로젝트", newProject: "새 프로젝트", openProject: "열기", projectName: "프로젝트명", projectDesc: "설명 (선택)",
+    create: "생성", creating: "생성 중…", cancel: "취소", save: "저장", edit: "편집", delete: "삭제", add: "추가",
+    saved: "저장됨", deleted: "삭제됨", confirm: "확인",
+    tabStaff: "스태프", tabFlight: "항공", tabAccommodation: "숙박", tabVehicle: "차량",
+    subStay: "숙박 목록", subHotels: "호텔 마스터",
+    staffList: "스태프 목록", flightMgmt: "항공 관리", hotelMgmt: "숙박 관리", hotelList: "호텔 목록",
+    progressFlight: "항공", progressHotel: "숙박", progressVehicle: "미배정", progressOf: "{done}/{total}",
+    no: "번호", dept: "부서", nameKanji: "이름", nameRoman: "로마자", importance: "중요도",
+    status: "상태", passport: "여권", dob: "생년월일", passportExp: "만료", diet: "식이", action: "작업", select: "선택",
+    arranged: "완료", partial: "일부", unArranged: "미배정", passportWarn: "180일 미만",
+    addStaff: "스태프 추가", editStaff: "스태프 편집",
+    airline: "항공사", flightNo: "편명", cabin: "좌석", pnr: "PNR",
+    depAirport: "출발", depTerminal: "터미널", depTime: "출발 시각", arrAirport: "도착", arrTerminal: "터미널", arrTime: "도착 시각",
+    checkedBag: "위탁", cabinBag: "기내", flightDone: "완료", flightNone: "미배정", addFlight: "입력",
+    hotel: "호텔", roomType: "객실", checkIn: "체크인", checkOut: "체크아웃", basePrice: "기본/박", nights: "박数", totalAmt: "합계",
+    roommate: "룸메이트", singleRoom: "1인실", hotelDone: "완료", hotelNone: "미배정", roommateSet: "룸메이트", roommateNone: "없음",
+    totalCost: "호텔 총비용", hotelStats: "호텔별 통계", guestCount: "투숙 인원", roomCount: "객실 수", roomOccupancy: "객실당", totalSpend: "총비용",
+    datePrice: "날짜별 요금", addRule: "규칙 추가", addHotel: "호텔 추가", date: "날짜", basePriceShort: "기본",
+    importanceSurcharge: "중요도", holidaySurcharge: "특별일", finalPrice: "최종",
+    hotelName: "호텔명", hotelAddr: "주소", hotelTel: "전화", targetHotel: "호텔", customRoomType: "사용자 정의", breakdownTitle: "일별 내역",
+    noData: "데이터 없음", searchStaff: "검색…", searchFlight: "검색…", searchHotel: "검색…", searchHotelList: "호텔 검색…",
+    allDept: "전체", role_owner: "소유자", role_admin: "관리자", role_editor: "편집", role_viewer: "열람", me: "본인",
+    noProject: "프로젝트 없음", noProjectHint: "새 프로젝트를 만들거나 초대를 기다리세요", firstProject: "첫 프로젝트",
+    deleteConfirm: "삭제하시겠습니까?", deleteProjConfirm: "프로젝트와 모든 데이터를 삭제하시겠습니까?",
+    bulkDeleteConfirm: "선택한 {n}명을 삭제하시겠습니까?",
+    staySegment: "숙박 구간", addSegment: "구간 추가", roommateWith: "{name}과 동실",
+    searchHotelName: "호텔…", searchRoomType: "객실…", searchRoman: "로마자", searchStatus: "상태", allStatus: "전체",
+    arranged_short: "완료", unArranged_short: "미배정", partial_short: "일부", clearFilter: "필터 초기화", exportCSV: "CSV",
+    noRequests: "대기 신청 없음", pendingBadge: "검토 중", approveTitle: "승인", approve: "승인", reject: "거절", rejectConfirm: "{email} 거절?",
+    approveProject: "프로젝트", approveRole: "역할", approveNote: "멤버 관리에서 변경 가능합니다.", confirmApproveBtn: "확인", selectProject: "프로젝트 선택",
+    roleViewerDesc: "열람만", roleEditorDesc: "편집 가능", roleAdminDesc: "관리자",
+    deptCostTitle: "부서별 비용", bulkDeleteBtn: "선택 삭제", minOneField: "한 항목 이상 입력", checkoutAfterCheckin: "퇴실일은 입실일 이후",
+    vehicleMgmt: "차량 배정", addVehicle: "차량 추가", editVehicle: "차량 편집", vehicleName: "차량명", vehicleRegion: "지역", vehicleType: "유형",
+    driver: "운전기사", passengers: "탑승자", addPassenger: "탑승자 추가", unassigned: "미배정", unassignedHint: "배정된 구간 없음",
+    regionTW: "대만", regionJP: "일본", regionKR: "한국", regionUS: "미국",
+    typeMinivan: "8인승", typeBus: "20인승", typeTruckCanvas: "트럭(천막)", typeTruckSteel: "트럭(철제)", typeComingSoon: "추후", typeCustom: "사용자 정의",
+    selectDriver: "운전기사…", selectPassenger: "탑승자…", noVehicle: "차량 없음", noVehicleHint: "차량 추가",
+    vehicleNamePlaceholder: "예: 감독차", maxPassengers: "定員", passengers_unit: "명",
+    totalVehicles: "차량", totalAssigned: "배정", totalUnassigned: "미배정", vehicleFull: "定員 초과",
+    segmentLabel: "구간", segmentPlaceholder: "예:早班, 收工", segmentMorning: "早班", segmentEvening: "收工", segmentTransfer: "転場", segmentCustom: "カスタム",
+    personTrips: "乗車区間", addTrip: "区間追加", removeTrip: "削除",
+    errEmailPw: "이메일과 비밀번호 입력", errPwMatch: "비밀번호 불일치", errPwLen: "6자 이상",
+    memberAdd: "멤버 추가", memberCurrent: "멤버 ({n})", memberAlready: "이미 멤버", memberSelf: "본인 삭제 불가",
+    memberUidHint: "User ID 입력", memberUidLabel: "User ID 확인", memberUidInfo: "→ Authentication → Users", memberAddBtn: "추가",
+    stayRequired: "호텔과 날짜 입력", syncRoommateTitle: "룸메이트 동기화", syncRoommateMsg: "동기화하시겠습니까?",
+    currencySettings: "通貨", baseCurrency: "基準通貨", displayCurrency: "表示通貨", exchangeRate: "レート", exchangeRateHint: "1 基準 = ? 表示",
+    currencyTWD: "TWD", currencyJPY: "JPY", optional: "任意", loading: "読み込み中…", resultsCount: "{n} / {total}", activeFilters: "フィルター",
+    refresh: "更新", noName: "（名前なし）", approved: "承認 {email}", rejected: "拒否 {email}",
   },
-  ja:{
-    appName:"映像制作 交通・宿泊管理システム",logout:"ログアウト",print:"印刷",members:"メンバー管理",back:"戻る",
-    loginTitle:"ログインしてください",loginEmail:"メールアドレス",loginPw:"パスワード",loginBtn:"ログイン",loginHint:"アクセス権は管理者から招待されます",
-    projects:"プロジェクト一覧",newProject:"＋ 新規プロジェクト",openProject:"開く →",projectName:"プロジェクト名",projectDesc:"説明（任意）",
-    create:"作成",creating:"作成中…",cancel:"キャンセル",save:"保存",edit:"編集",delete:"削除",add:"＋ 追加",
-    saved:"✓ 保存しました",deleted:"削除しました",
-    tabStaff:"👤 スタッフリスト",tabFlight:"✈ フライト管理",tabHotel:"🏨 ホテル管理",tabHotelList:"📋 ホテルリスト",
-    staffList:"スタッフリスト",flightMgmt:"✈ フライト管理",hotelMgmt:"ホテル管理",hotelList:"📋 ホテルリスト",
-    no:"No.",dept:"部署",nameKanji:"氏名（漢字）",nameRoman:"ローマ字",importance:"重要度",
-    status:"手配状況",passport:"パスポート番号",dob:"生年月日",passportExp:"有効期限",diet:"食事制限",action:"操作",
-    arranged:"✓ 手配済",partial:"⚡ 一部完了",unArranged:"— 未手配",passportWarn:"⚠ 残り180日未満",
-    addStaff:"スタッフ追加",editStaff:"スタッフ編集",
-    airline:"航空会社",flightNo:"便名",cabin:"搭乗クラス",pnr:"PNR予約コード",
-    depAirport:"出発空港",depTerminal:"出発ターミナル",depTime:"出発時刻",
-    arrAirport:"到着空港",arrTerminal:"到着ターミナル",arrTime:"到着時刻",
-    checkedBag:"預け荷物",cabinBag:"機内持込",flightDone:"✓ 手配済",flightNone:"未手配",addFlight:"＋ 入力",
-    hotel:"ホテル",roomType:"部屋タイプ",checkIn:"チェックイン",checkOut:"チェックアウト",
-    basePrice:"基本料金（$/泊）",nights:"宿泊日数",totalAmt:"合計金額（$）",
-    roommate:"同室者",singleRoom:"個室",hotelDone:"✓ 手配済",hotelNone:"未手配",
-    roommateSet:"同室設定",roommateNone:"なし（個室）",
-    totalCost:"🏨 ホテル総費用（全員合計）",
-    hotelStats:"📊 ホテル別統計",guestCount:"入室人数",roomCount:"客室数",totalSpend:"総費用",
-    datePrice:"📅 日付別料金設定",addRule:"＋ ルール追加",addHotel:"＋ ホテル追加",
-    date:"日付",basePriceShort:"基本",importanceSurcharge:"重要度加算",holidaySurcharge:"節日加算",finalPrice:"最終料金",
-    hotelName:"ホテル名",hotelAddr:"住所",hotelTel:"電話番号",
-    targetHotel:"対象ホテル",customRoomType:"カスタム部屋タイプ",breakdownTitle:"日別料金内訳",
-    noData:"データなし",searchStaff:"名前・部署・パスポートで検索…",searchFlight:"名前・航空会社で検索…",
-    searchHotel:"名前・ホテルで検索…",searchHotelList:"ホテル名・住所・電話で検索…",
-    allDept:"全部署",role_owner:"👑 オーナー",role_admin:"管理者",role_editor:"編集者",role_viewer:"閲覧のみ",
-    noProject:"プロジェクトなし",noProjectHint:"新しいプロジェクトを作成するか、管理者から招待を受けてください",firstProject:"＋ 最初のプロジェクトを作成",
-    deleteConfirm:"削除しますか？",deleteProjConfirm:"このプロジェクトを削除しますか？関連するすべてのデータも削除されます。",
-    staySegment:"宿泊セグメント",addSegment:"＋ 宿泊セグメント追加",
-    roommateWith:"{name}と同室",
-    searchHotelName:"ホテル名で検索…",searchRoomType:"部屋タイプで検索…",
-    searchRoman:"ローマ字",searchStatus:"手配状況",allStatus:"全て",
-    arranged_short:"手配済",unArranged_short:"未手配",partial_short:"一部完了",
-    clearFilter:"✕ クリア",exportCSV:"⬇ CSVエクスポート",passportAlert:"⚠ パスポート期限間近",noRequests:"申請はありません",pendingBadge:"審査待ち",approveTitle:"申請を承認",approveProject:"プロジェクト指定",approveRole:"権限ロール",approveNote:"メンバー管理でいつでも変更できます。",confirmApproveBtn:"承認を確定",deptCostTitle:"部門別宿泊費用",bulkDeleteBtn:"選択削除",minOneField:"少なくとも1つ入力してください",checkoutAfterCheckin:"チェックアウトはチェックインより後の日付にしてください",
-    errEmailPw:"メールアドレスとパスワードを入力してください",errPwMatch:"パスワードが一致しません",errPwLen:"パスワードは6文字以上にしてください",
-    registerTitle:"新規アカウント登録",registerBtn:"登録して申請する",verifyTitle:"確認メールを送信しました",verifyHint:"管理者の承認後にプロジェクトにアクセスできます。",toLoginBtn:"ログイン画面へ",
-    memberAdd:"メンバー追加",memberCurrent:"現在のメンバー（{n}名）",memberAlready:"このユーザーはすでに追加されています",memberSelf:"自分自身は削除できません",
-    memberUidHint:"Supabase Authentication の User ID を入力してください。",memberUidLabel:"User ID の確認方法",
-    memberUidInfo:"Supabase Dashboard → Authentication → Users → 対象ユーザーの UUID をコピー",memberAddBtn:"追加",
-    stayRequired:"ホテル・チェックイン・チェックアウト日を入力してください",
+  ja: {
+    appName: "制作 交通・宿泊管理", logout: "ログアウト", print: "印刷", members: "メンバー", back: "戻る", settings: "設定",
+    loginTitle: "ログイン", loginEmail: "メール", loginPw: "パスワード", loginBtn: "ログイン", loginHint: "管理者から招待されます",
+    registerTitle: "新規登録", registerBtn: "申請する", registerName: "お名前（任意）", registerMessage: "メッセージ（任意）", registerMessagePh: "所属・役職など", registerPwConfirm: "パスワード確認",
+    verifyTitle: "確認メール送信", verifyHint: "管理者承認後にアクセスできます。", verifyContact: "お急ぎの場合はシステム管理者へご連絡ください。", toLoginBtn: "ログインへ",
+    sessionExpiredTitle: "セッション期限切れ", sessionExpiredMsg: "続行するには再ログインしてください。", sessionExpiredBtn: "再ログイン",
+    projects: "プロジェクト", newProject: "新規", openProject: "開く", projectName: "名称", projectDesc: "説明（任意）",
+    create: "作成", creating: "作成中…", cancel: "キャンセル", save: "保存", edit: "編集", delete: "削除", add: "追加",
+    saved: "保存しました", deleted: "削除しました", confirm: "確定",
+    tabStaff: "スタッフ", tabFlight: "フライト", tabAccommodation: "宿泊", tabVehicle: "配車",
+    subStay: "宿泊一覧", subHotels: "ホテルマスタ",
+    staffList: "スタッフ", flightMgmt: "フライト管理", hotelMgmt: "宿泊管理", hotelList: "ホテル",
+    progressFlight: "フライト", progressHotel: "宿泊", progressVehicle: "未配車", progressOf: "{done}/{total}",
+    no: "No.", dept: "部署", nameKanji: "氏名", nameRoman: "ローマ字", importance: "重要度",
+    status: "状況", passport: "パスポート", dob: "生年月日", passportExp: "有効期限", diet: "食事", action: "操作", select: "選択",
+    arranged: "手配済", partial: "一部", unArranged: "未手配", passportWarn: "180日未満",
+    addStaff: "追加", editStaff: "編集",
+    airline: "航空会社", flightNo: "便名", cabin: "クラス", pnr: "PNR",
+    depAirport: "出発", depTerminal: "T", depTime: "出発", arrAirport: "到着", arrTerminal: "T", arrTime: "到着",
+    checkedBag: "預け", cabinBag: "機内", flightDone: "済", flightNone: "未", addFlight: "入力",
+    hotel: "ホテル", roomType: "部屋", checkIn: "IN", checkOut: "OUT", basePrice: "基本/泊", nights: "泊数", totalAmt: "合計",
+    roommate: "同室者", singleRoom: "個室", hotelDone: "済", hotelNone: "未", roommateSet: "同室設定", roommateNone: "なし",
+    totalCost: "ホテル総費用", hotelStats: "ホテル別", guestCount: "宿泊者数", roomCount: "客室数", roomOccupancy: "1室あたり", totalSpend: "総費用",
+    datePrice: "日付別料金", addRule: "追加", addHotel: "ホテル追加", date: "日付", basePriceShort: "基本",
+    importanceSurcharge: "重要度", holidaySurcharge: "祝日", finalPrice: "最終",
+    hotelName: "ホテル名", hotelAddr: "住所", hotelTel: "電話", targetHotel: "対象", customRoomType: "カスタム", breakdownTitle: "日別",
+    noData: "なし", searchStaff: "検索…", searchFlight: "検索…", searchHotel: "検索…", searchHotelList: "検索…",
+    allDept: "全部署", role_owner: "オーナー", role_admin: "管理者", role_editor: "編集", role_viewer: "閲覧", me: "自分",
+    noProject: "なし", noProjectHint: "作成または招待待ち", firstProject: "最初のプロジェクト",
+    deleteConfirm: "削除しますか？", deleteProjConfirm: "プロジェクトと全データを削除しますか？",
+    bulkDeleteConfirm: "選択した {n} 名を削除しますか？",
+    staySegment: "宿泊区間", addSegment: "区間追加", roommateWith: "{name}と同室",
+    searchHotelName: "ホテル…", searchRoomType: "部屋…", searchRoman: "ローマ字", searchStatus: "状況", allStatus: "すべて",
+    arranged_short: "済", unArranged_short: "未", partial_short: "一部", clearFilter: "クリア", exportCSV: "CSV",
+    noRequests: "申請なし", pendingBadge: "審査中", approveTitle: "承認", approve: "承認", reject: "拒否", rejectConfirm: "{email} を拒否？",
+    approveProject: "プロジェクト", approveRole: "ロール", approveNote: "メンバー管理で変更可", confirmApproveBtn: "確定", selectProject: "プロジェクトを選択",
+    roleViewerDesc: "閲覧のみ", roleEditorDesc: "編集可", roleAdminDesc: "管理者",
+    deptCostTitle: "部署別", bulkDeleteBtn: "選択削除", minOneField: "1項目以上", checkoutAfterCheckin: "OUTはINより後",
+    vehicleMgmt: "配車", addVehicle: "車両追加", editVehicle: "編集", vehicleName: "名称", vehicleRegion: "地域", vehicleType: "タイプ",
+    driver: "ドライバー", passengers: "同乗者", addPassenger: "追加", unassigned: "未配車", unassignedHint: "配車区間なし",
+    regionTW: "台湾", regionJP: "日本", regionKR: "韓国", regionUS: "US",
+    typeMinivan: "8人乗", typeBus: "20人乗", typeTruckCanvas: "トラック幌", typeTruckSteel: "トラック鉄", typeComingSoon: "追加予定", typeCustom: "カスタム",
+    selectDriver: "選択…", selectPassenger: "選択…", noVehicle: "なし", noVehicleHint: "車両を追加",
+    vehicleNamePlaceholder: "例：監督車", maxPassengers: "定員", passengers_unit: "名",
+    totalVehicles: "車両", totalAssigned: "配車", totalUnassigned: "未配車", vehicleFull: "定員超過",
+    segmentLabel: "区間", segmentPlaceholder: "例：早番、終業", segmentMorning: "早番", segmentEvening: "終業", segmentTransfer: "移動", segmentCustom: "カスタム",
+    personTrips: "乗車区間", addTrip: "区間追加", removeTrip: "削除",
+    errEmailPw: "メールとパスワード", errPwMatch: "不一致", errPwLen: "6文字以上",
+    memberAdd: "追加", memberCurrent: "メンバー（{n}）", memberAlready: "追加済", memberSelf: "自分は不可",
+    memberUidHint: "User ID", memberUidLabel: "User ID", memberUidInfo: "→ Authentication → Users", memberAddBtn: "追加",
+    stayRequired: "ホテルと日付", syncRoommateTitle: "同室者同期", syncRoommateMsg: "同室者の宿泊を同期しますか？",
+    currencySettings: "通貨", baseCurrency: "基準", displayCurrency: "表示", exchangeRate: "レート", exchangeRateHint: "1 基準 = ? 表示",
+    currencyTWD: "TWD", currencyJPY: "JPY", optional: "任意", loading: "読込中…", resultsCount: "{n} / {total}", activeFilters: "フィルター",
+    refresh: "更新", noName: "（未記入）", approved: "承認 {email}", rejected: "拒否 {email}",
   },
 };
 
-// ─── helpers ────────────────────────────────────────────────
-const todayStr = () => new Date().toISOString().slice(0, 10);
-const todayDT  = () => { const n = new Date(); n.setSeconds(0, 0); return n.toISOString().slice(0, 16); };
-const fmt = d => d ? new Date(d).toLocaleDateString("zh-TW") : "—";
-const diffDays = (a,b) => { if(!a||!b) return 0; return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000)); };
-const passportWarning = exp => exp && (new Date(exp) - new Date()) / 86400000 < 180;
-const starLabel = s => s===3?"★★★":s===2?"★★":s===1?"★":"";
-const IMPORTANCE  = [3,2,1,0];
-const CABIN       = ["Economy","Premium Economy","Business","First"];
-const ROOM_TYPES  = ["Single","Twin","Double","Suite","Deluxe","Custom"];
-// ─── 日本美学 Design System ─────────────────────────────────
-// Palette: 和紙 washi cream, 墨 sumi ink, 朱 vermillion, 青磁 celadon
+const starLabel = (s) => (s === 3 ? "★★★" : s === 2 ? "★★" : s === 1 ? "★" : "");
+const IMPORTANCE = [3, 2, 1, 0];
+const CABIN = ["Economy", "Premium Economy", "Business", "First"];
+const ROOM_TYPES = ["Single", "Twin", "Double", "Suite", "Deluxe", "Custom"];
+const VEHICLE_REGION_KEYS = ["TW", "JP", "KR", "US"];
+const VEHICLE_TYPES_BY_REGION_KEY = { TW: ["minivan", "bus", "truckCanvas", "truckSteel", "custom"], JP: null, KR: null, US: null };
+const VEHICLE_DEFAULT_CAPACITY = { minivan: 8, bus: 20, truckCanvas: 2, truckSteel: 2, custom: 4 };
+const SEGMENT_PRESETS = ["segmentMorning", "segmentEvening", "segmentTransfer", "segmentCustom"];
+
+// ─── 和美設計語言 v2 ─────────────────────────────────────────
+// 五大原則：間・侘寂・簡素・自然・幽玄
 const J = {
-  // 基本色
-  sumi:    "#1a1a1e",   // 墨 ink black
-  washi:   "#f7f4ef",   // 和紙 warm cream
-  shiro:   "#fafaf8",   // 白 off-white
-  moegi:   "#3d6b5e",   // 萌葱 deep teal-green
-  moegi2:  "#5a9e8c",   // 萌葱 light
-  shu:     "#c0392b",   // 朱 vermillion
-  shu2:    "#e74c3c",   // 朱 light
-  kincha:  "#b8860b",   // 金茶 golden
-  asagi:   "#4a7fa5",   // 浅葱 sky blue
-  fuji:    "#7b6fa5",   // 藤 wisteria
-  nezumi:  "#8c8c96",   // 鼠 grey
-  usunezumi:"#c8c8d0",  // 薄鼠 light grey
-  // 線・罫線
-  keisenL: "rgba(26,26,30,0.08)",
-  keisenM: "rgba(26,26,30,0.14)",
-  // 背景
-  bg:      "#f2efe8",   // 古紙 aged paper
-  bgCard:  "#fafaf8",
+  // ── 基本色 ──
+  sumi:        "#15151a",   // 墨  深藍黑
+  sumiMid:     "#2a2a32",   // 墨中
+  washi:       "#f3f0e8",   // 和紙 暖米白
+  shiro:       "#fdfcf9",   // 白  極淡白
+  // ── 主調：深緑 ──
+  moegi:       "#2b5a4c",   // 萌葱 深
+  moegi2:      "#3e8470",   // 萌葱 中
+  moegi3:      "rgba(43,90,76,.07)",
+  // ── アクセント ──
+  shu:         "#ad3030",   // 朱  深紅
+  shu2:        "#c94040",
+  kincha:      "#8f6318",   // 金茶
+  kincha2:     "rgba(143,99,24,.1)",
+  asagi:       "#2a5e80",   // 浅葱
+  asagi2:      "rgba(42,94,128,.08)",
+  fuji:        "#5a4880",   // 藤
+  // ── グレー系 ──
+  nezumi:      "#70707c",   // 鼠
+  usunezumi:   "#b0b0bc",   // 薄鼠
+  // ── 罫線 ──
+  keisenL:     "rgba(21,21,26,.065)",
+  keisenM:     "rgba(21,21,26,.13)",
+  keisenD:     "rgba(21,21,26,.22)",
+  // ── 地色 ──
+  bg:          "#e6e2d8",   // 古紙
+  bgCard:      "#fdfcf9",
 };
-
 const ROLE_COLORS = {
-  owner:  {background:"rgba(250,220,100,.12)",color:J.kincha,border:"1px solid #f0d080"},
-  admin:  {background:"rgba(192,57,43,.08)",color:J.shu,border:"1px solid #f0a0a0"},
-  editor: {background:"rgba(61,107,94,.1)",color:J.moegi,border:"1px solid #9cbf9c"},
-  viewer: {background:J.washi,color:J.nezumi,border:"1px solid #c0c0cc"},
+  owner:  { background: "rgba(143,99,24,.1)",  color: J.kincha, border: "1px solid rgba(143,99,24,.25)" },
+  admin:  { background: "rgba(173,48,48,.08)", color: J.shu,    border: "1px solid rgba(173,48,48,.22)" },
+  editor: { background: J.moegi3,              color: J.moegi,  border: "1px solid rgba(43,90,76,.2)"   },
+  viewer: { background: "rgba(112,112,124,.06)", color: J.nezumi, border: "1px solid rgba(112,112,124,.2)" },
 };
+const inpStyle = {
+  width: "100%", border: "1px solid " + J.keisenM, borderRadius: 4,
+  padding: "9px 13px", fontSize: 13, outline: "none", boxSizing: "border-box",
+  background: J.shiro, color: J.sumi, fontFamily: "'Noto Sans JP',sans-serif",
+  transition: "border-color .18s, box-shadow .18s",
+};
+const thS = {
+  padding: "11px 16px", textAlign: "left", whiteSpace: "nowrap",
+  fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase",
+  color: "rgba(253,252,249,.75)",
+};
+const tdS = () => ({
+  padding: "11px 16px", fontSize: 12.5,
+  background: J.shiro, borderBottom: "1px solid " + J.keisenL,
+  verticalAlign: "middle", color: J.sumi,
+});
+const tblW = {
+  width: "100%", borderCollapse: "collapse", background: J.shiro,
+  borderRadius: 6, overflow: "hidden",
+  boxShadow: "0 1px 3px rgba(0,0,0,.04), 0 4px 20px rgba(0,0,0,.04), 0 0 0 1px " + J.keisenL,
+};
+const thead = {
+  background: J.sumi,
+  backgroundImage: "linear-gradient(90deg, rgba(43,90,76,.35) 0%, transparent 100%)",
+};
+const eBtn = {
+  marginRight: 5, fontSize: 11.5, padding: "6px 13px", borderRadius: 4,
+  border: "1px solid " + J.keisenM, cursor: "pointer",
+  background: "transparent", color: J.sumi, whiteSpace: "nowrap",
+  transition: "background .15s, border-color .15s",
+};
+const dBtn = {
+  fontSize: 11.5, padding: "6px 13px", borderRadius: 4,
+  border: "1px solid rgba(173,48,48,.28)", cursor: "pointer",
+  background: "rgba(173,48,48,.05)", color: J.shu, whiteSpace: "nowrap",
+  transition: "background .15s",
+};
+const aBtn = {
+  fontSize: 11.5, padding: "6px 13px", borderRadius: 4,
+  border: "1px solid rgba(43,90,76,.3)", cursor: "pointer",
+  background: J.moegi3, color: J.moegi, whiteSpace: "nowrap",
+  transition: "background .15s",
+};
+const pBtn = (dis) => ({
+  background: dis ? J.usunezumi : J.moegi,
+  color: dis ? J.nezumi : J.shiro,
+  border: "none", borderRadius: 4,
+  padding: "9px 22px", fontWeight: 600,
+  cursor: dis ? "not-allowed" : "pointer",
+  fontSize: 13, whiteSpace: "nowrap",
+  transition: "background .18s, box-shadow .18s",
+  boxShadow: dis ? "none" : "0 2px 8px rgba(43,90,76,.22)",
+});
 
-// ─── UI primitives (和の美学) ────────────────────────────────
-// Google Fonts: Noto Serif JP + Noto Sans JP
+function buildRoommateGroups(roommates) {
+  const parent = {};
+  const find = (x) => {
+    if (!parent[x]) parent[x] = x;
+    if (parent[x] !== x) parent[x] = find(parent[x]);
+    return parent[x];
+  };
+  const union = (a, b) => {
+    parent[find(a)] = find(b);
+  };
+  roommates.forEach((r) => union(r.person_id, r.partner_id));
+  const groups = {};
+  Object.keys(parent).forEach((id) => {
+    const root = find(+id);
+    if (!groups[root]) groups[root] = new Set();
+    groups[root].add(+id);
+  });
+  roommates.forEach((r) => {
+    const root = find(r.person_id);
+    if (!groups[root]) groups[root] = new Set();
+    groups[root].add(r.person_id);
+    groups[root].add(r.partner_id);
+  });
+  return groups;
+}
 
-function Modal({title,onClose,children,wide}){
-  return(
-    <div style={{position:"fixed",inset:0,zIndex:50,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(10,10,14,0.6)",backdropFilter:"blur(3px)"}}>
-      <div style={{background:J.shiro,borderRadius:2,boxShadow:"0 32px 80px rgba(0,0,0,.22), 0 0 0 1px "+J.keisenM,width:"100%",maxWidth:wide?720:560,maxHeight:"90vh",overflowY:"auto",margin:"0 16px",border:"1px solid "+J.keisenL}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 28px",borderBottom:"1px solid "+J.keisenL,background:J.washi}}>
-          <h2 style={{fontWeight:600,fontSize:15,color:J.sumi,margin:0,letterSpacing:"0.06em",fontFamily:"'Noto Serif JP',serif"}}>{title}</h2>
-          <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:J.nezumi,lineHeight:1,padding:"2px 6px",borderRadius:2,transition:"color .2s"}} onMouseEnter={e=>e.target.style.color=J.sumi} onMouseLeave={e=>e.target.style.color=J.nezumi}>╳</button>
-        </div>
-        <div style={{padding:"24px 28px"}}>{children}</div>
+function stayRoomKey(stay, personId, groups) {
+  let groupKey = String(personId);
+  Object.entries(groups).forEach(([, members]) => {
+    if (members.has(personId)) groupKey = [...members].sort((a, b) => a - b).join(",");
+  });
+  return `${stay.hotel_id}|${stay.check_in}|${stay.check_out}|${groupKey}`;
+}
+
+function computeHotelStats(stays, roommates) {
+  const groups = buildRoommateGroups(roommates);
+  const byHotel = {};
+  const seenRoom = {};
+  stays.forEach((s) => {
+    if (!s.hotel_id) return;
+    if (!byHotel[s.hotel_id]) byHotel[s.hotel_id] = { guests: 0, rooms: 0, total: 0, roomDetails: [] };
+    byHotel[s.hotel_id].guests += 1;
+    byHotel[s.hotel_id].total += s.total_amount || 0;
+    const rk = stayRoomKey(s, s.person_id, groups);
+    if (!seenRoom[s.hotel_id]) seenRoom[s.hotel_id] = new Set();
+    if (!seenRoom[s.hotel_id].has(rk)) {
+      seenRoom[s.hotel_id].add(rk);
+      byHotel[s.hotel_id].rooms += 1;
+      let occ = 1;
+      Object.values(groups).forEach((members) => {
+        if (members.has(s.person_id)) occ = members.size;
+      });
+      byHotel[s.hotel_id].roomDetails.push({ key: rk, occupancy: occ });
+    }
+  });
+  return byHotel;
+}
+
+function legacyAssignmentsFromVehicle(v) {
+  const out = [];
+  if (v.driver_id) out.push({ person_id: v.driver_id, role: "driver", segment_label: "" });
+  (v.passenger_ids || []).forEach((pid) => out.push({ person_id: pid, role: "passenger", segment_label: "" }));
+  return out;
+}
+
+function vehicleOnboardCount(assignments) {
+  const drivers = assignments.filter((a) => a.role === "driver").length;
+  const pax = assignments.filter((a) => a.role === "passenger").length;
+  return drivers + pax;
+}
+
+function Toast({ msg }) {
+  return msg ? (
+    <div role="status" style={{
+      position: "fixed", top: 28, right: 28, zIndex: 999,
+      background: J.sumi, color: J.washi,
+      borderRadius: 6, padding: "12px 20px",
+      fontSize: 12.5, fontWeight: 500, letterSpacing: "0.01em",
+      borderLeft: "3px solid " + J.moegi2,
+      boxShadow: "0 4px 20px rgba(0,0,0,.22)",
+      animation: "toastIn .22s cubic-bezier(.21,.89,.82,1.1)",
+    }}>{msg}</div>
+  ) : null;
+}
+
+function SessionExpiredModal({ t, onRelogin }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(10,10,14,0.72)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: J.shiro, padding: "36px 40px", borderRadius: 10, maxWidth: 400, width: "90%", boxShadow: "0 8px 48px rgba(0,0,0,.22), 0 0 0 1px " + J.keisenM }}>
+        <div style={{ width: 40, height: 3, background: J.kincha, borderRadius: 2, marginBottom: 20 }} />
+        <h2 style={{ fontSize: 16, marginBottom: 8, color: J.sumi, fontFamily: "'Noto Serif JP',serif", fontWeight: 600 }}>{t.sessionExpiredTitle}</h2>
+        <p style={{ fontSize: 13, color: J.nezumi, marginBottom: 24, lineHeight: 1.7 }}>{t.sessionExpiredMsg}</p>
+        <button onClick={onRelogin} style={{ ...pBtn(false), width: "100%" }}>{t.sessionExpiredBtn}</button>
       </div>
     </div>
   );
 }
 
-function Field({label,children}){
-  return(
-    <div style={{marginBottom:14}}>
-      <label style={{display:"block",fontSize:10,fontWeight:600,color:J.nezumi,marginBottom:5,letterSpacing:"0.12em",textTransform:"uppercase"}}>{label}</label>
+function Modal({ title, onClose, children, wide }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,14,0.68)", backdropFilter: "blur(3px)" }}>
+      <div style={{
+        background: J.shiro, borderRadius: 10, width: "100%",
+        maxWidth: wide ? 760 : 580, maxHeight: "92vh", overflowY: "auto",
+        margin: "0 16px",
+        boxShadow: "0 8px 48px rgba(0,0,0,.22), 0 0 0 1px " + J.keisenL,
+        animation: "modalIn .2s cubic-bezier(.21,.89,.82,1.06)",
+      }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "20px 28px", borderBottom: "1px solid " + J.keisenL,
+          background: J.washi, borderRadius: "10px 10px 0 0",
+        }}>
+          <h2 style={{ fontWeight: 600, fontSize: 15, color: J.sumi, margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{title}</h2>
+          <button type="button" aria-label="close" onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: J.usunezumi, lineHeight: 1, padding: "4px 6px", borderRadius: 4 }}>×</button>
+        </div>
+        <div style={{ padding: "26px 28px" }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{
+        display: "block", fontSize: 9.5, fontWeight: 700, color: J.nezumi,
+        marginBottom: 6, letterSpacing: "0.18em", textTransform: "uppercase",
+      }}>{label}</label>
       {children}
     </div>
   );
 }
 
-const inpStyle={width:"100%",border:"1px solid "+J.keisenM,borderRadius:2,padding:"9px 12px",fontSize:13,outline:"none",boxSizing:"border-box",background:J.shiro,color:J.sumi,transition:"border-color .2s",fontFamily:"'Noto Sans JP',sans-serif"};
-const thS={padding:"10px 14px",textAlign:"left",whiteSpace:"nowrap",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase"};
-const tdS=i=>({padding:"10px 14px",fontSize:12,background:i%2===0?J.shiro:J.washi,borderBottom:"1px solid "+J.keisenL,verticalAlign:"middle",color:J.sumi});
-const tblW={width:"100%",borderCollapse:"collapse",background:J.shiro,borderRadius:2,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,.06), 0 0 0 1px "+J.keisenL};
-const thead={background:J.sumi,color:J.washi};
-const eBtn={marginRight:6,fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",background:J.shiro,color:J.sumi,whiteSpace:"nowrap",letterSpacing:"0.04em",transition:"all .15s"};
-const dBtn={fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid rgba(192,57,43,.3)",cursor:"pointer",background:"rgba(192,57,43,.05)",color:J.shu,whiteSpace:"nowrap",letterSpacing:"0.04em"};
-const aBtn={fontSize:11,padding:"5px 12px",borderRadius:2,border:"1px solid rgba(61,107,94,.35)",cursor:"pointer",background:"rgba(61,107,94,.08)",color:J.moegi,whiteSpace:"nowrap",letterSpacing:"0.04em"};
-const pBtn=(dis)=>({background:dis?J.usunezumi:J.moegi,color:dis?J.nezumi:J.washi,border:"none",borderRadius:2,padding:"9px 20px",fontWeight:600,cursor:dis?"not-allowed":"pointer",fontSize:13,whiteSpace:"nowrap",letterSpacing:"0.06em",transition:"background .2s"});
-
-function Toast({msg}){ return msg?<div style={{position:"fixed",top:24,right:24,zIndex:999,background:J.sumi,color:J.washi,borderRadius:2,padding:"11px 22px",fontSize:12,fontWeight:600,boxShadow:"0 8px 32px rgba(0,0,0,.25)",letterSpacing:"0.06em",borderLeft:"3px solid "+J.moegi2}}>{msg}</div>:null; }
-function useToast(){ const [m,setM]=useState(""); const show=useCallback(s=>{setM(s);setTimeout(()=>setM(""),3000);},[]);return[m,show]; }
-
-// 中優先8: 搜尋高亮 helper
-function Highlight({text,query}){
-  if(!query||!text) return <span>{text||""}</span>;
-  const idx=String(text).toLowerCase().indexOf(query.toLowerCase());
-  if(idx<0) return <span>{text}</span>;
-  return <span>{String(text).slice(0,idx)}<mark style={{background:"rgba(184,134,11,.25)",color:"inherit",borderRadius:1,padding:"0 1px"}}>{String(text).slice(idx,idx+query.length)}</mark>{String(text).slice(idx+query.length)}</span>;
+function Highlight({ text, query }) {
+  if (!query || !text) return <span>{text || ""}</span>;
+  const idx = String(text).toLowerCase().indexOf(query.toLowerCase());
+  if (idx < 0) return <span>{text}</span>;
+  return <span>{String(text).slice(0, idx)}<mark style={{ background: "rgba(143,99,24,.2)", borderRadius: 2, padding: "0 1px" }}>{String(text).slice(idx, idx + query.length)}</mark>{String(text).slice(idx + query.length)}</span>;
 }
 
-function SearchBar({value,onChange,placeholder}){
-  return(
-    <div style={{position:"relative",flex:1,minWidth:160}}>
-      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:J.nezumi,fontSize:13}}>⌕</span>
-      <input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder||"検索…"}
-        style={{...inpStyle,paddingLeft:32,borderRadius:2}}/>
+function SearchBar({ value, onChange, placeholder }) {
+  return (
+    <div style={{ position: "relative", flex: 1, minWidth: 160 }}>
+      <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: J.usunezumi, pointerEvents: "none", lineHeight: 1 }}>⌕</span>
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        style={{ ...inpStyle, paddingLeft: 28 }} aria-label={placeholder} className="wa-input" />
     </div>
   );
 }
 
-function DeptFilter({depts,value,onChange,allLabel}){
-  return(
-    <select value={value} onChange={e=>onChange(e.target.value)}
-      style={{...inpStyle,minWidth:110,width:"auto",cursor:"pointer"}}>
-      <option value="">{allLabel||"全部門"}</option>
-      {depts.map(d=><option key={d} value={d}>{d}</option>)}
+function DeptFilter({ depts, value, onChange, allLabel }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)}
+      style={{ ...inpStyle, minWidth: 110, width: "auto" }} aria-label={allLabel} className="wa-input">
+      <option value="">{allLabel}</option>
+      {depts.map((d) => <option key={d} value={d}>{d}</option>)}
     </select>
   );
 }
 
-function LangSwitcher({lang,onChange}){
-  return(
-    <select value={lang} onChange={e=>onChange(e.target.value)}
-      style={{background:"rgba(250,250,248,0.12)",color:J.washi,border:"1px solid rgba(250,250,248,.25)",borderRadius:2,padding:"6px 10px",fontSize:12,cursor:"pointer",outline:"none",letterSpacing:"0.04em"}}>
-      {Object.entries(LANGS).map(([k,v])=><option key={k} value={k} style={{background:"#1a1a1e",color:"#fafaf8"}}>{v}</option>)}
+function LangSwitcher({ lang, onChange }) {
+  return (
+    <select value={lang} onChange={(e) => onChange(e.target.value)} aria-label="Language"
+      style={{ background: "rgba(253,252,249,.1)", color: J.washi, border: "1px solid rgba(253,252,249,.2)", borderRadius: 4, padding: "6px 10px", fontSize: 11.5, fontFamily: "'Noto Sans JP',sans-serif", cursor: "pointer" }}>
+      {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k} style={{ background: J.sumi }}>{v}</option>)}
     </select>
   );
 }
 
-// ─── Forms ───────────────────────────────────────────────────
-function PersonForm({init,onSave,onClose,t}){
-  const blank={dept:"",name_kanji:"",last_roman:"",first_roman:"",importance:0,passport:"",dob:"",passport_exp:"",diet:""};
-  const [f,setF]=useState(init?{...blank,...init}:blank);
-  const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
-  // 只要填寫部門、姓名漢字、羅馬拼音姓、羅馬拼音名其中一個即可儲存
-  const canSave=[f.dept,f.name_kanji,f.last_roman,f.first_roman].some(v=>(v||"").trim()!=="");
-  return(
-    <div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        <Field label={t.dept}><input style={inpStyle} value={f.dept} onChange={set("dept")} maxLength={50}/></Field>
-        <Field label={t.nameKanji}><input style={inpStyle} value={f.name_kanji} onChange={set("name_kanji")} maxLength={50}/></Field>
-        <Field label={`${t.nameRoman}（姓）`}><input style={inpStyle} value={f.last_roman} onChange={set("last_roman")}/></Field>
-        <Field label={`${t.nameRoman}（名）`}><input style={inpStyle} value={f.first_roman} onChange={set("first_roman")}/></Field>
-        <Field label={t.importance}>
-          <select style={inpStyle} value={f.importance} onChange={e=>setF(p=>({...p,importance:+e.target.value}))}>
-            {IMPORTANCE.map(i=><option key={i} value={i}>{i===0?"—":starLabel(i)}</option>)}
-          </select>
-        </Field>
-        <Field label={<span>{t.passport} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.passport||""} onChange={set("passport")} maxLength={20}/></Field>
-        <Field label={<span>{t.dob} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input type="date" style={inpStyle} value={f.dob||""} onChange={set("dob")}/></Field>
-        <Field label={<span>{t.passportExp} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}>
-          <input type="date" style={{...inpStyle,...(passportWarning(f.passport_exp)?{borderColor:J.shu,color:J.shu}:{})}} value={f.passport_exp||""} onChange={set("passport_exp")}/>
-          {passportWarning(f.passport_exp)&&<p style={{color:J.shu,fontSize:10,marginTop:4,letterSpacing:"0.04em"}}>{t.passportWarn}</p>}
-        </Field>
-        <Field label={<span>{t.diet} <span style={{fontSize:10,color:J.usunezumi,fontWeight:400}}>Optional</span></span>}><input style={inpStyle} value={f.diet||""} onChange={set("diet")} maxLength={100}/></Field>
-      </div>
-      {!canSave&&<p style={{fontSize:11,color:J.shu,marginTop:10,letterSpacing:"0.04em"}}>{`※ ${t.minOneField}`}</p>}
-      <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
-        <button onClick={()=>canSave&&onSave(f)} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
-      </div>
+function FilterChips({ chips, onClear, t }) {
+  if (!chips.length) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", marginBottom: 12 }}>
+      <span style={{ fontSize: 9.5, fontWeight: 700, color: J.usunezumi, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t.activeFilters}</span>
+      {chips.map((c) => (
+        <span key={c.key} style={{ fontSize: 11, padding: "3px 10px", background: J.kincha2, color: J.kincha, border: "1px solid rgba(143,99,24,.2)", borderRadius: 20 }}>{c.label}</span>
+      ))}
+      <button type="button" onClick={onClear} style={{ ...eBtn, margin: 0, fontSize: 10.5, borderRadius: 20, padding: "3px 10px" }}>{t.clearFilter}</button>
     </div>
   );
 }
 
-function FlightForm({init,onSave,onClose,t}){
-  const blank={airline:"",flight_no:"",cabin:"Economy",pnr:"",dep_airport:"",dep_terminal:"",dep_time:todayDT(),arr_airport:"",arr_terminal:"",arr_time:todayDT(),checked_bag:"",cabin_bag:""};
-  const [f,setF]=useState(init?{...blank,...init}:blank);
-  const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
-  return(
-    <div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        <Field label={t.airline}><input style={inpStyle} value={f.airline} onChange={set("airline")}/></Field>
-        <Field label={t.flightNo}><input style={inpStyle} value={f.flight_no} onChange={set("flight_no")}/></Field>
-        <Field label={t.cabin}><select style={inpStyle} value={f.cabin} onChange={set("cabin")}>{CABIN.map(c=><option key={c}>{c}</option>)}</select></Field>
-        <Field label={t.pnr}><input style={inpStyle} value={f.pnr} onChange={set("pnr")}/></Field>
-        <Field label={t.depAirport}><input style={inpStyle} value={f.dep_airport} onChange={set("dep_airport")}/></Field>
-        <Field label={t.depTerminal}><input style={inpStyle} value={f.dep_terminal} onChange={set("dep_terminal")}/></Field>
-        <Field label={t.depTime}><input type="datetime-local" style={inpStyle} value={f.dep_time||""} onChange={set("dep_time")}/></Field>
-        <Field label={t.arrAirport}><input style={inpStyle} value={f.arr_airport} onChange={set("arr_airport")}/></Field>
-        <Field label={t.arrTerminal}><input style={inpStyle} value={f.arr_terminal} onChange={set("arr_terminal")}/></Field>
-        <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f.arr_time||""} onChange={set("arr_time")}/></Field>
-        <Field label={t.checkedBag}><input style={inpStyle} value={f.checked_bag} onChange={set("checked_bag")} placeholder="23kg×2"/></Field>
-        <Field label={t.cabinBag}><input style={inpStyle} value={f.cabin_bag} onChange={set("cabin_bag")} placeholder="10kg"/></Field>
-      </div>
-      <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
-        <button onClick={()=>onSave(f)} style={pBtn(false)}>{t.save}</button>
-      </div>
-    </div>
-  );
-}
-
-function HotelStayForm({init,hotels,pricingRules,onSave,onClose,t}){
-  const blank={hotel_id:"",room_type:"Single",room_custom:"",check_in:todayStr(),check_out:(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().slice(0,10);})(),base_price:"",stay_label:""};
-  const [f,setF]=useState(init?{...blank,...init,hotel_id:String(init.hotel_id||"")}:blank);
-  const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
-  const nights=diffDays(f.check_in,f.check_out);
-
-  const {totalAmount,breakdown}=useMemo(()=>{
-    if(!f.check_in||!f.check_out||nights===0) return{totalAmount:0,breakdown:[]};
-    const roomLabel=f.room_type==="Custom"?f.room_custom:f.room_type;
-    let total=0;const bd=[];
-    for(let i=0;i<nights;i++){
-      const d=new Date(f.check_in);d.setDate(d.getDate()+i);
-      const ds=d.toISOString().slice(0,10);
-      const rule=pricingRules.find(r=>+r.hotel_id===+f.hotel_id&&r.date===ds&&
-        (r.room_type===roomLabel||(r.room_type==="Custom"&&r.room_custom===roomLabel)));
-      const price=rule?(+rule.final_price||0):(+f.base_price||0);
-      total+=price;bd.push({date:ds,price,fromRule:!!rule});
-    }
-    return{totalAmount:total,breakdown:bd};
-  },[f,nights,pricingRules]);
-
-  const canSave=!!f.hotel_id&&!!f.check_in&&!!f.check_out;
-  return(
-    <div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        <Field label={t.staySegment}><input style={inpStyle} value={f.stay_label} onChange={set("stay_label")} placeholder="例：勘景期、拍攝期…"/></Field>
-        <Field label={t.hotel}>
-          <select style={inpStyle} value={f.hotel_id} onChange={set("hotel_id")}>
-            <option value="">-- {t.hotel} --</option>
-            {hotels.map(h=><option key={h.id} value={String(h.id)}>{h.name}</option>)}
-          </select>
-        </Field>
-        <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={set("room_type")}>{ROOM_TYPES.map(r=><option key={r}>{r}</option>)}</select></Field>
-        {f.room_type==="Custom"&&<Field label={t.customRoomType}><input style={inpStyle} value={f.room_custom} onChange={set("room_custom")}/></Field>}
-        <Field label={t.checkIn}><input type="date" style={inpStyle} value={f.check_in||""} onChange={set("check_in")}/></Field>
-        <Field label={t.checkOut}><input type="date" style={inpStyle} value={f.check_out||""} onChange={set("check_out")}/></Field>
-        <Field label={t.basePrice}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")} placeholder="0"/></Field>
-        <Field label={t.nights}><input style={{...inpStyle,background:J.washi,textAlign:"center"}} value={nights||""} readOnly/></Field>
-        <Field label={t.totalAmt}><input style={inpStyle} value={totalAmount?`$${totalAmount.toLocaleString()}`:"—"} readOnly style={{background:J.washi,fontWeight:700,color:J.asagi}}/></Field>
-      </div>
-      {breakdown.length>0&&(
-        <div style={{marginTop:10,background:J.washi,borderRadius:8,padding:10}}>
-          <div style={{fontSize:9,fontWeight:600,color:J.nezumi,marginBottom:6,letterSpacing:"0.14em",textTransform:"uppercase"}}>{t.breakdownTitle}</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-            {breakdown.map(b=>(
-              <span key={b.date} style={{fontSize:10,padding:"3px 8px",borderRadius:1,background:b.fromRule?"rgba(74,127,165,.1)":J.washi,color:b.fromRule?J.asagi:J.nezumi,border:b.fromRule?"1px solid rgba(74,127,165,.3)":"1px solid "+J.keisenL}}>
-                {b.date.slice(5)} ${b.price.toLocaleString()}{b.fromRule?" *":""}
+function ProgressBar({ t, stats }) {
+  const items = [
+    { label: t.progressFlight, done: stats.flightDone, total: stats.total, color: J.asagi },
+    { label: t.progressHotel, done: stats.hotelDone, total: stats.total, color: J.kincha },
+    { label: t.progressVehicle, done: stats.vehicleAssigned, total: stats.total, color: J.moegi, inverse: true },
+  ];
+  return (
+    <div style={{ display: "flex", gap: 20, flexWrap: "wrap", padding: "10px 0 4px", fontSize: 11, color: J.nezumi }}>
+      {items.map((it) => {
+        const pct = it.total ? Math.min(100, Math.round((it.done / it.total) * 100)) : 0;
+        return (
+          <div key={it.label} style={{ minWidth: 140 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5, alignItems: "baseline" }}>
+              <span style={{ fontSize: 10, letterSpacing: "0.08em" }}>{it.label}</span>
+              <span style={{ fontSize: 10.5, fontWeight: 600, color: it.color }}>
+                {it.inverse ? stats.unassignedVehicle : `${it.done} / ${it.total}`}
               </span>
-            ))}
+            </div>
+            <div style={{ height: 3, background: J.keisenL, borderRadius: 2, overflow: "hidden" }}>
+              <div style={{ height: 3, borderRadius: 2, background: it.color, width: `${pct}%`, transition: "width .6s cubic-bezier(.4,0,.2,1)" }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function VehicleForm({ init, onSave, onClose, t }) {
+  const regionLabel = (key) => t["region" + key] || key;
+  const typeLabel = (key) => ({ minivan: t.typeMinivan, bus: t.typeBus, truckCanvas: t.typeTruckCanvas, truckSteel: t.typeTruckSteel, custom: t.typeCustom }[key] || key);
+  const blank = { name: "", regionKey: "TW", typeKey: "minivan", capacity: VEHICLE_DEFAULT_CAPACITY.minivan, customCapacity: 4 };
+  const [f, setF] = useState(() => {
+    if (!init) return blank;
+    const tk = init.type_key || init.typeKey || "minivan";
+    return { ...blank, ...init, regionKey: init.region_key || init.regionKey || "TW", typeKey: tk, capacity: init.capacity || VEHICLE_DEFAULT_CAPACITY[tk] || 4 };
+  });
+  const [saving, setSaving] = useState(false);
+  const [showErr, setShowErr] = useState(false);
+  const typeKeys = VEHICLE_TYPES_BY_REGION_KEY[f.regionKey];
+  const isCustom = f.typeKey === "custom";
+  const canSave = f.name.trim() !== "";
+
+  const handleSave = async (e) => {
+    e?.preventDefault?.();
+    if (!canSave) { setShowErr(true); return; }
+    setSaving(true);
+    try {
+      await onSave({
+        name: f.name.trim(),
+        region: regionLabel(f.regionKey),
+        regionKey: f.regionKey,
+        type: typeLabel(f.typeKey),
+        typeKey: f.typeKey,
+        capacity: isCustom ? f.customCapacity : f.capacity,
+      });
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div>
+      <Field label={t.vehicleName}>
+        <input style={{ ...inpStyle, ...(showErr && !f.name.trim() ? { borderColor: J.shu } : {}) }} value={f.name} onChange={(e) => { setF((p) => ({ ...p, name: e.target.value })); setShowErr(false); }} placeholder={t.vehicleNamePlaceholder} maxLength={50} />
+        {showErr && !f.name.trim() && <p style={{ fontSize: 11, color: J.shu, marginTop: 4 }}>{t.minOneField}</p>}
+      </Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.vehicleRegion}>
+          <select style={inpStyle} value={f.regionKey} onChange={(e) => {
+            const rk = e.target.value;
+            const first = VEHICLE_TYPES_BY_REGION_KEY[rk]?.[0] || "custom";
+            setF((p) => ({ ...p, regionKey: rk, typeKey: first, capacity: VEHICLE_DEFAULT_CAPACITY[first] || 4 }));
+          }}>
+            {VEHICLE_REGION_KEYS.map((k) => <option key={k} value={k}>{regionLabel(k)}</option>)}
+          </select>
+        </Field>
+        <Field label={t.vehicleType}>
+          {typeKeys ? (
+            <select style={inpStyle} value={f.typeKey} onChange={(e) => {
+              const tk = e.target.value;
+              setF((p) => ({ ...p, typeKey: tk, capacity: tk !== "custom" ? (VEHICLE_DEFAULT_CAPACITY[tk] || 4) : p.customCapacity }));
+            }}>
+              {typeKeys.map((k) => <option key={k} value={k}>{typeLabel(k)}</option>)}
+            </select>
+          ) : <div style={{ ...inpStyle, background: J.washi, color: J.nezumi }}>{t.typeComingSoon}</div>}
+        </Field>
+      </div>
+      <Field label={`${t.maxPassengers}${isCustom ? ` (${t.typeCustom})` : ""}`}>
+        <select style={inpStyle} value={isCustom ? f.customCapacity : f.capacity} onChange={(e) => {
+          const n = +e.target.value;
+          setF((p) => isCustom ? { ...p, customCapacity: n, capacity: n } : { ...p, capacity: n });
+        }}>
+          {Array.from({ length: 40 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n} {t.passengers_unit}</option>)}
+        </select>
+      </Field>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
+        <button type="button" onClick={onClose} style={{ padding: "9px 18px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={handleSave} disabled={saving || !canSave} style={pBtn(saving || !canSave)}>{saving ? "…" : t.save}</button>
+      </div>
+    </div>
+  );
+}
+
+function PersonForm({ init, onSave, onClose, t, lang }) {
+  const blank = { dept: "", name_kanji: "", last_roman: "", first_roman: "", importance: 0, passport: "", dob: "", passport_exp: "", diet: "" };
+  const [f, setF] = useState(init ? { ...blank, ...init } : blank);
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const canSave = [f.dept, f.name_kanji, f.last_roman, f.first_roman].some((v) => (v || "").trim() !== "");
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.dept}><input style={inpStyle} value={f.dept} onChange={set("dept")} /></Field>
+        <Field label={t.nameKanji}><input style={inpStyle} value={f.name_kanji} onChange={set("name_kanji")} /></Field>
+        <Field label={`${t.nameRoman} (${t.optional})`}><input style={inpStyle} value={f.last_roman} onChange={set("last_roman")} placeholder={lang.startsWith("ja") ? "姓" : ""} /></Field>
+        <Field label={`${t.nameRoman} 2`}><input style={inpStyle} value={f.first_roman} onChange={set("first_roman")} /></Field>
+        <Field label={t.importance}><select style={inpStyle} value={f.importance} onChange={(e) => setF((p) => ({ ...p, importance: +e.target.value }))}>{IMPORTANCE.map((i) => <option key={i} value={i}>{i === 0 ? "—" : starLabel(i)}</option>)}</select></Field>
+        <Field label={`${t.passport} (${t.optional})`}><input style={inpStyle} value={f.passport || ""} onChange={set("passport")} /></Field>
+        <Field label={`${t.dob} (${t.optional})`}><input type="date" style={inpStyle} value={f.dob || ""} onChange={set("dob")} /></Field>
+        <Field label={`${t.passportExp} (${t.optional})`}>
+          <input type="date" style={{ ...inpStyle, ...(passportWarning(f.passport_exp) ? { borderColor: J.shu } : {}) }} value={f.passport_exp || ""} onChange={set("passport_exp")} />
+          {passportWarning(f.passport_exp) && <p style={{ color: J.shu, fontSize: 10, marginTop: 4 }}>{t.passportWarn}</p>}
+        </Field>
+        <Field label={`${t.diet} (${t.optional})`}><input style={inpStyle} value={f.diet || ""} onChange={set("diet")} /></Field>
+      </div>
+      {!canSave && <p style={{ fontSize: 11, color: J.shu }}>{t.minOneField}</p>}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={() => canSave && onSave(f)} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
+      </div>
+    </div>
+  );
+}
+
+function FlightForm({ init, onSave, onClose, t }) {
+  const blank = { airline: "", flight_no: "", cabin: "Economy", pnr: "", dep_airport: "", dep_terminal: "", dep_time: todayDT(), arr_airport: "", arr_terminal: "", arr_time: todayDT(), checked_bag: "", cabin_bag: "" };
+  const [f, setF] = useState(init ? { ...blank, ...init } : blank);
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {[[t.airline, "airline"], [t.flightNo, "flight_no"], [t.pnr, "pnr"], [t.depAirport, "dep_airport"], [t.depTerminal, "dep_terminal"], [t.arrAirport, "arr_airport"], [t.arrTerminal, "arr_terminal"], [t.checkedBag, "checked_bag"], [t.cabinBag, "cabin_bag"]].map(([lb, k]) => (
+          <Field key={k} label={lb}><input style={inpStyle} value={f[k] || ""} onChange={set(k)} /></Field>
+        ))}
+        <Field label={t.cabin}><select style={inpStyle} value={f.cabin} onChange={set("cabin")}>{CABIN.map((c) => <option key={c}>{c}</option>)}</select></Field>
+        <Field label={t.depTime}><input type="datetime-local" style={inpStyle} value={f.dep_time || ""} onChange={set("dep_time")} /></Field>
+        <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f.arr_time || ""} onChange={set("arr_time")} /></Field>
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={() => onSave(f)} style={pBtn(false)}>{t.save}</button>
+      </div>
+    </div>
+  );
+}
+
+function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang }) {
+  const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "" };
+  const [f, setF] = useState(init ? { ...blank, ...init, hotel_id: String(init.hotel_id || "") } : blank);
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const nights = diffDays(f.check_in, f.check_out);
+  const { totalAmount, breakdown } = useMemo(() => {
+    if (!f.check_in || !f.check_out || nights === 0) return { totalAmount: 0, breakdown: [] };
+    const roomLabel = f.room_type === "Custom" ? f.room_custom : f.room_type;
+    let total = 0; const bd = [];
+    for (let i = 0; i < nights; i++) {
+      const d = parseLocalDate(f.check_in); d.setDate(d.getDate() + i);
+      const ds = localDateStr(d);
+      const rule = pricingRules.find((r) => +r.hotel_id === +f.hotel_id && r.date === ds && (r.room_type === roomLabel || (r.room_type === "Custom" && r.room_custom === roomLabel)));
+      const price = rule ? (+rule.final_price || 0) : (+f.base_price || 0);
+      total += price; bd.push({ date: ds, price, fromRule: !!rule });
+    }
+    return { totalAmount: total, breakdown: bd };
+  }, [f, nights, pricingRules]);
+  const canSave = !!f.hotel_id && !!f.check_in && !!f.check_out;
+  const dispTotal = convertMoney(totalAmount, project);
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.staySegment}><input style={inpStyle} value={f.stay_label} onChange={set("stay_label")} /></Field>
+        <Field label={t.hotel}><select style={inpStyle} value={f.hotel_id} onChange={set("hotel_id")}><option value="">--</option>{hotels.map((h) => <option key={h.id} value={String(h.id)}>{h.name}</option>)}</select></Field>
+        <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={set("room_type")}>{ROOM_TYPES.map((r) => <option key={r}>{r}</option>)}</select></Field>
+        {f.room_type === "Custom" && <Field label={t.customRoomType}><input style={inpStyle} value={f.room_custom} onChange={set("room_custom")} /></Field>}
+        <Field label={t.checkIn}><input type="date" style={inpStyle} value={f.check_in || ""} onChange={set("check_in")} /></Field>
+        <Field label={t.checkOut}><input type="date" style={inpStyle} value={f.check_out || ""} onChange={set("check_out")} /></Field>
+        <Field label={t.basePrice}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")} /></Field>
+        <Field label={t.nights}><input style={{ ...inpStyle, background: J.washi, textAlign: "center" }} value={nights || ""} readOnly /></Field>
+        <Field label={t.totalAmt}><input style={{ ...inpStyle, background: J.washi, fontWeight: 700, color: J.asagi }} value={totalAmount ? formatMoney(dispTotal, project, lang) : "—"} readOnly /></Field>
+      </div>
+      {breakdown.length > 0 && (
+        <div style={{ marginTop: 10, background: J.washi, padding: 10 }}>
+          <div style={{ fontSize: 9, fontWeight: 600, color: J.nezumi, marginBottom: 6 }}>{t.breakdownTitle}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {breakdown.map((b) => <span key={b.date} style={{ fontSize: 10, padding: "3px 8px", border: "1px solid " + J.keisenL }}>{b.date.slice(5)} {formatMoney(convertMoney(b.price, project), project, lang)}</span>)}
           </div>
         </div>
       )}
-      {!canSave&&<p style={{fontSize:11,color:J.shu,marginTop:8,letterSpacing:"0.04em"}}>※ {t.stayRequired}</p>}
-      <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
-        <button onClick={()=>onSave({...f,nights,total_amount:totalAmount,base_price:f.base_price===""?null:+f.base_price})} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
+      {!canSave && <p style={{ fontSize: 11, color: J.shu }}>{t.stayRequired}</p>}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={() => onSave({ ...f, nights, total_amount: totalAmount, base_price: f.base_price === "" ? null : +f.base_price })} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
       </div>
     </div>
   );
 }
 
-function HotelMasterForm({init,onSave,onClose,t}){
-  const blank={name:"",address:"",tel:""};
-  const [f,setF]=useState(init?{...blank,...init}:blank);
-  const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
-  return(
+function HotelMasterForm({ init, onSave, onClose, t }) {
+  const blank = { name: "", address: "", tel: "" };
+  const [f, setF] = useState(init ? { ...blank, ...init } : blank);
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  return (
     <div>
-      <Field label={t.hotelName}><input style={inpStyle} value={f.name} onChange={set("name")}/></Field>
-      <Field label={t.hotelAddr}><input style={inpStyle} value={f.address} onChange={set("address")}/></Field>
-      <Field label={t.hotelTel}><input style={inpStyle} value={f.tel} onChange={set("tel")}/></Field>
-      <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
-        <button onClick={()=>onSave(f)} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
+      <Field label={t.hotelName}><input style={inpStyle} value={f.name} onChange={set("name")} /></Field>
+      <Field label={t.hotelAddr}><input style={inpStyle} value={f.address} onChange={set("address")} /></Field>
+      <Field label={t.hotelTel}><input style={inpStyle} value={f.tel} onChange={set("tel")} /></Field>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={() => onSave(f)} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
       </div>
     </div>
   );
 }
 
-function PricingRuleForm({init,hotelId,hotelName,onSave,onClose,t}){
-  const blank={date:"",room_type:"Single",room_custom:"",base_price:"0",importance_surcharge:"0",holiday_surcharge:"0"};
-  const [f,setF]=useState(init?{...blank,...init}:blank);
-  const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
-  const final=(+f.base_price||0)+(+f.importance_surcharge||0)+(+f.holiday_surcharge||0);
-  return(
+function PricingRuleForm({ init, hotelId, hotelName, onSave, onClose, t, project, lang }) {
+  const blank = { date: "", room_type: "Single", room_custom: "", base_price: "0", importance_surcharge: "0", holiday_surcharge: "0" };
+  const [f, setF] = useState(init ? { ...blank, ...init } : blank);
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const final = (+f.base_price || 0) + (+f.importance_surcharge || 0) + (+f.holiday_surcharge || 0);
+  return (
     <div>
-      <div style={{background:"rgba(74,127,165,.08)",border:"1px solid #bfdbfe",borderRadius:8,padding:"8px 14px",marginBottom:14,fontSize:13,color:J.asagi}}>🏨 {hotelName}</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-        <Field label={t.date}><input type="date" style={inpStyle} value={f.date||""} onChange={set("date")}/></Field>
-        <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={set("room_type")}>{ROOM_TYPES.map(r=><option key={r}>{r}</option>)}</select></Field>
-        {f.room_type==="Custom"&&<Field label={t.customRoomType}><input style={inpStyle} value={f.room_custom} onChange={set("room_custom")}/></Field>}
-        <Field label={`${t.basePriceShort} ($)`}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")}/></Field>
-        <Field label={`${t.importanceSurcharge} ($)`}><input type="number" min="0" style={inpStyle} value={f.importance_surcharge} onChange={set("importance_surcharge")}/></Field>
-        <Field label={`${t.holidaySurcharge} ($)`}><input type="number" min="0" style={inpStyle} value={f.holiday_surcharge} onChange={set("holiday_surcharge")}/></Field>
-        <Field label={t.finalPrice}><input style={inpStyle} value={`$${final.toLocaleString()}`} readOnly style={{background:J.washi,fontWeight:700,color:J.asagi}}/></Field>
+      <div style={{ background: "rgba(74,127,165,.08)", padding: "8px 14px", marginBottom: 14, fontSize: 13, color: J.asagi }}>{hotelName}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <Field label={t.date}><input type="date" style={inpStyle} value={f.date || ""} onChange={set("date")} /></Field>
+        <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={set("room_type")}>{ROOM_TYPES.map((r) => <option key={r}>{r}</option>)}</select></Field>
+        {f.room_type === "Custom" && <Field label={t.customRoomType}><input style={inpStyle} value={f.room_custom} onChange={set("room_custom")} /></Field>}
+        <Field label={t.basePriceShort}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")} /></Field>
+        <Field label={t.importanceSurcharge}><input type="number" min="0" style={inpStyle} value={f.importance_surcharge} onChange={set("importance_surcharge")} /></Field>
+        <Field label={t.holidaySurcharge}><input type="number" min="0" style={inpStyle} value={f.holiday_surcharge} onChange={set("holiday_surcharge")} /></Field>
+        <Field label={t.finalPrice}><input style={{ ...inpStyle, background: J.washi, fontWeight: 700, color: J.asagi }} value={formatMoney(convertMoney(final, project), project, lang)} readOnly /></Field>
       </div>
-      <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
-        <button onClick={()=>onSave({...f,hotel_id:hotelId,final_price:final,base_price:+f.base_price||0,importance_surcharge:+f.importance_surcharge||0,holiday_surcharge:+f.holiday_surcharge||0})} disabled={!f.date} style={pBtn(!f.date)}>{t.save}</button>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={() => onSave({ ...f, hotel_id: hotelId, final_price: final, base_price: +f.base_price || 0, importance_surcharge: +f.importance_surcharge || 0, holiday_surcharge: +f.holiday_surcharge || 0 })} disabled={!f.date} style={pBtn(!f.date)}>{t.save}</button>
       </div>
     </div>
   );
 }
 
-function RoommateModal({pid,persons,roommates,onSave,onClose,t}){
-  const current=roommates.filter(r=>r.person_id===pid).map(r=>r.partner_id);
-  const [selected,setSelected]=useState(current);
-  const person=persons.find(p=>p.id===pid);
-  const toggle=id=>setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]);
-  return(
-    <Modal title={`${t.roommateSet} — ${person?.name_kanji||""}`} onClose={onClose}>
-      <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:300,overflowY:"auto"}}>
-        {persons.filter(p=>p.id!==pid).map(p=>(
-          <label key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:2,cursor:"pointer",border:`1px solid ${selected.includes(p.id)?J.moegi:J.keisenM}`,background:selected.includes(p.id)?"rgba(61,107,94,.06)":J.shiro,transition:"all .15s"}}>
-            <input type="checkbox" checked={selected.includes(p.id)} onChange={()=>toggle(p.id)}/>
-            <span style={{fontWeight:600,fontSize:13,fontFamily:"'Noto Serif JP',serif",color:J.sumi}}>{p.name_kanji}</span>
-            <span style={{fontSize:12,color:J.nezumi}}>{p.last_roman} {p.first_roman} / {p.dept}</span>
-          </label>
-        ))}
-        {persons.filter(p=>p.id!==pid).length===0&&<p style={{color:J.usunezumi,fontSize:13}}>{t.noData}</p>}
-      </div>
-      <div style={{marginTop:12,padding:"10px 14px",background:J.washi,borderRadius:2,fontSize:12,color:J.sumi,borderLeft:"2px solid "+J.moegi,letterSpacing:"0.04em"}}>
-        {selected.length===0?t.roommateNone:selected.map(id=>persons.find(p=>p.id===id)?.name_kanji).filter(Boolean).join("、")}
-      </div>
-      <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
-        <button onClick={()=>onSave(pid,selected)} style={pBtn(false)}>{t.save}</button>
+function CurrencySettingsModal({ project, onSave, onClose, t }) {
+  const [f, setF] = useState({
+    base_currency: project.base_currency || "TWD",
+    display_currency: project.display_currency || "TWD",
+    exchange_rate: project.exchange_rate ?? 1,
+  });
+  return (
+    <Modal title={t.currencySettings} onClose={onClose}>
+      <Field label={t.baseCurrency}>
+        <select style={inpStyle} value={f.base_currency} onChange={(e) => setF((p) => ({ ...p, base_currency: e.target.value }))}>
+          <option value="TWD">{t.currencyTWD}</option>
+          <option value="JPY">{t.currencyJPY}</option>
+        </select>
+      </Field>
+      <Field label={t.displayCurrency}>
+        <select style={inpStyle} value={f.display_currency} onChange={(e) => setF((p) => ({ ...p, display_currency: e.target.value }))}>
+          <option value="TWD">{t.currencyTWD}</option>
+          <option value="JPY">{t.currencyJPY}</option>
+        </select>
+      </Field>
+      <Field label={t.exchangeRate}>
+        <input type="number" step="0.0001" min="0" style={inpStyle} value={f.exchange_rate} onChange={(e) => setF((p) => ({ ...p, exchange_rate: +e.target.value }))} />
+        <p style={{ fontSize: 10, color: J.nezumi, marginTop: 4 }}>{t.exchangeRateHint}</p>
+      </Field>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={() => onSave(f)} style={pBtn(false)}>{t.save}</button>
       </div>
     </Modal>
   );
 }
 
-// ─── Member Manager ──────────────────────────────────────────
-function MemberManager({project,user,isOwner,onClose,t}){
-  const [members,setMembers]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [userId,setUserId]=useState("");
-  const [role,setRole]=useState("editor");
-  const [saving,setSaving]=useState(false);
-  const [toastMsg,showToast]=useToast();
+function RoommateModal({ pid, persons, roommates, onSave, onClose, t }) {
+  const current = roommates.filter((r) => r.person_id === pid).map((r) => r.partner_id);
+  const [selected, setSelected] = useState(current);
+  const person = persons.find((p) => p.id === pid);
+  const toggle = (id) => setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
+  return (
+    <Modal title={`${t.roommateSet} — ${person?.name_kanji || ""}`} onClose={onClose}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
+        {persons.filter((p) => p.id !== pid).map((p) => (
+          <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", border: `1px solid ${selected.includes(p.id) ? J.moegi : J.keisenM}`, cursor: "pointer" }}>
+            <input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggle(p.id)} />
+            <span style={{ fontWeight: 600, fontSize: 13 }}>{p.name_kanji}</span>
+            <span style={{ fontSize: 12, color: J.nezumi }}>{p.last_roman} {p.first_roman}</span>
+          </label>
+        ))}
+      </div>
+      <div style={{ marginTop: 12, padding: 10, background: J.washi, fontSize: 12 }}>
+        {selected.length === 0 ? t.roommateNone : selected.map((id) => persons.find((p) => p.id === id)?.name_kanji).filter(Boolean).join("、")}
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={() => onSave(pid, selected)} style={pBtn(false)}>{t.save}</button>
+      </div>
+    </Modal>
+  );
+}
 
-  const load=async()=>{
+function SyncRoommateModal({ names, onConfirm, onClose, t }) {
+  return (
+    <Modal title={t.syncRoommateTitle} onClose={onClose}>
+      <p style={{ fontSize: 13, color: J.nezumi, lineHeight: 1.6, marginBottom: 16 }}>{t.syncRoommateMsg}<br /><strong>{names}</strong></p>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onConfirm} style={pBtn(false)}>{t.confirm}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function MemberManager({ project, user, canManage, onClose, t }) {
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState("");
+  const [role, setRole] = useState("editor");
+  const [saving, setSaving] = useState(false);
+  const [toastMsg, showToast] = useToast();
+  const load = async () => {
     setLoading(true);
-    try{ const rows=await api.get("user_projects",`&project_id=eq.${project.id}`);setMembers(rows); }
-    catch(e){ showToast("Error: "+e.message); }
+    try { setMembers(await api.get("user_projects", `&project_id=eq.${project.id}`)); } catch (e) { showToast(e.message); }
     setLoading(false);
   };
-  useEffect(()=>{load();},[]);
-
-  const addMember=async()=>{
-    if(!userId.trim()) return;
+  useEffect(() => { load(); }, []);
+  const addMember = async () => {
+    if (!userId.trim()) return;
     setSaving(true);
-    try{
-      if(members.find(m=>m.user_id===userId.trim())){showToast(t.memberAlready);setSaving(false);return;}
-      await api.insert("user_projects",{user_id:userId.trim(),project_id:project.id,role});
-      showToast(t.saved);setUserId("");load();
-    }catch(e){showToast("Error: "+e.message);}
-    setSaving(false);
+    try {
+      if (members.find((m) => m.user_id === userId.trim())) { showToast(t.memberAlready); return; }
+      await api.insert("user_projects", { user_id: userId.trim(), project_id: project.id, role });
+      showToast(t.saved); setUserId(""); load();
+    } catch (e) { showToast(e.message); } finally { setSaving(false); }
   };
-
-  const changeRole=async(id,newRole)=>{
-    try{
-      await api.update("user_projects",id,{role:newRole});
-      setMembers(ms=>ms.map(m=>m.id===id?{...m,role:newRole}:m));
-      showToast(t.saved);
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  const removeMember=async(id,uid)=>{
-    if(uid===user.id){showToast(t.memberSelf);return;}
-    if(!window.confirm(t.deleteConfirm)) return;
-    try{
-      await api.delete("user_projects",id);
-      setMembers(ms=>ms.filter(m=>m.id!==id));
-      showToast(t.deleted);
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  return(
-    <Modal title={`👥 ${t.members} — ${project.name}`} onClose={onClose} wide>
-      <Toast msg={toastMsg}/>
-      <div style={{background:J.washi,borderRadius:2,padding:18,marginBottom:20,border:"1px solid "+J.keisenL}}>
-        <div style={{fontWeight:600,fontSize:11,color:J.sumi,marginBottom:8,letterSpacing:"0.1em"}}>＋ {t.memberAdd}</div>
-        <div style={{fontSize:12,color:J.nezumi,marginBottom:10}}>{t.memberUidHint}</div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          <input style={inpStyle} value={userId} onChange={e=>setUserId(e.target.value)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" style={{flex:2,minWidth:200}}/>
-          <select value={role} onChange={e=>setRole(e.target.value)} style={{border:"1px solid #d1d5db",borderRadius:8,padding:"7px 10px",fontSize:13,background:J.shiro}}>
+  return (
+    <Modal title={`${t.members} — ${project.name}`} onClose={onClose} wide>
+      <Toast msg={toastMsg} />
+      <div style={{ background: J.washi, padding: 18, marginBottom: 20, border: "1px solid " + J.keisenL }}>
+        <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>{t.memberAdd}</div>
+        <p style={{ fontSize: 12, color: J.nezumi, marginBottom: 10 }}>{t.memberUidHint}</p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <input style={{ ...inpStyle, flex: 2, minWidth: 200 }} value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="UUID" />
+          <select value={role} onChange={(e) => setRole(e.target.value)} style={inpStyle}>
             <option value="admin">{t.role_admin}</option>
             <option value="editor">{t.role_editor}</option>
             <option value="viewer">{t.role_viewer}</option>
           </select>
-          <button onClick={addMember} disabled={saving||!userId.trim()} style={pBtn(saving||!userId.trim())}>{saving?"…":"追加"}</button>
+          <button type="button" onClick={addMember} disabled={saving || !userId.trim()} style={pBtn(saving || !userId.trim())}>{t.memberAddBtn}</button>
         </div>
       </div>
-      <div style={{fontWeight:600,fontSize:11,color:J.sumi,marginBottom:12,letterSpacing:"0.1em"}}>{t.memberCurrent.replace("{n}",members.length)}</div>
-      {loading?<div style={{textAlign:"center",padding:20,color:J.usunezumi}}>…</div>:(
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {members.map(m=>{
-            const isMe=m.user_id===user.id;
-            const canModify=!isMe&&(isOwner||m.role!=="admin");
-            return(
-              <div key={m.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",background:J.shiro,borderRadius:2,border:"1px solid "+J.keisenL}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                    <span style={{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:20,...(ROLE_COLORS[m.role]||ROLE_COLORS.viewer)}}>{t[`role_${m.role}`]||m.role}</span>
-                    {isMe&&<span style={{fontSize:9,background:"rgba(61,107,94,.1)",color:J.moegi,borderRadius:1,padding:"2px 8px",fontWeight:600,letterSpacing:"0.06em"}}>自分</span>}
-                  </div>
-                  <div style={{fontSize:11,color:J.usunezumi,fontFamily:"monospace",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.user_id}</div>
-                </div>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:12,flexShrink:0}}>
-                  {canModify&&(
-                    <select value={m.role} onChange={e=>changeRole(m.id,e.target.value)} style={{border:"1px solid #d1d5db",borderRadius:6,padding:"4px 8px",fontSize:12,background:J.shiro,cursor:"pointer"}}>
-                      <option value="admin">{t.role_admin}</option>
-                      <option value="editor">{t.role_editor}</option>
-                      <option value="viewer">{t.role_viewer}</option>
-                    </select>
-                  )}
-                  {canModify&&<button onClick={()=>removeMember(m.id,m.user_id)} style={dBtn}>{t.delete}</button>}
-                </div>
+      <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 12 }}>{t.memberCurrent.replace("{n}", members.length)}</div>
+      {loading ? <div style={{ textAlign: "center", color: J.usunezumi }}>…</div> : members.map((m) => {
+        const isMe = m.user_id === user.id;
+        const canModify = canManage && !isMe && m.role !== "owner";
+        return (
+          <div key={m.id} style={{ display: "flex", justifyContent: "space-between", padding: 12, border: "1px solid " + J.keisenL, marginBottom: 8 }}>
+            <div>
+              <span style={{ fontSize: 11, padding: "2px 8px", ...(ROLE_COLORS[m.role] || ROLE_COLORS.viewer) }}>{t[`role_${m.role}`] || m.role}</span>
+              {isMe && <span style={{ fontSize: 9, marginLeft: 6, color: J.moegi }}>{t.me}</span>}
+              <div style={{ fontSize: 11, color: J.usunezumi, fontFamily: "monospace", marginTop: 4 }}>{m.user_id}</div>
+            </div>
+            {canModify && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <select value={m.role} onChange={async (e) => { await api.update("user_projects", m.id, { role: e.target.value }); load(); }} style={{ ...inpStyle, width: "auto" }}>
+                  <option value="admin">{t.role_admin}</option>
+                  <option value="editor">{t.role_editor}</option>
+                  <option value="viewer">{t.role_viewer}</option>
+                </select>
+                <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("user_projects", m.id); load(); } }}>{t.delete}</button>
               </div>
-            );
-          })}
-        </div>
-      )}
-      <div style={{marginTop:20,padding:"14px 16px",background:"rgba(184,134,11,.05)",borderRadius:2,border:"1px solid rgba(184,134,11,.2)"}}>
-        <div style={{fontSize:10,fontWeight:600,color:J.kincha,marginBottom:6,letterSpacing:"0.1em"}}>{t.memberUidLabel}</div>
-        <div style={{fontSize:12,color:J.kincha,lineHeight:1.6}}>
-          <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer" style={{color:J.asagi}}>Supabase Dashboard</a> {t.memberUidInfo}
-        </div>
-      </div>
-      <div style={{display:"flex",justifyContent:"flex-end",marginTop:16}}>
-        <button onClick={onClose} style={{padding:"8px 20px",borderRadius:8,border:"1px solid #d1d5db",cursor:"pointer",fontSize:13}}>{t.cancel}</button>
-      </div>
+            )}
+          </div>
+        );
+      })}
+      <p style={{ fontSize: 11, color: J.kincha, marginTop: 12 }}>{t.memberUidLabel}: {t.memberUidInfo}</p>
     </Modal>
   );
 }
 
-// ─── Login / Register ────────────────────────────────────────
-function LoginScreen({onLogin}){
-  const [mode,setMode]=useState("login");
-  const [email,setEmail]=useState("");
-  const [pw,setPw]=useState("");
-  const [pw2,setPw2]=useState("");
-  const [displayName,setDisplayName]=useState("");
-  const [message,setMessage]=useState("");
-  const [loading,setLoading]=useState(false);
-  const [error,setError]=useState("");
-  const [lang,setLang]=useState("zh-TW");
-  const t=T[lang];
-
-  const reset=()=>{setError("");};
-
-  const handleLogin=async()=>{
-    if(!email.trim()||!pw.trim()){setError(t.errEmailPw);return;}
-    setLoading(true);setError("");
-    try{
-      const res=await api.login(email.trim(),pw);
-      if(res.access_token){_token=res.access_token;onLogin(res.access_token,res.user,lang);}
-      else setError(res.error_description||res.message||"Login failed");
-    }catch(e){setError("Error: "+e.message);}
-    setLoading(false);
+function LoginScreen({ onLogin }) {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [lang, setLang] = useState(() => localStorage.getItem("app_lang") || "zh-TW");
+  const t = T[lang];
+  const card = {
+    background: J.shiro, borderRadius: 12, padding: "44px 48px",
+    width: 440, maxWidth: "95vw",
+    boxShadow: "0 24px 80px rgba(0,0,0,.26), 0 0 0 1px rgba(255,255,255,.06)",
+    maxHeight: "92vh", overflowY: "auto",
+  };
+  const wrap = {
+    minHeight: "100vh",
+    background: J.sumi,
+    backgroundImage: [
+      "radial-gradient(ellipse 80% 60% at 20% 80%, rgba(43,90,76,.22) 0%, transparent 60%)",
+      "radial-gradient(ellipse 60% 40% at 80% 20%, rgba(42,94,128,.16) 0%, transparent 55%)",
+    ].join(","),
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "'Noto Sans JP',sans-serif",
   };
 
-  const handleRegister=async()=>{
-    if(!email.trim()||!pw.trim()){setError(t.errEmailPw);return;}
-    if(pw!==pw2){setError(t.errPwMatch);return;}
-    if(pw.length<6){setError(t.errPwLen);return;}
-    setLoading(true);setError("");
-    try{
-      const res=await api.signup(email.trim(),pw);
-      if(res.error||res.code>=400){setError(res.error?.message||res.message||"Signup failed");setLoading(false);return;}
-      const userId=res.id||res.user?.id||null;
-      await fetch(`${SUPABASE_URL}/rest/v1/user_requests`,{
-        method:"POST",
-        headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,"Content-Type":"application/json",Prefer:"return=minimal"},
-        body:JSON.stringify({email:email.trim(),display_name:displayName.trim(),message:message.trim(),status:"pending",user_id:userId}),
+  const handleLogin = async () => {
+    if (!email.trim() || !pw.trim()) { setError(t.errEmailPw); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await api.login(email.trim(), pw);
+      if (res.access_token) {
+        saveSession(res);
+        _token = res.access_token;
+        localStorage.setItem("app_lang", lang);
+        onLogin(res.access_token, res.user, lang);
+      } else setError(res.error_description || res.message || "Login failed");
+    } catch (e) { setError(String(e.message)); } finally { setLoading(false); }
+  };
+
+  const handleRegister = async () => {
+    if (!email.trim() || !pw.trim()) { setError(t.errEmailPw); return; }
+    if (pw !== pw2) { setError(t.errPwMatch); return; }
+    if (pw.length < 6) { setError(t.errPwLen); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await api.signup(email.trim(), pw);
+      if (res.error || res.code >= 400) { setError(res.error?.message || res.message); return; }
+      const userId = res.id || res.user?.id || null;
+      await fetch(`${SUPABASE_URL}/rest/v1/user_requests`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ email: email.trim(), display_name: displayName.trim(), message: message.trim(), status: "pending", user_id: userId }),
       });
       setMode("verify");
-    }catch(e){setError("Error: "+e.message);}
-    setLoading(false);
+    } catch (e) { setError(String(e.message)); } finally { setLoading(false); }
   };
 
-  const card={background:J.shiro,borderRadius:2,padding:"40px 44px",width:420,boxShadow:"0 40px 100px rgba(0,0,0,.18), 0 0 0 1px "+J.keisenM,maxHeight:"90vh",overflowY:"auto"};
-  const wrap={minHeight:"100vh",background:J.sumi,backgroundImage:"radial-gradient(ellipse at 20% 50%, rgba(61,107,94,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(74,127,165,0.1) 0%, transparent 50%)",display:"flex",alignItems:"center",justifyContent:"center"};
-
-  if(mode==="verify") return (
+  if (mode === "verify") return (
     <div style={wrap}><div style={card}>
-      <div style={{textAlign:"center",marginBottom:24}}>
-        <div style={{fontSize:48}}>📧</div>
-        <div style={{fontSize:18,fontWeight:800,color:J.sumi,marginTop:8}}>{t.verifyTitle}</div>
-        <div style={{fontSize:13,color:J.nezumi,marginTop:8,lineHeight:1.8}}>
-          {t.verifyTitle}: <strong>{email}</strong>
-        </div>
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontSize: 40, lineHeight: 1, color: J.moegi2, marginBottom: 12, fontFamily: "'Noto Serif JP',serif" }}>映</div>
+        <h2 style={{ fontSize: 18, color: J.sumi, fontFamily: "'Noto Serif JP',serif", fontWeight: 600, marginBottom: 0 }}>{t.verifyTitle}</h2>
       </div>
-      <div style={{background:"rgba(74,127,165,.08)",borderRadius:8,padding:12,marginBottom:16,fontSize:12,color:J.asagi}}>💡 {t.verifyHint}</div>
-      <button onClick={()=>{setMode("login");reset();}} style={{...pBtn(false),width:"100%",padding:12,fontSize:14}}>{t.toLoginBtn}</button>
+      <div style={{ background: J.moegi3, border: "1px solid rgba(43,90,76,.18)", borderRadius: 8, padding: "16px 18px", marginBottom: 18 }}>
+        <p style={{ fontSize: 13, color: J.moegi, marginBottom: 4, fontWeight: 600 }}>{email}</p>
+        <p style={{ fontSize: 12, color: J.nezumi, lineHeight: 1.7, margin: 0 }}>{t.verifyHint}</p>
+      </div>
+      <p style={{ fontSize: 11, color: J.nezumi, marginBottom: 20, lineHeight: 1.6 }}>{t.verifyContact}</p>
+      <button type="button" onClick={() => setMode("login")} style={{ ...pBtn(false), width: "100%" }}>{t.toLoginBtn}</button>
     </div></div>
   );
 
   return (
     <div style={wrap}><div style={card}>
-      <div style={{textAlign:"center",marginBottom:24}}>
-        <div style={{fontSize:28,letterSpacing:"-0.02em",fontFamily:"'Noto Serif JP',serif",color:J.sumi,fontWeight:300}}>映</div>
-        <div style={{fontSize:17,fontWeight:600,color:J.sumi,marginTop:6,letterSpacing:"0.1em",fontFamily:"'Noto Serif JP',serif"}}>{t.appName}</div>
-        <div style={{fontSize:11,color:J.nezumi,marginTop:6,letterSpacing:"0.16em",textTransform:"uppercase"}}>{mode==="login"?t.loginTitle:t.registerTitle}</div>
-        <div style={{width:32,height:1,background:J.moegi,margin:"12px auto 0"}}></div>
+      {/* ── Brand Mark ── */}
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontSize: 42, lineHeight: 1, color: J.moegi, marginBottom: 10, fontFamily: "'Noto Serif JP',serif", letterSpacing: "-0.02em" }}>映</div>
+        <h1 style={{ fontSize: 16, fontWeight: 600, color: J.sumi, margin: 0, letterSpacing: "0.08em", fontFamily: "'Noto Serif JP',serif" }}>{t.appName}</h1>
+        <p style={{ fontSize: 11, color: J.usunezumi, margin: "5px 0 0", letterSpacing: "0.04em" }}>{mode === "login" ? t.loginTitle : t.registerTitle}</p>
       </div>
-      <div style={{marginBottom:20}}>
-        <select value={lang} onChange={e=>setLang(e.target.value)} style={{...inpStyle,cursor:"pointer"}}>
-          {Object.entries(LANGS).map(([k,v])=><option key={k} value={k}>{v}</option>)}
+
+      {/* ── Lang ── */}
+      <div style={{ marginBottom: 20 }}>
+        <select style={{ ...inpStyle, fontSize: 12 }} value={lang} onChange={(e) => setLang(e.target.value)} className="wa-input">
+          {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
       </div>
-      <div style={{display:"flex",background:J.washi,borderRadius:2,padding:3,marginBottom:24,border:"1px solid "+J.keisenL}}>
-        {[["login",t.loginBtn],["register",t.registerTitle]].map(([m,label])=>(
-          <button key={m} onClick={()=>{setMode(m);reset();}}
-            style={{flex:1,padding:"8px 12px",borderRadius:1,border:"none",cursor:"pointer",fontWeight:mode===m?700:400,
-              background:mode===m?J.shiro:"transparent",color:mode===m?J.sumi:J.nezumi,
-              boxShadow:mode===m?"0 1px 3px rgba(0,0,0,.1)":"none",fontSize:12,letterSpacing:"0.08em",transition:"all .2s"}}>
-            {label}
-          </button>
+
+      {/* ── Tab pills ── */}
+      <div style={{ display: "flex", background: J.washi, borderRadius: 8, padding: 4, marginBottom: 24 }}>
+        {[["login", t.loginBtn], ["register", t.registerTitle]].map(([m, lb]) => (
+          <button key={m} type="button" onClick={() => { setMode(m); setError(""); }} style={{
+            flex: 1, padding: "8px 0", border: "none", cursor: "pointer",
+            fontFamily: "'Noto Sans JP',sans-serif", fontSize: 13,
+            fontWeight: mode === m ? 600 : 400,
+            color: mode === m ? J.sumi : J.nezumi,
+            background: mode === m ? J.shiro : "transparent",
+            borderRadius: 6,
+            boxShadow: mode === m ? "0 1px 4px rgba(0,0,0,.1)" : "none",
+            transition: "all .18s",
+          }}>{lb}</button>
         ))}
       </div>
-      {error&&<div style={{background:"rgba(192,57,43,.06)",color:J.shu,borderRadius:2,padding:"10px 14px",fontSize:12,marginBottom:16,borderLeft:"2px solid "+J.shu,letterSpacing:"0.04em"}}>{error}</div>}
-      {mode==="login"?(
+
+      {error && <div style={{ background: "rgba(173,48,48,.06)", color: J.shu, padding: "10px 14px", marginBottom: 18, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)", lineHeight: 1.5 }}>{error}</div>}
+
+      {mode === "login" ? (
         <>
-          <Field label={t.loginEmail}><input style={inpStyle} type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/></Field>
-          <Field label={t.loginPw}><input style={inpStyle} type="password" value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/></Field>
-          <button onClick={handleLogin} disabled={loading} style={{...pBtn(loading),width:"100%",marginTop:8,fontSize:14,padding:"13px",letterSpacing:"0.12em"}}>{loading?"…":t.loginBtn}</button>
-          <p style={{fontSize:10,color:J.nezumi,textAlign:"center",marginTop:16,letterSpacing:"0.08em",lineHeight:1.8}}>{t.loginHint}</p>
+          <Field label={t.loginEmail}><input style={inpStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="wa-input" /></Field>
+          <Field label={t.loginPw}><input style={inpStyle} type="password" value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()} className="wa-input" /></Field>
+          <button type="button" onClick={handleLogin} disabled={loading} style={{ ...pBtn(loading), width: "100%", marginTop: 10, padding: "11px 0" }}>
+            {loading ? <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>◌</span> : t.loginBtn}
+          </button>
+          <p style={{ fontSize: 10.5, color: J.nezumi, textAlign: "center", marginTop: 16, lineHeight: 1.6 }}>{t.loginHint}</p>
         </>
-      ):(
+      ) : (
         <>
-          <Field label={`${t.loginEmail} *`}><input style={inpStyle} type="email" value={email} onChange={e=>setEmail(e.target.value)}/></Field>
-          <Field label={`${t.loginPw} *`}><input style={inpStyle} type="password" value={pw} onChange={e=>setPw(e.target.value)}/></Field>
-          <Field label={`${t.loginPw} (confirm) *`}><input style={inpStyle} type="password" value={pw2} onChange={e=>setPw2(e.target.value)}/></Field>
-          <Field label="お名前（任意）"><input style={inpStyle} value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder="例：田中太郎"/></Field>
-          <Field label="申請メッセージ（任意）"><textarea style={inpStyle} value={message} onChange={e=>setMessage(e.target.value)} placeholder="所属・役職など" rows={2} style={{resize:"none"}}/></Field>
-          <button onClick={handleRegister} disabled={loading} style={{...pBtn(loading),width:"100%",marginTop:8,fontSize:15,padding:12}}>{loading?"…":t.registerBtn}</button>
-          <p style={{fontSize:11,color:J.usunezumi,textAlign:"center",marginTop:12,lineHeight:1.6}}>
-            {t.verifyHint}
-          </p>
+          <Field label={t.loginEmail}><input style={inpStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="wa-input" /></Field>
+          <Field label={t.loginPw}><input style={inpStyle} type="password" value={pw} onChange={(e) => setPw(e.target.value)} className="wa-input" /></Field>
+          <Field label={t.registerPwConfirm}><input style={inpStyle} type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} className="wa-input" /></Field>
+          <Field label={t.registerName}><input style={inpStyle} value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="wa-input" /></Field>
+          <Field label={t.registerMessage}><textarea style={{ ...inpStyle, resize: "none", lineHeight: 1.6 }} rows={2} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={t.registerMessagePh} className="wa-input" /></Field>
+          <button type="button" onClick={handleRegister} disabled={loading} style={{ ...pBtn(loading), width: "100%", marginTop: 10, padding: "11px 0" }}>
+            {loading ? <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>◌</span> : t.registerBtn}
+          </button>
+          <p style={{ fontSize: 11, color: J.usunezumi, textAlign: "center", marginTop: 14, lineHeight: 1.6 }}>{t.verifyContact}</p>
         </>
       )}
     </div></div>
   );
 }
 
-// ─── Project Selector ────────────────────────────────────────
-function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
-  const t=T[lang];
-  const [projects,setProjects]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [showNew,setShowNew]=useState(false);
-  const [newName,setNewName]=useState("");
-  const [newDesc,setNewDesc]=useState("");
-  const [saving,setSaving]=useState(false);
-  const [requests,setRequests]=useState([]);
-  const [reqLoading,setReqLoading]=useState(false);
-  const [approveModal,setApproveModal]=useState(null); // {req, projectId, role}
-  const [toastMsg,showToast]=useToast();
+function ProjectSelector({ user, isSystemOwner, lang, onLangChange, onSelect }) {
+  const t = T[lang];
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [approveModal, setApproveModal] = useState(null);
+  const [toastMsg, showToast] = useToast();
 
-  const load=async()=>{
+  const load = async () => {
     setLoading(true);
-    try{
-      if(isOwner){
-        const all=await api.get("projects");
-        setProjects(all.map(p=>({id:p.id,project_id:p.id,role:"owner",projects:p})));
-      }else{
-        const up=await api.get("user_projects",`&user_id=eq.${user.id}`);
-        if(up.length===0){setProjects([]);setLoading(false);return;}
-        const ids=up.map(r=>r.project_id);
-        const projs=await sb(`projects?id=in.(${ids.join(",")})`);
-        setProjects(up.map(r=>({...r,projects:projs.find(p=>p.id===r.project_id)||{id:r.project_id,name:"—",description:""}})));
+    try {
+      if (isSystemOwner) {
+        const all = await api.get("projects");
+        setProjects(all.map((p) => ({ id: p.id, project_id: p.id, role: "owner", projects: p })));
+      } else {
+        const up = await api.get("user_projects", `&user_id=eq.${user.id}`);
+        if (!up.length) { setProjects([]); setLoading(false); return; }
+        const ids = up.map((r) => r.project_id);
+        const projs = await sb(`projects?id=in.(${ids.join(",")})`);
+        setProjects(up.map((r) => ({ ...r, projects: projs.find((p) => p.id === r.project_id) || { id: r.project_id, name: "—" } })));
       }
-    }catch(e){showToast("Error: "+e.message);}
-    setLoading(false);
+    } catch (e) { showToast(e.message); } finally { setLoading(false); }
   };
 
-  const loadRequests=async()=>{
-    if(!isOwner) return;
-    setReqLoading(true);
-    try{const rows=await api.get("user_requests","&status=eq.pending&order=created_at.desc");setRequests(rows);}
-    catch(e){console.error(e);}
-    setReqLoading(false);
+  const loadRequests = async () => {
+    if (!isSystemOwner) return;
+    try { setRequests(await api.get("user_requests", "&status=eq.pending&order=created_at.desc")); } catch (e) { console.error(e); }
   };
 
-  useEffect(()=>{load();if(isOwner) loadRequests();},[isOwner]);
+  useEffect(() => { load(); if (isSystemOwner) loadRequests(); }, [isSystemOwner]);
 
-  const createProject=async()=>{
-    if(!newName.trim()) return;
+  const createProject = async () => {
+    if (!newName.trim()) return;
     setSaving(true);
-    try{
-      const [proj]=await api.insert("projects",{name:newName.trim(),description:newDesc,created_by:user.id});
-      await api.insert("user_projects",{user_id:user.id,project_id:proj.id,role:"admin"});
-      showToast(t.saved);setNewName("");setNewDesc("");setShowNew(false);load();
-    }catch(e){showToast("Error: "+e.message);}
-    setSaving(false);
+    try {
+      const [proj] = await api.insert("projects", { name: newName.trim(), description: newDesc, created_by: user.id, base_currency: "TWD", display_currency: "TWD", exchange_rate: 1 });
+      const creatorRole = isSystemOwner ? "owner" : "admin";
+      await api.insert("user_projects", { user_id: user.id, project_id: proj.id, role: creatorRole });
+      showToast(t.saved); setShowNew(false); setNewName(""); setNewDesc(""); load();
+    } catch (e) { showToast(e.message); } finally { setSaving(false); }
   };
 
-  const deleteProject=async(projId)=>{
-    if(!window.confirm(t.deleteProjConfirm)) return;
-    try{
-      // BUG FIX: cascade delete all related data
+  const deleteProject = async (projId) => {
+    if (!window.confirm(t.deleteProjConfirm)) return;
+    try {
       await Promise.all([
-        api.deleteWhere("persons","project_id",projId),
-        api.deleteWhere("flights","project_id",projId),
-        api.deleteWhere("stays","project_id",projId),
-        api.deleteWhere("hotels","project_id",projId),
-        api.deleteWhere("pricing_rules","project_id",projId),
-        api.deleteWhere("roommates","project_id",projId),
-        api.deleteWhere("user_projects","project_id",projId),
-      ]);
-      await api.delete("projects",projId);
-      showToast(t.deleted);load();
-    }catch(e){showToast("Error: "+e.message);}
+        "persons", "flights", "stays", "hotels", "pricing_rules", "roommates", "vehicles", "vehicle_assignments", "user_projects",
+      ].map((tbl) => api.deleteWhere(tbl, "project_id", projId).catch(() => {})));
+      await api.delete("projects", projId);
+      showToast(t.deleted); load();
+    } catch (e) { showToast(e.message); }
   };
 
-  const openApproveModal=async(req)=>{
-    // 先載入所有專案供選擇
-    try{
-      const allProjs=await api.get("projects");
-      setApproveModal({req, projects:allProjs, projectId:allProjs[0]?.id||"", role:"viewer"});
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  const confirmApprove=async()=>{
-    const {req,projectId,role}=approveModal;
-    if(!projectId){showToast("請選擇專案");return;}
-    try{
-      await api.update("user_requests",req.id,{status:"approved"});
-      if(req.user_id){
-        const existing=await api.get("user_projects",`&user_id=eq.${req.user_id}&project_id=eq.${projectId}`);
-        if(existing.length===0){
-          await api.insert("user_projects",{user_id:req.user_id,project_id:projectId,role});
-        }else{
-          await api.update("user_projects",existing[0].id,{role});
-        }
+  const confirmApprove = async () => {
+    const { req, projectId, role } = approveModal;
+    if (!projectId) { showToast(t.selectProject); return; }
+    try {
+      await api.update("user_requests", req.id, { status: "approved" });
+      if (req.user_id) {
+        const existing = await api.get("user_projects", `&user_id=eq.${req.user_id}&project_id=eq.${projectId}`);
+        if (!existing.length) await api.insert("user_projects", { user_id: req.user_id, project_id: projectId, role });
+        else await api.update("user_projects", existing[0].id, { role });
       }
-      showToast(`✓ ${req.email} 已批准`);
-      setApproveModal(null);
-      loadRequests();
-    }catch(e){showToast("Error: "+e.message);}
+      showToast(t.approved.replace("{email}", req.email));
+      setApproveModal(null); loadRequests();
+    } catch (e) { showToast(e.message); }
   };
 
-  const rejectRequest=async(req)=>{
-    if(!window.confirm(`確定拒絕 ${req.email} 的申請？`)) return;
-    try{
-      await api.update("user_requests",req.id,{status:"rejected"});
-      showToast(`已拒絕 ${req.email}`);
-      loadRequests();
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  return(
-    <div style={{minHeight:"100vh",background:J.bg}}>
-      <Toast msg={toastMsg}/>
-      <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg, rgba(61,107,94,.2) 0%, transparent 100%)",padding:"16px 28px",color:J.washi,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8,borderBottom:"1px solid rgba(250,250,248,.08)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:16}}>
-          <div style={{fontSize:22,fontWeight:200,letterSpacing:"-0.04em",fontFamily:"'Noto Serif JP',serif",color:J.washi}}>映</div>
+  const hdrBtn = { background: "rgba(253,252,249,.09)", color: J.washi, border: "1px solid rgba(253,252,249,.16)", padding: "7px 14px", cursor: "pointer", fontSize: 11.5, borderRadius: 4, fontFamily: "'Noto Sans JP',sans-serif", transition: "background .15s" };
+  return (
+    <div style={{ minHeight: "100vh", background: J.bg, fontFamily: "'Noto Sans JP',sans-serif" }}>
+      <Toast msg={toastMsg} />
+      {/* ── Header ── */}
+      <header style={{
+        background: J.sumi,
+        backgroundImage: "linear-gradient(135deg, rgba(43,90,76,.3) 0%, transparent 60%)",
+        padding: "16px 32px", color: J.washi,
+        display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8,
+        borderBottom: "1px solid rgba(255,255,255,.04)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <span style={{ fontSize: 28, fontFamily: "'Noto Serif JP',serif", color: J.moegi2, lineHeight: 1 }}>映</span>
           <div>
-            <div style={{fontSize:15,fontWeight:600,letterSpacing:"0.08em",fontFamily:"'Noto Serif JP',serif"}}>{t.appName}</div>
-            <div style={{fontSize:10,opacity:.55,marginTop:1,letterSpacing:"0.12em"}}>{user.email}{isOwner&&<span style={{marginLeft:8,padding:"1px 8px",borderRadius:1,background:"rgba(250,250,248,0.15)",fontSize:9,letterSpacing:"0.1em"}}>{t.role_owner}</span>}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.06em" }}>{t.appName}</div>
+            <div style={{ fontSize: 10, opacity: 0.5, marginTop: 2, letterSpacing: "0.04em" }}>
+              {user.email}
+              {isSystemOwner && <span style={{ marginLeft: 8, padding: "1px 8px", background: J.moegi3, color: J.moegi2, borderRadius: 10, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em" }}>{t.role_owner}</span>}
+            </div>
           </div>
         </div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <LangSwitcher lang={lang} onChange={onLangChange}/>
-          <button onClick={()=>{api.logout();window.location.reload();}}
-            style={{background:"rgba(250,250,248,0.1)",color:J.washi,border:"1px solid rgba(250,250,248,.2)",borderRadius:2,padding:"7px 14px",fontWeight:400,cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>
-            {t.logout}
-          </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <LangSwitcher lang={lang} onChange={onLangChange} />
+          <button type="button" onClick={() => { api.logout(); clearSession(); window.location.reload(); }} style={hdrBtn}>{t.logout}</button>
         </div>
-      </div>
+      </header>
 
-      {/* 待審核 */}
-      {isOwner&&(
-        <div style={{maxWidth:900,margin:"0 auto",padding:"24px 16px 0"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <h2 style={{fontSize:13,fontWeight:600,color:J.sumi,margin:0,letterSpacing:"0.1em",display:"flex",alignItems:"center",gap:10}}>
-              <span style={{width:3,height:16,background:J.kincha,display:"inline-block",borderRadius:1}}></span>
-              {t.approveTitle}
-              {requests.length>0&&<span style={{marginLeft:4,background:J.shu,color:J.washi,borderRadius:1,padding:"1px 7px",fontSize:10,fontWeight:700,letterSpacing:"0.06em"}}>{requests.length}</span>}
-            </h2>
-            <button onClick={loadRequests} style={{...eBtn,fontSize:11}}>↻ 更新</button>
+      {/* ── Approval requests ── */}
+      {isSystemOwner && (
+        <div style={{ maxWidth: 960, margin: "0 auto", padding: "28px 24px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 3, height: 16, background: J.shu, borderRadius: 2 }} />
+            <h2 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: J.sumi, margin: 0 }}>{t.approveTitle}</h2>
+            {requests.length > 0 && <span style={{ background: J.shu, color: J.shiro, padding: "2px 8px", fontSize: 10, borderRadius: 10, fontWeight: 700 }}>{requests.length}</span>}
           </div>
-          {reqLoading?<div style={{color:J.usunezumi,fontSize:13}}>…</div>:(
-            requests.length===0?(
-              <div style={{background:J.shiro,borderRadius:12,padding:"16px",textAlign:"center",color:J.usunezumi,fontSize:13,boxShadow:"0 2px 8px rgba(0,0,0,.06)",marginBottom:16}}>{t.noRequests}</div>
-            ):(
-              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-                {requests.map(req=>(
-                  <div key={req.id} style={{background:J.shiro,borderRadius:2,padding:"14px 18px",boxShadow:"0 1px 4px rgba(0,0,0,.06)",borderLeft:"3px solid "+J.kincha,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
-                        <span style={{fontWeight:700,fontSize:14,color:J.sumi}}>{req.display_name||"（名前未記入）"}</span>
-                        <span style={{fontSize:12,color:J.nezumi}}>{req.email}</span>
-                        <span style={{fontSize:11,background:"rgba(250,220,100,.12)",color:J.kincha,borderRadius:20,padding:"2px 8px",fontWeight:600}}>{t.pendingBadge}</span>
-                      </div>
-                      {req.message&&<div style={{fontSize:12,color:J.nezumi,background:J.washi,borderRadius:6,padding:"4px 8px",marginTop:4}}>💬 {req.message}</div>}
-                      <div style={{fontSize:11,color:J.usunezumi,marginTop:4}}>{new Date(req.created_at).toLocaleString("zh-TW")}</div>
-                    </div>
-                    <div style={{display:"flex",gap:8}}>
-                      <button onClick={()=>openApproveModal(req)} style={{background:J.moegi,color:J.washi,border:"none",borderRadius:2,padding:"7px 16px",fontWeight:600,cursor:"pointer",fontSize:12,letterSpacing:"0.08em"}}>批准</button>
-                      <button onClick={()=>rejectRequest(req)} style={{...dBtn,padding:"7px 16px",fontSize:12,letterSpacing:"0.08em"}}>拒否</button>
-                    </div>
-                  </div>
-                ))}
+          {requests.length === 0 ? (
+            <p style={{ color: J.usunezumi, fontSize: 12, marginBottom: 16 }}>{t.noRequests}</p>
+          ) : requests.map((req) => (
+            <div key={req.id} style={{ background: J.shiro, padding: "16px 20px", marginBottom: 10, borderRadius: 8, border: "1px solid " + J.keisenL, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
+              <div>
+                <strong style={{ fontSize: 13, color: J.sumi }}>{req.display_name || t.noName}</strong>
+                <span style={{ color: J.nezumi, fontSize: 12, marginLeft: 8 }}>{req.email}</span>
+                {req.message && <div style={{ fontSize: 12, color: J.nezumi, marginTop: 5, lineHeight: 1.5 }}>{req.message}</div>}
               </div>
-            )
-          )}
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <button type="button" onClick={async () => { const all = await api.get("projects"); setApproveModal({ req, projects: all, projectId: all[0]?.id || "", role: "viewer" }); }} style={pBtn(false)}>{t.approve}</button>
+                <button type="button" onClick={async () => { if (window.confirm(t.rejectConfirm.replace("{email}", req.email))) { await api.update("user_requests", req.id, { status: "rejected" }); showToast(t.rejected.replace("{email}", req.email)); loadRequests(); } }} style={dBtn}>{t.reject}</button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* 專案列表 */}
-      <div style={{maxWidth:900,margin:"0 auto",padding:"32px 16px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:28}}>
-          <h2 style={{fontSize:18,fontWeight:300,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:12}}>
-            <span style={{width:2,height:20,background:J.moegi,display:"inline-block"}}></span>
-            {t.projects}
-          </h2>
-          <button onClick={()=>setShowNew(true)} style={pBtn(false)}>{t.newProject}</button>
+      {/* ── Project list ── */}
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "36px 24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 3, height: 20, background: J.moegi, borderRadius: 2 }} />
+            <h2 style={{ fontSize: 20, fontWeight: 300, color: J.sumi, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.04em", margin: 0 }}>{t.projects}</h2>
+          </div>
+          <button type="button" onClick={() => setShowNew(true)} style={pBtn(false)}>{t.newProject}</button>
         </div>
-        {loading?<div style={{textAlign:"center",padding:40,color:J.usunezumi}}>…</div>:(
-          projects.length===0?(
-            <div style={{textAlign:"center",padding:"60px 40px",background:J.shiro,borderRadius:2,border:"1px solid "+J.keisenL}}>
-              <div style={{fontSize:32,fontWeight:200,color:J.usunezumi,marginBottom:16,fontFamily:"'Noto Serif JP',serif",letterSpacing:"0.2em"}}>無</div>
-              <div style={{fontSize:15,fontWeight:400,color:J.sumi,marginBottom:8,letterSpacing:"0.1em",fontFamily:"'Noto Serif JP',serif"}}>{t.noProject}</div>
-              <div style={{fontSize:12,color:J.nezumi,marginBottom:24,letterSpacing:"0.06em"}}>{t.noProjectHint}</div>
-              <button onClick={()=>setShowNew(true)} style={pBtn(false)}>{t.firstProject}</button>
-            </div>
-          ):(
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
-              {projects.map(up=>(
-                <div key={up.id} style={{background:J.shiro,borderRadius:2,boxShadow:"0 2px 12px rgba(0,0,0,.06), 0 0 0 1px "+J.keisenL,overflow:"hidden",transition:"transform .2s, box-shadow .2s"}}>
-                  <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg, rgba(61,107,94,.25) 0%, transparent 80%)",padding:"20px 20px 16px",color:J.washi}}>
-                    <div style={{fontSize:11,letterSpacing:"0.2em",color:"rgba(250,250,248,.4)",marginBottom:10,fontFamily:"'Noto Serif JP',serif",textTransform:"uppercase"}}>PROJECT</div>
-                    <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>{up.projects?.name||"—"}</div>
-                    {up.projects?.description&&<div style={{fontSize:12,opacity:.8}}>{up.projects.description}</div>}
+
+        {loading ? (
+          <p style={{ textAlign: "center", color: J.usunezumi, padding: 60 }}>{t.loading}</p>
+        ) : projects.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "70px 40px", background: J.shiro, borderRadius: 10, border: "1px solid " + J.keisenL }}>
+            <div style={{ fontSize: 32, fontFamily: "'Noto Serif JP',serif", color: J.usunezumi, marginBottom: 16 }}>映</div>
+            <p style={{ marginBottom: 6, fontSize: 14, color: J.sumi }}>{t.noProject}</p>
+            <p style={{ fontSize: 12, color: J.nezumi, marginBottom: 28, lineHeight: 1.6 }}>{t.noProjectHint}</p>
+            <button type="button" onClick={() => setShowNew(true)} style={pBtn(false)}>{t.firstProject}</button>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 18 }}>
+            {projects.map((up) => (
+              <div key={up.id} style={{
+                background: J.shiro, borderRadius: 10, overflow: "hidden",
+                boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 4px 20px rgba(0,0,0,.05), 0 0 0 1px " + J.keisenL,
+                transition: "box-shadow .2s, transform .15s",
+              }} className="proj-card">
+                {/* Color band based on role */}
+                <div style={{ height: 4, background: up.role === "owner" ? J.kincha : up.role === "admin" ? J.shu : up.role === "editor" ? J.moegi : J.usunezumi }} />
+                <div style={{ padding: "20px 22px" }}>
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontWeight: 600, fontSize: 16, color: J.sumi, letterSpacing: "0.02em", marginBottom: 5, fontFamily: "'Noto Serif JP',serif" }}>{up.projects?.name || "—"}</div>
+                    {up.projects?.description && <div style={{ fontSize: 12, color: J.nezumi, lineHeight: 1.5 }}>{up.projects.description}</div>}
                   </div>
-                  <div style={{padding:"14px 20px"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                      <span style={{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:1,letterSpacing:"0.06em",...(ROLE_COLORS[up.role]||ROLE_COLORS.viewer)}}>{t[`role_${up.role}`]||up.role}</span>
-                      <span style={{fontSize:11,color:J.usunezumi}}>{up.projects?.created_at?new Date(up.projects.created_at).toLocaleDateString():""}</span>
-                    </div>
-                    <div style={{display:"flex",gap:8}}>
-                      <button onClick={()=>onSelect(up.projects,up.role)} style={{flex:1,...pBtn(false),padding:"8px",fontSize:13}}>{t.openProject}</button>
-                      {(isOwner||up.role==="admin")&&(
-                        <button onClick={()=>deleteProject(up.projects?.id||up.project_id)} style={{...dBtn,padding:"8px 12px"}}>🗑</button>
-                      )}
-                    </div>
-                  </div>
+                  <span style={{ fontSize: 10, padding: "3px 10px", borderRadius: 20, fontWeight: 700, letterSpacing: "0.08em", ...(ROLE_COLORS[up.role] || ROLE_COLORS.viewer) }}>{t[`role_${up.role}`] || up.role}</span>
                 </div>
-              ))}
-            </div>
-          )
+                <div style={{ padding: "12px 22px 20px", display: "flex", gap: 8 }}>
+                  <button type="button" onClick={() => onSelect(up.projects, up.role)} style={{ ...pBtn(false), flex: 1, padding: "9px 0", fontSize: 12.5 }}>{t.openProject}</button>
+                  {(isSystemOwner || up.role === "admin" || up.role === "owner") && (
+                    <button type="button" onClick={() => deleteProject(up.projects?.id || up.project_id)} style={{ ...dBtn, padding: "9px 14px" }}>×</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* 批准對話框：選擇專案 + 角色 */}
-      {approveModal&&(
-        <Modal title="批准申請" onClose={()=>setApproveModal(null)}>
-          <div style={{marginBottom:16,padding:"12px 16px",background:J.washi,borderRadius:2,border:"1px solid "+J.keisenL}}>
-            <div style={{fontWeight:600,fontSize:13,color:J.sumi}}>{approveModal.req.display_name||"（未填姓名）"}</div>
-            <div style={{fontSize:12,color:J.nezumi,marginTop:2}}>{approveModal.req.email}</div>
-          </div>
+      {approveModal && (
+        <Modal title={t.approveTitle} onClose={() => setApproveModal(null)}>
           <Field label={t.approveProject}>
-            <select style={inpStyle} value={approveModal.projectId}
-              onChange={e=>setApproveModal(m=>({...m,projectId:e.target.value}))}>
-              {approveModal.projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+            <select style={inpStyle} value={approveModal.projectId} onChange={(e) => setApproveModal((m) => ({ ...m, projectId: e.target.value }))} className="wa-input">
+              {approveModal.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </Field>
           <Field label={t.approveRole}>
-            <select style={inpStyle} value={approveModal.role}
-              onChange={e=>setApproveModal(m=>({...m,role:e.target.value}))}>
-              <option value="viewer">👁 只讀（Viewer）— 只能查看</option>
-              <option value="editor">✏️ 編輯（Editor）— 可新增修改</option>
-              <option value="admin">🔑 管理員（Admin）— 可刪除管理成員</option>
+            <select style={inpStyle} value={approveModal.role} onChange={(e) => setApproveModal((m) => ({ ...m, role: e.target.value }))} className="wa-input">
+              <option value="viewer">{t.roleViewerDesc}</option>
+              <option value="editor">{t.roleEditorDesc}</option>
+              <option value="admin">{t.roleAdminDesc}</option>
             </select>
           </Field>
-          <div style={{fontSize:11,color:J.nezumi,marginBottom:16,padding:"8px 12px",background:"rgba(74,127,165,.06)",borderRadius:2,borderLeft:"2px solid "+J.asagi}}>
-            {t.approveNote}
-          </div>
-          <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:8}}>
-            <button onClick={()=>setApproveModal(null)} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,color:J.nezumi,background:J.shiro}}>取消</button>
-            <button onClick={confirmApprove} style={pBtn(false)}>{t.confirmApproveBtn}</button>
+          <p style={{ fontSize: 11.5, color: J.nezumi, marginBottom: 18, lineHeight: 1.6 }}>{t.approveNote}</p>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <button type="button" onClick={() => setApproveModal(null)} style={{ ...eBtn, marginRight: 0, padding: "9px 18px" }}>{t.cancel}</button>
+            <button type="button" onClick={confirmApprove} style={pBtn(false)}>{t.confirmApproveBtn}</button>
           </div>
         </Modal>
       )}
 
-      {showNew&&(
-        <Modal title={t.newProject} onClose={()=>setShowNew(false)}>
-          <Field label={`${t.projectName} *`}><input style={inpStyle} value={newName} onChange={e=>setNewName(e.target.value)}/></Field>
-          <Field label={t.projectDesc}><input style={inpStyle} value={newDesc} onChange={e=>setNewDesc(e.target.value)}/></Field>
-          <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:16}}>
-            <button onClick={()=>setShowNew(false)} style={{padding:"8px 16px",borderRadius:2,border:"1px solid "+J.keisenM,cursor:"pointer",fontSize:12,letterSpacing:"0.06em",color:J.nezumi,background:J.shiro}}>{t.cancel}</button>
-            <button onClick={createProject} disabled={saving||!newName.trim()} style={pBtn(saving||!newName.trim())}>{saving?t.creating:t.create}</button>
+      {showNew && (
+        <Modal title={t.newProject} onClose={() => setShowNew(false)}>
+          <Field label={t.projectName}><input style={inpStyle} value={newName} onChange={(e) => setNewName(e.target.value)} className="wa-input" /></Field>
+          <Field label={t.projectDesc}><input style={inpStyle} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="wa-input" /></Field>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+            <button type="button" onClick={() => setShowNew(false)} style={{ ...eBtn, marginRight: 0, padding: "9px 18px" }}>{t.cancel}</button>
+            <button type="button" onClick={createProject} disabled={saving || !newName.trim()} style={pBtn(saving || !newName.trim())}>{saving ? t.creating : t.create}</button>
           </div>
         </Modal>
       )}
@@ -1079,861 +1440,1056 @@ function ProjectSelector({user,isOwner,lang,onLangChange,onSelect}){
   );
 }
 
-// ─── Project App ─────────────────────────────────────────────
-function ProjectApp({project,userRole,user,isOwner,lang,onLangChange,onBack}){
-  const pid=project.id;
-  const t=T[lang];
-  const canEdit  =isOwner||userRole==="admin"||userRole==="editor";
-  const canDelete=isOwner||userRole==="admin";
+function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange, onBack, onProjectUpdate }) {
+  const pid = project.id;
+  const t = T[lang];
+  const canEdit = isSystemOwner || ["owner", "admin", "editor"].includes(userRole);
+  const canDelete = isSystemOwner || ["owner", "admin"].includes(userRole);
+  const canManageMembers = isSystemOwner || ["owner", "admin"].includes(userRole);
 
-  const [tab,setTab]=useState("A");
-  const [loading,setLoading]=useState(false);
-  const [toastMsg,showToast]=useToast();
+  const [tab, setTab] = useState("A");
+  const [accSub, setAccSub] = useState("stays");
+  const [loading, setLoading] = useState(true);
+  const [toastMsg, showToast] = useToast();
 
-  const [persons,     setPersons]     =useState([]);
-  const [flights,     setFlights]     =useState([]);
-  const [stays,       setStays]       =useState([]);
-  const [hotels,      setHotels]      =useState([]);
-  const [pricingRules,setPricingRules]=useState([]);
-  const [roommates,   setRoommates]   =useState([]);
+  const [persons, setPersons] = useState([]);
+  const [personIndex, setPersonIndex] = useState({});
+  const [flights, setFlights] = useState([]);
+  const [stays, setStays] = useState([]);
+  const [hotels, setHotels] = useState([]);
+  const [pricingRules, setPricingRules] = useState([]);
+  const [roommates, setRoommates] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [vehicleAssignments, setVehicleAssignments] = useState([]);
+  const [useAssignmentTable, setUseAssignmentTable] = useState(true);
 
-  const [searchA,setSearchA]=useState(""); const [deptA,setDeptA]=useState("");
-  const [searchB,setSearchB]=useState(""); const [deptB,setDeptB]=useState("");
-  // 功能二: 航班進階搜尋
-  const [searchBRoman,setSearchBRoman]=useState("");
-  const [searchBAirline,setSearchBAirline]=useState("");
-  const [searchBFlightNo,setSearchBFlightNo]=useState("");
-  const [searchBCabin,setSearchBCabin]=useState("");
-  const [searchBPnr,setSearchBPnr]=useState("");
-  const [searchBDepAirport,setSearchBDepAirport]=useState("");
-  const [searchBArrAirport,setSearchBArrAirport]=useState("");
-  const [searchBChecked,setSearchBChecked]=useState("");
-  const [searchBCabinBag,setSearchBCabinBag]=useState("");
-  const [searchBStatus,setSearchBStatus]=useState("");
-  const [showFlightAdvanced,setShowFlightAdvanced]=useState(false);
-  const [searchC,setSearchC]=useState(""); const [deptC,setDeptC]=useState("");
-  // 功能一: 飯店進階搜尋
-  const [searchCHotel,setSearchCHotel]=useState("");
-  const [searchCRoomType,setSearchCRoomType]=useState("");
-  const [showHotelAdvanced,setShowHotelAdvanced]=useState(false);
-  const [searchD,setSearchD]=useState("");
-  // 功能四-1,2: 拖移排序
-  const dragItem=useRef(null);
-  const dragOver=useRef(null);
-  // 低優先11: 批次選取
-  const [selectedIds,setSelectedIds]=useState([]);
-  const toggleSelect=useCallback(id=>setSelectedIds(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id]),[]);
-  const selectAll=useCallback(ids=>setSelectedIds(s=>s.length===ids.length?[]:ids),[]);
-  const bulkDelete=useCallback(async()=>{
-    if(!selectedIds.length) return;
-    if(!window.confirm(`確定刪除選取的 ${selectedIds.length} 人？此操作無法復原。`)) return;
-    for(const id of selectedIds){
-      await Promise.all([api.deleteWhere("flights","person_id",id),api.deleteWhere("stays","person_id",id),api.deleteWhere("roommates","person_id",id),api.deleteWhere("roommates","partner_id",id)]);
-      await api.delete("persons",id);
-    }
-    const remaining=persons.filter(p=>!selectedIds.includes(p.id));
-    await Promise.all(remaining.map((p,i)=>p.sort_order!==i?api.update("persons",p.id,{sort_order:i}):Promise.resolve()));
-    setPersons(remaining.map((p,i)=>({...p,sort_order:i})));
-    setFlights(f=>f.filter(x=>!selectedIds.includes(x.person_id)));
-    setStays(s=>s.filter(x=>!selectedIds.includes(x.person_id)));
-    setRoommates(r=>r.filter(x=>!selectedIds.includes(x.person_id)&&!selectedIds.includes(x.partner_id)));
-    setSelectedIds([]);
-    showToast(`已刪除 ${selectedIds.length} 人`);
-  },[selectedIds,persons,flights,stays,roommates]);
+  const [searchA, setSearchA] = useState("");
+  const [deptA, setDeptA] = useState("");
+  const [searchB, setSearchB] = useState("");
+  const [deptB, setDeptB] = useState("");
+  const [searchC, setSearchC] = useState("");
+  const [deptC, setDeptC] = useState("");
+  const [searchCHotel, setSearchCHotel] = useState("");
+  const [searchCRoom, setSearchCRoom] = useState("");
+  const [searchD, setSearchD] = useState("");
+  const [showFlightAdv, setShowFlightAdv] = useState(false);
+  const [searchBRoman, setSearchBRoman] = useState("");
+  const [searchBAirline, setSearchBAirline] = useState("");
+  const [searchBStatus, setSearchBStatus] = useState("");
 
-  const [personModal,  setPersonModal]  =useState(null);
-  const [flightModal,  setFlightModal]  =useState(null);
-  const [stayModal,    setStayModal]    =useState(null);
-  const [hotelModal,   setHotelModal]   =useState(null);
-  const [priceModal,   setPriceModal]   =useState(null);
-  const [roommateModal,setRoommateModal]=useState(null);
-  const [showMembers,  setShowMembers]  =useState(false);
+  const debSearchA = useDebounced(searchA);
+  const debSearchB = useDebounced(searchB);
+  const debSearchC = useDebounced(searchC);
 
-  const loadAll=useCallback(async()=>{
+  const [selectedIds, setSelectedIds] = useState([]);
+  const dragItem = useRef(null);
+  const dragOver = useRef(null);
+
+  const [personModal, setPersonModal] = useState(null);
+  const [flightModal, setFlightModal] = useState(null);
+  const [stayModal, setStayModal] = useState(null);
+  const [hotelModal, setHotelModal] = useState(null);
+  const [priceModal, setPriceModal] = useState(null);
+  const [roommateModal, setRoommateModal] = useState(null);
+  const [vehicleModal, setVehicleModal] = useState(null);
+  const [showMembers, setShowMembers] = useState(false);
+  const [showCurrency, setShowCurrency] = useState(false);
+  const [syncRoommate, setSyncRoommate] = useState(null);
+  const [pendingStay, setPendingStay] = useState(null);
+  const [addStayPerson, setAddStayPerson] = useState("");
+  const [addTripVehicle, setAddTripVehicle] = useState(null);
+  const [tripPerson, setTripPerson] = useState("");
+  const [tripRole, setTripRole] = useState("passenger");
+  const [tripSegment, setTripSegment] = useState("");
+
+  const loadAll = useCallback(async () => {
     setLoading(true);
-    try{
-      const pf=`&project_id=eq.${pid}`;
-      const [p,f,s,h,pr,rm]=await Promise.all([
-        api.get("persons",pf+"&order=sort_order.asc,id.asc"),
-        api.get("flights",pf),api.get("stays",pf),
-        api.get("hotels",pf),api.get("pricing_rules",pf),api.get("roommates",pf),
+    try {
+      const pf = `&project_id=eq.${pid}`;
+      const [p, f, s, h, pr, rm, vh, va] = await Promise.all([
+        api.get("persons", pf + "&order=sort_order.asc,id.asc"),
+        api.get("flights", pf),
+        api.get("stays", pf),
+        api.get("hotels", pf),
+        api.get("pricing_rules", pf),
+        api.get("roommates", pf),
+        api.get("vehicles", pf + "&order=created_at.asc").catch(() => []),
+        api.get("vehicle_assignments", pf + "&order=sort_order.asc,id.asc").catch(() => null),
       ]);
-      setPersons(p);setFlights(f);setStays(s);setHotels(h);setPricingRules(pr);setRoommates(rm);
-    }catch(e){showToast("Error: "+e.message);}
-    setLoading(false);
-  },[pid]);
-  useEffect(()=>{loadAll();},[loadAll]);
+      setPersons(p);
+      setPersonIndex(Object.fromEntries(p.map((x, i) => [x.id, i + 1])));
+      setFlights(f); setStays(s); setHotels(h); setPricingRules(pr); setRoommates(rm); setVehicles(vh || []);
+      if (va === null) { setUseAssignmentTable(false); setVehicleAssignments([]); }
+      else { setUseAssignmentTable(true); setVehicleAssignments(va); }
+    } catch (e) { showToast(e.message); } finally { setLoading(false); }
+  }, [pid]);
 
-  const allDepts=useMemo(()=>[...new Set(persons.map(p=>p.dept).filter(Boolean))],[persons]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
-  const getStatus=useCallback((id)=>{
-    const f=flights.find(fl=>fl.person_id===id);
-    const ps=stays.filter(st=>st.person_id===id);
-    const hasF=f&&f.airline&&f.flight_no;
-    const hasS=ps.length>0&&ps.some(s=>s.hotel_id&&s.check_in&&s.check_out);
-    if(hasF&&hasS) return"arranged";
-    if(hasF||hasS) return"partial";
-    return"none";
-  },[flights,stays]);
+  const getAssignmentsForVehicle = useCallback((vehicleId) => {
+    if (useAssignmentTable) return vehicleAssignments.filter((a) => a.vehicle_id === vehicleId);
+    const v = vehicles.find((x) => x.id === vehicleId);
+    if (!v) return [];
+    if (v.assignments?.length) return v.assignments.map((a, i) => ({ ...a, id: `legacy-${vehicleId}-${i}`, vehicle_id: vehicleId }));
+    return legacyAssignmentsFromVehicle(v).map((a, i) => ({ ...a, id: `legacy-${vehicleId}-${i}`, vehicle_id: vehicleId }));
+  }, [useAssignmentTable, vehicleAssignments, vehicles]);
 
-  // 中優先7: CSV 匯出
-  const exportCSV=useCallback(()=>{
-    const headers=["編號","部門","姓名（漢字）","羅馬拼音","重要度","護照號碼","出生年月日","護照效期","飲食限制","狀態","航空公司","航班號","艙等","PNR","出發機場","出發時間","抵達機場","抵達時間","託運行李","手提行李","飯店","房型","入住日期","退房日期","住宿天數","金額","同室者"];
-    const rows=persons.map((p,i)=>{
-      const fl=flights.find(x=>x.person_id===p.id);
-      const pStays=stays.filter(x=>x.person_id===p.id);
-      const s=pStays[0];
-      const hotelName=s?hotels.find(h=>h.id==s.hotel_id)?.name||"":"";
-      const rm=roommates.filter(r=>r.person_id===p.id).map(r=>persons.find(x=>x.id===r.partner_id)?.name_kanji||"").filter(Boolean).join("/");
-      const st=getStatus(p.id)==="arranged"?"已安排":getStatus(p.id)==="partial"?"部分完成":"未安排";
-      return [i+1,p.dept||"",p.name_kanji||"",`${p.last_roman||""} ${p.first_roman||""}`.trim(),p.importance||0,p.passport||"",p.dob||"",p.passport_exp||"",p.diet||"",st,fl?.airline||"",fl?.flight_no||"",fl?.cabin||"",fl?.pnr||"",fl?.dep_airport||"",fl?.dep_time||"",fl?.arr_airport||"",fl?.arr_time||"",fl?.checked_bag||"",fl?.cabin_bag||"",hotelName,s?.room_type||"",s?.check_in||"",s?.check_out||"",s?.nights||"",s?.total_amount||"",rm];
-    });
-    const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+ '"').join(",")).join("\n");
-    const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;a.download=`staff_${new Date().toISOString().slice(0,10)}.csv`;a.click();
-    URL.revokeObjectURL(url);
-  },[persons,flights,stays,hotels,roommates,getStatus]);
+  const allAssignments = useMemo(() => {
+    if (useAssignmentTable) return vehicleAssignments;
+    return vehicles.flatMap((v) => getAssignmentsForVehicle(v.id));
+  }, [useAssignmentTable, vehicleAssignments, vehicles, getAssignmentsForVehicle]);
 
-  const filterPersons=(q,dept)=>persons.filter(p=>{
-    const kw=q.toLowerCase();
-    const ok=!kw||[p.name_kanji,p.last_roman,p.first_roman,p.dept,p.passport,p.diet].some(v=>(v||"").toLowerCase().includes(kw));
-    return ok&&(!dept||p.dept===dept);
+  const cleanupPersonVehicles = async (personId) => {
+    if (useAssignmentTable) {
+      await api.deleteWhere("vehicle_assignments", "person_id", personId).catch(() => {});
+      setVehicleAssignments((va) => va.filter((a) => a.person_id !== personId));
+    }
+    for (const v of vehicles) {
+      const needs = v.driver_id === personId || (v.passenger_ids || []).includes(personId);
+      if (needs) {
+        const pids = (v.passenger_ids || []).filter((id) => id !== personId);
+        await api.update("vehicles", v.id, { driver_id: v.driver_id === personId ? null : v.driver_id, passenger_ids: pids.length ? pids : null }).catch(() => {});
+      }
+    }
+    setVehicles((vs) => vs.map((v) => ({
+      ...v,
+      driver_id: v.driver_id === personId ? null : v.driver_id,
+      passenger_ids: (v.passenger_ids || []).filter((id) => id !== personId),
+    })));
+  };
+
+  const getStatus = useCallback((id) => {
+    const fl = flights.find((x) => x.person_id === id);
+    const ps = stays.filter((st) => st.person_id === id);
+    const hasF = fl && fl.airline && fl.flight_no;
+    const hasS = ps.some((s) => s.hotel_id && s.check_in && s.check_out);
+    if (hasF && hasS) return "arranged";
+    if (hasF || hasS) return "partial";
+    return "none";
+  }, [flights, stays]);
+
+  const allDepts = useMemo(() => [...new Set(persons.map((p) => p.dept).filter(Boolean))], [persons]);
+  const hotelStatsMap = useMemo(() => computeHotelStats(stays, roommates), [stays, roommates]);
+  const totalHotelCost = useMemo(() => stays.reduce((s, st) => s + (st.total_amount || 0), 0), [stays]);
+
+  const personsWithNoTrips = useMemo(() => {
+    const has = new Set(allAssignments.map((a) => a.person_id));
+    return persons.filter((p) => !has.has(p.id));
+  }, [persons, allAssignments]);
+
+  const progressStats = useMemo(() => {
+    const total = persons.length;
+    const flightDone = persons.filter((p) => { const fl = flights.find((x) => x.person_id === p.id); return fl && fl.airline; }).length;
+    const hotelDone = persons.filter((p) => stays.some((s) => s.person_id === p.id && s.hotel_id)).length;
+    const tripPersons = new Set(allAssignments.map((a) => a.person_id));
+    return { total, flightDone, hotelDone, vehicleAssigned: tripPersons.size, unassignedVehicle: persons.filter((p) => !tripPersons.has(p.id)).length };
+  }, [persons, flights, stays, allAssignments]);
+
+  const getRoommateNames = (id) => roommates.filter((r) => r.person_id === id).map((r) => persons.find((p) => p.id === r.partner_id)?.name_kanji).filter(Boolean).join("、");
+  const getHotelName = (id) => hotels.find((h) => h.id == id)?.name || "—";
+
+  const filterPersons = (q, dept) => persons.filter((p) => {
+    const kw = q.toLowerCase();
+    const ok = !kw || [p.name_kanji, p.last_roman, p.first_roman, p.dept, p.passport].some((v) => (v || "").toLowerCase().includes(kw));
+    return ok && (!dept || p.dept === dept);
   });
 
-  // 中優先6: useMemo 快取航班篩選結果
-  const filteredFlightPersons=useMemo(()=>persons.filter(p=>{
-    const fl=flights.find(x=>x.person_id===p.id);
-    const kw=searchB.toLowerCase();
-    const nameOk=!kw||[p.name_kanji,p.last_roman,p.first_roman,p.dept].some(v=>(v||"").toLowerCase().includes(kw));
-    const romanOk=!searchBRoman||[p.last_roman,p.first_roman].some(v=>(v||"").toLowerCase().includes(searchBRoman.toLowerCase()));
-    const airlineOk=!searchBAirline||(fl?.airline||"").toLowerCase().includes(searchBAirline.toLowerCase());
-    const flightNoOk=!searchBFlightNo||(fl?.flight_no||"").toLowerCase().includes(searchBFlightNo.toLowerCase());
-    const cabinOk=!searchBCabin||(fl?.cabin||"").toLowerCase().includes(searchBCabin.toLowerCase());
-    const pnrOk=!searchBPnr||(fl?.pnr||"").toLowerCase().includes(searchBPnr.toLowerCase());
-    const depOk=!searchBDepAirport||(fl?.dep_airport||"").toLowerCase().includes(searchBDepAirport.toLowerCase());
-    const arrOk=!searchBArrAirport||(fl?.arr_airport||"").toLowerCase().includes(searchBArrAirport.toLowerCase());
-    const checkedOk=!searchBChecked||(fl?.checked_bag||"").toLowerCase().includes(searchBChecked.toLowerCase());
-    const cabinBagOk=!searchBCabinBag||(fl?.cabin_bag||"").toLowerCase().includes(searchBCabinBag.toLowerCase());
-    const st=getStatus(p.id);
-    const statusOk=!searchBStatus||(searchBStatus==="arranged"?st==="arranged":searchBStatus==="partial"?st==="partial":st==="none");
-    const deptOk=!deptB||p.dept===deptB;
-    return nameOk&&romanOk&&airlineOk&&flightNoOk&&cabinOk&&pnrOk&&depOk&&arrOk&&checkedOk&&cabinBagOk&&statusOk&&deptOk;
-  }),[persons,flights,searchB,deptB,searchBRoman,searchBAirline,searchBFlightNo,searchBCabin,searchBPnr,searchBDepAirport,searchBArrAirport,searchBChecked,searchBCabinBag,searchBStatus,getStatus]);
+  const filteredFlightPersons = useMemo(() => persons.filter((p) => {
+    const fl = flights.find((x) => x.person_id === p.id);
+    const kw = debSearchB.toLowerCase();
+    const nameOk = !kw || [p.name_kanji, p.last_roman, p.first_roman, p.dept].some((v) => (v || "").toLowerCase().includes(kw));
+    const romanOk = !searchBRoman || [p.last_roman, p.first_roman].some((v) => (v || "").toLowerCase().includes(searchBRoman.toLowerCase()));
+    const airlineOk = !searchBAirline || (fl?.airline || "").toLowerCase().includes(searchBAirline.toLowerCase());
+    const st = getStatus(p.id);
+    const statusOk = !searchBStatus || (searchBStatus === "arranged" ? st === "arranged" : searchBStatus === "partial" ? st === "partial" : st === "none");
+    return nameOk && romanOk && airlineOk && statusOk && (!deptB || p.dept === deptB);
+  }), [persons, flights, debSearchB, deptB, searchBRoman, searchBAirline, searchBStatus, getStatus]);
 
-  // 中優先6: useMemo 快取飯店篩選結果
-  const filteredHotelPersons=useMemo(()=>persons.filter(p=>{
-    const kw=searchC.toLowerCase();
-    const nameOk=!kw||[p.name_kanji,p.last_roman,p.first_roman,p.dept].some(v=>(v||"").toLowerCase().includes(kw));
-    const pStays=stays.filter(s=>s.person_id===p.id);
-    const hotelOk=!searchCHotel||pStays.some(s=>{
-      const h=hotels.find(x=>x.id==s.hotel_id);
-      return(h?.name||"").toLowerCase().includes(searchCHotel.toLowerCase());
+  const flatStays = useMemo(() => {
+    const rows = [];
+    stays.forEach((s) => {
+      const p = persons.find((x) => x.id === s.person_id);
+      if (!p) return;
+      const kw = debSearchC.toLowerCase();
+      const hname = getHotelName(s.hotel_id);
+      const rt = s.room_type === "Custom" ? s.room_custom : s.room_type;
+      const nameOk = !kw || [p.name_kanji, p.last_roman, p.dept].some((v) => (v || "").toLowerCase().includes(kw));
+      const hotelOk = !searchCHotel || hname.toLowerCase().includes(searchCHotel.toLowerCase());
+      const roomOk = !searchCRoom || (rt || "").toLowerCase().includes(searchCRoom.toLowerCase());
+      const deptOk = !deptC || p.dept === deptC;
+      if (nameOk && hotelOk && roomOk && deptOk) rows.push({ ...s, person: p, hotelName: hname, roomLabel: rt });
     });
-    const roomTypeOk=!searchCRoomType||pStays.some(s=>{
-      const rt=s.room_type==="Custom"?(s.room_custom||""):(s.room_type||"");
-      return rt.toLowerCase().includes(searchCRoomType.toLowerCase());
-    });
-    return nameOk&&hotelOk&&roomTypeOk&&(!deptC||p.dept===deptC);
-  }),[persons,stays,hotels,searchC,deptC,searchCHotel,searchCRoomType]);
+    rows.sort((a, b) => (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0));
+    return rows;
+  }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, personIndex, hotels]);
 
-  const getHotelName =id=>hotels.find(h=>h.id==id)?.name||"—";
-  const getPersonStays=useCallback(id=>stays.filter(s=>s.person_id===id),[stays]);
-  const getPersonTotal=useCallback(id=>stays.filter(s=>s.person_id===id).reduce((sum,s)=>sum+(s.total_amount||0),0),[stays]);
-  const getRoommateNames=id=>roommates.filter(r=>r.person_id===id).map(r=>persons.find(p=>p.id===r.partner_id)?.name_kanji).filter(Boolean).join("、");
-
-  const totalHotelCost=useMemo(()=>stays.reduce((s,st)=>s+(st.total_amount||0),0),[stays]);
-  const hotelStats=useMemo(()=>{
-    const map={};
-    hotels.forEach(h=>{map[h.id]={guests:0,rooms:0,total:0};});
-    stays.forEach(s=>{
-      if(!s.hotel_id) return;
-      if(!map[s.hotel_id]) map[s.hotel_id]={guests:0,rooms:0,total:0};
-      map[s.hotel_id].guests+=1;map[s.hotel_id].rooms+=1;map[s.hotel_id].total+=(s.total_amount||0);
-    });
-    return map;
-  },[stays,hotels]);
-
-  // CRUD
-  const savePerson=async f=>{
-    try{
-      // 空的日期欄位必須傳 null，不能傳 ""（Supabase date 型別不接受空字串）
-      const data={...f,
-        dob:f.dob||null,
-        passport_exp:f.passport_exp||null,
-      };
-      // 無必填限制：任何欄位填一個即可儲存
-      if(personModal.mode==="add"){
-        const sortOrder=persons.length;
-        const[r]=await api.insert("persons",{...data,project_id:pid,sort_order:sortOrder});
-        setPersons(p=>[...p,r]);
-      }else{
-        const[r]=await api.update("persons",personModal.data.id,data);
-        setPersons(p=>p.map(x=>x.id===personModal.data.id?r:x));
+  const addAssignment = async (vehicleId, personId, role, segmentLabel = "") => {
+    const v = vehicles.find((x) => x.id === vehicleId);
+    if (!v) return;
+    const current = getAssignmentsForVehicle(vehicleId);
+    const seg = segmentLabel || "";
+    const segGroup = current.filter((a) => (a.segment_label || "") === seg);
+    if (current.some((a) => a.person_id === personId && a.role === role && (a.segment_label || "") === seg)) return;
+    const cap = v.capacity || 4;
+    if (vehicleOnboardCount(segGroup) >= cap) { showToast(t.vehicleFull); return; }
+    if (role === "driver" && segGroup.some((a) => a.role === "driver")) { showToast(t.vehicleFull); return; }
+    try {
+      if (useAssignmentTable) {
+        const [row] = await api.insert("vehicle_assignments", { project_id: pid, vehicle_id: vehicleId, person_id: personId, role, segment_label: segmentLabel, sort_order: current.length });
+        setVehicleAssignments((va) => [...va, row]);
+      } else {
+        const next = [...current.map(({ person_id, role: r, segment_label }) => ({ person_id, role: r, segment_label: segment_label || "" })), { person_id: personId, role, segment_label: segmentLabel }];
+        const driver = next.find((a) => a.role === "driver");
+        const pids = next.filter((a) => a.role === "passenger").map((a) => a.person_id);
+        await api.update("vehicles", vehicleId, { assignments: next, driver_id: driver?.person_id || null, passenger_ids: pids.length ? pids : null });
+        setVehicles((vs) => vs.map((x) => x.id === vehicleId ? { ...x, assignments: next, driver_id: driver?.person_id || null, passenger_ids: pids } : x));
       }
-      showToast(t.saved);setPersonModal(null);
-    }catch(e){showToast("Error: "+e.message);}
+    } catch (e) { showToast(e.message); }
   };
 
-  const deletePerson=async id=>{
-    if(!window.confirm(t.deleteConfirm)) return;
-    try{
+  const removeAssignment = async (assignment) => {
+    try {
+      if (useAssignmentTable && assignment.id && !String(assignment.id).startsWith("legacy")) {
+        await api.delete("vehicle_assignments", assignment.id);
+        setVehicleAssignments((va) => va.filter((a) => a.id !== assignment.id));
+      } else {
+        const vid = assignment.vehicle_id;
+        const current = getAssignmentsForVehicle(vid).filter((a) => !(a.person_id === assignment.person_id && a.role === assignment.role && (a.segment_label || "") === (assignment.segment_label || "")));
+        const next = current.map(({ person_id, role, segment_label }) => ({ person_id, role, segment_label: segment_label || "" }));
+        const driver = next.find((a) => a.role === "driver");
+        const pids = next.filter((a) => a.role === "passenger").map((a) => a.person_id);
+        await api.update("vehicles", vid, { assignments: next, driver_id: driver?.person_id || null, passenger_ids: pids.length ? pids : null });
+        await loadAll();
+      }
+    } catch (e) { showToast(e.message); }
+  };
+
+  const savePerson = async (f) => {
+    try {
+      const data = { ...f, dob: f.dob || null, passport_exp: f.passport_exp || null };
+      if (personModal.mode === "add") {
+        const [r] = await api.insert("persons", { ...data, project_id: pid, sort_order: persons.length });
+        setPersons((p) => [...p, r]);
+      } else {
+        const [r] = await api.update("persons", personModal.data.id, data);
+        setPersons((p) => p.map((x) => x.id === personModal.data.id ? r : x));
+      }
+      showToast(t.saved); setPersonModal(null); loadAll();
+    } catch (e) { showToast(e.message); }
+  };
+
+  const deletePerson = async (id) => {
+    if (!window.confirm(t.deleteConfirm)) return;
+    try {
       await Promise.all([
-        api.deleteWhere("flights","person_id",id),
-        api.deleteWhere("stays","person_id",id),
-        api.deleteWhere("roommates","person_id",id),
-        api.deleteWhere("roommates","partner_id",id),
+        api.deleteWhere("flights", "person_id", id),
+        api.deleteWhere("stays", "person_id", id),
+        api.deleteWhere("roommates", "person_id", id),
+        api.deleteWhere("roommates", "partner_id", id),
       ]);
-      await api.delete("persons",id);
-      // 高優先1: 刪除後重新排序 sort_order，避免序號跳號
-      const remaining=persons.filter(x=>x.id!==id);
-      await Promise.all(remaining.map((p,i)=>
-        p.sort_order!==i ? api.update("persons",p.id,{sort_order:i}) : Promise.resolve()
-      ));
-      setPersons(remaining.map((p,i)=>({...p,sort_order:i})));
-      setFlights(f=>f.filter(x=>x.person_id!==id));
-      setStays(s=>s.filter(x=>x.person_id!==id));
-      setRoommates(r=>r.filter(x=>x.person_id!==id&&x.partner_id!==id));
+      await cleanupPersonVehicles(id);
+      await api.delete("persons", id);
+      const remaining = persons.filter((x) => x.id !== id);
+      await Promise.all(remaining.map((p, i) => p.sort_order !== i ? api.update("persons", p.id, { sort_order: i }) : Promise.resolve()));
+      setPersons(remaining.map((p, i) => ({ ...p, sort_order: i })));
+      setFlights((fl) => fl.filter((x) => x.person_id !== id));
+      setStays((st) => st.filter((x) => x.person_id !== id));
+      setRoommates((r) => r.filter((x) => x.person_id !== id && x.partner_id !== id));
       showToast(t.deleted);
-    }catch(e){showToast("Error: "+e.message);}
+    } catch (e) { showToast(e.message); }
   };
 
-  const saveFlight=async f=>{
-    try{
-      const existing=flights.find(fl=>fl.person_id===flightModal.pid);
-      const data={...f,person_id:flightModal.pid,project_id:pid};
-      if(existing){const[r]=await api.update("flights",existing.id,data);setFlights(fl=>fl.map(x=>x.id===existing.id?r:x));}
-      else{const[r]=await api.insert("flights",data);setFlights(fl=>[...fl,r]);}
-      showToast(t.saved);setFlightModal(null);
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  const saveStay=async f=>{
-    if(!f.hotel_id||!f.check_in||!f.check_out){showToast(t.stayRequired);return;}
-    // 高優先2: 住宿退房必須晚於入住
-    if(f.check_out<=f.check_in){showToast(t.checkoutAfterCheckin);return;}
-    try{
-      const data={...f,person_id:stayModal.pid,project_id:pid,base_price:f.base_price===""||f.base_price===null?null:+f.base_price,nights:f.nights||0,total_amount:f.total_amount||0};
-      let saved;
-      if(stayModal.stayId){const[r]=await api.update("stays",stayModal.stayId,data);setStays(s=>s.map(x=>x.id===stayModal.stayId?r:x));saved=r;}
-      else{const[r]=await api.insert("stays",data);setStays(s=>[...s,r]);saved=r;}
-      // 高優先2: 同室者住宿自動同步
-      const myRoommates=roommates.filter(r=>r.person_id===stayModal.pid);
-      if(myRoommates.length>0){
-        const partnerNames=myRoommates.map(r=>persons.find(p=>p.id===r.partner_id)?.name_kanji||"").filter(Boolean).join("、");
-        const doSync=window.confirm(`與 ${partnerNames} 同室，是否同步更新他們的住宿資料（飯店、房型、日期、費用）？`);
-        if(doSync){
-          const syncData={hotel_id:data.hotel_id,room_type:data.room_type,room_custom:data.room_custom,check_in:data.check_in,check_out:data.check_out,stay_label:data.stay_label,nights:data.nights,base_price:data.base_price,total_amount:data.total_amount,project_id:pid};
-          for(const rm of myRoommates){
-            const partnerStay=stays.find(s=>s.person_id===rm.partner_id&&(stayModal.stayId?s.id===stayModal.stayId:s.stay_label===data.stay_label));
-            if(partnerStay){
-              const[r]=await api.update("stays",partnerStay.id,{...syncData,person_id:rm.partner_id});
-              setStays(s=>s.map(x=>x.id===partnerStay.id?r:x));
-            }else{
-              const[r]=await api.insert("stays",{...syncData,person_id:rm.partner_id});
-              setStays(s=>[...s,r]);
-            }
-          }
-          showToast(`✓ 已同步 ${partnerNames} 的住宿`);
-        }
-      }
-      showToast(t.saved);setStayModal(null);
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  const deleteStay=async id=>{
-    if(!window.confirm(t.deleteConfirm)) return;
-    try{await api.delete("stays",id);setStays(s=>s.filter(x=>x.id!==id));showToast(t.deleted);}
-    catch(e){showToast("Error: "+e.message);}
-  };
-
-  const saveHotel=async f=>{
-    try{
-      if(hotelModal.mode==="add"){const[r]=await api.insert("hotels",{...f,project_id:pid});setHotels(h=>[...h,r]);}
-      else{const[r]=await api.update("hotels",hotelModal.data.id,f);setHotels(h=>h.map(x=>x.id===hotelModal.data.id?r:x));}
-      showToast(t.saved);setHotelModal(null);
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  const deleteHotel=async id=>{
-    if(!window.confirm(t.deleteConfirm)) return;
-    try{await api.delete("hotels",id);setHotels(h=>h.filter(x=>x.id!==id));showToast(t.deleted);}
-    catch(e){showToast("Error: "+e.message);}
-  };
-
-  const savePricing=async f=>{
-    if(!f.date){showToast("日付を入力してください");return;}
-    try{
-      const data={...f,project_id:pid,hotel_id:f.hotel_id,base_price:+f.base_price||0,importance_surcharge:+f.importance_surcharge||0,holiday_surcharge:+f.holiday_surcharge||0,final_price:+f.final_price||0};
-      if(priceModal.mode==="add"){const[r]=await api.insert("pricing_rules",data);setPricingRules(rs=>[...rs,r]);}
-      else{const[r]=await api.update("pricing_rules",priceModal.data.id,data);setPricingRules(rs=>rs.map(x=>x.id===priceModal.data.id?r:x));}
-      showToast(t.saved);setPriceModal(null);
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  const deletePricing=async id=>{
-    try{await api.delete("pricing_rules",id);setPricingRules(rs=>rs.filter(r=>r.id!==id));showToast(t.deleted);}
-    catch(e){showToast("Error: "+e.message);}
-  };
-
-  const saveRoommates=async(rpid,partnerIds)=>{
-    try{
-      // BUG FIX: clean bidirectional logic - build full group first, clear all, re-insert
-      const group=[...new Set([rpid,...partnerIds])];
-      for(const gid of group){
-        await api.deleteWhere("roommates","person_id",gid);
-      }
-      if(partnerIds.length>0){
-        for(const gid of group){
-          const partners=group.filter(x=>x!==gid);
-          if(partners.length>0){
-            await api.insert("roommates",partners.map(x=>({person_id:gid,partner_id:x,project_id:pid})));
-          }
-        }
-      }
-      await loadAll();showToast(t.saved);setRoommateModal(null);
-    }catch(e){showToast("Error: "+e.message);}
-  };
-
-  const TABS=[{id:"A",label:t.tabStaff},{id:"B",label:t.tabFlight},{id:"C",label:t.tabHotel},{id:"D",label:t.tabHotelList}];
-
-  // 功能四-1,2: drag handlers
-  const handleDragStart=(e,idx)=>{dragItem.current=idx;e.dataTransfer.effectAllowed="move";};
-  const handleDragEnter=(e,idx)=>{dragOver.current=idx;};
-  const handleDragEnd=async()=>{
-    if(dragItem.current===null||dragOver.current===null||dragItem.current===dragOver.current){
-      dragItem.current=null;dragOver.current=null;return;
+  const bulkDelete = async () => {
+    if (!selectedIds.length) return;
+    if (!window.confirm(t.bulkDeleteConfirm.replace("{n}", selectedIds.length))) return;
+    for (const id of selectedIds) {
+      await Promise.all([
+        api.deleteWhere("flights", "person_id", id),
+        api.deleteWhere("stays", "person_id", id),
+        api.deleteWhere("roommates", "person_id", id),
+        api.deleteWhere("roommates", "partner_id", id),
+      ]);
+      await cleanupPersonVehicles(id);
+      await api.delete("persons", id);
     }
-    const newList=[...persons];
-    const dragged=newList.splice(dragItem.current,1)[0];
-    newList.splice(dragOver.current,0,dragged);
-    const reordered=newList.map((p,i)=>({...p,sort_order:i}));
+    await loadAll();
+    setSelectedIds([]);
+    showToast(t.deleted);
+  };
+
+  const saveVehicle = async (f) => {
+    try {
+      const safeFields = {
+        name: f.name,
+        region: f.region || "",
+        type: f.type || "",
+        region_key: f.regionKey || "TW",
+        type_key: f.typeKey || "minivan",
+        capacity: f.capacity || 4,
+        project_id: pid,
+      };
+      if (vehicleModal.mode === "add") {
+        const [r] = await api.insert("vehicles", { ...safeFields, driver_id: null, passenger_ids: null, assignments: [] });
+        setVehicles((v) => [...v, r]);
+      } else {
+        const [r] = await api.update("vehicles", vehicleModal.data.id, safeFields);
+        setVehicles((v) => v.map((x) => x.id === vehicleModal.data.id ? r : x));
+      }
+      showToast(t.saved); setVehicleModal(null);
+    } catch (e) { showToast(e.message); }
+  };
+
+  const finishSaveStay = async (data, syncPartners) => {
+    try {
+      let saved;
+      if (stayModal.stayId) {
+        const [r] = await api.update("stays", stayModal.stayId, data);
+        setStays((s) => s.map((x) => x.id === stayModal.stayId ? r : x));
+        saved = r;
+      } else {
+        const [r] = await api.insert("stays", data);
+        setStays((s) => [...s, r]);
+        saved = r;
+      }
+      if (syncPartners?.length) {
+        const syncData = { hotel_id: data.hotel_id, room_type: data.room_type, room_custom: data.room_custom, check_in: data.check_in, check_out: data.check_out, stay_label: data.stay_label, nights: data.nights, base_price: data.base_price, total_amount: data.total_amount, project_id: pid };
+        for (const rm of syncPartners) {
+          const partnerStays = stays.filter((s) => s.person_id === rm.partner_id);
+          const match = partnerStays.find((s) =>
+            (data.stay_label && s.stay_label === data.stay_label) ||
+            (!data.stay_label && s.hotel_id == data.hotel_id && s.check_in === data.check_in && s.check_out === data.check_out)
+          );
+          if (match) {
+            const [r] = await api.update("stays", match.id, { ...syncData, person_id: rm.partner_id });
+            setStays((st) => st.map((x) => x.id === match.id ? r : x));
+          } else {
+            const [r] = await api.insert("stays", { ...syncData, person_id: rm.partner_id });
+            setStays((st) => [...st, r]);
+          }
+        }
+      }
+      showToast(t.saved); setStayModal(null); setSyncRoommate(null); setPendingStay(null);
+      loadAll();
+    } catch (e) { showToast(e.message); }
+  };
+
+  const saveStay = async (f) => {
+    if (!f.hotel_id || !f.check_in || !f.check_out) { showToast(t.stayRequired); return; }
+    if (f.check_out <= f.check_in) { showToast(t.checkoutAfterCheckin); return; }
+    const data = { ...f, person_id: stayModal.pid, project_id: pid, base_price: f.base_price === "" || f.base_price === null ? null : +f.base_price, nights: f.nights || 0, total_amount: f.total_amount || 0 };
+    const myRoommates = roommates.filter((r) => r.person_id === stayModal.pid);
+    if (myRoommates.length) {
+      const names = myRoommates.map((r) => persons.find((p) => p.id === r.partner_id)?.name_kanji).filter(Boolean).join("、");
+      setPendingStay(data);
+      setSyncRoommate(names);
+      return;
+    }
+    await finishSaveStay(data, null);
+  };
+
+  const exportCSV = () => {
+    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.importance, t.passport, t.dob, t.passportExp, t.diet, t.status, t.airline, t.flightNo, t.hotel, t.checkIn, t.checkOut, t.totalAmt, t.roommate];
+    const rows = persons.map((p, i) => {
+      const fl = flights.find((x) => x.person_id === p.id);
+      const s = stays.find((x) => x.person_id === p.id);
+      const st = getStatus(p.id);
+      const stLabel = st === "arranged" ? t.arranged_short : st === "partial" ? t.partial_short : t.unArranged_short;
+      return [i + 1, p.dept, p.name_kanji, `${p.last_roman} ${p.first_roman}`.trim(), p.importance, p.passport, p.dob, p.passport_exp, p.diet, stLabel, fl?.airline, fl?.flight_no, s ? getHotelName(s.hotel_id) : "", s?.check_in, s?.check_out, s?.total_amount, getRoommateNames(p.id)];
+    });
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `staff_${todayStr()}.csv`; a.click();
+  };
+
+  const statusBadge = (s) => {
+    const cfg = s === "arranged"
+      ? { bg: J.moegi3, c: J.moegi, border: "rgba(43,90,76,.2)", lb: t.arranged }
+      : s === "partial"
+      ? { bg: J.kincha2, c: J.kincha, border: "rgba(143,99,24,.2)", lb: t.partial }
+      : { bg: "rgba(112,112,124,.07)", c: J.nezumi, border: "rgba(112,112,124,.18)", lb: t.unArranged };
+    return (
+      <span style={{ padding: "2px 10px", fontSize: 10, fontWeight: 700, background: cfg.bg, color: cfg.c, border: `1px solid ${cfg.border}`, borderRadius: 20, letterSpacing: "0.06em" }}>{cfg.lb}</span>
+    );
+  };
+
+  const TABS = [{ id: "A", label: t.tabStaff }, { id: "B", label: t.tabFlight }, { id: "C", label: t.tabAccommodation }, { id: "E", label: t.tabVehicle }];
+
+  const handleDragEnd = async () => {
+    if (dragItem.current === null || dragOver.current === null || dragItem.current === dragOver.current) { dragItem.current = null; dragOver.current = null; return; }
+    const newList = [...persons];
+    const dragged = newList.splice(dragItem.current, 1)[0];
+    newList.splice(dragOver.current, 0, dragged);
+    const reordered = newList.map((p, i) => ({ ...p, sort_order: i }));
     setPersons(reordered);
-    dragItem.current=null;dragOver.current=null;
-    try{
-      await Promise.all(reordered.map(p=>api.update("persons",p.id,{sort_order:p.sort_order})));
-    }catch(e){showToast("Error: "+e.message);}
+    dragItem.current = null; dragOver.current = null;
+    try { await Promise.all(reordered.map((p) => api.update("persons", p.id, { sort_order: p.sort_order }))); } catch (e) { showToast(e.message); loadAll(); }
   };
 
-  const statusBadge=s=>{
-    if(s==="arranged") return<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(61,107,94,.1)",color:J.moegi,fontSize:10,fontWeight:600,letterSpacing:"0.06em",border:"1px solid rgba(61,107,94,.25)"}}>{t.arranged}</span>;
-    if(s==="partial")  return<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(184,134,11,.1)",color:J.kincha,fontSize:10,fontWeight:600,letterSpacing:"0.06em",border:"1px solid rgba(184,134,11,.25)"}}>{t.partial}</span>;
-    return<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(140,140,150,.08)",color:J.nezumi,fontSize:10,letterSpacing:"0.06em",border:"1px solid "+J.keisenM}}>{t.unArranged}</span>;
+  const saveCurrency = async (f) => {
+    try {
+      const [updated] = await api.update("projects", pid, f);
+      onProjectUpdate(updated);
+      showToast(t.saved); setShowCurrency(false);
+    } catch (e) { showToast(e.message); }
   };
 
-  return(
-    <div style={{fontFamily:"'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif",minHeight:"100vh",background:J.bg}}>
-      <Toast msg={toastMsg}/>
-      <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg, rgba(61,107,94,.18) 0%, transparent 100%)",padding:"14px 24px",color:J.washi,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8,borderBottom:"1px solid rgba(250,250,248,.06)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <button onClick={onBack} style={{background:"rgba(250,250,248,0.1)",color:J.washi,border:"1px solid rgba(250,250,248,.2)",borderRadius:2,padding:"6px 12px",cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>← {t.back}</button>
+  const rowsA = filterPersons(debSearchA, deptA);
+  const allSelected = rowsA.length > 0 && rowsA.every((p) => selectedIds.includes(p.id));
+
+  const hdrBtn2 = { background: "rgba(253,252,249,.09)", color: J.washi, border: "1px solid rgba(253,252,249,.16)", padding: "7px 14px", cursor: "pointer", fontSize: 11.5, borderRadius: 4, fontFamily: "'Noto Sans JP',sans-serif", transition: "background .15s" };
+  return (
+    <div style={{ minHeight: "100vh", background: J.bg, fontFamily: "'Noto Sans JP',sans-serif" }}>
+      <Toast msg={toastMsg} />
+      {/* ── App Header ── */}
+      <header style={{
+        background: J.sumi,
+        backgroundImage: "linear-gradient(135deg, rgba(43,90,76,.28) 0%, transparent 55%)",
+        padding: "13px 28px", color: J.washi,
+        display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8,
+        alignItems: "center",
+        borderBottom: "1px solid rgba(255,255,255,.04)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button type="button" onClick={onBack} style={{ ...hdrBtn2, display: "flex", alignItems: "center", gap: 5, padding: "6px 12px" }}>
+            <span style={{ fontSize: 14, lineHeight: 1, opacity: 0.7 }}>←</span> {t.back}
+          </button>
+          <div style={{ width: 1, height: 24, background: "rgba(253,252,249,.12)" }} />
           <div>
-            <div style={{fontSize:15,fontWeight:600,letterSpacing:"0.08em",fontFamily:"'Noto Serif JP',serif"}}>{project.name}</div>
-            <div style={{fontSize:10,opacity:.5,marginTop:1,letterSpacing:"0.1em"}}>{user.email} · <span style={{padding:"1px 7px",borderRadius:1,background:"rgba(250,250,248,0.15)",fontSize:9,letterSpacing:"0.06em"}}>{isOwner?t.role_owner:(t[`role_${userRole}`]||userRole)}</span></div>
+            <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.04em", fontFamily: "'Noto Serif JP',serif" }}>{project.name}</div>
+            <div style={{ fontSize: 10, opacity: 0.45, marginTop: 1, letterSpacing: "0.03em" }}>{user.email} · {t[`role_${userRole}`] || userRole}</div>
           </div>
         </div>
-        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-          <LangSwitcher lang={lang} onChange={onLangChange}/>
-          {(isOwner||canDelete)&&(
-            <button onClick={()=>setShowMembers(true)} style={{background:"rgba(250,250,248,0.1)",color:J.washi,border:"1px solid rgba(250,250,248,.2)",borderRadius:2,padding:"6px 13px",fontWeight:400,cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>{t.members}</button>
-          )}
-          <button onClick={()=>window.print()} style={{background:"rgba(250,250,248,0.1)",color:J.washi,border:"1px solid rgba(250,250,248,.2)",borderRadius:2,padding:"6px 13px",fontWeight:400,cursor:"pointer",fontSize:11,letterSpacing:"0.08em"}}>{t.print}</button>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <LangSwitcher lang={lang} onChange={onLangChange} />
+          {canManageMembers && <button type="button" onClick={() => setShowMembers(true)} style={hdrBtn2}>{t.members}</button>}
+          {canEdit && <button type="button" onClick={() => setShowCurrency(true)} style={hdrBtn2}>{t.settings}</button>}
+          <button type="button" onClick={() => window.print()} style={hdrBtn2}>{t.print}</button>
+        </div>
+      </header>
+
+      {/* ── Tab bar + Progress ── */}
+      <div className="no-print" style={{ background: J.shiro, borderBottom: "1px solid " + J.keisenL }}>
+        <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0 20px" }}>
+          <div style={{ display: "flex", overflowX: "auto", gap: 2 }}>
+            {TABS.map((tb) => (
+              <button key={tb.id} type="button" onClick={() => setTab(tb.id)} style={{
+                padding: "14px 22px", fontWeight: tab === tb.id ? 600 : 400,
+                color: tab === tb.id ? J.moegi : J.nezumi,
+                border: "none",
+                borderBottom: tab === tb.id ? "2px solid " + J.moegi : "2px solid transparent",
+                background: "none", cursor: "pointer", fontSize: 12.5, whiteSpace: "nowrap",
+                transition: "color .15s, border-color .15s",
+                letterSpacing: "0.02em",
+              }}>{tb.label}</button>
+            ))}
+          </div>
+          {!loading && <div style={{ paddingBottom: 10 }}><ProgressBar t={t} stats={progressStats} /></div>}
         </div>
       </div>
 
-      <div className="no-print" style={{background:J.shiro,borderBottom:"1px solid "+J.keisenL,display:"flex",paddingLeft:16,overflowX:"auto"}}>
-        {TABS.map(tb=>(
-          <button key={tb.id} onClick={()=>setTab(tb.id)}
-            style={{padding:"12px 20px",fontWeight:tab===tb.id?600:400,color:tab===tb.id?J.moegi:J.nezumi,borderBottom:tab===tb.id?"2px solid "+J.moegi:"2px solid transparent",background:"none",border:"none",borderBottom:tab===tb.id?"2px solid "+J.moegi:"2px solid transparent",cursor:"pointer",fontSize:12,whiteSpace:"nowrap",letterSpacing:"0.06em",transition:"color .2s",fontFamily:"'Noto Sans JP',sans-serif"}}>
-            {tb.label}
-          </button>
-        ))}
-      </div>
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "80px 0", color: J.nezumi }}>
+          <div style={{ fontSize: 11, letterSpacing: "0.16em", opacity: 0.6 }}>{t.loading}</div>
+        </div>
+      ) : (
+        <div style={{ padding: "28px 20px", maxWidth: 1320, margin: "0 auto" }}>
 
-      {loading?<div style={{textAlign:"center",padding:60,color:J.nezumi,fontSize:12,letterSpacing:"0.2em"}}>読み込み中…</div>:(
-        <div style={{padding:"24px 20px",maxWidth:1320,margin:"0 auto"}}>
+          {tab === "A" && (
+            <div className="tab-content">
+              <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 3, height: 18, background: J.moegi, borderRadius: 2 }} />
+                  <h2 style={{ fontSize: 14, fontWeight: 600, color: J.sumi, margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{t.staffList}</h2>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <SearchBar value={searchA} onChange={setSearchA} placeholder={t.searchStaff} />
+                  <DeptFilter depts={allDepts} value={deptA} onChange={setDeptA} allLabel={t.allDept} />
+                  <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", rowsA.length).replace("{total}", persons.length)}</span>
+                  <button type="button" onClick={exportCSV} style={eBtn}>{t.exportCSV}</button>
+                  {canEdit && selectedIds.length > 0 && <button type="button" onClick={bulkDelete} style={dBtn}>{t.bulkDeleteBtn} ({selectedIds.length})</button>}
+                  {canEdit && <button type="button" onClick={() => setPersonModal({ mode: "add" })} style={pBtn(false)}>{t.addStaff}</button>}
+                </div>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={tblW}>
+                  <thead><tr style={thead}>
+                    {canEdit && <th style={{ ...thS, width: 36 }}><input type="checkbox" checked={allSelected} onChange={() => setSelectedIds(allSelected ? [] : rowsA.map((p) => p.id))} aria-label={t.select} /></th>}
+                    <th style={{ ...thS, width: 50 }}>{t.no}</th>
+                    <th style={thS}>{t.dept}</th>
+                    <th style={thS}>{t.nameKanji}</th>
+                    <th style={thS}>{t.nameRoman}</th>
+                    <th style={thS}>{t.importance}</th>
+                    <th style={thS}>{t.status}</th>
+                    <th style={thS}>{t.passport}</th>
+                    <th style={thS}>{t.dob}</th>
+                    <th style={thS}>{t.passportExp}</th>
+                    <th style={thS}>{t.diet}</th>
+                    <th style={thS}>{t.action}</th>
+                  </tr></thead>
+                  <tbody>
+                    {rowsA.map((p, i) => {
+                      const rm = getRoommateNames(p.id);
+                      const warn = passportWarning(p.passport_exp);
+                      return (
+                        <tr key={p.id} draggable={canEdit} onDragStart={() => { dragItem.current = persons.indexOf(p); }} onDragEnter={() => { dragOver.current = persons.indexOf(p); }} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}>
+                          {canEdit && <td style={tdS()}><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => setSelectedIds((s) => s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id])} /></td>}
+                          <td style={{ ...tdS(), textAlign: "center", color: J.usunezumi }}>{personIndex[p.id] || i + 1}</td>
+                          <td style={tdS()}><Highlight text={p.dept} query={debSearchA} /></td>
+                          <td style={tdS()}><Highlight text={p.name_kanji} query={debSearchA} /></td>
+                          <td style={tdS()}><Highlight text={`${p.last_roman || ""} ${p.first_roman || ""}`.trim()} query={debSearchA} /></td>
+                          <td style={{ ...tdS(), textAlign: "center" }}>{starLabel(p.importance) || "—"}</td>
+                          <td style={tdS()}>{statusBadge(getStatus(p.id))}{rm && <div style={{ fontSize: 10, color: J.nezumi, marginTop: 2 }}>{t.roommateWith.replace("{name}", rm)}</div>}</td>
+                          <td style={tdS()}>{p.passport || "—"}</td>
+                          <td style={tdS()}>{fmtDate(p.dob, lang)}</td>
+                          <td style={{ ...tdS(), color: warn ? J.shu : "inherit" }}>{fmtDate(p.passport_exp, lang)}</td>
+                          <td style={tdS()}>{p.diet || "—"}</td>
+                          <td style={tdS()}>
+                            {canEdit && <button type="button" style={eBtn} onClick={() => setPersonModal({ mode: "edit", data: p })}>{t.edit}</button>}
+                            {canDelete && <button type="button" style={dBtn} onClick={() => deletePerson(p.id)}>{t.delete}</button>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
-          {/* TAB A: 工作人員列表 */}
-          {tab==="A"&&(()=>{
-            const rows=filterPersons(searchA,deptA);
-            return(
-              <div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
-                  <h2 style={{fontSize:14,fontWeight:400,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:10}}><span style={{width:2,height:14,background:J.moegi,display:"inline-block"}}></span>{t.staffList}</h2>
-                  <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-                    <SearchBar value={searchA} onChange={setSearchA} placeholder={t.searchStaff}/>
-                    <DeptFilter depts={allDepts} value={deptA} onChange={setDeptA} allLabel={t.allDept}/>
-                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <button onClick={exportCSV} style={{...eBtn,fontSize:12,padding:"7px 14px"}}>{t.exportCSV}</button>
-                    {canEdit&&selectedIds.length>0&&(
-                      <button onClick={bulkDelete} style={{...dBtn,fontSize:12,padding:"7px 14px"}}>{t.bulkDeleteBtn}（{selectedIds.length}）</button>
+          {tab === "B" && (
+            <div className="tab-content">
+              <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 3, height: 18, background: J.asagi, borderRadius: 2 }} />
+                  <h2 style={{ fontSize: 14, fontWeight: 600, color: J.sumi, margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{t.flightMgmt}</h2>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <SearchBar value={searchB} onChange={setSearchB} placeholder={t.searchFlight} />
+                  <DeptFilter depts={allDepts} value={deptB} onChange={setDeptB} allLabel={t.allDept} />
+                  <button type="button" onClick={() => setShowFlightAdv((v) => !v)} style={eBtn}>{showFlightAdv ? "−" : "+"} {t.activeFilters}</button>
+                </div>
+              </div>
+              {showFlightAdv && (
+                <div style={{ background: J.washi, padding: "16px 18px", marginBottom: 14, borderRadius: 8, border: "1px solid " + J.keisenL, display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
+                  <input style={inpStyle} placeholder={t.searchRoman} value={searchBRoman} onChange={(e) => setSearchBRoman(e.target.value)} className="wa-input" />
+                  <input style={inpStyle} placeholder={t.airline} value={searchBAirline} onChange={(e) => setSearchBAirline(e.target.value)} className="wa-input" />
+                  <select style={inpStyle} value={searchBStatus} onChange={(e) => setSearchBStatus(e.target.value)} className="wa-input">
+                    <option value="">{t.allStatus}</option>
+                    <option value="arranged">{t.arranged_short}</option>
+                    <option value="partial">{t.partial_short}</option>
+                    <option value="none">{t.unArranged_short}</option>
+                  </select>
+                  <button type="button" style={dBtn} onClick={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }}>{t.clearFilter}</button>
+                </div>
+              )}
+              <FilterChips chips={[{ key: "r", label: searchBRoman }, { key: "a", label: searchBAirline }, { key: "s", label: searchBStatus }].filter((c) => c.label)} onClear={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }} t={t} />
+              <p style={{ fontSize: 11, color: J.nezumi, marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", filteredFlightPersons.length).replace("{total}", persons.length)}</p>
+              <div style={{ overflowX: "auto" }}>
+                <table style={tblW}>
+                  <thead><tr style={thead}>
+                    {[t.no, t.dept, t.nameKanji, t.nameRoman, t.airline, t.flightNo, t.cabin, t.pnr, t.depAirport, t.depTime, t.arrAirport, t.arrTime, t.status, t.action].map((h) => <th key={h} style={thS}>{h}</th>)}
+                  </tr></thead>
+                  <tbody>
+                    {filteredFlightPersons.map((p, i) => {
+                      const fl = flights.find((x) => x.person_id === p.id);
+                      const hasF = fl && fl.airline;
+                      return (
+                        <tr key={p.id}>
+                          <td style={{ ...tdS(), textAlign: "center" }}>{personIndex[p.id]}</td>
+                          <td style={tdS()}>{p.dept}</td>
+                          <td style={tdS()}>{p.name_kanji}</td>
+                          <td style={tdS()}>{p.last_roman} {p.first_roman}</td>
+                          <td style={tdS()}>{fl?.airline || "—"}</td>
+                          <td style={tdS()}>{fl?.flight_no || "—"}</td>
+                          <td style={tdS()}>{fl?.cabin || "—"}</td>
+                          <td style={tdS()}>{fl?.pnr || "—"}</td>
+                          <td style={tdS()}>{fl?.dep_airport || "—"}</td>
+                          <td style={tdS()}>{fl?.dep_time ? new Date(fl.dep_time).toLocaleString() : "—"}</td>
+                          <td style={tdS()}>{fl?.arr_airport || "—"}</td>
+                          <td style={tdS()}>{fl?.arr_time ? new Date(fl.arr_time).toLocaleString() : "—"}</td>
+                          <td style={tdS()}>{hasF ? statusBadge("arranged") : statusBadge("none")}</td>
+                          <td style={tdS()}>{canEdit && <button type="button" style={aBtn} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {tab === "C" && (
+            <div className="tab-content">
+              {/* Cost summary banner */}
+              <div style={{
+                background: J.sumi,
+                backgroundImage: "linear-gradient(135deg, rgba(43,90,76,.28) 0%, transparent 60%)",
+                color: J.washi, padding: "18px 24px", marginBottom: 20,
+                borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center",
+                boxShadow: "0 2px 12px rgba(0,0,0,.1)",
+              }}>
+                <span style={{ fontSize: 12, opacity: 0.7, letterSpacing: "0.06em" }}>{t.totalCost}</span>
+                <strong style={{ fontSize: 22, fontFamily: "'Noto Serif JP',serif", letterSpacing: "-0.01em" }}>{formatMoney(convertMoney(totalHotelCost, project), project, lang)}</strong>
+              </div>
+              {/* Sub-tabs */}
+              <div style={{ display: "flex", background: J.washi, borderRadius: 8, padding: 4, marginBottom: 20, width: "fit-content", gap: 2 }}>
+                {[["stays", t.subStay], ["hotels", t.subHotels]].map(([k, lb]) => (
+                  <button key={k} type="button" onClick={() => setAccSub(k)} style={{
+                    padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12.5,
+                    fontFamily: "'Noto Sans JP',sans-serif", letterSpacing: "0.02em",
+                    fontWeight: accSub === k ? 600 : 400,
+                    color: accSub === k ? J.sumi : J.nezumi,
+                    background: accSub === k ? J.shiro : "transparent",
+                    borderRadius: 6,
+                    boxShadow: accSub === k ? "0 1px 4px rgba(0,0,0,.08)" : "none",
+                    transition: "all .15s",
+                  }}>{lb}</button>
+                ))}
+              </div>
+
+              {accSub === "stays" && (
+                <>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
+                    <SearchBar value={searchC} onChange={setSearchC} placeholder={t.searchHotel} />
+                    <DeptFilter depts={allDepts} value={deptC} onChange={setDeptC} allLabel={t.allDept} />
+                    <input style={{ ...inpStyle, width: 140 }} placeholder={t.searchHotelName} value={searchCHotel} onChange={(e) => setSearchCHotel(e.target.value)} />
+                    <input style={{ ...inpStyle, width: 120 }} placeholder={t.searchRoomType} value={searchCRoom} onChange={(e) => setSearchCRoom(e.target.value)} />
+                    {canEdit && (
+                      <>
+                        <select style={{ ...inpStyle, width: 160 }} value={addStayPerson} onChange={(e) => setAddStayPerson(e.target.value)}>
+                          <option value="">{t.addSegment}</option>
+                          {persons.map((p) => <option key={p.id} value={p.id}>{p.name_kanji || p.last_roman}</option>)}
+                        </select>
+                        <button type="button" style={pBtn(!addStayPerson)} disabled={!addStayPerson} onClick={() => { setStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
+                      </>
                     )}
-                    {canEdit&&<button onClick={()=>setPersonModal({mode:"add",data:null})} style={pBtn(false)}>{t.add}</button>}
+                    <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
-                  </div>
-                </div>
-                <div style={{overflowX:"auto"}}>
-                  <table style={{...tblW,tableLayout:"auto"}}>
-                    <thead><tr style={thead}>
-                      <th style={{...thS,width:50}}>{t.no}</th>
-                      <th style={{...thS,minWidth:80}}>{t.dept}</th>
-                      <th style={{...thS,minWidth:110}}>{t.nameKanji}</th>
-                      <th style={{...thS,minWidth:130}}>{t.nameRoman}</th>
-                      <th style={{...thS,width:60,textAlign:"center"}}>{t.importance}</th>
-                      <th style={{...thS,minWidth:120}}>{t.status}</th>
-                      <th style={{...thS,minWidth:110}}>{t.passport}</th>
-                      <th style={{...thS,minWidth:90}}>{t.dob}</th>
-                      <th style={{...thS,minWidth:90}}>{t.passportExp}</th>
-                      <th style={{...thS,minWidth:90}}>{t.diet}</th>
-                      <th style={{...thS,minWidth:90}}>{t.action}</th>
-                    </tr></thead>
-                    <tbody>
-                      {rows.map((p,i)=>{
-                        const warn=passportWarning(p.passport_exp);
-                        const rm=getRoommateNames(p.id);
-                        const st=getStatus(p.id);
-                        return(
-                          <tr key={p.id}
-                            draggable={canEdit}
-                            onDragStart={e=>handleDragStart(e,persons.indexOf(p))}
-                            onDragEnter={e=>handleDragEnter(e,persons.indexOf(p))}
-                            onDragEnd={handleDragEnd}
-                            onDragOver={e=>e.preventDefault()}
-                            style={{cursor:canEdit?"grab":"default"}}>
-                            {/* 功能四-1: 自動編號（全局序號） */}
-                            <td style={{...tdS(i),color:J.usunezumi,fontSize:11,textAlign:"center"}}>
-                              {canEdit&&<span style={{marginRight:2,opacity:0.35,fontSize:10}}>⠿</span>}
-                              {persons.indexOf(p)+1}
-                            </td>
-                            <td style={{...tdS(i),maxWidth:120,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><Highlight text={p.dept} query={searchA}/></td>
-                            <td style={{...tdS(i),fontWeight:p.importance===3?700:400,color:p.importance===3?J.shu:"inherit",whiteSpace:"nowrap"}}>
-                              <Highlight text={p.name_kanji} query={searchA}/>{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
-                            </td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}><Highlight text={`${p.last_roman||""} ${p.first_roman||""}`.trim()} query={searchA}/></td>
-                            <td style={{...tdS(i),color:p.importance===3?J.shu:p.importance===2?J.kincha:J.nezumi,textAlign:"center"}}>{starLabel(p.importance)||"—"}</td>
-                            {/* 功能三-3: 狀態含同室者 */}
-                            <td style={tdS(i)}>
-                              {statusBadge(st)}
-                              {rm&&<div style={{fontSize:10,color:J.nezumi,marginTop:3}}>🛏 {t.roommateWith.replace("{name}",rm)}</div>}
-                            </td>
-                            <td style={tdS(i)}>{p.passport||"—"}</td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>{fmt(p.dob)}</td>
-                            <td style={{...tdS(i),color:warn?J.shu:"inherit",fontWeight:warn?600:400,whiteSpace:"nowrap"}}>{fmt(p.passport_exp)}{warn&&" ⚠"}</td>
-                            <td style={{...tdS(i),maxWidth:100,overflow:"hidden",textOverflow:"ellipsis"}}>{p.diet||"—"}</td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>
-                              {canEdit&&<button style={eBtn} onClick={()=>setPersonModal({mode:"edit",data:p})}>{t.edit}</button>}
-                              {canDelete&&<button style={dBtn} onClick={()=>deletePerson(p.id)}>{t.delete}</button>}
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={tblW}>
+                      <thead><tr style={thead}>
+                        {[t.no, t.dept, t.nameKanji, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate, t.action].map((h) => <th key={h} style={thS}>{h}</th>)}
+                      </tr></thead>
+                      <tbody>
+                        {flatStays.map((row, i) => (
+                          <tr key={row.id}>
+                            <td style={{ ...tdS(), textAlign: "center" }}>{personIndex[row.person_id]}</td>
+                            <td style={tdS()}>{row.person.dept}</td>
+                            <td style={tdS()}>{row.person.name_kanji}</td>
+                            <td style={tdS()}>{row.stay_label || "—"}</td>
+                            <td style={tdS()}>{row.hotelName}</td>
+                            <td style={tdS()}>{row.roomLabel}</td>
+                            <td style={tdS()}>{fmtDate(row.check_in, lang)}</td>
+                            <td style={tdS()}>{fmtDate(row.check_out, lang)}</td>
+                            <td style={{ ...tdS(), textAlign: "center" }}>{row.nights}</td>
+                            <td style={{ ...tdS(), fontWeight: 600, color: J.asagi, fontVariantNumeric: "tabular-nums" }}>{formatMoney(convertMoney(row.total_amount, project), project, lang)}</td>
+                            <td style={tdS()}>{getRoommateNames(row.person_id) || t.singleRoom}</td>
+                            <td style={tdS()}>
+                              {canEdit && <>
+                                <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>
+                                <button type="button" style={eBtn} onClick={() => setRoommateModal({ pid: row.person_id })}>{t.roommateSet}</button>
+                              </>}
+                              {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>{t.delete}</button>}
                             </td>
                           </tr>
-                        );
-                      })}
-                      {rows.length===0&&<tr><td colSpan={11} style={{padding:20,textAlign:"center",color:J.usunezumi}}>{t.noData}</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            );
-          })()}
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: 28 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                      <div style={{ width: 3, height: 14, background: J.kincha, borderRadius: 2 }} />
+                      <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: J.sumi, margin: 0 }}>{t.hotelStats}</h3>
+                    </div>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={tblW}>
+                        <thead><tr style={thead}>{[t.hotelName, t.guestCount, t.roomCount, t.roomOccupancy, t.totalSpend].map((h) => <th key={h} style={thS}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {hotels.map((h, i) => {
+                            const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0, roomDetails: [] };
+                            const occ = st.roomDetails.length ? (st.roomDetails.reduce((s, r) => s + r.occupancy, 0) / st.roomDetails.length).toFixed(1) : "—";
+                            return (
+                              <tr key={h.id}>
+                                <td style={tdS()}>{h.name}</td>
+                                <td style={tdS()}>{st.guests}</td>
+                                <td style={tdS()}>{st.rooms}</td>
+                                <td style={tdS()}>{occ}</td>
+                                <td style={tdS()}>{formatMoney(convertMoney(st.total, project), project, lang)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
 
-          {/* TAB B: 航班管理 */}
-          {tab==="B"&&(()=>{
-            const rows=filteredFlightPersons;
-            return(
-              <div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-                  <h2 style={{fontSize:14,fontWeight:400,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:10}}><span style={{width:2,height:14,background:J.asagi,display:"inline-block"}}></span>{t.flightMgmt}</h2>
-                  <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                    <SearchBar value={searchB} onChange={setSearchB} placeholder={t.searchFlight}/>
-                    <DeptFilter depts={allDepts} value={deptB} onChange={setDeptB} allLabel={t.allDept}/>
-                    {/* 功能二: 進階搜尋切換 */}
-                    <button onClick={()=>setShowFlightAdvanced(v=>!v)}
-                      style={{...eBtn,margin:0,background:showFlightAdvanced?"rgba(74,127,165,.08)":J.shiro,color:showFlightAdvanced?J.asagi:J.sumi,borderColor:showFlightAdvanced?"rgba(74,127,165,.2)":J.keisenM}}>
-                      🔍 {showFlightAdvanced?"▲":"▼"}
-                    </button>
+              {accSub === "hotels" && (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+                    <SearchBar value={searchD} onChange={setSearchD} placeholder={t.searchHotelList} />
+                    {canEdit && <button type="button" onClick={() => setHotelModal({ mode: "add" })} style={pBtn(false)}>{t.addHotel}</button>}
                   </div>
-                </div>
-                {/* 功能二: 進階搜尋面板 */}
-                {showFlightAdvanced&&(
-                  <div style={{background:J.washi,borderRadius:2,padding:"14px 18px",marginBottom:14,display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(155px,1fr))",gap:10,border:"1px solid "+J.keisenL}}>
-                    {[
-                      [searchBRoman,setSearchBRoman,t.nameRoman],
-                      [searchBAirline,setSearchBAirline,t.airline],
-                      [searchBFlightNo,setSearchBFlightNo,t.flightNo],
-                      [searchBCabin,setSearchBCabin,t.cabin],
-                      [searchBPnr,setSearchBPnr,t.pnr],
-                      [searchBDepAirport,setSearchBDepAirport,t.depAirport],
-                      [searchBArrAirport,setSearchBArrAirport,t.arrAirport],
-                      [searchBChecked,setSearchBChecked,t.checkedBag],
-                      [searchBCabinBag,setSearchBCabinBag,t.cabinBag],
-                    ].map(([val,setter,label])=>(
-                      <div key={label}>
-                        <div style={{fontSize:9,color:J.nezumi,marginBottom:4,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase"}}>{label}</div>
-                        <input value={val} onChange={e=>setter(e.target.value)} placeholder={`${label}…`}
-                          style={{...inpStyle,padding:"6px 10px",fontSize:12}}/>
-                      </div>
-                    ))}
-                    <div>
-                      <div style={{fontSize:9,color:J.nezumi,marginBottom:4,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase"}}>{t.searchStatus}</div>
-                      <select value={searchBStatus} onChange={e=>setSearchBStatus(e.target.value)}
-                        style={{...inpStyle,padding:"6px 10px",fontSize:12,cursor:"pointer"}}>
-                        <option value="">{t.allStatus}</option>
-                        <option value="arranged">{t.arranged_short}</option>
-                        <option value="partial">{t.partial_short}</option>
-                        <option value="none">{t.unArranged_short}</option>
-                      </select>
-                    </div>
-                    <div style={{display:"flex",alignItems:"flex-end"}}>
-                      <button onClick={()=>{setSearchBRoman("");setSearchBAirline("");setSearchBFlightNo("");setSearchBCabin("");setSearchBPnr("");setSearchBDepAirport("");setSearchBArrAirport("");setSearchBChecked("");setSearchBCabinBag("");setSearchBStatus("");}}
-                        style={{...dBtn,fontSize:12,padding:"5px 12px"}}>{t.clearFilter}</button>
-                    </div>
-                  </div>
-                )}
-                <div style={{overflowX:"auto"}}>
-                  <table style={{...tblW,tableLayout:"auto"}}>
-                    <thead><tr style={thead}>
-                      <th style={{...thS,width:50}}>{t.no}</th>
-                      <th style={{...thS,minWidth:80}}>{t.dept}</th>
-                      <th style={{...thS,minWidth:100}}>{t.nameKanji}</th>
-                      <th style={{...thS,minWidth:120}}>{t.nameRoman}</th>
-                      <th style={{...thS,minWidth:90}}>{t.airline}</th>
-                      <th style={{...thS,minWidth:75}}>{t.flightNo}</th>
-                      <th style={{...thS,minWidth:80}}>{t.cabin}</th>
-                      <th style={{...thS,minWidth:85}}>{t.pnr}</th>
-                      <th style={{...thS,minWidth:90}}>{t.depAirport}</th>
-                      <th style={{...thS,minWidth:105}}>{t.depTime}</th>
-                      <th style={{...thS,minWidth:90}}>{t.arrAirport}</th>
-                      <th style={{...thS,minWidth:105}}>{t.arrTime}</th>
-                      <th style={{...thS,minWidth:110}}>{t.checkedBag}/{t.cabinBag}</th>
-                      <th style={{...thS,minWidth:80}}>{t.status}</th>
-                      <th style={{...thS,minWidth:75}}>{t.action}</th>
-                    </tr></thead>
-                    <tbody>
-                      {rows.map((p,i)=>{
-                        const f=flights.find(fl=>fl.person_id===p.id);const hasF=f&&f.airline;
-                        return(
-                          <tr key={p.id}>
-                            <td style={{...tdS(i),textAlign:"center",color:J.usunezumi,fontSize:11}}>{persons.indexOf(p)+1}</td>
-                            <td style={{...tdS(i),maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.dept}</td>
-                            <td style={{...tdS(i),fontWeight:p.importance===3?700:400,color:p.importance===3?J.shu:"inherit",whiteSpace:"nowrap"}}>
-                              <Highlight text={p.name_kanji} query={searchB}/>{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
-                            </td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}><Highlight text={`${p.last_roman||""} ${p.first_roman||""}`.trim()} query={searchB}/></td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>{f?.airline||"—"}</td>
-                            <td style={tdS(i)}>{f?.flight_no||"—"}</td>
-                            <td style={tdS(i)}>{f?.cabin||"—"}</td>
-                            <td style={{...tdS(i),fontFamily:"monospace",fontSize:11}}>{f?.pnr||"—"}</td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>{f?`${f.dep_airport}${f.dep_terminal?" T"+f.dep_terminal:""}`:"—"}</td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap",fontSize:11}}>{f?.dep_time?new Date(f.dep_time).toLocaleString("zh-TW",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"—"}</td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>{f?`${f.arr_airport}${f.arr_terminal?" T"+f.arr_terminal:""}`:"—"}</td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap",fontSize:11}}>{f?.arr_time?new Date(f.arr_time).toLocaleString("zh-TW",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"—"}</td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>{f?`${f.checked_bag||"—"} / ${f.cabin_bag||"—"}`:"—"}</td>
-                            <td style={tdS(i)}>{hasF?<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(61,107,94,.1)",color:J.moegi,fontSize:10,fontWeight:600,whiteSpace:"nowrap",letterSpacing:"0.04em",border:"1px solid rgba(61,107,94,.2)"}}>{t.flightDone}</span>:<span style={{padding:"2px 9px",borderRadius:1,background:"rgba(140,140,150,.08)",color:J.nezumi,fontSize:10,whiteSpace:"nowrap",letterSpacing:"0.04em",border:"1px solid "+J.keisenM}}>{t.flightNone}</span>}</td>
-                            <td style={{...tdS(i),whiteSpace:"nowrap"}}>
-                              {canEdit&&<button style={aBtn} onClick={()=>setFlightModal({pid:p.id,data:f||null})}>{hasF?t.edit:t.addFlight}</button>}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {rows.length===0&&<tr><td colSpan={15} style={{padding:20,textAlign:"center",color:J.usunezumi}}>{t.noData}</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* TAB C: 飯店管理 */}
-          {tab==="C"&&(()=>{
-            const rows=filteredHotelPersons;
-            return(
-              <div>
-                <div style={{background:J.sumi,backgroundImage:"linear-gradient(135deg,rgba(61,107,94,.2) 0%,transparent 100%)",color:J.washi,borderRadius:2,padding:"14px 22px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between",border:"1px solid rgba(250,250,248,.06)"}}>
-                  <div style={{fontSize:14,fontWeight:600}}>{t.totalCost}</div>
-                  <div style={{fontSize:24,fontWeight:900}}>${totalHotelCost.toLocaleString()}</div>
-                </div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-                  <h2 style={{fontSize:14,fontWeight:400,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:10}}><span style={{width:2,height:14,background:J.kincha,display:"inline-block"}}></span>{t.hotelMgmt}</h2>
-                  <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                    <SearchBar value={searchC} onChange={setSearchC} placeholder={t.searchHotel}/>
-                    <DeptFilter depts={allDepts} value={deptC} onChange={setDeptC} allLabel={t.allDept}/>
-                    {/* 功能一: 進階搜尋切換 */}
-                    <button onClick={()=>setShowHotelAdvanced(v=>!v)}
-                      style={{...eBtn,margin:0,background:showHotelAdvanced?"rgba(74,127,165,.08)":J.shiro,color:showHotelAdvanced?J.asagi:J.sumi,borderColor:showHotelAdvanced?"rgba(74,127,165,.2)":J.keisenM}}>
-                      🔍 {showHotelAdvanced?"▲":"▼"}
-                    </button>
-                  </div>
-                </div>
-                {/* 功能一: 飯店進階搜尋面板 */}
-                {showHotelAdvanced&&(
-                  <div style={{background:J.washi,borderRadius:2,padding:"14px 18px",marginBottom:14,display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end",border:"1px solid "+J.keisenL}}>
-                    <div>
-                      <div style={{fontSize:9,color:J.nezumi,marginBottom:4,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase"}}>{t.hotelName}</div>
-                      <input value={searchCHotel} onChange={e=>setSearchCHotel(e.target.value)} placeholder={t.searchHotelName}
-                        style={{...inpStyle,padding:"6px 10px",fontSize:12,width:160}}/>
-                    </div>
-                    <div>
-                      <div style={{fontSize:9,color:J.nezumi,marginBottom:4,fontWeight:600,letterSpacing:"0.12em",textTransform:"uppercase"}}>{t.roomType}</div>
-                      <input value={searchCRoomType} onChange={e=>setSearchCRoomType(e.target.value)} placeholder={t.searchRoomType}
-                        style={{...inpStyle,padding:"6px 10px",fontSize:12,width:140}}/>
-                    </div>
-                    <button onClick={()=>{setSearchCHotel("");setSearchCRoomType("");}}
-                      style={{...dBtn,fontSize:12,padding:"5px 12px"}}>{t.clearFilter}</button>
-                  </div>
-                )}
-                <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:28}}>
-                  {rows.map(p=>{
-                    const pStays=getPersonStays(p.id);
-                    const pTotal=getPersonTotal(p.id);
-                    const rm=getRoommateNames(p.id);
-                    return(
-                      <div key={p.id} style={{background:J.shiro,borderRadius:2,boxShadow:"0 1px 6px rgba(0,0,0,.06)",overflow:"hidden",border:"1px solid "+J.keisenL}}>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 18px",background:J.washi,borderBottom:"1px solid "+J.keisenL,flexWrap:"wrap",gap:8}}>
-                          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                            <span style={{fontWeight:600,fontSize:13,color:p.importance===3?J.shu:J.sumi,letterSpacing:"0.04em",fontFamily:"'Noto Serif JP',serif"}}>
-                              <Highlight text={p.name_kanji} query={searchC}/>{p.importance===3&&<span style={{marginLeft:6,fontSize:9,background:"rgba(192,57,43,.1)",color:J.shu,borderRadius:1,padding:"1px 6px",letterSpacing:"0.04em",border:"1px solid rgba(192,57,43,.2)"}}>★★★</span>}
-                            </span>
-                            <span style={{fontSize:12,color:J.nezumi}}><Highlight text={p.dept} query={searchC}/></span>
-                            {statusBadge(getStatus(p.id))}
-                            {/* 功能三-3: 同室者顯示 */}
-                            {rm&&<span style={{fontSize:11,color:J.nezumi,background:"rgba(61,107,94,.07)",padding:"2px 8px",borderRadius:20,border:"1px solid #bbf7d0"}}>🛏 {t.roommateWith.replace("{name}",rm)}</span>}
+                  {hotels.filter((h) => !searchD || [h.name, h.address, h.tel].some((v) => (v || "").toLowerCase().includes(searchD.toLowerCase()))).map((h) => {
+                    const hRules = pricingRules.filter((r) => +r.hotel_id === h.id).sort((a, b) => a.date > b.date ? 1 : -1);
+                    return (
+                      <div key={h.id} style={{ background: J.shiro, borderRadius: 8, border: "1px solid " + J.keisenL, marginBottom: 14, padding: "18px 20px", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <div>
+                            <strong style={{ fontSize: 14, color: J.sumi, fontFamily: "'Noto Serif JP',serif" }}>{h.name}</strong>
+                            <div style={{ fontSize: 11.5, color: J.nezumi, marginTop: 3 }}>{h.address}{h.tel ? ` · ${h.tel}` : ""}</div>
                           </div>
-                          <div style={{display:"flex",alignItems:"center",gap:8}}>
-                            {pTotal>0&&<span style={{fontWeight:700,color:J.asagi,fontSize:14}}>${pTotal.toLocaleString()}</span>}
-                            {canEdit&&<button onClick={()=>setStayModal({pid:p.id,stayId:null,data:null})} style={{...pBtn(false),padding:"5px 12px",fontSize:12}}>{t.addSegment}</button>}
-                            {canEdit&&<button onClick={()=>setRoommateModal({pid:p.id})} style={{...eBtn,margin:0}} title={t.roommateSet}>🛏</button>}
-                          </div>
+                          {canEdit && <>
+                            <button type="button" style={eBtn} onClick={() => setHotelModal({ mode: "edit", data: h })}>{t.edit}</button>
+                            {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("hotels", h.id); setHotels((x) => x.filter((y) => y.id !== h.id)); } }}>{t.delete}</button>}
+                          </>}
                         </div>
-                        {pStays.length===0?(
-                          <div style={{padding:"14px 18px",fontSize:11,color:J.nezumi,letterSpacing:"0.06em",fontStyle:"italic"}}>{t.noData}</div>
-                        ):(
-                          <div style={{overflowX:"auto"}}>
-                            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                              <thead><tr style={{background:J.keisenL}}>
-                                {[t.staySegment,t.hotel,t.roomType,t.checkIn,t.checkOut,t.nights,t.totalAmt,t.roommate,t.action].map((h,hi)=>
-                                  <th key={h} style={{padding:"7px 12px",textAlign:hi===5?"center":"left",fontWeight:600,color:J.sumi,whiteSpace:"nowrap"}}>{h}</th>
-                                )}
-                              </tr></thead>
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                            <span style={{ fontSize: 11, fontWeight: 600 }}>{t.datePrice}</span>
+                            {canEdit && <button type="button" onClick={() => setPriceModal({ mode: "add", hotelId: h.id, hotelName: h.name })} style={{ ...aBtn, margin: 0 }}>{t.addRule}</button>}
+                          </div>
+                          {hRules.length === 0 ? <p style={{ fontSize: 12, color: J.usunezumi }}>{t.noData}</p> : (
+                            <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                              <thead><tr>{[t.date, t.roomType, t.finalPrice, t.action].map((lb) => <th key={lb} style={{ textAlign: "left", padding: 6 }}>{lb}</th>)}</tr></thead>
                               <tbody>
-                                {pStays.map((s,si)=>{
-                                  const rl=s.room_type==="Custom"?(s.room_custom||"Custom"):s.room_type;
-                                  return(
-                                    <tr key={s.id} style={{borderBottom:"1px solid #e5e7eb"}}>
-                                      <td style={{padding:"8px 12px"}}><span style={{background:"rgba(74,127,165,.1)",color:J.asagi,borderRadius:1,padding:"2px 8px",fontWeight:600,fontSize:10,letterSpacing:"0.06em"}}>{s.stay_label||`#${si+1}`}</span></td>
-                                      <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{getHotelName(s.hotel_id)}</td>
-                                      <td style={{padding:"8px 12px"}}>{rl||"—"}</td>
-                                      <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{fmt(s.check_in)}</td>
-                                      <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>{fmt(s.check_out)}</td>
-                                      <td style={{padding:"8px 12px",textAlign:"center"}}>{s.nights||"—"}</td>
-                                      <td style={{padding:"8px 12px",fontWeight:700,color:J.asagi}}>{s.total_amount?`$${s.total_amount.toLocaleString()}`:"—"}</td>
-                                      <td style={{padding:"8px 12px"}}>{getRoommateNames(p.id)||<span style={{color:J.usunezumi}}>{t.singleRoom}</span>}</td>
-                                      <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>
-                                        {canEdit&&<button style={eBtn} onClick={()=>setStayModal({pid:p.id,stayId:s.id,data:s})}>{t.edit}</button>}
-                                        {canDelete&&<button style={dBtn} onClick={()=>deleteStay(s.id)}>{t.delete}</button>}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
+                                {hRules.map((r) => (
+                                  <tr key={r.id}>
+                                    <td style={{ padding: 6 }}>{r.date}</td>
+                                    <td style={{ padding: 6 }}>{r.room_type === "Custom" ? r.room_custom : r.room_type}</td>
+                                    <td style={{ padding: 6 }}>{formatMoney(convertMoney(r.final_price, project), project, lang)}</td>
+                                    <td style={{ padding: 6 }}>
+                                      {canEdit && <button type="button" style={eBtn} onClick={() => setPriceModal({ mode: "edit", data: r, hotelId: h.id, hotelName: h.name })}>{t.edit}</button>}
+                                      {canDelete && <button type="button" style={dBtn} onClick={async () => { await api.delete("pricing_rules", r.id); setPricingRules((pr) => pr.filter((x) => x.id !== r.id)); }}>{t.delete}</button>}
+                                    </td>
+                                  </tr>
+                                ))}
                               </tbody>
                             </table>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     );
                   })}
-                  {rows.length===0&&<div style={{padding:20,textAlign:"center",color:J.usunezumi}}>{t.noData}</div>}
+                </>
+              )}
+            </div>
+          )}
+
+          {tab === "E" && (
+            <div className="tab-content">
+              {/* Vehicle stats banner */}
+              <div style={{
+                background: J.sumi,
+                backgroundImage: "linear-gradient(135deg, rgba(43,90,76,.28) 0%, transparent 60%)",
+                color: J.washi, padding: "18px 24px", marginBottom: 24,
+                borderRadius: 8, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, alignItems: "center",
+                boxShadow: "0 2px 12px rgba(0,0,0,.1)",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 14, fontFamily: "'Noto Serif JP',serif", fontWeight: 600, letterSpacing: "0.04em" }}>{t.vehicleMgmt}</span>
                 </div>
-                <div>
-                  {/* 低優先10: 部門費用統計 */}
-              {(()=>{
-                const deptTotals={};
-                stays.forEach(s=>{
-                  const p=persons.find(x=>x.id===s.person_id);
-                  const dept=p?.dept||"未分組";
-                  deptTotals[dept]=(deptTotals[dept]||0)+(s.total_amount||0);
-                });
-                const entries=Object.entries(deptTotals).sort((a,b)=>b[1]-a[1]);
-                if(!entries.length) return null;
-                return(
-                  <div style={{marginBottom:20}}>
-                    <h3 style={{fontSize:12,fontWeight:600,color:J.sumi,marginBottom:10,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:8}}><span style={{width:2,height:12,background:J.kincha,display:"inline-block"}}></span>{t.deptCostTitle}</h3>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8}}>
-                      {entries.map(([dept,total])=>(
-                        <div key={dept} style={{background:J.shiro,border:"1px solid "+J.keisenL,borderRadius:2,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                          <span style={{fontSize:11,color:J.nezumi,letterSpacing:"0.04em"}}>{dept}</span>
-                          <span style={{fontSize:13,fontWeight:600,color:J.kincha}}>${total.toLocaleString()}</span>
+                <div style={{ display: "flex", gap: 24, fontSize: 12, opacity: 0.9 }}>
+                  <span>{t.totalVehicles}: <strong>{vehicles.length}</strong></span>
+                  <span>{t.totalAssigned}: <strong>{allAssignments.length}</strong></span>
+                  <span style={{ color: personsWithNoTrips.length ? "#ff9a9a" : "rgba(253,252,249,.7)" }}>
+                    {t.totalUnassigned}: <strong>{personsWithNoTrips.length}</strong>
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 520px", minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 3, height: 18, background: J.moegi, borderRadius: 2 }} />
+                      <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: J.sumi, margin: 0 }}>{t.vehicleMgmt}</h2>
+                    </div>
+                    {canEdit && <button type="button" onClick={() => setVehicleModal({ mode: "add" })} style={pBtn(false)}>{t.addVehicle}</button>}
+                  </div>
+                  {vehicles.length === 0 ? (
+                    <div style={{ padding: "50px 40px", textAlign: "center", background: J.shiro, border: "1px solid " + J.keisenL, borderRadius: 8, color: J.nezumi, fontSize: 13 }}>{t.noVehicleHint}</div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 14 }}>
+                      {vehicles.map((v) => {
+                        const assigns = getAssignmentsForVehicle(v.id);
+                        const cap = v.capacity || 4;
+                        const segGroups = {};
+                        assigns.forEach((a) => {
+                          const k = a.segment_label || "";
+                          if (!segGroups[k]) segGroups[k] = [];
+                          segGroups[k].push(a);
+                        });
+                        const onboard = Math.max(0, ...Object.values(segGroups).map((g) => vehicleOnboardCount(g)), 0);
+                        const pct = cap ? Math.min(100, (onboard / cap) * 100) : 0;
+                        const isFull = onboard >= cap;
+                        return (
+                          <div key={v.id} style={{ background: J.shiro, borderRadius: 8, border: "1px solid " + J.keisenL, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+                            {/* Vehicle header */}
+                            <div style={{ background: J.sumiMid, color: J.washi, padding: "14px 18px" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                <div>
+                                  <strong style={{ fontSize: 14, fontFamily: "'Noto Serif JP',serif" }}>{v.name}</strong>
+                                  <div style={{ fontSize: 10.5, marginTop: 4, opacity: 0.65, letterSpacing: "0.04em" }}>{v.region} · {v.type} · {onboard}/{cap} {t.passengers_unit}</div>
+                                </div>
+                                <div style={{ display: "flex", gap: 6 }}>
+                                  {canEdit && <button type="button" style={{ ...eBtn, color: J.washi, borderColor: "rgba(253,252,249,.2)", background: "rgba(253,252,249,.08)", marginRight: 0 }} onClick={() => setVehicleModal({ mode: "edit", data: v })}>{t.edit}</button>}
+                                  {canDelete && <button type="button" style={{ ...dBtn, color: "#ff9a9a", borderColor: "rgba(255,100,100,.3)", background: "rgba(255,80,80,.08)" }} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.deleteWhere("vehicle_assignments", "vehicle_id", v.id).catch(() => {}); await api.delete("vehicles", v.id); setVehicles((x) => x.filter((y) => y.id !== v.id)); } }}>×</button>}
+                                </div>
+                              </div>
+                              {/* Capacity bar */}
+                              <div style={{ height: 3, background: "rgba(255,255,255,.15)", marginTop: 10, borderRadius: 2, overflow: "hidden" }}>
+                                <div style={{ height: 3, width: pct + "%", background: isFull ? "#ff6b6b" : J.moegi2, borderRadius: 2, transition: "width .4s" }} />
+                              </div>
+                            </div>
+                            <div style={{ padding: "12px 14px" }}>
+                              {assigns.map((a) => {
+                                const p = persons.find((x) => x.id === a.person_id);
+                                if (!p) return null;
+                                return (
+                                  <div key={a.id || `${a.person_id}-${a.role}-${a.segment_label}`} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid " + J.keisenL, fontSize: 12 }}>
+                                    <span><strong>{a.role === "driver" ? t.driver : t.passengers}</strong> · {p.name_kanji}{a.segment_label ? ` (${a.segment_label})` : ""}</span>
+                                    {canEdit && <button type="button" style={dBtn} onClick={() => removeAssignment(a)}>×</button>}
+                                  </div>
+                                );
+                              })}
+                              {canEdit && (
+                                <div style={{ marginTop: 10 }}>
+                                  {addTripVehicle === v.id ? (
+                                    <div style={{ display: "grid", gap: 8 }}>
+                                      <select style={inpStyle} value={tripPerson} onChange={(e) => setTripPerson(e.target.value)}>
+                                        <option value="">{t.selectPassenger}</option>
+                                        {persons.map((p) => <option key={p.id} value={p.id}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
+                                      </select>
+                                      <select style={inpStyle} value={tripRole} onChange={(e) => setTripRole(e.target.value)}>
+                                        <option value="driver">{t.driver}</option>
+                                        <option value="passenger">{t.passengers}</option>
+                                      </select>
+                                      <select style={inpStyle} value={tripSegment} onChange={(e) => setTripSegment(e.target.value)}>
+                                        <option value="">{t.segmentLabel}</option>
+                                        <option value={t.segmentMorning}>{t.segmentMorning}</option>
+                                        <option value={t.segmentEvening}>{t.segmentEvening}</option>
+                                        <option value={t.segmentTransfer}>{t.segmentTransfer}</option>
+                                      </select>
+                                      <div style={{ display: "flex", gap: 8 }}>
+                                        <button type="button" style={pBtn(false)} onClick={() => {
+                                          if (!tripPerson) return;
+                                          addAssignment(v.id, +tripPerson, tripRole, tripSegment);
+                                          setAddTripVehicle(null); setTripPerson(""); setTripSegment("");
+                                        }}>{t.save}</button>
+                                        <button type="button" style={eBtn} onClick={() => setAddTripVehicle(null)}>{t.cancel}</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button type="button" style={{ ...aBtn, width: "100%" }} onClick={() => { setAddTripVehicle(v.id); setTripPerson(""); setTripRole("passenger"); setTripSegment(""); }}>{t.addTrip}</button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                <aside className="no-print" style={{ flex: "0 1 280px", position: "sticky", top: 16 }}>
+                  <div style={{ background: J.shiro, border: "1px solid " + J.keisenL }}>
+                    <div style={{ background: personsWithNoTrips.length ? J.shu : J.moegi, color: J.washi, padding: "12px 16px", display: "flex", justifyContent: "space-between" }}>
+                      <span>{t.unassigned}</span><span>{personsWithNoTrips.length}</span>
+                    </div>
+                    <div style={{ maxHeight: 400, overflowY: "auto" }}>
+                      {personsWithNoTrips.map((p) => (
+                        <div key={p.id} style={{ padding: "8px 16px", borderBottom: "1px solid " + J.keisenL, fontSize: 12 }}>
+                          <div style={{ fontWeight: 600 }}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</div>
+                          <div style={{ fontSize: 10, color: J.nezumi }}>{p.dept}</div>
                         </div>
                       ))}
                     </div>
+                    <p style={{ padding: 10, fontSize: 10, color: J.nezumi }}>{t.unassignedHint}</p>
                   </div>
-                );
-              })()}
-              <h3 style={{fontSize:12,fontWeight:600,color:J.sumi,marginBottom:14,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:8}}><span style={{width:2,height:12,background:J.asagi,display:"inline-block"}}></span>{t.hotelStats}</h3>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
-                    {hotels.map(h=>{
-                      const st=hotelStats[h.id]||{guests:0,rooms:0,total:0};
-                      return(
-                        <div key={h.id} style={{background:J.shiro,borderRadius:2,padding:18,boxShadow:"0 1px 4px rgba(0,0,0,.05)",borderLeft:"3px solid "+J.asagi,border:"1px solid "+J.keisenL,borderLeft:"3px solid "+J.asagi}}>
-                          <div style={{fontWeight:600,fontSize:12,color:J.sumi,marginBottom:12,letterSpacing:"0.06em",fontFamily:"'Noto Serif JP',serif"}}>{h.name}</div>
-                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,textAlign:"center"}}>
-                            <div style={{background:"rgba(74,127,165,.07)",borderRadius:1,padding:"10px 4px"}}><div style={{fontSize:22,fontWeight:300,color:J.asagi,fontFamily:"'Noto Serif JP',serif"}}>{st.guests}</div><div style={{fontSize:10,color:J.nezumi}}>{t.guestCount}</div></div>
-                            <div style={{background:"rgba(61,107,94,.07)",borderRadius:1,padding:"10px 4px"}}><div style={{fontSize:22,fontWeight:300,color:J.moegi,fontFamily:"'Noto Serif JP',serif"}}>{st.rooms}</div><div style={{fontSize:10,color:J.nezumi}}>{t.roomCount}</div></div>
-                            <div style={{background:"rgba(184,134,11,.07)",borderRadius:1,padding:"10px 4px"}}><div style={{fontSize:13,fontWeight:600,color:J.kincha,fontFamily:"'Noto Serif JP',serif"}}>${st.total.toLocaleString()}</div><div style={{fontSize:10,color:J.nezumi}}>{t.totalSpend}</div></div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div style={{ marginTop: 12, background: J.washi, padding: 12, fontSize: 11, color: J.nezumi, lineHeight: 1.5 }}>
+                    {t.personTrips}: {t.segmentMorning} / {t.segmentEvening} / {t.segmentTransfer}
                   </div>
-                </div>
+                </aside>
               </div>
-            );
-          })()}
-
-                    {/* TAB D */}
-          {tab==="D"&&(()=>{
-            const kw=searchD.toLowerCase();
-            const fh=hotels.filter(h=>!kw||[h.name,h.address,h.tel].some(v=>(v||"").toLowerCase().includes(kw)));
-            return(
-              <div>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
-                  <h2 style={{fontSize:14,fontWeight:400,color:J.sumi,margin:0,letterSpacing:"0.12em",fontFamily:"'Noto Serif JP',serif",display:"flex",alignItems:"center",gap:10}}><span style={{width:2,height:14,background:J.fuji,display:"inline-block"}}></span>{t.hotelList}</h2>
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <SearchBar value={searchD} onChange={setSearchD} placeholder={t.searchHotelList}/>
-                    {canEdit&&<button onClick={()=>setHotelModal({mode:"add",data:null})} style={pBtn(false)}>{t.addHotel}</button>}
-                  </div>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:18}}>
-                  {fh.map(h=>{
-                    const hRules=[...pricingRules.filter(r=>+r.hotel_id===h.id)].sort((a,b)=>a.date>b.date?1:-1);
-                    return(
-                      <div key={h.id} style={{background:J.shiro,borderRadius:2,boxShadow:"0 1px 6px rgba(0,0,0,.06)",overflow:"hidden",border:"1px solid "+J.keisenL}}>
-                        <div style={{borderLeft:"3px solid "+J.fuji,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-                          <div>
-                            <div style={{fontWeight:600,fontSize:14,color:J.sumi,marginBottom:4,letterSpacing:"0.04em",fontFamily:"'Noto Serif JP',serif"}}>🏨 {h.name}</div>
-                            <div style={{fontSize:12,color:J.nezumi}}>📍 {h.address}</div>
-                            <div style={{fontSize:12,color:J.nezumi}}>📞 {h.tel}</div>
-                          </div>
-                          {canEdit&&(
-                            <div style={{display:"flex",gap:8,marginLeft:12}}>
-                              <button style={eBtn} onClick={()=>setHotelModal({mode:"edit",data:h})}>{t.edit}</button>
-                              {canDelete&&<button style={dBtn} onClick={()=>deleteHotel(h.id)}>{t.delete}</button>}
-                            </div>
-                          )}
-                        </div>
-                        <div style={{borderTop:"1px solid "+J.keisenL,padding:"14px 18px",background:J.washi}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                            <div style={{fontSize:11,fontWeight:600,color:J.sumi,letterSpacing:"0.1em"}}>{t.datePrice}</div>
-                            {canEdit&&<button onClick={()=>setPriceModal({mode:"add",data:null,hotelId:h.id,hotelName:h.name})} style={{background:J.fuji,color:J.washi,border:"none",borderRadius:2,padding:"5px 12px",fontWeight:600,cursor:"pointer",fontSize:11,letterSpacing:"0.06em"}}>{t.addRule}</button>}
-                          </div>
-                          {hRules.length===0?<p style={{color:J.usunezumi,fontSize:12,margin:0}}>{t.noData}</p>:(
-                            <div style={{overflowX:"auto"}}>
-                              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                                <thead><tr style={{background:J.keisenL}}>
-                                  {[t.date,t.roomType,t.basePriceShort,t.importanceSurcharge,t.holidaySurcharge,t.finalPrice,t.action].map(l=>
-                                    <th key={l} style={{padding:"6px 10px",textAlign:"left",fontWeight:600}}>{l}</th>
-                                  )}
-                                </tr></thead>
-                                <tbody>
-                                  {hRules.map(r=>(
-                                    <tr key={r.id} style={{borderBottom:"1px solid #e5e7eb"}}>
-                                      <td style={{padding:"6px 10px"}}>{r.date}</td>
-                                      <td style={{padding:"6px 10px"}}>{r.room_type==="Custom"?(r.room_custom||"Custom"):r.room_type}</td>
-                                      <td style={{padding:"6px 10px"}}>${(+r.base_price||0).toLocaleString()}</td>
-                                      <td style={{padding:"6px 10px"}}>${(+r.importance_surcharge||0).toLocaleString()}</td>
-                                      <td style={{padding:"6px 10px"}}>${(+r.holiday_surcharge||0).toLocaleString()}</td>
-                                      <td style={{padding:"6px 10px",fontWeight:700,color:J.asagi}}>${(+r.final_price||0).toLocaleString()}</td>
-                                      <td style={{padding:"6px 10px",whiteSpace:"nowrap"}}>
-                                        {canEdit&&<button style={eBtn} onClick={()=>setPriceModal({mode:"edit",data:r,hotelId:h.id,hotelName:h.name})}>{t.edit}</button>}
-                                        {canDelete&&<button style={dBtn} onClick={()=>deletePricing(r.id)}>{t.delete}</button>}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {fh.length===0&&<p style={{color:J.usunezumi,fontSize:13}}>{t.noData}</p>}
-                </div>
-              </div>
-            );
-          })()}
+            </div>
+          )}
         </div>
       )}
 
-      {personModal&&<Modal title={personModal.mode==="add"?t.addStaff:t.editStaff} onClose={()=>setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={()=>setPersonModal(null)} t={t}/></Modal>}
-      {flightModal&&<Modal title={`${t.flightMgmt} — ${persons.find(p=>p.id===flightModal.pid)?.name_kanji||""}`} onClose={()=>setFlightModal(null)}><FlightForm init={flightModal.data} onSave={saveFlight} onClose={()=>setFlightModal(null)} t={t}/></Modal>}
-      {stayModal&&<Modal title={`${t.hotelMgmt} — ${persons.find(p=>p.id===stayModal.pid)?.name_kanji||""}`} onClose={()=>setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={()=>setStayModal(null)} t={t}/></Modal>}
-      {hotelModal&&<Modal title={hotelModal.mode==="add"?t.addHotel:t.hotelName} onClose={()=>setHotelModal(null)}><HotelMasterForm init={hotelModal.data} onSave={saveHotel} onClose={()=>setHotelModal(null)} t={t}/></Modal>}
-      {priceModal&&<Modal title={priceModal.mode==="add"?t.addRule:t.datePrice} onClose={()=>setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={savePricing} onClose={()=>setPriceModal(null)} t={t}/></Modal>}
-      {roommateModal&&<RoommateModal pid={roommateModal.pid} persons={persons} roommates={roommates} onSave={saveRoommates} onClose={()=>setRoommateModal(null)} t={t}/>}
-      {showMembers&&<MemberManager project={project} user={user} isOwner={isOwner} onClose={()=>setShowMembers(false)} t={t}/>}
-
-      <style>{`
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;600&family=Noto+Sans+JP:wght@300;400;600&display=swap');
-  *{box-sizing:border-box}
-  body{font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif!important}
-  input,select,textarea{font-family:'Noto Sans JP',sans-serif!important}
-  input:focus,select:focus,textarea:focus{border-color:#3d6b5e!important;outline:none;box-shadow:0 0 0 2px rgba(61,107,94,0.12)!important}
-  button:hover{opacity:0.85}
-  table tr:hover td{background:rgba(61,107,94,0.04)!important}
-  ::-webkit-scrollbar{width:6px;height:6px}
-  ::-webkit-scrollbar-track{background:transparent}
-  ::-webkit-scrollbar-thumb{background:rgba(26,26,30,0.15);border-radius:3px}
-  @media print{.no-print{display:none!important}body{background:white}@page{size:A4 landscape;margin:10mm}}
-`}</style>
+      {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
+      {flightModal && <Modal title={t.flightMgmt} onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = { ...f, person_id: flightModal.pid, project_id: pid }; if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
+      {stayModal && <Modal title={t.hotelMgmt} onClose={() => setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={() => setStayModal(null)} t={t} project={project} lang={lang} /></Modal>}
+      {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
+      {priceModal && <Modal title={t.datePrice} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
+      {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} /></Modal>}
+      {roommateModal && <RoommateModal pid={roommateModal.pid} persons={persons} roommates={roommates} onSave={async (rpid, partnerIds) => { try { const group = [...new Set([rpid, ...partnerIds])]; for (const gid of group) await api.deleteWhere("roommates", "person_id", gid); if (partnerIds.length) for (const gid of group) { const partners = group.filter((x) => x !== gid); if (partners.length) await api.insert("roommates", partners.map((x) => ({ person_id: gid, partner_id: x, project_id: pid }))); } await loadAll(); showToast(t.saved); setRoommateModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setRoommateModal(null)} t={t} />}
+      {syncRoommate && pendingStay && stayModal && <SyncRoommateModal names={syncRoommate} t={t} onClose={() => finishSaveStay(pendingStay, null)} onConfirm={() => finishSaveStay(pendingStay, roommates.filter((r) => r.person_id === stayModal.pid))} />}
+      {showMembers && <MemberManager project={project} user={user} canManage={canManageMembers} onClose={() => setShowMembers(false)} t={t} />}
+      {showCurrency && <CurrencySettingsModal project={project} onSave={saveCurrency} onClose={() => setShowCurrency(false)} t={t} />}
     </div>
   );
 }
 
-// ─── Root ─────────────────────────────────────────────────────
-function App(){
-  const [token,   setToken]   =useState(null);
-  const [user,    setUser]    =useState(null);
-  const [isOwner, setIsOwner] =useState(false);
-  const [project, setProject] =useState(null);
-  const [userRole,setUserRole]=useState(null);
-  const [lang,    setLang]    =useState("zh-TW");
+// ─── 全域 CSS ─────────────────────────────────────────────────
+function GlobalStyles() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Noto+Serif+JP:wght@300;400;600&display=swap');
 
-  const handleLogin=async(tk,u,loginLang)=>{
-    _token=tk;setToken(tk);setUser(u);
-    setIsOwner(u.id===OWNER_ID);
-    try{
-      const rows=await api.get("user_settings",`&user_id=eq.${u.id}`);
-      setLang(rows.length>0?rows[0].language:(loginLang||"zh-TW"));
-    }catch{setLang(loginLang||"zh-TW");}
-  };
+      *, *::before, *::after { box-sizing: border-box; }
 
-  const handleLangChange=async newLang=>{
-    setLang(newLang);
-    if(user){
-      try{
-        await sb("user_settings",{method:"POST",prefer:"return=representation,resolution=merge-duplicates",body:JSON.stringify({user_id:user.id,language:newLang})});
-      }catch(e){console.error(e);}
-    }
-  };
+      body {
+        margin: 0;
+        background: ${J.bg};
+        font-family: 'Noto Sans JP', -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        color: ${J.sumi};
+      }
 
-  const handleSelectProject=(proj,role)=>{setProject(proj);setUserRole(role);};
-  const handleBack=()=>{setProject(null);setUserRole(null);};
+      /* ── Scrollbar ── */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: ${J.keisenD}; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: ${J.nezumi}; }
 
-  // Inject Japanese fonts
-  if(typeof document!=="undefined"){
-    if(!document.getElementById("jp-fonts")){
-      const l=document.createElement("link");
-      l.id="jp-fonts";l.rel="stylesheet";
-      l.href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;600&family=Noto+Sans+JP:wght@300;400;600&display=swap";
-      document.head.appendChild(l);
-    }
-  }
-  if(!token) return <LoginScreen onLogin={handleLogin}/>;
-  if(!project) return <ProjectSelector user={user} isOwner={isOwner} lang={lang} onLangChange={handleLangChange} onSelect={handleSelectProject}/>;
-  return <ProjectApp project={project} userRole={isOwner?"owner":userRole} user={user} isOwner={isOwner} lang={lang} onLangChange={handleLangChange} onBack={handleBack}/>;
+      /* ── Input focus ring ── */
+      .wa-input:focus {
+        border-color: ${J.moegi} !important;
+        box-shadow: 0 0 0 3px rgba(43,90,76,.12) !important;
+      }
+      .wa-input::placeholder { color: ${J.usunezumi}; }
+
+      /* ── Table hover rows ── */
+      tbody tr:hover td { background: rgba(43,90,76,.035) !important; }
+
+      /* ── Project card hover ── */
+      .proj-card:hover {
+        box-shadow: 0 4px 24px rgba(0,0,0,.1), 0 0 0 1px ${J.keisenM} !important;
+        transform: translateY(-2px);
+      }
+
+      /* ── Animations ── */
+      @keyframes toastIn {
+        from { opacity: 0; transform: translateY(-10px) scale(.96); }
+        to   { opacity: 1; transform: translateY(0)    scale(1);    }
+      }
+      @keyframes modalIn {
+        from { opacity: 0; transform: scale(.97) translateY(6px); }
+        to   { opacity: 1; transform: scale(1)   translateY(0);   }
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* ── Print ── */
+      @media print {
+        .no-print { display: none !important; }
+        header { display: none !important; }
+        body { background: white !important; }
+      }
+
+      /* ── Number column (table index) ── */
+      .td-num { color: ${J.usunezumi}; font-variant-numeric: tabular-nums; }
+
+      /* ── Amount highlight ── */
+      .td-amt { font-weight: 600; color: ${J.asagi}; font-variant-numeric: tabular-nums; }
+
+      /* ── Section fade-in ── */
+      .tab-content { animation: fadeIn .22s ease both; }
+    `}</style>
+  );
 }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App/>);
-  </script>
-</body>
-</html>
+function App() {
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [isSystemOwner, setIsSystemOwner] = useState(false);
+  const [project, setProject] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [lang, setLang] = useState(() => localStorage.getItem("app_lang") || "zh-TW");
+  const [booting, setBooting] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  useEffect(() => {
+    window.__onSessionExpired = () => setSessionExpired(true);
+    return () => { window.__onSessionExpired = null; };
+  }, []);
+
+  const applyAuth = async (tk, u, loginLang) => {
+    _token = tk;
+    setToken(tk);
+    setUser(u);
+    const owner = await resolveIsSystemOwner(u.id);
+    setIsSystemOwner(owner);
+    try {
+      const rows = await api.get("user_settings", `&user_id=eq.${u.id}`);
+      setLang(rows[0]?.language || loginLang || localStorage.getItem("app_lang") || "zh-TW");
+    } catch {
+      setLang(loginLang || "zh-TW");
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return;
+        const sess = JSON.parse(raw);
+        if (sess.expires_at && Date.now() > sess.expires_at - 120000 && sess.refresh_token) {
+          const refreshed = await api.refresh(sess.refresh_token);
+          if (refreshed.access_token) {
+            saveSession(refreshed);
+            sess.access_token = refreshed.access_token;
+          }
+        }
+        if (!sess.access_token) return;
+        _token = sess.access_token;
+        const u = await api.getUser();
+        if (u?.id) await applyAuth(sess.access_token, u);
+        else clearSession();
+      } catch {
+        clearSession();
+      } finally {
+        setBooting(false);
+      }
+    })();
+  }, []);
+
+  const handleLangChange = async (newLang) => {
+    setLang(newLang);
+    localStorage.setItem("app_lang", newLang);
+    if (user) {
+      try {
+        await sb("user_settings", { method: "POST", prefer: "return=representation,resolution=merge-duplicates", body: JSON.stringify({ user_id: user.id, language: newLang }) });
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  if (booting) return (
+    <>
+      <GlobalStyles />
+      <div style={{ minHeight: "100vh", background: J.sumi, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <div style={{ fontSize: 36, fontFamily: "'Noto Serif JP',serif", color: J.moegi2, animation: "fadeIn 1s ease both" }}>映</div>
+        <div style={{ fontSize: 11, color: J.nezumi, letterSpacing: "0.18em", textTransform: "uppercase" }}>{T[lang].loading}</div>
+      </div>
+    </>
+  );
+  if (sessionExpired) return (
+    <>
+      <GlobalStyles />
+      <SessionExpiredModal t={T[lang]} onRelogin={() => { clearSession(); setSessionExpired(false); setToken(null); setUser(null); window.location.reload(); }} />
+    </>
+  );
+  if (!token) return <><GlobalStyles /><LoginScreen onLogin={(tk, u, l) => applyAuth(tk, u, l)} /></>;
+  if (!project) return <><GlobalStyles /><ProjectSelector user={user} isSystemOwner={isSystemOwner} lang={lang} onLangChange={handleLangChange} onSelect={(proj, role) => { setProject(proj); setUserRole(isSystemOwner && !role ? "owner" : role); }} /></>;
+  return <><GlobalStyles /><ProjectApp project={project} userRole={userRole} user={user} isSystemOwner={isSystemOwner} lang={lang} onLangChange={handleLangChange} onBack={() => { setProject(null); setUserRole(null); }} onProjectUpdate={setProject} /></>;
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
