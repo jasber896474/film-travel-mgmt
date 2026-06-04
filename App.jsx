@@ -222,6 +222,8 @@ const T = {
     bulkDeleteConfirm: "確定刪除選取的 {n} 人？此操作無法復原。",
     staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "與 {name} 同室",
     roomNo: "房號", roomNoPending: "待分配", unassignedRooms: "未配房人員", unassignedRoomsHint: "以下人員尚未指派房號",
+    unassignedRoomSection: "待分配房號",
+    vehicleSimpleHint: "需變更乘車配置時，請直接新增車輛即可。",
     roomPriceLockTitle: "房間費用歸屬", roomPriceLockMsg: "此房號已有其他入住者，由誰負擔房間費用？",
     roomPriceLockSelf: "由此人負擔（其他人設為 ¥0）", roomPriceLockOther: "由原有人負擔（此人設為 ¥0）",
     searchHotelName: "搜尋飯店…", searchRoomType: "搜尋房型…", searchRoman: "羅馬拼音", searchStatus: "安排狀態", allStatus: "全部狀態",
@@ -251,7 +253,8 @@ const T = {
     currencySettings: "幣別設定", baseCurrency: "計價幣別", displayCurrency: "顯示幣別", exchangeRate: "匯率", exchangeRateHint: "1 單位計價幣 = ? 顯示幣",
     currencyTWD: "台幣 TWD", currencyJPY: "日圓 JPY", optional: "選填", loading: "載入中…", resultsCount: "顯示 {n} / {total} 人", activeFilters: "使用中篩選",
     refresh: "更新", noName: "（未填姓名）", approved: "已批准 {email}", rejected: "已拒絕 {email}",
-    licensePlate: "車牌號碼", pickupTime: "乘車時刻", pickupLocation: "乘車地點", vehicleArrivalTime: "到達時刻", vehicleArrivalLocation: "到達地點", vehicleNote: "備考",
+    licensePlate: "車牌號碼", vehicleNo: "車號", driverPhone: "司機電話", onboardDepts: "搭乘部門",
+    pickupTime: "乘車時刻", pickupLocation: "乘車地點", vehicleArrivalTime: "到達時刻", vehicleArrivalLocation: "到達地點", vehicleNote: "備考",
     stayMgmt: "住宿分配清冊",
   },
   "zh-CN": {
@@ -287,6 +290,8 @@ const T = {
     bulkDeleteConfirm: "确定删除选取的 {n} 人？此操作无法复原。",
     staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "与 {name} 同住",
     roomNo: "房号", roomNoPending: "待分配", unassignedRooms: "未分配房间", unassignedRoomsHint: "以下人员尚未指派房号",
+    unassignedRoomSection: "待分配房号",
+    vehicleSimpleHint: "需变更乘车安排时，请直接新增车辆。",
     roomPriceLockTitle: "房间费用归属", roomPriceLockMsg: "此房号已有其他入住者，由谁承担房间费用？",
     roomPriceLockSelf: "由此人承担（其他人设为 ¥0）", roomPriceLockOther: "由原有人承担（此人设为 ¥0）",
     searchHotelName: "搜索饭店…", searchRoomType: "搜索房型…", searchRoman: "罗马拼音", searchStatus: "安排状态", allStatus: "全部状态",
@@ -316,7 +321,8 @@ const T = {
     currencySettings: "币别设定", baseCurrency: "计价币别", displayCurrency: "显示币别", exchangeRate: "汇率", exchangeRateHint: "1 单位计价币 = ? 显示币",
     currencyTWD: "台币 TWD", currencyJPY: "日元 JPY", optional: "选填", loading: "加载中…", resultsCount: "显示 {n} / {total} 人", activeFilters: "使用中筛选",
     refresh: "更新", noName: "（未填姓名）", approved: "已批准 {email}", rejected: "已拒绝 {email}",
-    licensePlate: "车牌号码", pickupTime: "乘车时刻", pickupLocation: "乘车地点", vehicleArrivalTime: "到达时刻", vehicleArrivalLocation: "到达地点", vehicleNote: "备注",
+    licensePlate: "车牌号码", vehicleNo: "车号", driverPhone: "司机电话", onboardDepts: "搭乘部门",
+    pickupTime: "乘车时刻", pickupLocation: "乘车地点", vehicleArrivalTime: "到达时刻", vehicleArrivalLocation: "到达地点", vehicleNote: "备注",
     stayMgmt: "住宿分配清册",
   },
   en: {
@@ -352,6 +358,7 @@ const T = {
     bulkDeleteConfirm: "Delete {n} selected staff? This cannot be undone.",
     staySegment: "Stay Segment", addSegment: "Add Stay", roommateWith: "With {name}",
     roomNo: "Room No.", roomNoPending: "Pending", unassignedRooms: "No Room Assigned", unassignedRoomsHint: "These persons have no room number yet",
+    unassignedRoomSection: "Room pending",
     roomPriceLockTitle: "Room Cost", roomPriceLockMsg: "This room already has occupants. Who covers the room cost?",
     roomPriceLockSelf: "This person pays (others set to ¥0)", roomPriceLockOther: "Original occupant pays (this person set to ¥0)",
     searchHotelName: "Search hotel…", searchRoomType: "Search room type…", searchRoman: "Romanized", searchStatus: "Status", allStatus: "All",
@@ -381,7 +388,8 @@ const T = {
     currencySettings: "Currency", baseCurrency: "Base currency", displayCurrency: "Display currency", exchangeRate: "Rate", exchangeRateHint: "1 base = ? display",
     currencyTWD: "TWD", currencyJPY: "JPY", optional: "Optional", loading: "Loading…", resultsCount: "Showing {n} / {total}", activeFilters: "Active filters",
     refresh: "Refresh", noName: "(No name)", approved: "Approved {email}", rejected: "Rejected {email}",
-    licensePlate: "License Plate", pickupTime: "Pickup Time", pickupLocation: "Pickup Location", vehicleArrivalTime: "Arrival Time", vehicleArrivalLocation: "Arrival Location", vehicleNote: "Note",
+    licensePlate: "License Plate", vehicleNo: "Vehicle No.", driverPhone: "Driver Phone", onboardDepts: "Onboard Depts",
+    pickupTime: "Pickup Time", pickupLocation: "Pickup Location", vehicleArrivalTime: "Arrival Time", vehicleArrivalLocation: "Arrival Location", vehicleNote: "Note",
     stayMgmt: "Accommodation List",
   },
   ko: {
@@ -417,6 +425,7 @@ const T = {
     bulkDeleteConfirm: "선택한 {n}명을 삭제하시겠습니까?",
     staySegment: "숙박 구간", addSegment: "구간 추가", roommateWith: "{name}과 동실",
     roomNo: "객실 번호", roomNoPending: "미배정", unassignedRooms: "객실 미배정 인원", unassignedRoomsHint: "아직 객실 번호가 없는 인원",
+    unassignedRoomSection: "객실 번호 미배정",
     roomPriceLockTitle: "객실 비용 귀속", roomPriceLockMsg: "이 객실에 이미 다른 투숙자가 있습니다. 누가 비용을 부담합니까?",
     roomPriceLockSelf: "이 사람이 부담 (나머지 ¥0)", roomPriceLockOther: "기존 투숙자가 부담 (이 사람 ¥0)",
     searchHotelName: "호텔…", searchRoomType: "객실…", searchRoman: "로마자", searchStatus: "상태", allStatus: "전체",
@@ -446,7 +455,8 @@ const T = {
     currencySettings: "통화 설정", baseCurrency: "기준 통화", displayCurrency: "표시 통화", exchangeRate: "환율", exchangeRateHint: "1 기준 = ? 표시",
     currencyTWD: "대만 달러 TWD", currencyJPY: "일본 엔 JPY", optional: "선택사항", loading: "로딩 중…", resultsCount: "{n} / {total}명", activeFilters: "활성 필터",
     refresh: "새로고침", noName: "（이름 없음）", approved: "승인됨 {email}", rejected: "거절됨 {email}",
-    licensePlate: "번호판", pickupTime: "탑승 시각", pickupLocation: "탑승 장소", vehicleArrivalTime: "도착 시각", vehicleArrivalLocation: "도착 장소", vehicleNote: "메모",
+    licensePlate: "번호판", vehicleNo: "차량 번호", driverPhone: "기사 전화", onboardDepts: "탑승 부서",
+    pickupTime: "탑승 시각", pickupLocation: "탑승 장소", vehicleArrivalTime: "도착 시각", vehicleArrivalLocation: "도착 장소", vehicleNote: "메모",
   },
   ja: {
     appName: "制作 交通・宿泊管理", logout: "ログアウト", print: "印刷", members: "メンバー", back: "戻る", settings: "設定",
@@ -481,6 +491,7 @@ const T = {
     bulkDeleteConfirm: "選択した {n} 名を削除しますか？",
     staySegment: "宿泊区間", addSegment: "区間追加", roommateWith: "{name}と同室",
     roomNo: "部屋番号", roomNoPending: "未配室", unassignedRooms: "未配室スタッフ", unassignedRoomsHint: "部屋番号未設定のスタッフ",
+    unassignedRoomSection: "部屋番号未配",
     roomPriceLockTitle: "部屋代帰属", roomPriceLockMsg: "この部屋番号にはすでに入室者がいます。部屋代を誰が負担しますか？",
     roomPriceLockSelf: "この人が負担（他は ¥0）", roomPriceLockOther: "既入室者が負担（この人は ¥0）",
     searchHotelName: "ホテル…", searchRoomType: "部屋…", searchRoman: "ローマ字", searchStatus: "状況", allStatus: "すべて",
@@ -510,7 +521,8 @@ const T = {
     currencySettings: "通貨", baseCurrency: "基準", displayCurrency: "表示", exchangeRate: "レート", exchangeRateHint: "1 基準 = ? 表示",
     currencyTWD: "TWD", currencyJPY: "JPY", optional: "任意", loading: "読込中…", resultsCount: "{n} / {total}", activeFilters: "フィルター",
     refresh: "更新", noName: "（未記入）", approved: "承認 {email}", rejected: "拒否 {email}",
-    licensePlate: "ナンバープレート", pickupTime: "乗車時刻", pickupLocation: "乗車地", vehicleArrivalTime: "到着時刻", vehicleArrivalLocation: "到着地", vehicleNote: "備考",
+    licensePlate: "ナンバープレート", vehicleNo: "車号", driverPhone: "運転手電話", onboardDepts: "乗車部署",
+    pickupTime: "乗車時刻", pickupLocation: "乗車地", vehicleArrivalTime: "到着時刻", vehicleArrivalLocation: "到着地", vehicleNote: "備考",
     stayMgmt: "宿泊割当一覧",
   },
 };
@@ -576,6 +588,15 @@ const tdS = () => ({
   padding: "11px 16px", fontSize: 12.5,
   background: J.shiro, borderBottom: "1px solid " + J.keisenL,
   verticalAlign: "middle", color: J.sumi,
+});
+const flightCell = (extra = {}) => ({
+  ...tdS(),
+  textAlign: "center",
+  whiteSpace: "nowrap",
+  fontSize: 12.5,
+  fontWeight: 400,
+  color: J.sumi,
+  ...extra,
 });
 const tblW = {
   width: "100%", borderCollapse: "collapse", background: J.shiro,
@@ -684,6 +705,48 @@ function vehicleOnboardCount(assignments) {
   const drivers = assignments.filter((a) => a.role === "driver").length;
   const pax = assignments.filter((a) => a.role === "passenger").length;
   return drivers + pax;
+}
+
+function vehicleDeptSummary(assigns, persons) {
+  const depts = [...new Set(assigns.map((a) => persons.find((p) => p.id === a.person_id)?.dept).filter(Boolean))];
+  return depts.length ? depts.join("、") : "";
+}
+
+function stayRoomGroupKey(row) {
+  if (!row?.room_number) return null;
+  return `${row.hotel_id}::${row.room_number}`;
+}
+
+function computeStayRowSpans(rows) {
+  const meta = rows.map((row) => ({
+    groupKey: stayRoomGroupKey(row) || `u:${row.id}`,
+    rowSpan: 1,
+    skipGroupCells: false,
+  }));
+  let i = 0;
+  while (i < rows.length) {
+    const gk = stayRoomGroupKey(rows[i]);
+    if (!gk) {
+      i += 1;
+      continue;
+    }
+    let j = i + 1;
+    while (j < rows.length && stayRoomGroupKey(rows[j]) === gk) j += 1;
+    const span = j - i;
+    for (let k = i; k < j; k++) {
+      meta[k].groupKey = gk;
+      meta[k].rowSpan = span;
+      if (k > i) meta[k].skipGroupCells = true;
+    }
+    i = j;
+  }
+  return meta;
+}
+
+function stayArrangementStatus(row) {
+  if (row.room_number) return "arranged";
+  if (row.hotel_id) return "partial";
+  return "none";
 }
 
 function Toast({ msg }) {
@@ -829,7 +892,7 @@ function ProgressBar({ t, stats }) {
 function VehicleForm({ init, onSave, onClose, t }) {
   const regionLabel = (key) => t["region" + key] || key;
   const typeLabel = (key) => ({ minivan: t.typeMinivan, bus: t.typeBus, truckCanvas: t.typeTruckCanvas, truckSteel: t.typeTruckSteel, custom: t.typeCustom }[key] || key);
-  const blank = { name: "", regionKey: "TW", typeKey: "minivan", capacity: VEHICLE_DEFAULT_CAPACITY.minivan, customCapacity: 4, license_plate: "", pickup_time: "", pickup_location: "", arrival_time: "", arrival_location: "", note: "" };
+  const blank = { name: "", regionKey: "TW", typeKey: "minivan", capacity: VEHICLE_DEFAULT_CAPACITY.minivan, customCapacity: 4, vehicle_no: "", driver_phone: "", license_plate: "", pickup_time: "", pickup_location: "", arrival_time: "", arrival_location: "", note: "" };
   const [f, setF] = useState(() => {
     if (!init) return blank;
     const tk = init.type_key || init.typeKey || "minivan";
@@ -853,6 +916,8 @@ function VehicleForm({ init, onSave, onClose, t }) {
         type: typeLabel(f.typeKey),
         typeKey: f.typeKey,
         capacity: isCustom ? f.customCapacity : f.capacity,
+        vehicle_no: f.vehicle_no || "",
+        driver_phone: f.driver_phone || "",
         license_plate: f.license_plate || "",
         pickup_time: f.pickup_time || "",
         pickup_location: f.pickup_location || "",
@@ -902,13 +967,21 @@ function VehicleForm({ init, onSave, onClose, t }) {
       </Field>
 
       <div style={{ marginTop: 16, padding: "12px 14px", background: J.washi, borderRadius: 6, border: "1px solid " + J.keisenL }}>
-        <p style={{ fontSize: 11, color: J.nezumi, margin: "0 0 10px" }}>──── {t.licensePlate} / {t.pickupTime} / {t.vehicleNote} ────</p>
+        <p style={{ fontSize: 11, color: J.nezumi, margin: "0 0 10px" }}>──── {t.vehicleNo} / {t.driverPhone} / {t.licensePlate} ────</p>
+        <div style={inp2}>
+          <Field label={t.vehicleNo}>
+            <input style={inpStyle} value={f.vehicle_no} onChange={(e) => setF((p) => ({ ...p, vehicle_no: e.target.value }))} placeholder="01" maxLength={20} />
+          </Field>
+          <Field label={t.driverPhone}>
+            <input style={inpStyle} value={f.driver_phone} onChange={(e) => setF((p) => ({ ...p, driver_phone: e.target.value }))} placeholder="090-0000-0000" maxLength={30} />
+          </Field>
+        </div>
         <div style={inp2}>
           <Field label={t.licensePlate}>
             <input style={inpStyle} value={f.license_plate} onChange={(e) => setF((p) => ({ ...p, license_plate: e.target.value }))} placeholder="AB-1234" maxLength={20} />
           </Field>
-          <Field label={""}>
-            <div style={{ height: "100%"}} />
+          <Field label={t.vehicleNote}>
+            <input style={inpStyle} value={f.note} onChange={(e) => setF((p) => ({ ...p, note: e.target.value }))} maxLength={100} />
           </Field>
         </div>
         <div style={inp2}>
@@ -927,9 +1000,6 @@ function VehicleForm({ init, onSave, onClose, t }) {
             <input style={inpStyle} value={f.arrival_location} onChange={(e) => setF((p) => ({ ...p, arrival_location: e.target.value }))} maxLength={60} />
           </Field>
         </div>
-        <Field label={t.vehicleNote}>
-          <input style={inpStyle} value={f.note} onChange={(e) => setF((p) => ({ ...p, note: e.target.value }))} maxLength={100} />
-        </Field>
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
@@ -2088,6 +2158,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
         type_key: f.typeKey || "minivan",
         capacity: f.capacity || 4,
         project_id: pid,
+        vehicle_no: f.vehicle_no || null,
+        driver_phone: f.driver_phone || null,
         license_plate: f.license_plate || null,
         pickup_time: f.pickup_time || null,
         pickup_location: f.pickup_location || null,
@@ -2161,13 +2233,11 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
   };
 
   const exportCSV = () => {
-    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.importance, t.passport, t.dob, t.passportExp, t.diet, t.status, t.airline, t.flightNo, t.hotel, t.checkIn, t.checkOut, t.totalAmt, t.roommate];
+    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.importance, t.passport, t.dob, t.passportExp, t.diet, t.airline, t.flightNo, t.hotel, t.checkIn, t.checkOut, t.totalAmt, t.roommate];
     const rows = persons.map((p, i) => {
       const fl = flights.find((x) => x.person_id === p.id);
       const s = stays.find((x) => x.person_id === p.id);
-      const st = getStatus(p.id);
-      const stLabel = st === "arranged" ? t.arranged_short : st === "partial" ? t.partial_short : t.unArranged_short;
-      return [i + 1, p.dept, p.name_kanji, `${p.last_roman} ${p.first_roman}`.trim(), p.importance, p.passport, p.dob, p.passport_exp, p.diet, stLabel, fl?.airline, fl?.flight_no, s ? getHotelName(s.hotel_id) : "", s?.check_in, s?.check_out, s?.total_amount, getRoommateNames(p.id)];
+      return [i + 1, p.dept, p.name_kanji, `${p.last_roman} ${p.first_roman}`.trim(), p.importance, p.passport, p.dob, p.passport_exp, p.diet, fl?.airline, fl?.flight_no, s ? getHotelName(s.hotel_id) : "", s?.check_in, s?.check_out, s?.total_amount, getRoommateNames(p.id)];
     });
     downloadCSV([headers, ...rows], `staff_${todayStr()}.csv`);
   };
@@ -2243,14 +2313,17 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
   const exportVehicleCSV = () => {
     const headers = [
       "No.", t.vehicleName, t.vehicleRegion, t.vehicleType, t.maxPassengers,
-      t.licensePlate, t.pickupTime, t.pickupLocation, t.vehicleArrivalTime, t.vehicleArrivalLocation, t.vehicleNote,
+      t.vehicleNo, t.driverPhone, t.licensePlate, t.pickupTime, t.pickupLocation, t.vehicleArrivalTime, t.vehicleArrivalLocation, t.vehicleNote,
       t.no, t.dept, t.nameKanji, t.nameRoman, t.driver,
     ];
-    const emptyTrip = ["", "", "", "", "", ""];
+    const emptyTrip = ["", "", "", "", "", "", "", ""];
     const rows = vehicles.flatMap((v, vi) => {
       const assigns = getAssignmentsForVehicle(v.id);
       const no = String(vi + 1).padStart(2, "0");
-      const tripInfo = [v.license_plate || "", v.pickup_time || "", v.pickup_location || "", v.arrival_time || "", v.arrival_location || "", v.note || ""];
+      const tripInfo = [
+        v.vehicle_no || "", v.driver_phone || "", v.license_plate || "",
+        v.pickup_time || "", v.pickup_location || "", v.arrival_time || "", v.arrival_location || "", v.note || "",
+      ];
       if (!assigns.length) return [[no, v.name, v.region, v.type, v.capacity || 4, ...tripInfo, "", "", "", "", ""]];
       return assigns.map((a, ai) => {
         const p = persons.find((x) => x.id === a.person_id);
@@ -2382,7 +2455,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                     <th style={thS}>{t.nameKanji}</th>
                     <th style={thS}>{t.nameRoman}</th>
                     <th style={thS}>{t.importance}</th>
-                    <th style={thS}>{t.status}</th>
                     <th style={thS}>{t.passport}</th>
                     <th style={thS}>{t.dob}</th>
                     <th style={thS}>{t.passportExp}</th>
@@ -2391,7 +2463,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                   </tr></thead>
                   <tbody>
                     {rowsA.map((p, i) => {
-                      const rm = getRoommateNames(p.id);
                       const warn = passportWarning(p.passport_exp);
                       return (
                         <tr key={p.id} draggable={canEdit} onDragStart={() => { dragItem.current = persons.indexOf(p); }} onDragEnter={() => { dragOver.current = persons.indexOf(p); }} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}>
@@ -2401,7 +2472,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                           <td style={tdS()}><Highlight text={p.name_kanji} query={debSearchA} /></td>
                           <td style={tdS()}><Highlight text={`${p.last_roman || ""} ${p.first_roman || ""}`.trim()} query={debSearchA} /></td>
                           <td style={{ ...tdS(), textAlign: "center" }}>{starLabel(p.importance) || "—"}</td>
-                          <td style={tdS()}>{statusBadge(getStatus(p.id))}{rm && <div style={{ fontSize: 10, color: J.nezumi, marginTop: 2 }}>{t.roommateWith.replace("{name}", rm)}</div>}</td>
                           <td style={tdS()}>{p.passport || "—"}</td>
                           <td style={tdS()}>{fmtDate(p.dob, lang)}</td>
                           <td style={{ ...tdS(), color: warn ? J.shu : "inherit" }}>{fmtDate(p.passport_exp, lang)}</td>
@@ -2464,41 +2534,38 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                     {filteredFlightPersons.map((p) => {
                       const fl = flights.find((x) => x.person_id === p.id);
                       const hasF = fl && fl.airline;
-                      const tdC = { ...tdS(), textAlign: "center", whiteSpace: "nowrap" };
                       const depDT = fmtFlightDateTime(fl?.dep_time, lang);
                       const arrDT = fmtFlightDateTime(fl?.arr_time, lang);
                       const dtCell = (dt) => dt ? (
                         <div>
-                          <div style={{ fontSize: 11, fontWeight: 500 }}>{dt.date}</div>
-                          <div style={{ fontSize: 12, fontWeight: 700 }}>{dt.time}</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 400, color: J.sumi }}>{dt.date}</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 400, color: J.sumi }}>{dt.time}</div>
                         </div>
                       ) : "—";
-                      const depApt = fl?.dep_airport || "—";
-                      const arrApt = fl?.arr_airport || "—";
                       const depT = fl?.dep_terminal ? `T${fl.dep_terminal.replace(/^T/i,"")}` : "";
                       const arrT = fl?.arr_terminal ? `T${fl.arr_terminal.replace(/^T/i,"")}` : "";
+                      const aptCell = (code, term) => (
+                        <div>
+                          <div style={{ fontSize: 12.5, fontWeight: 400, color: J.sumi }}>{code || "—"}</div>
+                          {term && <div style={{ fontSize: 12.5, fontWeight: 400, color: J.sumi }}>{term}</div>}
+                        </div>
+                      );
                       return (
                         <tr key={p.id}>
-                          <td style={tdC}>{personIndex[p.id]}</td>
-                          <td style={tdC}>{p.dept}</td>
-                          <td style={{ ...tdC, textAlign: "left" }}>{p.name_kanji}</td>
-                          <td style={{ ...tdC, textAlign: "left" }}>{p.last_roman} {p.first_roman}</td>
-                          <td style={tdC}>{fl?.airline || "—"}</td>
-                          <td style={tdC}>{fl?.flight_no || "—"}</td>
-                          <td style={tdC}>{fl?.cabin || "—"}</td>
-                          <td style={tdC}>{fl?.pnr || "—"}</td>
-                          <td style={{ ...tdC, whiteSpace: "normal" }}>
-                            <div style={{ fontWeight: 600 }}>{depApt}</div>
-                            {depT && <div style={{ fontSize: 10, color: J.moegi, fontWeight: 700 }}>{depT}</div>}
-                          </td>
-                          <td style={tdC}>{dtCell(depDT)}</td>
-                          <td style={{ ...tdC, whiteSpace: "normal" }}>
-                            <div style={{ fontWeight: 600 }}>{arrApt}</div>
-                            {arrT && <div style={{ fontSize: 10, color: J.moegi, fontWeight: 700 }}>{arrT}</div>}
-                          </td>
-                          <td style={tdC}>{dtCell(arrDT)}</td>
-                          <td style={{ ...tdC, minWidth: 80 }}>{statusBadge(hasF ? "arranged" : "none")}</td>
-                          <td style={tdC}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
+                          <td style={flightCell()}>{personIndex[p.id]}</td>
+                          <td style={flightCell()}>{p.dept || "—"}</td>
+                          <td style={flightCell()}>{p.name_kanji || "—"}</td>
+                          <td style={flightCell()}>{`${p.last_roman || ""} ${p.first_roman || ""}`.trim() || "—"}</td>
+                          <td style={flightCell()}>{fl?.airline || "—"}</td>
+                          <td style={flightCell()}>{fl?.flight_no || "—"}</td>
+                          <td style={flightCell()}>{fl?.cabin || "—"}</td>
+                          <td style={flightCell()}>{fl?.pnr || "—"}</td>
+                          <td style={flightCell({ whiteSpace: "normal" })}>{aptCell(fl?.dep_airport, depT)}</td>
+                          <td style={flightCell()}>{dtCell(depDT)}</td>
+                          <td style={flightCell({ whiteSpace: "normal" })}>{aptCell(fl?.arr_airport, arrT)}</td>
+                          <td style={flightCell()}>{dtCell(arrDT)}</td>
+                          <td style={flightCell({ minWidth: 80 })}>{statusBadge(hasF ? "arranged" : "none")}</td>
+                          <td style={flightCell()}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
                         </tr>
                       );
                     })}
@@ -2556,12 +2623,33 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                     <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
                   {(() => {
-                    const assigned = flatStays.filter((r) => r.room_number);
-                    const unassigned = flatStays.filter((r) => !r.room_number);
-                    // Persons with no stays at all (completely unassigned)
-                    const personsNoStay = persons.filter((p) => !stays.some((s) => s.person_id === p.id));
+                    const sortStayRows = (rows) => [...rows].sort((a, b) => {
+                      const aHas = a.room_number ? 0 : 1;
+                      const bHas = b.room_number ? 0 : 1;
+                      if (aHas !== bHas) return aHas - bHas;
+                      if (a.room_number && b.room_number && a.room_number !== b.room_number)
+                        return a.room_number.localeCompare(b.room_number, undefined, { numeric: true });
+                      return (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0);
+                    });
 
-                    const stayRow = (row, i) => {
+                    const hotelGroups = [];
+                    const groupMap = new Map();
+                    flatStays.forEach((row) => {
+                      const hid = row.hotel_id ?? "none";
+                      if (!groupMap.has(hid)) {
+                        const g = { hotelId: hid, hotelName: row.hotelName || t.noData, rows: [] };
+                        groupMap.set(hid, g);
+                        hotelGroups.push(g);
+                      }
+                      groupMap.get(hid).rows.push(row);
+                    });
+                    hotelGroups.sort((a, b) => a.hotelName.localeCompare(b.hotelName, lang === "ja" ? "ja" : "zh-Hant"));
+
+                    const personsNoStay = persons.filter((p) => !stays.some((s) => s.person_id === p.id));
+                    const stayHeaders = [t.no, t.dept, t.nameKanji, t.staySegment, t.roomNo, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.action];
+                    const colSpan = stayHeaders.length;
+
+                    const stayRow = (row) => {
                       const roomKey = row.room_number ? `${row.hotel_id}::${row.room_number}` : null;
                       const groupColor = roomKey ? roomGroupColorMap[roomKey] : null;
                       const isZeroPrice = row.room_number && row.total_amount === 0;
@@ -2573,8 +2661,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                           <td style={tdS()}>{row.person.dept}</td>
                           <td style={{ ...tdS(), fontWeight: 600 }}>{row.person.name_kanji}</td>
                           <td style={tdS()}>{row.stay_label || "—"}</td>
-                          <td style={tdS()}>{row.hotelName}</td>
-                          {/* Room number – inline editable */}
                           <td style={tdS()}>
                             {canEdit ? (
                               <input
@@ -2598,36 +2684,65 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                             {isZeroPrice ? <span style={{ fontSize: 11, color: J.usunezumi }}>—</span> : formatMoney(convertMoney(row.total_amount, project), project, lang)}
                           </td>
                           <td style={tdS()}>
-                            {canEdit && <>
-                              <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>
-                            </>}
+                            {canEdit && <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>}
                             {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>{t.delete}</button>}
                           </td>
                         </tr>
                       );
                     };
 
-                    return (
-                      <div style={{ overflowX: "auto" }}>
-                        <table style={tblW}>
-                          <thead><tr style={thead}>
-                            {[t.no, t.dept, t.nameKanji, t.staySegment, t.hotel, t.roomNo, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.action].map((h) => <th key={h} style={thS}>{h}</th>)}
-                          </tr></thead>
-                          <tbody>
-                            {assigned.map(stayRow)}
-                            {unassigned.length > 0 && (
-                              <tr><td colSpan={12} style={{ background: "#fff8ec", padding: "6px 12px", fontSize: 11, fontWeight: 700, color: J.kincha, borderTop: "2px dashed " + J.kincha, letterSpacing: "0.06em" }}>
-                                ▼ {t.roomNoPending} ({unassigned.length})
-                              </td></tr>
-                            )}
-                            {unassigned.map(stayRow)}
-                          </tbody>
-                        </table>
+                    if (!hotelGroups.length) {
+                      return <p style={{ fontSize: 13, color: J.nezumi, padding: "24px 0" }}>{t.noData}</p>;
+                    }
 
-                        {/* ── Unassigned persons panel ── */}
-                        {(personsNoStay.length > 0) && (
-                          <div style={{ marginTop: 18, padding: "14px 18px", background: "#fff8ec", border: "1.5px dashed " + J.kincha, borderRadius: 8 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: J.kincha, marginBottom: 8 }}>⚠ {t.unassignedRooms}</div>
+                    return (
+                      <div>
+                        {hotelGroups.map((group) => {
+                          const rows = sortStayRows(group.rows);
+                          const assigned = rows.filter((r) => r.room_number);
+                          const unassigned = rows.filter((r) => !r.room_number);
+                          const subtotal = rows.reduce((s, r) => s + (r.total_amount || 0), 0);
+                          const st = hotelStatsMap[group.hotelId] || {};
+                          return (
+                            <section key={String(group.hotelId)} style={{ marginBottom: 32 }}>
+                              <div style={{
+                                display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8,
+                                marginBottom: 12, paddingBottom: 10, borderBottom: `2px solid ${J.moegi}`,
+                              }}>
+                                <h3 style={{ fontSize: 15, fontWeight: 700, color: J.sumi, margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
+                                  {group.hotelName}
+                                </h3>
+                                <span style={{ fontSize: 11, color: J.nezumi }}>
+                                  {rows.length} {t.guestCount}
+                                  {st.rooms != null && st.rooms > 0 ? ` · ${st.rooms} ${t.roomCount}` : ""}
+                                  {" · "}{formatMoney(convertMoney(subtotal, project), project, lang)}
+                                </span>
+                              </div>
+                              <div style={{ overflowX: "auto" }}>
+                                <table style={tblW}>
+                                  <thead><tr style={thead}>
+                                    {stayHeaders.map((h) => <th key={h} style={thS}>{h}</th>)}
+                                  </tr></thead>
+                                  <tbody>
+                                    {assigned.map(stayRow)}
+                                    {unassigned.length > 0 && (
+                                      <tr>
+                                        <td colSpan={colSpan} style={{ background: "#fff8ec", padding: "6px 12px", fontSize: 11, fontWeight: 700, color: J.kincha, borderTop: "2px dashed " + J.kincha, letterSpacing: "0.06em" }}>
+                                          {t.unassignedRoomSection} ({unassigned.length})
+                                        </td>
+                                      </tr>
+                                    )}
+                                    {unassigned.map(stayRow)}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </section>
+                          );
+                        })}
+
+                        {personsNoStay.length > 0 && (
+                          <div style={{ marginTop: 8, padding: "14px 18px", background: "#fff8ec", border: "1.5px dashed " + J.kincha, borderRadius: 8 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: J.kincha, marginBottom: 8 }}>{t.unassignedRooms}</div>
                             <p style={{ fontSize: 11, color: J.nezumi, margin: "0 0 10px" }}>{t.unassignedRoomsHint}</p>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                               {personsNoStay.map((p) => (
@@ -2640,65 +2755,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                             </div>
                           </div>
                         )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* ── 配房視圖：依飯店 → 房間群組顯示 ── */}
-                  {(() => {
-                    const grps = buildRoommateGroups(roommates);
-                    const byHotel = {};
-                    flatStays.forEach((row) => {
-                      const hid = String(row.hotel_id || row.hotelName || "?");
-                      const rk = stayRoomKey(row, row.person_id, grps);
-                      if (!byHotel[hid]) byHotel[hid] = { name: row.hotelName, rooms: {} };
-                      if (!byHotel[hid].rooms[rk]) byHotel[hid].rooms[rk] = [];
-                      byHotel[hid].rooms[rk].push(row);
-                    });
-                    if (!Object.keys(byHotel).length) return null;
-                    return (
-                      <div style={{ marginTop: 28 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                          <div style={{ width: 3, height: 14, background: J.fuji, borderRadius: 2 }} />
-                          <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: J.sumi, margin: 0 }}>配房視圖</h3>
-                          <span style={{ fontSize: 10.5, color: J.usunezumi }}>— 依飯店 / 同室群組</span>
-                        </div>
-                        {Object.entries(byHotel).map(([hid, hData]) => (
-                          <div key={hid} style={{ marginBottom: 22 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: J.sumi, marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid " + J.keisenL, fontFamily: "'Noto Serif JP',serif" }}>{hData.name}</div>
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 10 }}>
-                              {Object.entries(hData.rooms).map(([rk, roomStays]) => {
-                                const occupants = roomStays.map((rs) => persons.find((p) => p.id === rs.person_id)).filter(Boolean);
-                                const isSingle = occupants.length === 1;
-                                const sample = roomStays[0];
-                                return (
-                                  <div key={rk} style={{ background: J.shiro, border: `1px solid ${isSingle ? J.keisenL : J.moegi}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
-                                    <div style={{ background: isSingle ? J.washi : J.moegi3, padding: "7px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                      <span style={{ fontSize: 10, fontWeight: 700, color: isSingle ? J.usunezumi : J.moegi, letterSpacing: "0.05em" }}>
-                                        {isSingle ? t.singleRoom : `同室 ×${occupants.length}`}
-                                      </span>
-                                      <span style={{ fontSize: 9.5, color: J.nezumi }}>{sample.roomLabel}</span>
-                                    </div>
-                                    <div style={{ padding: "8px 12px" }}>
-                                      <div style={{ fontSize: 9.5, color: J.usunezumi, marginBottom: 6 }}>{fmtDate(sample.check_in, lang)} – {fmtDate(sample.check_out, lang)} · {sample.nights}{lang === "en" ? "nts" : "泊"}</div>
-                                      {occupants.map((p) => (
-                                        <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, padding: "4px 0", borderBottom: "1px solid " + J.keisenL }}>
-                                          <span style={{ fontWeight: 600 }}>{p.name_kanji}</span>
-                                          <span style={{ fontSize: 10, color: J.nezumi }}>{p.dept}</span>
-                                        </div>
-                                      ))}
-                                      {canEdit && (
-                                        <button type="button" style={{ ...eBtn, width: "100%", marginTop: 8, fontSize: 10.5 }} onClick={() => setRoommateModal({ pid: occupants[0]?.id })}>
-                                          {t.roommateSet}
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))}
                       </div>
                     );
                   })()}
@@ -2849,24 +2905,31 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                                 <div style={{ height: 3, width: pct + "%", background: isFull ? "#ff6b6b" : J.moegi2, borderRadius: 2, transition: "width .4s" }} />
                               </div>
                             </div>
-                            {(v.license_plate || v.pickup_time || v.pickup_location || v.arrival_time || v.arrival_location || v.note) && (
-                              <div style={{ padding: "8px 14px", background: J.washi, borderBottom: "1px solid " + J.keisenL, fontSize: 11, color: J.nezumi, lineHeight: 1.7 }}>
-                                {v.license_plate && <span style={{ marginRight: 12, fontWeight: 600, color: J.sumi }}>🚗 {v.license_plate}</span>}
-                                {(v.pickup_time || v.pickup_location) && <span style={{ marginRight: 12 }}>{v.pickup_time && <strong>{v.pickup_time}</strong>}{v.pickup_location && ` ${v.pickup_location}`}</span>}
-                                {(v.arrival_time || v.arrival_location) && <span style={{ marginRight: 12 }}>→ {v.arrival_time && <strong>{v.arrival_time}</strong>}{v.arrival_location && ` ${v.arrival_location}`}</span>}
-                                {v.note && <span style={{ color: J.nezumi, fontStyle: "italic" }}>📝 {v.note}</span>}
+                            {(v.vehicle_no || v.driver_phone || v.license_plate || v.pickup_time || v.pickup_location || v.arrival_time || v.arrival_location || v.note) && (
+                              <div style={{ padding: "8px 14px", background: J.washi, borderBottom: "1px solid " + J.keisenL, fontSize: 11.5, color: J.sumi, lineHeight: 1.7 }}>
+                                {v.vehicle_no && <span style={{ marginRight: 12 }}>{t.vehicleNo}: {v.vehicle_no}</span>}
+                                {v.driver_phone && <span style={{ marginRight: 12 }}>{t.driverPhone}: {v.driver_phone}</span>}
+                                {v.license_plate && <span style={{ marginRight: 12 }}>{t.licensePlate}: {v.license_plate}</span>}
+                                {(v.pickup_time || v.pickup_location) && <span style={{ marginRight: 12 }}>{v.pickup_time}{v.pickup_location ? ` ${v.pickup_location}` : ""}</span>}
+                                {(v.arrival_time || v.arrival_location) && <span style={{ marginRight: 12 }}>→ {v.arrival_time}{v.arrival_location ? ` ${v.arrival_location}` : ""}</span>}
+                                {v.note && <span style={{ color: J.nezumi }}>{v.note}</span>}
                               </div>
                             )}
                             <div style={{ padding: "12px 14px" }}>
+                              {assigns.length > 0 && (
+                                <div style={{ fontSize: 11, color: J.nezumi, marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid " + J.keisenL }}>
+                                  {t.onboardDepts}: <span style={{ fontWeight: 600, color: J.sumi }}>{vehicleDeptSummary(assigns, persons) || "—"}</span>
+                                </div>
+                              )}
                               {assigns.map((a) => {
                                 const p = persons.find((x) => x.id === a.person_id);
                                 if (!p) return null;
                                 return (
                                   <div key={a.id || `${a.person_id}-${a.role}-${a.segment_label}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid " + J.keisenL, fontSize: 12 }}>
                                     <div>
-                                      <span style={{ fontWeight: 600 }}>{p.name_kanji}</span>
-                                      {p.dept && <span style={{ fontSize: 10.5, color: J.nezumi, marginLeft: 6 }}>{p.dept}</span>}
-                                      {a.role === "driver" && <span style={{ fontSize: 9.5, color: J.moegi, fontWeight: 700, marginLeft: 6, padding: "1px 5px", background: J.moegi3, borderRadius: 3 }}>{t.driver}</span>}
+                                      <span style={{ fontWeight: 600, color: J.sumi }}>{p.dept || "—"}</span>
+                                      <span style={{ fontSize: 11, color: J.nezumi, marginLeft: 8 }}>{p.name_kanji}</span>
+                                      {a.role === "driver" && <span style={{ fontSize: 9.5, color: J.moegi, fontWeight: 600, marginLeft: 6, padding: "1px 5px", background: J.moegi3, borderRadius: 3 }}>{t.driver}</span>}
                                     </div>
                                     {canEdit && <button type="button" style={dBtn} onClick={() => removeAssignment(a)}>×</button>}
                                   </div>
@@ -2876,7 +2939,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                                 <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                                   <select style={{ ...inpStyle, flex: "2 1 120px", minWidth: 0 }} value={addTripVehicle === v.id ? tripPerson : ""} onChange={(e) => { setAddTripVehicle(v.id); setTripPerson(e.target.value); }}>
                                     <option value="">{t.selectPassenger}</option>
-                                    {persons.map((p) => <option key={p.id} value={p.id}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
+                                    {persons.map((p) => <option key={p.id} value={p.id}>{p.dept ? `[${p.dept}] ` : ""}{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
                                   </select>
                                   <select style={{ ...inpStyle, flex: "1 1 80px", minWidth: 0 }} value={addTripVehicle === v.id ? tripRole : "passenger"} onChange={(e) => { setAddTripVehicle(v.id); setTripRole(e.target.value); }}>
                                     <option value="driver">{t.driver}</option>
@@ -2887,6 +2950,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                                     addAssignment(v.id, +tripPerson, tripRole, "");
                                     setAddTripVehicle(null); setTripPerson(""); setTripRole("passenger");
                                   }}>+</button>
+                                  {addTripVehicle === v.id && tripPerson && (() => {
+                                    const sel = persons.find((x) => x.id === +tripPerson);
+                                    return sel?.dept ? <span style={{ fontSize: 11, fontWeight: 600, color: J.moegi, width: "100%" }}>{t.dept}: {sel.dept}</span> : null;
+                                  })()}
                                 </div>
                               )}
                             </div>
