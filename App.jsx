@@ -251,6 +251,7 @@ const T = {
     memberAdd: "新增成員", memberCurrent: "目前成員（{n} 人）", memberAlready: "此用戶已是成員", memberSelf: "無法移除自己",
     memberUidHint: "請輸入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查詢 User ID", memberUidInfo: "→ Authentication → Users → 複製 UUID", memberAddBtn: "加入",
     stayRequired: "請選擇飯店並填寫入住/退房日期", syncRoommateTitle: "同步同室者住宿", syncRoommateMsg: "是否同步更新同室者的飯店、房型與日期？",
+    syncRoommateOpt: "一併同步同室者（{names}）的飯店、房型與日期",
     currencySettings: "幣別設定", baseCurrency: "計價幣別", displayCurrency: "顯示幣別", exchangeRate: "匯率", exchangeRateHint: "1 單位計價幣 = ? 顯示幣",
     currencyTWD: "台幣 TWD", currencyJPY: "日圓 JPY", optional: "選填", loading: "載入中…", resultsCount: "顯示 {n} / {total} 人", activeFilters: "使用中篩選",
     refresh: "更新", noName: "（未填姓名）", approved: "已批准 {email}", rejected: "已拒絕 {email}",
@@ -320,6 +321,7 @@ const T = {
     memberAdd: "新增成员", memberCurrent: "当前成员（{n} 人）", memberAlready: "该用户已是成员", memberSelf: "无法移除自己",
     memberUidHint: "请输入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查询 User ID", memberUidInfo: "→ Authentication → Users → 复制 UUID", memberAddBtn: "加入",
     stayRequired: "请选择饭店并填写入住/退房日期", syncRoommateTitle: "同步同住者住宿", syncRoommateMsg: "是否同步更新同住者的饭店、房型与日期？",
+    syncRoommateOpt: "一并同步同住者（{names}）的饭店、房型与日期",
     currencySettings: "币别设定", baseCurrency: "计价币别", displayCurrency: "显示币别", exchangeRate: "汇率", exchangeRateHint: "1 单位计价币 = ? 显示币",
     currencyTWD: "台币 TWD", currencyJPY: "日元 JPY", optional: "选填", loading: "加载中…", resultsCount: "显示 {n} / {total} 人", activeFilters: "使用中筛选",
     refresh: "更新", noName: "（未填姓名）", approved: "已批准 {email}", rejected: "已拒绝 {email}",
@@ -588,9 +590,10 @@ const thS = {
 const tdS = (extra = {}) => ({
   padding: "10px 8px", fontSize: 12.5, lineHeight: 1.45,
   background: "var(--shiro)", borderBottom: "1px solid var(--keisenL)",
-  verticalAlign: "middle", color: "var(--sumi)", overflow: "hidden",
-  textOverflow: "ellipsis", maxWidth: 0, ...extra,
+  verticalAlign: "middle", color: "var(--sumi)",
+  ...extra,
 });
+const tdEllipsis = (extra = {}) => tdS({ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", ...extra });
 const flightCell = (extra = {}) => tdS({ textAlign: "center", whiteSpace: "nowrap", fontWeight: 400, maxWidth: "none", ...extra });
 const tblW = {
   width: "100%", tableLayout: "fixed", borderCollapse: "collapse", background: "var(--shiro)",
@@ -626,6 +629,10 @@ const pBtn = (dis) => ({
 });
 
 const STAY_COL_WIDTHS = [44, 72, 88, 80, 76, 72, 84, 84, 44, 88, 108];
+const staffColWidths = (withCheckbox) => (withCheckbox
+  ? [40, 48, 88, 96, 120, 56, 104, 88, 88, 108, 116]
+  : [48, 88, 96, 120, 56, 104, 88, 88, 108, 116]);
+const HOTEL_STATS_COL_WIDTHS = ["38%", "15%", "15%", "15%", "17%"];
 
 function ThemeToggle({ theme, onChange, t }) {
   return (
@@ -1121,9 +1128,10 @@ function FlightForm({ init, onSave, onClose, t }) {
   );
 }
 
-function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang }) {
+function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, roommateNames }) {
   const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "" };
   const [f, setF] = useState(init ? { ...blank, ...init, hotel_id: String(init.hotel_id || "") } : blank);
+  const [syncRoommates, setSyncRoommates] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const nights = diffDays(f.check_in, f.check_out);
   const { totalAmount, breakdown } = useMemo(() => {
@@ -1163,9 +1171,15 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
         </div>
       )}
       {!canSave && <p style={{ fontSize: 11, color: "var(--shu)" }}>{t.stayRequired}</p>}
+      {roommateNames && (
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 14, padding: "10px 12px", background: "var(--washi)", borderRadius: 6, border: "1px solid var(--keisenL)", cursor: "pointer", fontSize: 12, lineHeight: 1.5, color: "var(--sumi)" }}>
+          <input type="checkbox" checked={syncRoommates} onChange={(e) => setSyncRoommates(e.target.checked)} style={{ marginTop: 3, flexShrink: 0 }} />
+          <span>{(t.syncRoommateOpt || t.syncRoommateMsg).replace("{names}", roommateNames)}</span>
+        </label>
+      )}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
-        <button type="button" onClick={() => onSave({ ...f, nights, total_amount: totalAmount, base_price: f.base_price === "" ? null : +f.base_price })} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
+        <button type="button" onClick={() => onSave({ ...f, nights, total_amount: totalAmount, base_price: f.base_price === "" ? null : +f.base_price, sync_roommates: syncRoommates })} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
       </div>
     </div>
   );
@@ -1912,8 +1926,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [vehicleModal, setVehicleModal] = useState(null);
   const [showMembers, setShowMembers] = useState(false);
   const [showCurrency, setShowCurrency] = useState(false);
-  const [syncRoommate, setSyncRoommate] = useState(null);
-  const [pendingStay, setPendingStay] = useState(null);
   const [addStayPerson, setAddStayPerson] = useState("");
   const [addTripVehicle, setAddTripVehicle] = useState(null);
   const [tripPerson, setTripPerson] = useState("");
@@ -2249,7 +2261,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
           }
         }
       }
-      showToast(t.saved); setStayModal(null); setSyncRoommate(null); setPendingStay(null);
+      showToast(t.saved); setStayModal(null);
       loadAll();
     } catch (e) { showToast(e.message); }
   };
@@ -2257,15 +2269,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const saveStay = async (f) => {
     if (!f.hotel_id || !f.check_in || !f.check_out) { showToast(t.stayRequired); return; }
     if (f.check_out <= f.check_in) { showToast(t.checkoutAfterCheckin); return; }
-    const data = { ...f, person_id: stayModal.pid, project_id: pid, base_price: f.base_price === "" || f.base_price === null ? null : +f.base_price, nights: f.nights || 0, total_amount: f.total_amount || 0 };
-    const myRoommates = roommates.filter((r) => r.person_id === stayModal.pid);
-    if (myRoommates.length) {
-      const names = myRoommates.map((r) => persons.find((p) => p.id === r.partner_id)?.name_kanji).filter(Boolean).join("、");
-      setPendingStay(data);
-      setSyncRoommate(names);
-      return;
-    }
-    await finishSaveStay(data, null);
+    const { sync_roommates: syncRoommates, ...rest } = f;
+    const data = { ...rest, person_id: stayModal.pid, project_id: pid, base_price: f.base_price === "" || f.base_price === null ? null : +f.base_price, nights: f.nights || 0, total_amount: f.total_amount || 0 };
+    const myRoommates = syncRoommates ? roommates.filter((r) => r.person_id === stayModal.pid) : [];
+    await finishSaveStay(data, myRoommates.length ? myRoommates : null);
   };
 
   const downloadCSV = (rows, filename) => {
@@ -2496,38 +2503,43 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                 </div>
               </div>
               <div style={{ overflowX: "auto" }}>
-                <table style={tblW}>
+                <table style={tblW} className="data-table staff-table">
+                  <colgroup>
+                    {staffColWidths(canEdit).map((w, i) => <col key={i} style={{ width: w }} />)}
+                  </colgroup>
                   <thead><tr style={thead}>
-                    {canEdit && <th style={{ ...thS, width: 36 }}><input type="checkbox" checked={allSelected} onChange={() => setSelectedIds(allSelected ? [] : rowsA.map((p) => p.id))} aria-label={t.select} /></th>}
-                    <th style={{ ...thS, width: 50 }}>{t.no}</th>
-                    <th style={thS}>{t.dept}</th>
-                    <th style={thS}>{t.nameKanji}</th>
-                    <th style={thS}>{t.nameRoman}</th>
-                    <th style={thS}>{t.importance}</th>
-                    <th style={thS}>{t.passport}</th>
-                    <th style={thS}>{t.dob}</th>
-                    <th style={thS}>{t.passportExp}</th>
-                    <th style={thS}>{t.diet}</th>
-                    <th style={thS}>{t.action}</th>
+                    {canEdit && <th style={{ ...thS, textAlign: "center" }}><input type="checkbox" checked={allSelected} onChange={() => setSelectedIds(allSelected ? [] : rowsA.map((p) => p.id))} aria-label={t.select} /></th>}
+                    <th style={{ ...thS, textAlign: "center" }}>{t.no}</th>
+                    <th style={{ ...thS, textAlign: "left" }}>{t.dept}</th>
+                    <th style={{ ...thS, textAlign: "left" }}>{t.nameKanji}</th>
+                    <th style={{ ...thS, textAlign: "left" }}>{t.nameRoman}</th>
+                    <th style={{ ...thS, textAlign: "center" }}>{t.importance}</th>
+                    <th style={{ ...thS, textAlign: "left" }}>{t.passport}</th>
+                    <th style={{ ...thS, textAlign: "center" }}>{t.dob}</th>
+                    <th style={{ ...thS, textAlign: "center" }}>{t.passportExp}</th>
+                    <th style={{ ...thS, textAlign: "left" }}>{t.diet}</th>
+                    <th style={{ ...thS, textAlign: "center" }}>{t.action}</th>
                   </tr></thead>
                   <tbody>
                     {rowsA.map((p, i) => {
                       const warn = passportWarning(p.passport_exp);
                       return (
                         <tr key={p.id} draggable={canEdit} onDragStart={() => { dragItem.current = persons.indexOf(p); }} onDragEnter={() => { dragOver.current = persons.indexOf(p); }} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}>
-                          {canEdit && <td style={tdS()}><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => setSelectedIds((s) => s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id])} /></td>}
-                          <td style={{ ...tdS(), textAlign: "center", color: "var(--usunezumi)" }}>{personIndex[p.id] || i + 1}</td>
-                          <td style={tdS()}><Highlight text={p.dept} query={debSearchA} /></td>
-                          <td style={tdS()}><Highlight text={p.name_kanji} query={debSearchA} /></td>
-                          <td style={tdS()}><Highlight text={`${p.last_roman || ""} ${p.first_roman || ""}`.trim()} query={debSearchA} /></td>
-                          <td style={{ ...tdS(), textAlign: "center" }}>{starLabel(p.importance) || "—"}</td>
-                          <td style={tdS()}>{p.passport || "—"}</td>
-                          <td style={tdS()}>{fmtDate(p.dob, lang)}</td>
-                          <td style={{ ...tdS(), color: warn ? "var(--shu)" : "inherit" }}>{fmtDate(p.passport_exp, lang)}</td>
-                          <td style={tdS()}>{p.diet || "—"}</td>
-                          <td style={tdS()}>
-                            {canEdit && <button type="button" style={eBtn} onClick={() => setPersonModal({ mode: "edit", data: p })}>{t.edit}</button>}
-                            {canDelete && <button type="button" style={dBtn} onClick={() => deletePerson(p.id)}>{t.delete}</button>}
+                          {canEdit && <td style={{ ...tdS(), textAlign: "center" }}><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => setSelectedIds((s) => s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id])} /></td>}
+                          <td className="td-num" style={tdS({ textAlign: "center" })}>{personIndex[p.id] || i + 1}</td>
+                          <td style={tdEllipsis()} title={p.dept}><Highlight text={p.dept} query={debSearchA} /></td>
+                          <td style={tdEllipsis({ fontWeight: 600 })} title={p.name_kanji}><Highlight text={p.name_kanji} query={debSearchA} /></td>
+                          <td style={tdEllipsis()} title={`${p.last_roman || ""} ${p.first_roman || ""}`.trim()}><Highlight text={`${p.last_roman || ""} ${p.first_roman || ""}`.trim()} query={debSearchA} /></td>
+                          <td style={tdS({ textAlign: "center" })}>{starLabel(p.importance) || "—"}</td>
+                          <td style={tdEllipsis()} title={p.passport}>{p.passport || "—"}</td>
+                          <td style={tdS({ textAlign: "center", whiteSpace: "nowrap" })}>{fmtDate(p.dob, lang)}</td>
+                          <td style={tdS({ textAlign: "center", whiteSpace: "nowrap", color: warn ? "var(--shu)" : "inherit" })}>{fmtDate(p.passport_exp, lang)}</td>
+                          <td style={tdEllipsis()} title={p.diet}>{p.diet || "—"}</td>
+                          <td className="col-actions" style={tdS({ textAlign: "center" })}>
+                            <div className="tbl-actions">
+                              {canEdit && <button type="button" style={eBtn} onClick={() => setPersonModal({ mode: "edit", data: p })}>{t.edit}</button>}
+                              {canDelete && <button type="button" style={dBtn} onClick={() => deletePerson(p.id)}>{t.delete}</button>}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -2707,9 +2719,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           <td className="td-num col-center" style={{ ...tdS({ maxWidth: "none" }), borderLeft: groupColor ? `3px solid ${groupColor}` : "3px solid transparent" }}>
                             {personIndex[row.person_id]}
                           </td>
-                          <td className="col-text" style={tdS()} title={row.person.dept}>{row.person.dept}</td>
-                          <td className="col-text" style={tdS({ fontWeight: 600 })} title={row.person.name_kanji}>{row.person.name_kanji}</td>
-                          <td className="col-text" style={tdS()} title={row.stay_label || ""}>{row.stay_label || "—"}</td>
+                          <td className="col-text" style={tdEllipsis()} title={row.person.dept}>{row.person.dept}</td>
+                          <td className="col-text" style={tdEllipsis({ fontWeight: 600 })} title={row.person.name_kanji}>{row.person.name_kanji}</td>
+                          <td className="col-text" style={tdEllipsis()} title={row.stay_label || ""}>{row.stay_label || "—"}</td>
                           <td className="room-no-cell" style={tdS({ maxWidth: "none" })}>
                             {canEdit ? (
                               <input
@@ -2731,7 +2743,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                               </span>
                             )}
                           </td>
-                          <td className="col-text" style={tdS()} title={row.roomLabel}>{row.roomLabel}</td>
+                          <td className="col-text" style={tdEllipsis()} title={row.roomLabel}>{row.roomLabel}</td>
                           <td className="col-center" style={tdS({ maxWidth: "none" })}>{fmtDate(row.check_in, lang)}</td>
                           <td className="col-center" style={tdS({ maxWidth: "none" })}>{fmtDate(row.check_out, lang)}</td>
                           <td className="col-center" style={tdS({ maxWidth: "none" })}>{row.nights}</td>
@@ -2824,19 +2836,30 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStats}</h3>
                     </div>
                     <div style={{ overflowX: "auto" }}>
-                      <table style={tblW}>
-                        <thead><tr style={thead}>{[t.hotelName, t.guestCount, t.roomCount, t.roomOccupancy, t.totalSpend].map((h) => <th key={h} style={thS}>{h}</th>)}</tr></thead>
+                      <table style={tblW} className="data-table hotel-stats-table">
+                        <colgroup>
+                          {HOTEL_STATS_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
+                        </colgroup>
+                        <thead><tr style={thead}>
+                          {[
+                            { h: t.hotelName, align: "left" },
+                            { h: t.guestCount, align: "center" },
+                            { h: t.roomCount, align: "center" },
+                            { h: t.roomOccupancy, align: "center" },
+                            { h: t.totalSpend, align: "right" },
+                          ].map(({ h, align }) => <th key={h} style={{ ...thS, textAlign: align }}>{h}</th>)}
+                        </tr></thead>
                         <tbody>
-                          {hotels.map((h, i) => {
+                          {hotels.map((h) => {
                             const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0, roomDetails: [] };
                             const occ = st.roomDetails.length ? (st.roomDetails.reduce((s, r) => s + r.occupancy, 0) / st.roomDetails.length).toFixed(1) : "—";
                             return (
                               <tr key={h.id}>
-                                <td style={tdS()}>{h.name}</td>
-                                <td style={tdS()}>{st.guests}</td>
-                                <td style={tdS()}>{st.rooms}</td>
-                                <td style={tdS()}>{occ}</td>
-                                <td style={tdS()}>{formatMoney(convertMoney(st.total, project), project, lang)}</td>
+                                <td style={tdEllipsis({ fontWeight: 600 })} title={h.name}>{h.name}</td>
+                                <td style={tdS({ textAlign: "center", fontVariantNumeric: "tabular-nums" })}>{st.guests}</td>
+                                <td style={tdS({ textAlign: "center", fontVariantNumeric: "tabular-nums" })}>{st.rooms}</td>
+                                <td style={tdS({ textAlign: "center", fontVariantNumeric: "tabular-nums" })}>{occ}</td>
+                                <td className="td-amt" style={tdS({ textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{formatMoney(convertMoney(st.total, project), project, lang)}</td>
                               </tr>
                             );
                           })}
@@ -3053,12 +3076,11 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
       {flightModal && <Modal title={t.flightMgmt} onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = { ...f, person_id: flightModal.pid, project_id: pid }; if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
-      {stayModal && <Modal title={t.hotelMgmt} onClose={() => setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={() => setStayModal(null)} t={t} project={project} lang={lang} /></Modal>}
+      {stayModal && <Modal title={t.hotelMgmt} onClose={() => setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={() => setStayModal(null)} t={t} project={project} lang={lang} roommateNames={getRoommateNames(stayModal.pid) || null} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.datePrice} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
       {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} /></Modal>}
       {roommateModal && <RoommateModal pid={roommateModal.pid} persons={persons} roommates={roommates} stays={flatStays} onSave={async (rpid, partnerIds) => { try { const group = [...new Set([rpid, ...partnerIds])]; for (const gid of group) await api.deleteWhere("roommates", "person_id", gid); if (partnerIds.length) for (const gid of group) { const partners = group.filter((x) => x !== gid); if (partners.length) await api.insert("roommates", partners.map((x) => ({ person_id: gid, partner_id: x, project_id: pid }))); } await loadAll(); showToast(t.saved); setRoommateModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setRoommateModal(null)} t={t} />}
-      {syncRoommate && pendingStay && stayModal && <SyncRoommateModal names={syncRoommate} t={t} onClose={() => finishSaveStay(pendingStay, null)} onConfirm={() => finishSaveStay(pendingStay, roommates.filter((r) => r.person_id === stayModal.pid))} />}
       {showMembers && <MemberManager project={project} user={user} canManage={canManageMembers} onClose={() => setShowMembers(false)} t={t} />}
       {showCurrency && <CurrencySettingsModal project={project} onSave={saveCurrency} onClose={() => setShowCurrency(false)} t={t} />}
       {roomPriceLockModal && (() => {
