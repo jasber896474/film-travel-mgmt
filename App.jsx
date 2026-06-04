@@ -221,6 +221,9 @@ const T = {
     deleteConfirm: "確定刪除？", deleteProjConfirm: "確定刪除此專案？所有相關資料也會一併刪除。",
     bulkDeleteConfirm: "確定刪除選取的 {n} 人？此操作無法復原。",
     staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "與 {name} 同室",
+    roomNo: "房號", roomNoPending: "待分配", unassignedRooms: "未配房人員", unassignedRoomsHint: "以下人員尚未指派房號",
+    roomPriceLockTitle: "房間費用歸屬", roomPriceLockMsg: "此房號已有其他入住者，由誰負擔房間費用？",
+    roomPriceLockSelf: "由此人負擔（其他人設為 ¥0）", roomPriceLockOther: "由原有人負擔（此人設為 ¥0）",
     searchHotelName: "搜尋飯店…", searchRoomType: "搜尋房型…", searchRoman: "羅馬拼音", searchStatus: "安排狀態", allStatus: "全部狀態",
     arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除篩選", exportCSV: "匯出 CSV",
     noRequests: "目前沒有待審核申請", pendingBadge: "待審核", approveTitle: "批准申請", approve: "批准", reject: "拒絕", rejectConfirm: "確定拒絕 {email} 的申請？",
@@ -283,6 +286,9 @@ const T = {
     deleteConfirm: "确定删除？", deleteProjConfirm: "确定删除此项目？所有相关数据也会一并删除。",
     bulkDeleteConfirm: "确定删除选取的 {n} 人？此操作无法复原。",
     staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "与 {name} 同住",
+    roomNo: "房号", roomNoPending: "待分配", unassignedRooms: "未分配房间", unassignedRoomsHint: "以下人员尚未指派房号",
+    roomPriceLockTitle: "房间费用归属", roomPriceLockMsg: "此房号已有其他入住者，由谁承担房间费用？",
+    roomPriceLockSelf: "由此人承担（其他人设为 ¥0）", roomPriceLockOther: "由原有人承担（此人设为 ¥0）",
     searchHotelName: "搜索饭店…", searchRoomType: "搜索房型…", searchRoman: "罗马拼音", searchStatus: "安排状态", allStatus: "全部状态",
     arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除筛选", exportCSV: "导出 CSV",
     noRequests: "暂无待审核申请", pendingBadge: "待审核", approveTitle: "批准申请", approve: "批准", reject: "拒绝", rejectConfirm: "确定拒绝 {email} 的申请？",
@@ -345,6 +351,9 @@ const T = {
     deleteConfirm: "Confirm delete?", deleteProjConfirm: "Delete this project and all related data?",
     bulkDeleteConfirm: "Delete {n} selected staff? This cannot be undone.",
     staySegment: "Stay Segment", addSegment: "Add Stay", roommateWith: "With {name}",
+    roomNo: "Room No.", roomNoPending: "Pending", unassignedRooms: "No Room Assigned", unassignedRoomsHint: "These persons have no room number yet",
+    roomPriceLockTitle: "Room Cost", roomPriceLockMsg: "This room already has occupants. Who covers the room cost?",
+    roomPriceLockSelf: "This person pays (others set to ¥0)", roomPriceLockOther: "Original occupant pays (this person set to ¥0)",
     searchHotelName: "Search hotel…", searchRoomType: "Search room type…", searchRoman: "Romanized", searchStatus: "Status", allStatus: "All",
     arranged_short: "Done", unArranged_short: "Pending", partial_short: "Partial", clearFilter: "Clear filters", exportCSV: "Export CSV",
     noRequests: "No pending requests", pendingBadge: "Pending", approveTitle: "Approve", approve: "Approve", reject: "Reject", rejectConfirm: "Reject {email}?",
@@ -407,6 +416,9 @@ const T = {
     deleteConfirm: "삭제하시겠습니까?", deleteProjConfirm: "프로젝트와 모든 데이터를 삭제하시겠습니까?",
     bulkDeleteConfirm: "선택한 {n}명을 삭제하시겠습니까?",
     staySegment: "숙박 구간", addSegment: "구간 추가", roommateWith: "{name}과 동실",
+    roomNo: "객실 번호", roomNoPending: "미배정", unassignedRooms: "객실 미배정 인원", unassignedRoomsHint: "아직 객실 번호가 없는 인원",
+    roomPriceLockTitle: "객실 비용 귀속", roomPriceLockMsg: "이 객실에 이미 다른 투숙자가 있습니다. 누가 비용을 부담합니까?",
+    roomPriceLockSelf: "이 사람이 부담 (나머지 ¥0)", roomPriceLockOther: "기존 투숙자가 부담 (이 사람 ¥0)",
     searchHotelName: "호텔…", searchRoomType: "객실…", searchRoman: "로마자", searchStatus: "상태", allStatus: "전체",
     arranged_short: "완료", unArranged_short: "미배정", partial_short: "일부", clearFilter: "필터 초기화", exportCSV: "CSV",
     noRequests: "대기 신청 없음", pendingBadge: "검토 중", approveTitle: "승인", approve: "승인", reject: "거절", rejectConfirm: "{email} 거절?",
@@ -468,6 +480,9 @@ const T = {
     deleteConfirm: "削除しますか？", deleteProjConfirm: "プロジェクトと全データを削除しますか？",
     bulkDeleteConfirm: "選択した {n} 名を削除しますか？",
     staySegment: "宿泊区間", addSegment: "区間追加", roommateWith: "{name}と同室",
+    roomNo: "部屋番号", roomNoPending: "未配室", unassignedRooms: "未配室スタッフ", unassignedRoomsHint: "部屋番号未設定のスタッフ",
+    roomPriceLockTitle: "部屋代帰属", roomPriceLockMsg: "この部屋番号にはすでに入室者がいます。部屋代を誰が負担しますか？",
+    roomPriceLockSelf: "この人が負担（他は ¥0）", roomPriceLockOther: "既入室者が負担（この人は ¥0）",
     searchHotelName: "ホテル…", searchRoomType: "部屋…", searchRoman: "ローマ字", searchStatus: "状況", allStatus: "すべて",
     arranged_short: "済", unArranged_short: "未", partial_short: "一部", clearFilter: "クリア", exportCSV: "CSV",
     noRequests: "申請なし", pendingBadge: "審査中", approveTitle: "承認", approve: "承認", reject: "拒否", rejectConfirm: "{email} を拒否？",
@@ -1911,9 +1926,63 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
       const deptOk = !deptC || p.dept === deptC;
       if (nameOk && hotelOk && roomOk && deptOk) rows.push({ ...s, person: p, hotelName: hname, roomLabel: rt });
     });
-    rows.sort((a, b) => (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0));
+    // Sort: assigned rooms first (hotel → room_number), unassigned last
+    rows.sort((a, b) => {
+      const aHasRoom = a.room_number ? 0 : 1;
+      const bHasRoom = b.room_number ? 0 : 1;
+      if (aHasRoom !== bHasRoom) return aHasRoom - bHasRoom;
+      if (a.hotel_id !== b.hotel_id) return (a.hotel_id || 0) - (b.hotel_id || 0);
+      if (a.room_number && b.room_number && a.room_number !== b.room_number)
+        return a.room_number.localeCompare(b.room_number, undefined, { numeric: true });
+      return (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0);
+    });
     return rows;
   }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, personIndex, hotels]);
+
+  // Room group colours (cycle through palette for each unique hotel+room_number key)
+  const ROOM_COLORS = ["#2b5a4c", "#6b4c9a", "#8b4513", "#1a5276", "#7b241c", "#117a65", "#6e2f1a", "#1b4f72"];
+  const roomGroupColorMap = useMemo(() => {
+    const map = {};
+    let idx = 0;
+    flatStays.forEach((row) => {
+      if (!row.room_number) return;
+      const key = `${row.hotel_id}::${row.room_number}`;
+      if (!(key in map)) map[key] = ROOM_COLORS[idx++ % ROOM_COLORS.length];
+    });
+    return map;
+  }, [flatStays]);
+
+  // Save room_number for a stay + trigger price-locking
+  const [roomPriceLockModal, setRoomPriceLockModal] = useState(null);
+
+  const saveRoomNumber = async (stayId, hotelId, newRoomNo) => {
+    try {
+      const trimmed = newRoomNo.trim();
+      await api.update("stays", stayId, { room_number: trimmed || null });
+      setStays((prev) => prev.map((s) => s.id === stayId ? { ...s, room_number: trimmed || null } : s));
+      // Check for same-room conflicts → price lock
+      if (trimmed) {
+        const sameRoom = stays.filter((s) => s.id !== stayId && s.hotel_id === hotelId && s.room_number === trimmed);
+        if (sameRoom.length > 0) {
+          setRoomPriceLockModal({ stayId, sameRoomStays: sameRoom });
+        }
+      }
+    } catch (e) { showToast(e.message); }
+  };
+
+  const applyRoomPriceLock = async (payerStayId) => {
+    if (!roomPriceLockModal) return;
+    const { stayId, sameRoomStays } = roomPriceLockModal;
+    const allIds = [stayId, ...sameRoomStays.map((s) => s.id)];
+    const zeroes = allIds.filter((id) => id !== payerStayId);
+    try {
+      for (const id of zeroes) {
+        await api.update("stays", id, { total_amount: 0 });
+        setStays((prev) => prev.map((s) => s.id === id ? { ...s, total_amount: 0 } : s));
+      }
+    } catch (e) { showToast(e.message); }
+    setRoomPriceLockModal(null);
+  };
 
   const addAssignment = async (vehicleId, personId, role, segmentLabel = "") => {
     const v = vehicles.find((x) => x.id === vehicleId);
@@ -2122,14 +2191,13 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
 
   const exportStaysCSV = () => {
     // ── Section 1: individual stay rows ──
-    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate];
+    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.staySegment, t.hotel, t.roomNo, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt];
     const rows = flatStays.map((row) => [
       personIndex[row.person_id], row.person.dept, row.person.name_kanji,
       `${row.person.last_roman || ""} ${row.person.first_roman || ""}`.trim(),
-      row.stay_label || "", row.hotelName, row.roomLabel,
+      row.stay_label || "", row.hotelName, row.room_number || t.roomNoPending, row.roomLabel,
       row.check_in, row.check_out, row.nights,
-      formatMoney(convertMoney(row.total_amount, project), project, lang),
-      getRoommateNames(row.person_id) || t.singleRoom,
+      row.total_amount === 0 && row.room_number ? "" : formatMoney(convertMoney(row.total_amount, project), project, lang),
     ]);
 
     // ── Section 2: hotel statistics ──
@@ -2487,37 +2555,94 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                     )}
                     <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={tblW}>
-                      <thead><tr style={thead}>
-                        {[t.no, t.dept, t.nameKanji, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate, t.action].map((h) => <th key={h} style={thS}>{h}</th>)}
-                      </tr></thead>
-                      <tbody>
-                        {flatStays.map((row, i) => (
-                          <tr key={row.id}>
-                            <td style={{ ...tdS(), textAlign: "center" }}>{personIndex[row.person_id]}</td>
-                            <td style={tdS()}>{row.person.dept}</td>
-                            <td style={tdS()}>{row.person.name_kanji}</td>
-                            <td style={tdS()}>{row.stay_label || "—"}</td>
-                            <td style={tdS()}>{row.hotelName}</td>
-                            <td style={tdS()}>{row.roomLabel}</td>
-                            <td style={tdS()}>{fmtDate(row.check_in, lang)}</td>
-                            <td style={tdS()}>{fmtDate(row.check_out, lang)}</td>
-                            <td style={{ ...tdS(), textAlign: "center" }}>{row.nights}</td>
-                            <td style={{ ...tdS(), fontWeight: 600, color: J.asagi, fontVariantNumeric: "tabular-nums" }}>{formatMoney(convertMoney(row.total_amount, project), project, lang)}</td>
-                            <td style={tdS()}>{getRoommateNames(row.person_id) || t.singleRoom}</td>
-                            <td style={tdS()}>
-                              {canEdit && <>
-                                <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>
-                                <button type="button" style={eBtn} onClick={() => setRoommateModal({ pid: row.person_id })}>{t.roommateSet}</button>
-                              </>}
-                              {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>{t.delete}</button>}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  {(() => {
+                    const assigned = flatStays.filter((r) => r.room_number);
+                    const unassigned = flatStays.filter((r) => !r.room_number);
+                    // Persons with no stays at all (completely unassigned)
+                    const personsNoStay = persons.filter((p) => !stays.some((s) => s.person_id === p.id));
+
+                    const stayRow = (row, i) => {
+                      const roomKey = row.room_number ? `${row.hotel_id}::${row.room_number}` : null;
+                      const groupColor = roomKey ? roomGroupColorMap[roomKey] : null;
+                      const isZeroPrice = row.room_number && row.total_amount === 0;
+                      return (
+                        <tr key={row.id} style={{ background: groupColor ? `${groupColor}0d` : "transparent" }}>
+                          <td style={{ ...tdS(), textAlign: "center", paddingLeft: groupColor ? 10 : tdS().padding, borderLeft: groupColor ? `3px solid ${groupColor}` : "3px solid transparent" }}>
+                            {personIndex[row.person_id]}
+                          </td>
+                          <td style={tdS()}>{row.person.dept}</td>
+                          <td style={{ ...tdS(), fontWeight: 600 }}>{row.person.name_kanji}</td>
+                          <td style={tdS()}>{row.stay_label || "—"}</td>
+                          <td style={tdS()}>{row.hotelName}</td>
+                          {/* Room number – inline editable */}
+                          <td style={tdS()}>
+                            {canEdit ? (
+                              <input
+                                defaultValue={row.room_number || ""}
+                                placeholder={t.roomNoPending}
+                                style={{ ...inpStyle, width: 70, padding: "3px 6px", fontSize: 12, background: row.room_number ? `${groupColor}22` : "#fff8f0", borderColor: row.room_number ? groupColor : J.kincha, fontWeight: 600, color: groupColor || J.nezumi }}
+                                onBlur={(e) => { if (e.target.value !== (row.room_number || "")) saveRoomNumber(row.id, row.hotel_id, e.target.value); }}
+                                onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                              />
+                            ) : (
+                              <span style={{ color: row.room_number ? groupColor : J.nezumi, fontWeight: row.room_number ? 700 : 400 }}>
+                                {row.room_number || t.roomNoPending}
+                              </span>
+                            )}
+                          </td>
+                          <td style={tdS()}>{row.roomLabel}</td>
+                          <td style={tdS()}>{fmtDate(row.check_in, lang)}</td>
+                          <td style={tdS()}>{fmtDate(row.check_out, lang)}</td>
+                          <td style={{ ...tdS(), textAlign: "center" }}>{row.nights}</td>
+                          <td style={{ ...tdS(), fontWeight: 600, color: isZeroPrice ? J.usunezumi : J.asagi, fontVariantNumeric: "tabular-nums" }}>
+                            {isZeroPrice ? <span style={{ fontSize: 11, color: J.usunezumi }}>—</span> : formatMoney(convertMoney(row.total_amount, project), project, lang)}
+                          </td>
+                          <td style={tdS()}>
+                            {canEdit && <>
+                              <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>
+                            </>}
+                            {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>{t.delete}</button>}
+                          </td>
+                        </tr>
+                      );
+                    };
+
+                    return (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={tblW}>
+                          <thead><tr style={thead}>
+                            {[t.no, t.dept, t.nameKanji, t.staySegment, t.hotel, t.roomNo, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.action].map((h) => <th key={h} style={thS}>{h}</th>)}
+                          </tr></thead>
+                          <tbody>
+                            {assigned.map(stayRow)}
+                            {unassigned.length > 0 && (
+                              <tr><td colSpan={12} style={{ background: "#fff8ec", padding: "6px 12px", fontSize: 11, fontWeight: 700, color: J.kincha, borderTop: "2px dashed " + J.kincha, letterSpacing: "0.06em" }}>
+                                ▼ {t.roomNoPending} ({unassigned.length})
+                              </td></tr>
+                            )}
+                            {unassigned.map(stayRow)}
+                          </tbody>
+                        </table>
+
+                        {/* ── Unassigned persons panel ── */}
+                        {(personsNoStay.length > 0) && (
+                          <div style={{ marginTop: 18, padding: "14px 18px", background: "#fff8ec", border: "1.5px dashed " + J.kincha, borderRadius: 8 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: J.kincha, marginBottom: 8 }}>⚠ {t.unassignedRooms}</div>
+                            <p style={{ fontSize: 11, color: J.nezumi, margin: "0 0 10px" }}>{t.unassignedRoomsHint}</p>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                              {personsNoStay.map((p) => (
+                                <div key={p.id} style={{ background: J.shiro, border: "1px solid " + J.keisenL, borderRadius: 6, padding: "5px 10px", fontSize: 11.5 }}>
+                                  <span style={{ fontWeight: 600 }}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
+                                  {p.dept && <span style={{ color: J.nezumi, marginLeft: 6, fontSize: 10.5 }}>{p.dept}</span>}
+                                  {canEdit && <button type="button" style={{ ...aBtn, marginLeft: 8, fontSize: 10, padding: "2px 7px" }} onClick={() => setStayModal({ pid: p.id, stayId: null, data: null })}>{t.addSegment}</button>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* ── 配房視圖：依飯店 → 房間群組顯示 ── */}
                   {(() => {
@@ -2806,6 +2931,29 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
       {syncRoommate && pendingStay && stayModal && <SyncRoommateModal names={syncRoommate} t={t} onClose={() => finishSaveStay(pendingStay, null)} onConfirm={() => finishSaveStay(pendingStay, roommates.filter((r) => r.person_id === stayModal.pid))} />}
       {showMembers && <MemberManager project={project} user={user} canManage={canManageMembers} onClose={() => setShowMembers(false)} t={t} />}
       {showCurrency && <CurrencySettingsModal project={project} onSave={saveCurrency} onClose={() => setShowCurrency(false)} t={t} />}
+      {roomPriceLockModal && (() => {
+        const thisStay = stays.find((s) => s.id === roomPriceLockModal.stayId);
+        const thisPerson = thisStay ? persons.find((p) => p.id === thisStay.person_id) : null;
+        const otherPersons = roomPriceLockModal.sameRoomStays.map((s) => persons.find((p) => p.id === s.person_id)).filter(Boolean);
+        return (
+          <Modal title={t.roomPriceLockTitle} onClose={() => setRoomPriceLockModal(null)}>
+            <p style={{ fontSize: 13, color: J.sumi, marginBottom: 16, lineHeight: 1.6 }}>{t.roomPriceLockMsg}</p>
+            <div style={{ fontSize: 12, color: J.nezumi, marginBottom: 20 }}>
+              <div>・{t.roomNoPending}: <strong>{thisStay?.room_number}</strong></div>
+              <div>・{t.nameKanji}: <strong>{thisPerson?.name_kanji}</strong> + {otherPersons.map((p) => p.name_kanji).join("、")}</div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button type="button" style={pBtn(false)} onClick={() => applyRoomPriceLock(roomPriceLockModal.stayId)}>
+                {t.roomPriceLockSelf}
+              </button>
+              <button type="button" style={{ ...pBtn(false), background: J.shiro, color: J.sumi, border: "1px solid " + J.keisenM }} onClick={() => applyRoomPriceLock(roomPriceLockModal.sameRoomStays[0].id)}>
+                {t.roomPriceLockOther}
+              </button>
+              <button type="button" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: J.nezumi, marginTop: 4 }} onClick={() => setRoomPriceLockModal(null)}>{t.cancel}</button>
+            </div>
+          </Modal>
+        );
+      })()}
     </div>
   );
 }
