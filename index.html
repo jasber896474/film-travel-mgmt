@@ -19,7 +19,7 @@
 <body>
   <div id="root"><p style="padding:24px;color:#8c8c96">載入中…</p></div>
   <script type="text/babel" data-presets="react,env">
-const { useState, useMemo, useCallback, useEffect, useRef } = React;
+const { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } = React;
 
 const SUPABASE_URL = "https://knoudnzjnfkfhiizgcna.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OdfFFai3Ac1NgbelUPlYXQ_8R8IDAhA";
@@ -212,6 +212,7 @@ const LANGS = { "zh-TW": "繁體中文", "zh-CN": "简体中文", en: "English",
 const T = {
   "zh-TW": {
     appName: "劇組交通住宿管理系統", logout: "登出", print: "列印", members: "成員管理", back: "返回", settings: "專案設定",
+    themeLight: "淺色", themeDark: "深色",
     loginTitle: "請登入", loginEmail: "電子郵件", loginPw: "密碼", loginBtn: "登入", loginHint: "存取權限由管理員邀請授予",
     registerTitle: "新帳號申請", registerBtn: "申請登入", registerName: "姓名（選填）", registerMessage: "申請訊息（選填）", registerMessagePh: "所屬・職務等", registerPwConfirm: "確認密碼",
     verifyTitle: "驗證信已發送", verifyHint: "管理員審核通過後即可存取專案。", verifyContact: "若有急件請聯絡系統管理員。", toLoginBtn: "返回登入",
@@ -280,6 +281,7 @@ const T = {
   },
   "zh-CN": {
     appName: "剧组交通住宿管理系统", logout: "登出", print: "打印", members: "成员管理", back: "返回", settings: "项目设定",
+    themeLight: "浅色", themeDark: "深色",
     loginTitle: "请登录", loginEmail: "电子邮件", loginPw: "密码", loginBtn: "登录", loginHint: "访问权限由管理员邀请授予",
     registerTitle: "新账号申请", registerBtn: "申请登录", registerName: "姓名（选填）", registerMessage: "申请消息（选填）", registerMessagePh: "所属・职务等", registerPwConfirm: "确认密码",
     verifyTitle: "验证邮件已发送", verifyHint: "管理员审核通过后即可访问项目。", verifyContact: "如有急件请联系系统管理员。", toLoginBtn: "返回登录",
@@ -557,105 +559,121 @@ const VEHICLE_TYPES_BY_REGION_KEY = { TW: ["minivan", "bus", "truckCanvas", "tru
 const VEHICLE_DEFAULT_CAPACITY = { minivan: 8, bus: 20, truckCanvas: 2, truckSteel: 2, custom: 4 };
 const SEGMENT_PRESETS = ["segmentMorning", "segmentEvening", "segmentTransfer", "segmentCustom"];
 
-// ─── 和美設計語言 v2 ─────────────────────────────────────────
-// 五大原則：間・侘寂・簡素・自然・幽玄
-const J = {
-  // ── 基本色 ──
-  sumi:        "#15151a",   // 墨  深藍黑
-  sumiMid:     "#2a2a32",   // 墨中
-  washi:       "#f3f0e8",   // 和紙 暖米白
-  shiro:       "#fdfcf9",   // 白  極淡白
-  // ── 主調：深緑 ──
-  moegi:       "#2b5a4c",   // 萌葱 深
-  moegi2:      "#3e8470",   // 萌葱 中
-  moegi3:      "rgba(43,90,76,.07)",
-  // ── アクセント ──
-  shu:         "#ad3030",   // 朱  深紅
-  shu2:        "#c94040",
-  kincha:      "#8f6318",   // 金茶
-  kincha2:     "rgba(143,99,24,.1)",
-  asagi:       "#2a5e80",   // 浅葱
-  asagi2:      "rgba(42,94,128,.08)",
-  fuji:        "#5a4880",   // 藤
-  // ── グレー系 ──
-  nezumi:      "#70707c",   // 鼠
-  usunezumi:   "#b0b0bc",   // 薄鼠
-  // ── 罫線 ──
-  keisenL:     "rgba(21,21,26,.065)",
-  keisenM:     "rgba(21,21,26,.13)",
-  keisenD:     "rgba(21,21,26,.22)",
-  // ── 地色 ──
-  bg:          "#e6e2d8",   // 古紙
-  bgCard:      "#fdfcf9",
+// ─── 和美設計語言 v3：淺色 / 深色（CSS 變數驅動）────────────────
+const THEMES = {
+  light: {
+    sumi: "#15151a", sumiMid: "#2a2a32", washi: "#f3f0e8", shiro: "#fdfcf9",
+    moegi: "#2b5a4c", moegi2: "#3e8470", moegi3: "rgba(43,90,76,.07)",
+    shu: "#ad3030", shu2: "#c94040", kincha: "#8f6318", kincha2: "rgba(143,99,24,.1)",
+    asagi: "#2a5e80", asagi2: "rgba(42,94,128,.08)", fuji: "#5a4880",
+    nezumi: "#70707c", usunezumi: "#b0b0bc",
+    keisenL: "rgba(21,21,26,.065)", keisenM: "rgba(21,21,26,.13)", keisenD: "rgba(21,21,26,.22)",
+    bg: "#e6e2d8", bgCard: "#fdfcf9", pendingBg: "#fff8ec", pendingBorder: "#8f6318",
+    headerGrad: "linear-gradient(135deg, rgba(43,90,76,.28) 0%, transparent 55%)",
+    theadGrad: "linear-gradient(90deg, rgba(43,90,76,.35) 0%, transparent 100%)",
+    rowHover: "rgba(43,90,76,.035)", focusRing: "rgba(43,90,76,.12)",
+    hdrBtnBg: "rgba(253,252,249,.09)", hdrBtnBorder: "rgba(253,252,249,.16)", hdrText: "#fdfcf9",
+  },
+  dark: {
+    sumi: "#e8e6e2", sumiMid: "#16161c", washi: "#eceae6", shiro: "#2a2a34",
+    moegi: "#6ab89a", moegi2: "#8ed4b8", moegi3: "rgba(106,184,154,.14)",
+    shu: "#f07070", shu2: "#ff8888", kincha: "#d4a84a", kincha2: "rgba(212,168,74,.18)",
+    asagi: "#7eb8d8", asagi2: "rgba(126,184,216,.12)", fuji: "#a898c8",
+    nezumi: "#9a9aa8", usunezumi: "#6a6a78",
+    keisenL: "rgba(255,255,255,.06)", keisenM: "rgba(255,255,255,.12)", keisenD: "rgba(255,255,255,.2)",
+    bg: "#121218", bgCard: "#2a2a34", pendingBg: "rgba(212,168,74,.1)", pendingBorder: "#d4a84a",
+    headerGrad: "linear-gradient(135deg, rgba(106,184,154,.22) 0%, transparent 55%)",
+    theadGrad: "linear-gradient(90deg, rgba(106,184,154,.25) 0%, transparent 100%)",
+    rowHover: "rgba(106,184,154,.08)", focusRing: "rgba(106,184,154,.2)",
+    hdrBtnBg: "rgba(255,255,255,.06)", hdrBtnBorder: "rgba(255,255,255,.12)", hdrText: "#e8e6e2",
+  },
 };
+const J = THEMES.light;
 const ROLE_COLORS = {
-  owner:  { background: "rgba(143,99,24,.1)",  color: J.kincha, border: "1px solid rgba(143,99,24,.25)" },
-  admin:  { background: "rgba(173,48,48,.08)", color: J.shu,    border: "1px solid rgba(173,48,48,.22)" },
-  editor: { background: J.moegi3,              color: J.moegi,  border: "1px solid rgba(43,90,76,.2)"   },
-  viewer: { background: "rgba(112,112,124,.06)", color: J.nezumi, border: "1px solid rgba(112,112,124,.2)" },
+  owner:  { background: "var(--kincha2)", color: "var(--kincha)", border: "1px solid rgba(143,99,24,.25)" },
+  admin:  { background: "rgba(173,48,48,.08)", color: "var(--shu)", border: "1px solid rgba(173,48,48,.22)" },
+  editor: { background: "var(--moegi3)", color: "var(--moegi)", border: "1px solid rgba(43,90,76,.2)" },
+  viewer: { background: "rgba(112,112,124,.06)", color: "var(--nezumi)", border: "1px solid rgba(112,112,124,.2)" },
 };
 const inpStyle = {
-  width: "100%", border: "1px solid " + J.keisenM, borderRadius: 4,
+  width: "100%", border: "1px solid var(--keisenM)", borderRadius: 4,
   padding: "9px 13px", fontSize: 13, outline: "none", boxSizing: "border-box",
-  background: J.shiro, color: J.sumi, fontFamily: "'Noto Sans JP',sans-serif",
+  background: "var(--shiro)", color: "var(--sumi)", fontFamily: "'Noto Sans JP',sans-serif",
   transition: "border-color .18s, box-shadow .18s",
 };
 const thS = {
-  padding: "11px 16px", textAlign: "left", whiteSpace: "nowrap",
-  fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase",
-  color: "rgba(253,252,249,.75)",
+  padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap",
+  fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
+  color: "var(--hdrText)", opacity: 0.88, verticalAlign: "middle",
 };
-const tdS = () => ({
-  padding: "11px 16px", fontSize: 12.5,
-  background: J.shiro, borderBottom: "1px solid " + J.keisenL,
-  verticalAlign: "middle", color: J.sumi,
+const tdS = (extra = {}) => ({
+  padding: "10px 8px", fontSize: 12.5, lineHeight: 1.45,
+  background: "var(--shiro)", borderBottom: "1px solid var(--keisenL)",
+  verticalAlign: "middle", color: "var(--sumi)", overflow: "hidden",
+  textOverflow: "ellipsis", maxWidth: 0, ...extra,
 });
-const flightCell = (extra = {}) => ({
-  ...tdS(),
-  textAlign: "center",
-  whiteSpace: "nowrap",
-  fontSize: 12.5,
-  fontWeight: 400,
-  color: J.sumi,
-  ...extra,
-});
+const flightCell = (extra = {}) => tdS({ textAlign: "center", whiteSpace: "nowrap", fontWeight: 400, maxWidth: "none", ...extra });
 const tblW = {
-  width: "100%", borderCollapse: "collapse", background: J.shiro,
-  borderRadius: 6, overflow: "hidden",
-  boxShadow: "0 1px 3px rgba(0,0,0,.04), 0 4px 20px rgba(0,0,0,.04), 0 0 0 1px " + J.keisenL,
+  width: "100%", tableLayout: "fixed", borderCollapse: "collapse", background: "var(--shiro)",
+  borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,.04), 0 4px 20px rgba(0,0,0,.04), 0 0 0 1px var(--keisenL)",
 };
 const thead = {
-  background: J.sumi,
-  backgroundImage: "linear-gradient(90deg, rgba(43,90,76,.35) 0%, transparent 100%)",
+  background: "var(--sumiMid)",
+  backgroundImage: "var(--theadGrad)",
 };
 const eBtn = {
-  marginRight: 5, fontSize: 11.5, padding: "6px 13px", borderRadius: 4,
-  border: "1px solid " + J.keisenM, cursor: "pointer",
-  background: "transparent", color: J.sumi, whiteSpace: "nowrap",
-  transition: "background .15s, border-color .15s",
+  marginRight: 4, fontSize: 11, padding: "5px 10px", borderRadius: 4,
+  border: "1px solid var(--keisenM)", cursor: "pointer",
+  background: "transparent", color: "var(--sumi)", whiteSpace: "nowrap",
 };
 const dBtn = {
-  fontSize: 11.5, padding: "6px 13px", borderRadius: 4,
+  fontSize: 11, padding: "5px 10px", borderRadius: 4,
   border: "1px solid rgba(173,48,48,.28)", cursor: "pointer",
-  background: "rgba(173,48,48,.05)", color: J.shu, whiteSpace: "nowrap",
-  transition: "background .15s",
+  background: "rgba(173,48,48,.05)", color: "var(--shu)", whiteSpace: "nowrap",
 };
 const aBtn = {
-  fontSize: 11.5, padding: "6px 13px", borderRadius: 4,
+  fontSize: 11, padding: "5px 10px", borderRadius: 4,
   border: "1px solid rgba(43,90,76,.3)", cursor: "pointer",
-  background: J.moegi3, color: J.moegi, whiteSpace: "nowrap",
-  transition: "background .15s",
+  background: "var(--moegi3)", color: "var(--moegi)", whiteSpace: "nowrap",
 };
 const pBtn = (dis) => ({
-  background: dis ? J.usunezumi : J.moegi,
-  color: dis ? J.nezumi : J.shiro,
+  background: dis ? "var(--usunezumi)" : "var(--moegi)",
+  color: dis ? "var(--nezumi)" : "var(--shiro)",
   border: "none", borderRadius: 4,
   padding: "9px 22px", fontWeight: 600,
   cursor: dis ? "not-allowed" : "pointer",
   fontSize: 13, whiteSpace: "nowrap",
-  transition: "background .18s, box-shadow .18s",
   boxShadow: dis ? "none" : "0 2px 8px rgba(43,90,76,.22)",
 });
+
+const STAY_COL_WIDTHS = [44, 72, 88, 80, 76, 72, 84, 84, 44, 88, 108];
+
+function ThemeToggle({ theme, onChange, t }) {
+  return (
+    <div style={{ display: "flex", borderRadius: 4, overflow: "hidden", border: "1px solid var(--hdrBtnBorder)" }}>
+      {["light", "dark"].map((m) => (
+        <button key={m} type="button" onClick={() => onChange(m)} aria-pressed={theme === m}
+          style={{
+            padding: "6px 12px", fontSize: 11, border: "none", cursor: "pointer",
+            fontFamily: "'Noto Sans JP',sans-serif",
+            background: theme === m ? "var(--moegi)" : "var(--hdrBtnBg)",
+            color: theme === m ? "var(--shiro)" : "var(--hdrText)",
+            fontWeight: theme === m ? 600 : 400,
+          }}>{m === "light" ? (t.themeLight || "淺色") : (t.themeDark || "深色")}</button>
+      ))}
+    </div>
+  );
+}
+
+function applyThemeVars(mode) {
+  const p = THEMES[mode] || THEMES.light;
+  const el = document.documentElement;
+  el.setAttribute("data-theme", mode);
+  Object.entries(p).forEach(([k, v]) => el.style.setProperty(`--${k}`, v));
+}
+if (typeof document !== "undefined") {
+  try { applyThemeVars(localStorage.getItem("app_theme") === "dark" ? "dark" : "light"); } catch (_) { applyThemeVars("light"); }
+}
 
 function buildRoommateGroups(roommates) {
   const parent = {};
@@ -796,10 +814,10 @@ function Toast({ msg }) {
   return msg ? (
     <div role="status" style={{
       position: "fixed", top: 28, right: 28, zIndex: 999,
-      background: J.sumi, color: J.washi,
+      background: "var(--sumiMid)", color: "var(--washi)",
       borderRadius: 6, padding: "12px 20px",
       fontSize: 12.5, fontWeight: 500, letterSpacing: "0.01em",
-      borderLeft: "3px solid " + J.moegi2,
+      borderLeft: "3px solid " + "var(--moegi2)",
       boxShadow: "0 4px 20px rgba(0,0,0,.22)",
       animation: "toastIn .22s cubic-bezier(.21,.89,.82,1.1)",
     }}>{msg}</div>
@@ -809,10 +827,10 @@ function Toast({ msg }) {
 function SessionExpiredModal({ t, onRelogin }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(10,10,14,0.72)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: J.shiro, padding: "36px 40px", borderRadius: 10, maxWidth: 400, width: "90%", boxShadow: "0 8px 48px rgba(0,0,0,.22), 0 0 0 1px " + J.keisenM }}>
-        <div style={{ width: 40, height: 3, background: J.kincha, borderRadius: 2, marginBottom: 20 }} />
-        <h2 style={{ fontSize: 16, marginBottom: 8, color: J.sumi, fontFamily: "'Noto Serif JP',serif", fontWeight: 600 }}>{t.sessionExpiredTitle}</h2>
-        <p style={{ fontSize: 13, color: J.nezumi, marginBottom: 24, lineHeight: 1.7 }}>{t.sessionExpiredMsg}</p>
+      <div style={{ background: "var(--shiro)", padding: "36px 40px", borderRadius: 10, maxWidth: 400, width: "90%", boxShadow: "0 8px 48px rgba(0,0,0,.22), 0 0 0 1px " + "var(--keisenM)" }}>
+        <div style={{ width: 40, height: 3, background: "var(--kincha)", borderRadius: 2, marginBottom: 20 }} />
+        <h2 style={{ fontSize: 16, marginBottom: 8, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif", fontWeight: 600 }}>{t.sessionExpiredTitle}</h2>
+        <p style={{ fontSize: 13, color: "var(--nezumi)", marginBottom: 24, lineHeight: 1.7 }}>{t.sessionExpiredMsg}</p>
         <button onClick={onRelogin} style={{ ...pBtn(false), width: "100%" }}>{t.sessionExpiredBtn}</button>
       </div>
     </div>
@@ -823,19 +841,19 @@ function Modal({ title, onClose, children, wide }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,14,0.68)", backdropFilter: "blur(3px)" }}>
       <div style={{
-        background: J.shiro, borderRadius: 10, width: "100%",
+        background: "var(--shiro)", borderRadius: 10, width: "100%",
         maxWidth: wide ? 760 : 580, maxHeight: "92vh", overflowY: "auto",
         margin: "0 16px",
-        boxShadow: "0 8px 48px rgba(0,0,0,.22), 0 0 0 1px " + J.keisenL,
+        boxShadow: "0 8px 48px rgba(0,0,0,.22), 0 0 0 1px " + "var(--keisenL)",
         animation: "modalIn .2s cubic-bezier(.21,.89,.82,1.06)",
       }}>
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "20px 28px", borderBottom: "1px solid " + J.keisenL,
-          background: J.washi, borderRadius: "10px 10px 0 0",
+          padding: "20px 28px", borderBottom: "1px solid var(--keisenL)",
+          background: "var(--washi)", borderRadius: "10px 10px 0 0",
         }}>
-          <h2 style={{ fontWeight: 600, fontSize: 15, color: J.sumi, margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{title}</h2>
-          <button type="button" aria-label="close" onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: J.usunezumi, lineHeight: 1, padding: "4px 6px", borderRadius: 4 }}>×</button>
+          <h2 style={{ fontWeight: 600, fontSize: 15, color: "var(--sumi)", margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{title}</h2>
+          <button type="button" aria-label="close" onClick={onClose} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--usunezumi)", lineHeight: 1, padding: "4px 6px", borderRadius: 4 }}>×</button>
         </div>
         <div style={{ padding: "26px 28px" }}>{children}</div>
       </div>
@@ -847,7 +865,7 @@ function Field({ label, children }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <label style={{
-        display: "block", fontSize: 9.5, fontWeight: 700, color: J.nezumi,
+        display: "block", fontSize: 9.5, fontWeight: 700, color: "var(--nezumi)",
         marginBottom: 6, letterSpacing: "0.18em", textTransform: "uppercase",
       }}>{label}</label>
       {children}
@@ -865,7 +883,7 @@ function Highlight({ text, query }) {
 function SearchBar({ value, onChange, placeholder }) {
   return (
     <div style={{ position: "relative", flex: 1, minWidth: 160 }}>
-      <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: J.usunezumi, pointerEvents: "none", lineHeight: 1 }}>⌕</span>
+      <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "var(--usunezumi)", pointerEvents: "none", lineHeight: 1 }}>⌕</span>
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         style={{ ...inpStyle, paddingLeft: 28 }} aria-label={placeholder} className="wa-input" />
     </div>
@@ -885,8 +903,8 @@ function DeptFilter({ depts, value, onChange, allLabel }) {
 function LangSwitcher({ lang, onChange }) {
   return (
     <select value={lang} onChange={(e) => onChange(e.target.value)} aria-label="Language"
-      style={{ background: "rgba(253,252,249,.1)", color: J.washi, border: "1px solid rgba(253,252,249,.2)", borderRadius: 4, padding: "6px 10px", fontSize: 11.5, fontFamily: "'Noto Sans JP',sans-serif", cursor: "pointer" }}>
-      {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k} style={{ background: J.sumi }}>{v}</option>)}
+      style={{ background: "rgba(253,252,249,.1)", color: "var(--washi)", border: "1px solid rgba(253,252,249,.2)", borderRadius: 4, padding: "6px 10px", fontSize: 11.5, fontFamily: "'Noto Sans JP',sans-serif", cursor: "pointer" }}>
+      {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k} style={{ background: "var(--sumiMid)", color: "var(--washi)" }}>{v}</option>)}
     </select>
   );
 }
@@ -895,9 +913,9 @@ function FilterChips({ chips, onClear, t }) {
   if (!chips.length) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", marginBottom: 12 }}>
-      <span style={{ fontSize: 9.5, fontWeight: 700, color: J.usunezumi, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t.activeFilters}</span>
+      <span style={{ fontSize: 9.5, fontWeight: 700, color: "var(--usunezumi)", letterSpacing: "0.1em", textTransform: "uppercase" }}>{t.activeFilters}</span>
       {chips.map((c) => (
-        <span key={c.key} style={{ fontSize: 11, padding: "3px 10px", background: J.kincha2, color: J.kincha, border: "1px solid rgba(143,99,24,.2)", borderRadius: 20 }}>{c.label}</span>
+        <span key={c.key} style={{ fontSize: 11, padding: "3px 10px", background: "var(--kincha2)", color: "var(--kincha)", border: "1px solid rgba(143,99,24,.2)", borderRadius: 20 }}>{c.label}</span>
       ))}
       <button type="button" onClick={onClear} style={{ ...eBtn, margin: 0, fontSize: 10.5, borderRadius: 20, padding: "3px 10px" }}>{t.clearFilter}</button>
     </div>
@@ -906,12 +924,12 @@ function FilterChips({ chips, onClear, t }) {
 
 function ProgressBar({ t, stats }) {
   const items = [
-    { label: t.progressFlight, done: stats.flightDone, total: stats.total, color: J.asagi },
-    { label: t.progressHotel, done: stats.hotelDone, total: stats.total, color: J.kincha },
-    { label: t.progressVehicle, done: stats.vehicleAssigned, total: stats.total, color: J.moegi, inverse: true },
+    { label: t.progressFlight, done: stats.flightDone, total: stats.total, color: "var(--asagi)" },
+    { label: t.progressHotel, done: stats.hotelDone, total: stats.total, color: "var(--kincha)" },
+    { label: t.progressVehicle, done: stats.vehicleAssigned, total: stats.total, color: "var(--moegi)", inverse: true },
   ];
   return (
-    <div style={{ display: "flex", gap: 20, flexWrap: "wrap", padding: "10px 0 4px", fontSize: 11, color: J.nezumi }}>
+    <div style={{ display: "flex", gap: 20, flexWrap: "wrap", padding: "10px 0 4px", fontSize: 11, color: "var(--nezumi)" }}>
       {items.map((it) => {
         const pct = it.total ? Math.min(100, Math.round((it.done / it.total) * 100)) : 0;
         return (
@@ -922,7 +940,7 @@ function ProgressBar({ t, stats }) {
                 {it.inverse ? stats.unassignedVehicle : `${it.done} / ${it.total}`}
               </span>
             </div>
-            <div style={{ height: 3, background: J.keisenL, borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ height: 3, background: "var(--keisenL)", borderRadius: 2, overflow: "hidden" }}>
               <div style={{ height: 3, borderRadius: 2, background: it.color, width: `${pct}%`, transition: "width .6s cubic-bezier(.4,0,.2,1)" }} />
             </div>
           </div>
@@ -976,8 +994,8 @@ function VehicleForm({ init, onSave, onClose, t }) {
   return (
     <div>
       <Field label={t.vehicleName}>
-        <input style={{ ...inpStyle, ...(showErr && !f.name.trim() ? { borderColor: J.shu } : {}) }} value={f.name} onChange={(e) => { setF((p) => ({ ...p, name: e.target.value })); setShowErr(false); }} placeholder={t.vehicleNamePlaceholder} maxLength={50} />
-        {showErr && !f.name.trim() && <p style={{ fontSize: 11, color: J.shu, marginTop: 4 }}>{t.minOneField}</p>}
+        <input style={{ ...inpStyle, ...(showErr && !f.name.trim() ? { borderColor: "var(--shu)" } : {}) }} value={f.name} onChange={(e) => { setF((p) => ({ ...p, name: e.target.value })); setShowErr(false); }} placeholder={t.vehicleNamePlaceholder} maxLength={50} />
+        {showErr && !f.name.trim() && <p style={{ fontSize: 11, color: "var(--shu)", marginTop: 4 }}>{t.minOneField}</p>}
       </Field>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label={t.vehicleRegion}>
@@ -997,7 +1015,7 @@ function VehicleForm({ init, onSave, onClose, t }) {
             }}>
               {typeKeys.map((k) => <option key={k} value={k}>{typeLabel(k)}</option>)}
             </select>
-          ) : <div style={{ ...inpStyle, background: J.washi, color: J.nezumi }}>{t.typeComingSoon}</div>}
+          ) : <div style={{ ...inpStyle, background: "var(--washi)", color: "var(--nezumi)" }}>{t.typeComingSoon}</div>}
         </Field>
       </div>
       <Field label={`${t.maxPassengers}${isCustom ? ` (${t.typeCustom})` : ""}`}>
@@ -1009,8 +1027,8 @@ function VehicleForm({ init, onSave, onClose, t }) {
         </select>
       </Field>
 
-      <div style={{ marginTop: 16, padding: "12px 14px", background: J.washi, borderRadius: 6, border: "1px solid " + J.keisenL }}>
-        <p style={{ fontSize: 11, color: J.nezumi, margin: "0 0 10px" }}>──── {t.vehicleNo} / {t.driverPhone} / {t.licensePlate} ────</p>
+      <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--washi)", borderRadius: 6, border: "1px solid var(--keisenL)" }}>
+        <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>──── {t.vehicleNo} / {t.driverPhone} / {t.licensePlate} ────</p>
         <div style={inp2}>
           <Field label={t.vehicleNo}>
             <input style={inpStyle} value={f.vehicle_no} onChange={(e) => setF((p) => ({ ...p, vehicle_no: e.target.value }))} placeholder="01" maxLength={20} />
@@ -1046,7 +1064,7 @@ function VehicleForm({ init, onSave, onClose, t }) {
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
-        <button type="button" onClick={onClose} style={{ padding: "9px 18px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "9px 18px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={handleSave} disabled={saving || !canSave} style={pBtn(saving || !canSave)}>{saving ? "…" : t.save}</button>
       </div>
     </div>
@@ -1069,14 +1087,14 @@ function PersonForm({ init, onSave, onClose, t, lang }) {
         <Field label={`${t.passport} (${t.optional})`}><input style={inpStyle} value={f.passport || ""} onChange={set("passport")} /></Field>
         <Field label={`${t.dob} (${t.optional})`}><input type="date" style={inpStyle} value={f.dob || ""} onChange={set("dob")} /></Field>
         <Field label={`${t.passportExp} (${t.optional})`}>
-          <input type="date" style={{ ...inpStyle, ...(passportWarning(f.passport_exp) ? { borderColor: J.shu } : {}) }} value={f.passport_exp || ""} onChange={set("passport_exp")} />
-          {passportWarning(f.passport_exp) && <p style={{ color: J.shu, fontSize: 10, marginTop: 4 }}>{t.passportWarn}</p>}
+          <input type="date" style={{ ...inpStyle, ...(passportWarning(f.passport_exp) ? { borderColor: "var(--shu)" } : {}) }} value={f.passport_exp || ""} onChange={set("passport_exp")} />
+          {passportWarning(f.passport_exp) && <p style={{ color: "var(--shu)", fontSize: 10, marginTop: 4 }}>{t.passportWarn}</p>}
         </Field>
         <Field label={`${t.diet} (${t.optional})`}><input style={inpStyle} value={f.diet || ""} onChange={set("diet")} /></Field>
       </div>
-      {!canSave && <p style={{ fontSize: 11, color: J.shu }}>{t.minOneField}</p>}
+      {!canSave && <p style={{ fontSize: 11, color: "var(--shu)" }}>{t.minOneField}</p>}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => canSave && onSave(f)} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
       </div>
     </div>
@@ -1088,12 +1106,12 @@ function AirportTerminalField({ label, airportKey, terminalKey, f, set }) {
   const tLabel = terminal ? `T${terminal.replace(/^T/i, "")}` : "";
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: J.nezumi, marginBottom: 6, letterSpacing: "0.18em", textTransform: "uppercase" }}>{label}</label>
+      <label style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: "var(--nezumi)", marginBottom: 6, letterSpacing: "0.18em", textTransform: "uppercase" }}>{label}</label>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <input style={{ ...inpStyle, flex: 1 }} value={f[airportKey] || ""} onChange={set(airportKey)} className="wa-input" placeholder="NRT / TPE…" />
         <input style={{ ...inpStyle, width: 60, textAlign: "center" }} value={f[terminalKey] || ""} onChange={set(terminalKey)} className="wa-input" placeholder="T#" />
       </div>
-      {tLabel && <div style={{ fontSize: 10.5, color: J.moegi, marginTop: 4, fontWeight: 600, letterSpacing: "0.05em" }}>{tLabel}</div>}
+      {tLabel && <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 4, fontWeight: 600, letterSpacing: "0.05em" }}>{tLabel}</div>}
     </div>
   );
 }
@@ -1117,7 +1135,7 @@ function FlightForm({ init, onSave, onClose, t }) {
         <Field label={`${t.cabinBag} (${t.optional})`}><input style={inpStyle} value={f.cabin_bag || ""} onChange={set("cabin_bag")} className="wa-input" /></Field>
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => onSave(f)} style={pBtn(false)}>{t.save}</button>
       </div>
     </div>
@@ -1154,20 +1172,20 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
         <Field label={t.checkIn}><input type="date" style={inpStyle} value={f.check_in || ""} onChange={set("check_in")} /></Field>
         <Field label={t.checkOut}><input type="date" style={inpStyle} value={f.check_out || ""} onChange={set("check_out")} /></Field>
         <Field label={t.basePrice}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")} /></Field>
-        <Field label={t.nights}><input style={{ ...inpStyle, background: J.washi, textAlign: "center" }} value={nights || ""} readOnly /></Field>
-        <Field label={t.totalAmt}><input style={{ ...inpStyle, background: J.washi, fontWeight: 700, color: J.asagi }} value={totalAmount ? formatMoney(dispTotal, project, lang) : "—"} readOnly /></Field>
+        <Field label={t.nights}><input style={{ ...inpStyle, background: "var(--washi)", textAlign: "center" }} value={nights || ""} readOnly /></Field>
+        <Field label={t.totalAmt}><input style={{ ...inpStyle, background: "var(--washi)", fontWeight: 700, color: "var(--asagi)" }} value={totalAmount ? formatMoney(dispTotal, project, lang) : "—"} readOnly /></Field>
       </div>
       {breakdown.length > 0 && (
-        <div style={{ marginTop: 10, background: J.washi, padding: 10 }}>
-          <div style={{ fontSize: 9, fontWeight: 600, color: J.nezumi, marginBottom: 6 }}>{t.breakdownTitle}</div>
+        <div style={{ marginTop: 10, background: "var(--washi)", padding: 10 }}>
+          <div style={{ fontSize: 9, fontWeight: 600, color: "var(--nezumi)", marginBottom: 6 }}>{t.breakdownTitle}</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {breakdown.map((b) => <span key={b.date} style={{ fontSize: 10, padding: "3px 8px", border: "1px solid " + J.keisenL }}>{b.date.slice(5)} {formatMoney(convertMoney(b.price, project), project, lang)}</span>)}
+            {breakdown.map((b) => <span key={b.date} style={{ fontSize: 10, padding: "3px 8px", border: "1px solid var(--keisenL)" }}>{b.date.slice(5)} {formatMoney(convertMoney(b.price, project), project, lang)}</span>)}
           </div>
         </div>
       )}
-      {!canSave && <p style={{ fontSize: 11, color: J.shu }}>{t.stayRequired}</p>}
+      {!canSave && <p style={{ fontSize: 11, color: "var(--shu)" }}>{t.stayRequired}</p>}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => onSave({ ...f, nights, total_amount: totalAmount, base_price: f.base_price === "" ? null : +f.base_price })} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
       </div>
     </div>
@@ -1184,7 +1202,7 @@ function HotelMasterForm({ init, onSave, onClose, t }) {
       <Field label={t.hotelAddr}><input style={inpStyle} value={f.address} onChange={set("address")} /></Field>
       <Field label={t.hotelTel}><input style={inpStyle} value={f.tel} onChange={set("tel")} /></Field>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => onSave(f)} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
       </div>
     </div>
@@ -1198,7 +1216,7 @@ function PricingRuleForm({ init, hotelId, hotelName, onSave, onClose, t, project
   const final = (+f.base_price || 0) + (+f.importance_surcharge || 0) + (+f.holiday_surcharge || 0);
   return (
     <div>
-      <div style={{ background: "rgba(74,127,165,.08)", padding: "8px 14px", marginBottom: 14, fontSize: 13, color: J.asagi }}>{hotelName}</div>
+      <div style={{ background: "rgba(74,127,165,.08)", padding: "8px 14px", marginBottom: 14, fontSize: 13, color: "var(--asagi)" }}>{hotelName}</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label={t.date}><input type="date" style={inpStyle} value={f.date || ""} onChange={set("date")} /></Field>
         <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={set("room_type")}>{ROOM_TYPES.map((r) => <option key={r}>{r}</option>)}</select></Field>
@@ -1206,10 +1224,10 @@ function PricingRuleForm({ init, hotelId, hotelName, onSave, onClose, t, project
         <Field label={t.basePriceShort}><input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")} /></Field>
         <Field label={t.importanceSurcharge}><input type="number" min="0" style={inpStyle} value={f.importance_surcharge} onChange={set("importance_surcharge")} /></Field>
         <Field label={t.holidaySurcharge}><input type="number" min="0" style={inpStyle} value={f.holiday_surcharge} onChange={set("holiday_surcharge")} /></Field>
-        <Field label={t.finalPrice}><input style={{ ...inpStyle, background: J.washi, fontWeight: 700, color: J.asagi }} value={formatMoney(convertMoney(final, project), project, lang)} readOnly /></Field>
+        <Field label={t.finalPrice}><input style={{ ...inpStyle, background: "var(--washi)", fontWeight: 700, color: "var(--asagi)" }} value={formatMoney(convertMoney(final, project), project, lang)} readOnly /></Field>
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
-        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => onSave({ ...f, hotel_id: hotelId, final_price: final, base_price: +f.base_price || 0, importance_surcharge: +f.importance_surcharge || 0, holiday_surcharge: +f.holiday_surcharge || 0 })} disabled={!f.date} style={pBtn(!f.date)}>{t.save}</button>
       </div>
     </div>
@@ -1236,10 +1254,10 @@ function CurrencySettingsModal({ project, onSave, onClose, t }) {
       </Field>
       <Field label={t.exchangeRate}>
         <input type="number" step="0.0001" min="0" style={inpStyle} value={f.exchange_rate} onChange={(e) => setF((p) => ({ ...p, exchange_rate: +e.target.value }))} />
-        <p style={{ fontSize: 10, color: J.nezumi, marginTop: 4 }}>{t.exchangeRateHint}</p>
+        <p style={{ fontSize: 10, color: "var(--nezumi)", marginTop: 4 }}>{t.exchangeRateHint}</p>
       </Field>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => onSave(f)} style={pBtn(false)}>{t.save}</button>
       </div>
     </Modal>
@@ -1280,23 +1298,23 @@ function RoommateModal({ pid, persons, roommates, stays, onSave, onClose, t }) {
     <Modal title={`${t.roommateSet} — ${person?.name_kanji || ""}`} onClose={onClose}>
       {/* My stays context */}
       {myStays.length > 0 && (
-        <div style={{ background: J.moegi3, border: "1px solid rgba(43,90,76,.15)", borderRadius: 6, padding: "8px 12px", marginBottom: 12, fontSize: 11, color: J.moegi, lineHeight: 1.6 }}>
+        <div style={{ background: "var(--moegi3)", border: "1px solid rgba(43,90,76,.15)", borderRadius: 6, padding: "8px 12px", marginBottom: 12, fontSize: 11, color: "var(--moegi)", lineHeight: 1.6 }}>
           {myStays.map((s) => <div key={s.id}>{s.hotelName || s.hotel_id} · {s.check_in} – {s.check_out} ({s.roomLabel || s.room_type})</div>)}
         </div>
       )}
       {/* Filter toggle */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <span style={{ fontSize: 10.5, color: J.usunezumi }}>
+        <span style={{ fontSize: 10.5, color: "var(--usunezumi)" }}>
           {showAll ? `全部 ${persons.length - 1} 人` : `同飯店重疊日期 ${sameHotelIds.size} 人`}
         </span>
         <button type="button" onClick={() => setShowAll((v) => !v)}
-          style={{ fontSize: 10.5, background: "none", border: "none", cursor: "pointer", color: J.moegi, textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>
+          style={{ fontSize: 10.5, background: "none", border: "none", cursor: "pointer", color: "var(--moegi)", textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>
           {showAll ? "只顯示同飯店" : "顯示全部"}
         </button>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 280, overflowY: "auto" }}>
         {candidates.length === 0 && (
-          <div style={{ padding: "20px", textAlign: "center", color: J.usunezumi, fontSize: 12 }}>
+          <div style={{ padding: "20px", textAlign: "center", color: "var(--usunezumi)", fontSize: 12 }}>
             {showAll ? "無其他成員" : "無同飯店重疊住宿成員，請點「顯示全部」"}
           </div>
         )}
@@ -1304,24 +1322,24 @@ function RoommateModal({ pid, persons, roommates, stays, onSave, onClose, t }) {
           const pStays = stays.filter((s) => s.person_id === p.id && myStays.some((ms) => staysOverlap(ms, s)));
           const isSelected = selected.includes(p.id);
           return (
-            <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", border: `1px solid ${isSelected ? J.moegi : J.keisenM}`, borderRadius: 6, cursor: "pointer", background: isSelected ? J.moegi3 : J.shiro, transition: "all .12s" }}>
+            <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", border: `1px solid ${isSelected ? "var(--moegi)" : "var(--keisenM)"}`, borderRadius: 6, cursor: "pointer", background: isSelected ? "var(--moegi3)" : "var(--shiro)", transition: "all .12s" }}>
               <input type="checkbox" checked={isSelected} onChange={() => toggle(p.id)} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name_kanji}
-                  <span style={{ fontSize: 11, color: J.nezumi, fontWeight: 400, marginLeft: 8 }}>{p.dept}</span>
+                  <span style={{ fontSize: 11, color: "var(--nezumi)", fontWeight: 400, marginLeft: 8 }}>{p.dept}</span>
                 </div>
-                {pStays.length > 0 && <div style={{ fontSize: 10, color: J.moegi, marginTop: 1 }}>{pStays[0].hotelName || ""} {pStays[0].check_in}–{pStays[0].check_out}</div>}
+                {pStays.length > 0 && <div style={{ fontSize: 10, color: "var(--moegi)", marginTop: 1 }}>{pStays[0].hotelName || ""} {pStays[0].check_in}–{pStays[0].check_out}</div>}
               </div>
             </label>
           );
         })}
       </div>
-      <div style={{ marginTop: 10, padding: "8px 12px", background: J.washi, fontSize: 11.5, borderRadius: 4, color: J.sumi }}>
-        {selected.length === 0 ? <span style={{ color: J.usunezumi }}>{t.roommateNone}</span>
+      <div style={{ marginTop: 10, padding: "8px 12px", background: "var(--washi)", fontSize: 11.5, borderRadius: 4, color: "var(--sumi)" }}>
+        {selected.length === 0 ? <span style={{ color: "var(--usunezumi)" }}>{t.roommateNone}</span>
           : selected.map((id) => persons.find((p) => p.id === id)?.name_kanji).filter(Boolean).join("、")}
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
-        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => onSave(pid, selected)} style={pBtn(false)}>{t.save}</button>
       </div>
     </Modal>
@@ -1331,9 +1349,9 @@ function RoommateModal({ pid, persons, roommates, stays, onSave, onClose, t }) {
 function SyncRoommateModal({ names, onConfirm, onClose, t }) {
   return (
     <Modal title={t.syncRoommateTitle} onClose={onClose}>
-      <p style={{ fontSize: 13, color: J.nezumi, lineHeight: 1.6, marginBottom: 16 }}>{t.syncRoommateMsg}<br /><strong>{names}</strong></p>
+      <p style={{ fontSize: 13, color: "var(--nezumi)", lineHeight: 1.6, marginBottom: 16 }}>{t.syncRoommateMsg}<br /><strong>{names}</strong></p>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={onConfirm} style={pBtn(false)}>{t.confirm}</button>
       </div>
     </Modal>
@@ -1365,9 +1383,9 @@ function MemberManager({ project, user, canManage, onClose, t }) {
   return (
     <Modal title={`${t.members} — ${project.name}`} onClose={onClose} wide>
       <Toast msg={toastMsg} />
-      <div style={{ background: J.washi, padding: 18, marginBottom: 20, border: "1px solid " + J.keisenL }}>
+      <div style={{ background: "var(--washi)", padding: 18, marginBottom: 20, border: "1px solid var(--keisenL)" }}>
         <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>{t.memberAdd}</div>
-        <p style={{ fontSize: 12, color: J.nezumi, marginBottom: 10 }}>{t.memberUidHint}</p>
+        <p style={{ fontSize: 12, color: "var(--nezumi)", marginBottom: 10 }}>{t.memberUidHint}</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input style={{ ...inpStyle, flex: 2, minWidth: 200 }} value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="UUID" />
           <select value={role} onChange={(e) => setRole(e.target.value)} style={inpStyle}>
@@ -1379,15 +1397,15 @@ function MemberManager({ project, user, canManage, onClose, t }) {
         </div>
       </div>
       <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 12 }}>{t.memberCurrent.replace("{n}", members.length)}</div>
-      {loading ? <div style={{ textAlign: "center", color: J.usunezumi }}>…</div> : members.map((m) => {
+      {loading ? <div style={{ textAlign: "center", color: "var(--usunezumi)" }}>…</div> : members.map((m) => {
         const isMe = m.user_id === user.id;
         const canModify = canManage && !isMe && m.role !== "owner";
         return (
-          <div key={m.id} style={{ display: "flex", justifyContent: "space-between", padding: 12, border: "1px solid " + J.keisenL, marginBottom: 8 }}>
+          <div key={m.id} style={{ display: "flex", justifyContent: "space-between", padding: 12, border: "1px solid var(--keisenL)", marginBottom: 8 }}>
             <div>
               <span style={{ fontSize: 11, padding: "2px 8px", ...(ROLE_COLORS[m.role] || ROLE_COLORS.viewer) }}>{t[`role_${m.role}`] || m.role}</span>
-              {isMe && <span style={{ fontSize: 9, marginLeft: 6, color: J.moegi }}>{t.me}</span>}
-              <div style={{ fontSize: 11, color: J.usunezumi, fontFamily: "monospace", marginTop: 4 }}>{m.user_id}</div>
+              {isMe && <span style={{ fontSize: 9, marginLeft: 6, color: "var(--moegi)" }}>{t.me}</span>}
+              <div style={{ fontSize: 11, color: "var(--usunezumi)", fontFamily: "monospace", marginTop: 4 }}>{m.user_id}</div>
             </div>
             {canModify && (
               <div style={{ display: "flex", gap: 8 }}>
@@ -1402,7 +1420,7 @@ function MemberManager({ project, user, canManage, onClose, t }) {
           </div>
         );
       })}
-      <p style={{ fontSize: 11, color: J.kincha, marginTop: 12 }}>{t.memberUidLabel}: {t.memberUidInfo}</p>
+      <p style={{ fontSize: 11, color: "var(--kincha)", marginTop: 12 }}>{t.memberUidLabel}: {t.memberUidInfo}</p>
     </Modal>
   );
 }
@@ -1425,18 +1443,18 @@ function ForgotPasswordPanel({ t, onBack }) {
 
   if (sent) return (
     <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: 32, marginBottom: 14, color: J.moegi }}>✓</div>
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: J.sumi, marginBottom: 8 }}>{t.forgotPwSent}</h3>
-      <p style={{ fontSize: 12.5, color: J.nezumi, lineHeight: 1.7, marginBottom: 22 }}>{t.forgotPwSentHint}</p>
+      <div style={{ fontSize: 32, marginBottom: 14, color: "var(--moegi)" }}>✓</div>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--sumi)", marginBottom: 8 }}>{t.forgotPwSent}</h3>
+      <p style={{ fontSize: 12.5, color: "var(--nezumi)", lineHeight: 1.7, marginBottom: 22 }}>{t.forgotPwSentHint}</p>
       <button type="button" onClick={onBack} style={{ ...pBtn(false), width: "100%" }}>{t.backToLogin}</button>
     </div>
   );
 
   return (
     <>
-      <h3 style={{ fontSize: 15, fontWeight: 600, color: J.sumi, marginBottom: 8, fontFamily: "'Noto Serif JP',serif" }}>{t.forgotPwTitle}</h3>
-      <p style={{ fontSize: 12, color: J.nezumi, marginBottom: 20, lineHeight: 1.6 }}>{t.forgotPwHint}</p>
-      {error && <div style={{ background: "rgba(173,48,48,.06)", color: J.shu, padding: "10px 14px", marginBottom: 16, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)" }}>{error}</div>}
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--sumi)", marginBottom: 8, fontFamily: "'Noto Serif JP',serif" }}>{t.forgotPwTitle}</h3>
+      <p style={{ fontSize: 12, color: "var(--nezumi)", marginBottom: 20, lineHeight: 1.6 }}>{t.forgotPwHint}</p>
+      {error && <div style={{ background: "rgba(173,48,48,.06)", color: "var(--shu)", padding: "10px 14px", marginBottom: 16, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)" }}>{error}</div>}
       <Field label={t.loginEmail}>
         <input style={inpStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} className="wa-input" />
       </Field>
@@ -1444,7 +1462,7 @@ function ForgotPasswordPanel({ t, onBack }) {
         {loading ? <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>◌</span> : t.forgotPwBtn}
       </button>
       <div style={{ textAlign: "center", marginTop: 14 }}>
-        <button type="button" onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11.5, color: J.nezumi, textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>{t.backToLogin}</button>
+        <button type="button" onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11.5, color: "var(--nezumi)", textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>{t.backToLogin}</button>
       </div>
     </>
   );
@@ -1460,12 +1478,12 @@ function ResetPasswordScreen({ recoveryToken, lang }) {
   const [done, setDone] = useState(false);
 
   const wrap = {
-    minHeight: "100vh", background: J.sumi,
+    minHeight: "100vh", background: "var(--sumiMid)",
     backgroundImage: "radial-gradient(ellipse 80% 60% at 20% 80%, rgba(43,90,76,.22) 0%, transparent 60%)",
     display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Noto Sans JP',sans-serif",
   };
   const card = {
-    background: J.shiro, borderRadius: 12, padding: "44px 48px",
+    background: "var(--shiro)", borderRadius: 12, padding: "44px 48px",
     width: 420, maxWidth: "95vw",
     boxShadow: "0 24px 80px rgba(0,0,0,.26), 0 0 0 1px rgba(255,255,255,.06)",
   };
@@ -1485,9 +1503,9 @@ function ResetPasswordScreen({ recoveryToken, lang }) {
   if (done) return (
     <div style={wrap}><div style={card}>
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 36, fontFamily: "'Noto Serif JP',serif", color: J.moegi, marginBottom: 16 }}>映</div>
-        <div style={{ fontSize: 32, marginBottom: 12, color: J.moegi }}>✓</div>
-        <h3 style={{ fontSize: 16, fontWeight: 600, color: J.sumi, marginBottom: 12, fontFamily: "'Noto Serif JP',serif" }}>{t.resetPwSuccess}</h3>
+        <div style={{ fontSize: 36, fontFamily: "'Noto Serif JP',serif", color: "var(--moegi)", marginBottom: 16 }}>映</div>
+        <div style={{ fontSize: 32, marginBottom: 12, color: "var(--moegi)" }}>✓</div>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--sumi)", marginBottom: 12, fontFamily: "'Noto Serif JP',serif" }}>{t.resetPwSuccess}</h3>
         <button type="button" onClick={() => { window.location.hash = ""; window.location.reload(); }} style={{ ...pBtn(false), width: "100%", padding: "11px 0", marginTop: 8 }}>{t.backToLogin}</button>
       </div>
     </div></div>
@@ -1496,10 +1514,10 @@ function ResetPasswordScreen({ recoveryToken, lang }) {
   return (
     <div style={wrap}><div style={card}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <div style={{ fontSize: 36, lineHeight: 1, color: J.moegi, marginBottom: 10, fontFamily: "'Noto Serif JP',serif" }}>映</div>
-        <h1 style={{ fontSize: 16, fontWeight: 600, color: J.sumi, margin: 0, letterSpacing: "0.08em", fontFamily: "'Noto Serif JP',serif" }}>{t.resetPwTitle}</h1>
+        <div style={{ fontSize: 36, lineHeight: 1, color: "var(--moegi)", marginBottom: 10, fontFamily: "'Noto Serif JP',serif" }}>映</div>
+        <h1 style={{ fontSize: 16, fontWeight: 600, color: "var(--sumi)", margin: 0, letterSpacing: "0.08em", fontFamily: "'Noto Serif JP',serif" }}>{t.resetPwTitle}</h1>
       </div>
-      {error && <div style={{ background: "rgba(173,48,48,.06)", color: J.shu, padding: "10px 14px", marginBottom: 18, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)" }}>{error}</div>}
+      {error && <div style={{ background: "rgba(173,48,48,.06)", color: "var(--shu)", padding: "10px 14px", marginBottom: 18, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)" }}>{error}</div>}
       <Field label={t.newPw}><input style={inpStyle} type="password" value={pw} onChange={(e) => setPw(e.target.value)} className="wa-input" /></Field>
       <Field label={t.confirmNewPw}><input style={inpStyle} type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleReset()} className="wa-input" /></Field>
       <button type="button" onClick={handleReset} disabled={loading} style={{ ...pBtn(loading), width: "100%", padding: "11px 0", marginTop: 4 }}>
@@ -1521,14 +1539,14 @@ function LoginScreen({ onLogin }) {
   const [lang, setLang] = useState(() => localStorage.getItem("app_lang") || "zh-TW");
   const t = T[lang];
   const card = {
-    background: J.shiro, borderRadius: 12, padding: "44px 48px",
+    background: "var(--shiro)", borderRadius: 12, padding: "44px 48px",
     width: 440, maxWidth: "95vw",
     boxShadow: "0 24px 80px rgba(0,0,0,.26), 0 0 0 1px rgba(255,255,255,.06)",
     maxHeight: "92vh", overflowY: "auto",
   };
   const wrap = {
     minHeight: "100vh",
-    background: J.sumi,
+    background: "var(--sumiMid)",
     backgroundImage: [
       "radial-gradient(ellipse 80% 60% at 20% 80%, rgba(43,90,76,.22) 0%, transparent 60%)",
       "radial-gradient(ellipse 60% 40% at 80% 20%, rgba(42,94,128,.16) 0%, transparent 55%)",
@@ -1572,14 +1590,14 @@ function LoginScreen({ onLogin }) {
   if (mode === "verify") return (
     <div style={wrap}><div style={card}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <div style={{ fontSize: 40, lineHeight: 1, color: J.moegi2, marginBottom: 12, fontFamily: "'Noto Serif JP',serif" }}>映</div>
-        <h2 style={{ fontSize: 18, color: J.sumi, fontFamily: "'Noto Serif JP',serif", fontWeight: 600, marginBottom: 0 }}>{t.verifyTitle}</h2>
+        <div style={{ fontSize: 40, lineHeight: 1, color: "var(--moegi2)", marginBottom: 12, fontFamily: "'Noto Serif JP',serif" }}>映</div>
+        <h2 style={{ fontSize: 18, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif", fontWeight: 600, marginBottom: 0 }}>{t.verifyTitle}</h2>
       </div>
-      <div style={{ background: J.moegi3, border: "1px solid rgba(43,90,76,.18)", borderRadius: 8, padding: "16px 18px", marginBottom: 18 }}>
-        <p style={{ fontSize: 13, color: J.moegi, marginBottom: 4, fontWeight: 600 }}>{email}</p>
-        <p style={{ fontSize: 12, color: J.nezumi, lineHeight: 1.7, margin: 0 }}>{t.verifyHint}</p>
+      <div style={{ background: "var(--moegi3)", border: "1px solid rgba(43,90,76,.18)", borderRadius: 8, padding: "16px 18px", marginBottom: 18 }}>
+        <p style={{ fontSize: 13, color: "var(--moegi)", marginBottom: 4, fontWeight: 600 }}>{email}</p>
+        <p style={{ fontSize: 12, color: "var(--nezumi)", lineHeight: 1.7, margin: 0 }}>{t.verifyHint}</p>
       </div>
-      <p style={{ fontSize: 11, color: J.nezumi, marginBottom: 20, lineHeight: 1.6 }}>{t.verifyContact}</p>
+      <p style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 20, lineHeight: 1.6 }}>{t.verifyContact}</p>
       <button type="button" onClick={() => setMode("login")} style={{ ...pBtn(false), width: "100%" }}>{t.toLoginBtn}</button>
     </div></div>
   );
@@ -1588,29 +1606,29 @@ function LoginScreen({ onLogin }) {
     <div style={wrap}><div style={card}>
       {/* ── Brand Mark ── */}
       <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <div style={{ fontSize: 42, lineHeight: 1, color: J.moegi, marginBottom: 10, fontFamily: "'Noto Serif JP',serif", letterSpacing: "-0.02em" }}>映</div>
-        <h1 style={{ fontSize: 16, fontWeight: 600, color: J.sumi, margin: 0, letterSpacing: "0.08em", fontFamily: "'Noto Serif JP',serif" }}>{t.appName}</h1>
-        <p style={{ fontSize: 11, color: J.usunezumi, margin: "5px 0 0", letterSpacing: "0.04em" }}>{mode === "login" ? t.loginTitle : t.registerTitle}</p>
+        <div style={{ fontSize: 42, lineHeight: 1, color: "var(--moegi)", marginBottom: 10, fontFamily: "'Noto Serif JP',serif", letterSpacing: "-0.02em" }}>映</div>
+        <h1 style={{ fontSize: 16, fontWeight: 600, color: "var(--sumi)", margin: 0, letterSpacing: "0.08em", fontFamily: "'Noto Serif JP',serif" }}>{t.appName}</h1>
+        <p style={{ fontSize: 11, color: "var(--usunezumi)", margin: "5px 0 0", letterSpacing: "0.04em" }}>{mode === "login" ? t.loginTitle : t.registerTitle}</p>
       </div>
 
       {/* ── Lang lock selector (locked after login) ── */}
       <div style={{ marginBottom: 20 }}>
-        <label style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: J.nezumi, marginBottom: 6, letterSpacing: "0.16em", textTransform: "uppercase" }}>{t.langSelectLabel || "Language / 語言 / 言語"}</label>
+        <label style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: "var(--nezumi)", marginBottom: 6, letterSpacing: "0.16em", textTransform: "uppercase" }}>{t.langSelectLabel || "Language / 語言 / 言語"}</label>
         <select style={{ ...inpStyle, fontSize: 12 }} value={lang} onChange={(e) => { setLang(e.target.value); localStorage.setItem("app_lang", e.target.value); }} className="wa-input">
           {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <p style={{ fontSize: 9.5, color: J.usunezumi, marginTop: 5, lineHeight: 1.5, margin: "5px 0 0" }}>{t.langLockHint || "登入後語系將固定，如需切換請重新登入"}</p>
+        <p style={{ fontSize: 9.5, color: "var(--usunezumi)", marginTop: 5, lineHeight: 1.5, margin: "5px 0 0" }}>{t.langLockHint || "登入後語系將固定，如需切換請重新登入"}</p>
       </div>
 
       {/* ── Tab pills ── */}
-      <div style={{ display: "flex", background: J.washi, borderRadius: 8, padding: 4, marginBottom: 24 }}>
+      <div style={{ display: "flex", background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 24 }}>
         {[["login", t.loginBtn], ["register", t.registerTitle]].map(([m, lb]) => (
           <button key={m} type="button" onClick={() => { setMode(m); setError(""); }} style={{
             flex: 1, padding: "8px 0", border: "none", cursor: "pointer",
             fontFamily: "'Noto Sans JP',sans-serif", fontSize: 13,
             fontWeight: mode === m ? 600 : 400,
-            color: mode === m ? J.sumi : J.nezumi,
-            background: mode === m ? J.shiro : "transparent",
+            color: mode === m ? "var(--sumi)" : "var(--nezumi)",
+            background: mode === m ? "var(--shiro)" : "transparent",
             borderRadius: 6,
             boxShadow: mode === m ? "0 1px 4px rgba(0,0,0,.1)" : "none",
             transition: "all .18s",
@@ -1618,7 +1636,7 @@ function LoginScreen({ onLogin }) {
         ))}
       </div>
 
-      {error && <div style={{ background: "rgba(173,48,48,.06)", color: J.shu, padding: "10px 14px", marginBottom: 18, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)", lineHeight: 1.5 }}>{error}</div>}
+      {error && <div style={{ background: "rgba(173,48,48,.06)", color: "var(--shu)", padding: "10px 14px", marginBottom: 18, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)", lineHeight: 1.5 }}>{error}</div>}
 
       {mode === "login" ? (
         <>
@@ -1628,9 +1646,9 @@ function LoginScreen({ onLogin }) {
             {loading ? <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>◌</span> : t.loginBtn}
           </button>
           <div style={{ textAlign: "center", marginTop: 14 }}>
-            <button type="button" onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11.5, color: J.nezumi, textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>{t.forgotPw}</button>
+            <button type="button" onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11.5, color: "var(--nezumi)", textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>{t.forgotPw}</button>
           </div>
-          <p style={{ fontSize: 10.5, color: J.nezumi, textAlign: "center", marginTop: 10, lineHeight: 1.6 }}>{t.loginHint}</p>
+          <p style={{ fontSize: 10.5, color: "var(--nezumi)", textAlign: "center", marginTop: 10, lineHeight: 1.6 }}>{t.loginHint}</p>
         </>
       ) : mode === "forgot" ? (
         <ForgotPasswordPanel t={t} lang={lang} onBack={() => { setMode("login"); setError(""); }} />
@@ -1644,14 +1662,14 @@ function LoginScreen({ onLogin }) {
           <button type="button" onClick={handleRegister} disabled={loading} style={{ ...pBtn(loading), width: "100%", marginTop: 10, padding: "11px 0" }}>
             {loading ? <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>◌</span> : t.registerBtn}
           </button>
-          <p style={{ fontSize: 11, color: J.usunezumi, textAlign: "center", marginTop: 14, lineHeight: 1.6 }}>{t.verifyContact}</p>
+          <p style={{ fontSize: 11, color: "var(--usunezumi)", textAlign: "center", marginTop: 14, lineHeight: 1.6 }}>{t.verifyContact}</p>
         </>
       )}
     </div></div>
   );
 }
 
-function ProjectSelector({ user, isSystemOwner, lang, onLangChange, onSelect }) {
+function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLangChange, onSelect }) {
   const t = T[lang];
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1723,29 +1741,31 @@ function ProjectSelector({ user, isSystemOwner, lang, onLangChange, onSelect }) 
     } catch (e) { showToast(e.message); }
   };
 
-  const hdrBtn = { background: "rgba(253,252,249,.09)", color: J.washi, border: "1px solid rgba(253,252,249,.16)", padding: "7px 14px", cursor: "pointer", fontSize: 11.5, borderRadius: 4, fontFamily: "'Noto Sans JP',sans-serif", transition: "background .15s" };
+  const hdrBtn = { background: "var(--hdrBtnBg)", color: "var(--hdrText)", border: "1px solid var(--hdrBtnBorder)", padding: "7px 14px", cursor: "pointer", fontSize: 11.5, borderRadius: 4, fontFamily: "'Noto Sans JP',sans-serif", transition: "background .15s" };
+  const tSel = T[lang];
   return (
-    <div style={{ minHeight: "100vh", background: J.bg, fontFamily: "'Noto Sans JP',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Noto Sans JP',sans-serif" }}>
       <Toast msg={toastMsg} />
       {/* ── Header ── */}
       <header style={{
-        background: J.sumi,
-        backgroundImage: "linear-gradient(135deg, rgba(43,90,76,.3) 0%, transparent 60%)",
-        padding: "16px 32px", color: J.washi,
+        background: "var(--sumiMid)",
+        backgroundImage: "var(--headerGrad)",
+        padding: "16px 32px", color: "var(--washi)",
         display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8,
         borderBottom: "1px solid rgba(255,255,255,.04)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 28, fontFamily: "'Noto Serif JP',serif", color: J.moegi2, lineHeight: 1 }}>映</span>
+          <span style={{ fontSize: 28, fontFamily: "'Noto Serif JP',serif", color: "var(--moegi2)", lineHeight: 1 }}>映</span>
           <div>
             <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "0.06em" }}>{t.appName}</div>
             <div style={{ fontSize: 10, opacity: 0.5, marginTop: 2, letterSpacing: "0.04em" }}>
               {user.email}
-              {isSystemOwner && <span style={{ marginLeft: 8, padding: "1px 8px", background: J.moegi3, color: J.moegi2, borderRadius: 10, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em" }}>{t.role_owner}</span>}
+              {isSystemOwner && <span style={{ marginLeft: 8, padding: "1px 8px", background: "var(--moegi3)", color: "var(--moegi2)", borderRadius: 10, fontSize: 9, fontWeight: 700, letterSpacing: "0.12em" }}>{t.role_owner}</span>}
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <ThemeToggle theme={theme} onChange={onThemeChange} t={tSel} />
           <button type="button" onClick={() => { api.logout(); clearSession(); window.location.reload(); }} style={hdrBtn}>{t.logout}</button>
         </div>
       </header>
@@ -1754,18 +1774,18 @@ function ProjectSelector({ user, isSystemOwner, lang, onLangChange, onSelect }) 
       {isSystemOwner && (
         <div style={{ maxWidth: 960, margin: "0 auto", padding: "28px 24px 0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <div style={{ width: 3, height: 16, background: J.shu, borderRadius: 2 }} />
-            <h2 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: J.sumi, margin: 0 }}>{t.approveTitle}</h2>
-            {requests.length > 0 && <span style={{ background: J.shu, color: J.shiro, padding: "2px 8px", fontSize: 10, borderRadius: 10, fontWeight: 700 }}>{requests.length}</span>}
+            <div style={{ width: 3, height: 16, background: "var(--shu)", borderRadius: 2 }} />
+            <h2 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.approveTitle}</h2>
+            {requests.length > 0 && <span style={{ background: "var(--shu)", color: "var(--shiro)", padding: "2px 8px", fontSize: 10, borderRadius: 10, fontWeight: 700 }}>{requests.length}</span>}
           </div>
           {requests.length === 0 ? (
-            <p style={{ color: J.usunezumi, fontSize: 12, marginBottom: 16 }}>{t.noRequests}</p>
+            <p style={{ color: "var(--usunezumi)", fontSize: 12, marginBottom: 16 }}>{t.noRequests}</p>
           ) : requests.map((req) => (
-            <div key={req.id} style={{ background: J.shiro, padding: "16px 20px", marginBottom: 10, borderRadius: 8, border: "1px solid " + J.keisenL, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
+            <div key={req.id} style={{ background: "var(--shiro)", padding: "16px 20px", marginBottom: 10, borderRadius: 8, border: "1px solid var(--keisenL)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
               <div>
-                <strong style={{ fontSize: 13, color: J.sumi }}>{req.display_name || t.noName}</strong>
-                <span style={{ color: J.nezumi, fontSize: 12, marginLeft: 8 }}>{req.email}</span>
-                {req.message && <div style={{ fontSize: 12, color: J.nezumi, marginTop: 5, lineHeight: 1.5 }}>{req.message}</div>}
+                <strong style={{ fontSize: 13, color: "var(--sumi)" }}>{req.display_name || t.noName}</strong>
+                <span style={{ color: "var(--nezumi)", fontSize: 12, marginLeft: 8 }}>{req.email}</span>
+                {req.message && <div style={{ fontSize: 12, color: "var(--nezumi)", marginTop: 5, lineHeight: 1.5 }}>{req.message}</div>}
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <button type="button" onClick={async () => { const all = await api.get("projects"); setApproveModal({ req, projects: all, projectId: all[0]?.id || "", role: "viewer" }); }} style={pBtn(false)}>{t.approve}</button>
@@ -1780,35 +1800,35 @@ function ProjectSelector({ user, isSystemOwner, lang, onLangChange, onSelect }) 
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "36px 24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 3, height: 20, background: J.moegi, borderRadius: 2 }} />
-            <h2 style={{ fontSize: 20, fontWeight: 300, color: J.sumi, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.04em", margin: 0 }}>{t.projects}</h2>
+            <div style={{ width: 3, height: 20, background: "var(--moegi)", borderRadius: 2 }} />
+            <h2 style={{ fontSize: 20, fontWeight: 300, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.04em", margin: 0 }}>{t.projects}</h2>
           </div>
           <button type="button" onClick={() => setShowNew(true)} style={pBtn(false)}>{t.newProject}</button>
         </div>
 
         {loading ? (
-          <p style={{ textAlign: "center", color: J.usunezumi, padding: 60 }}>{t.loading}</p>
+          <p style={{ textAlign: "center", color: "var(--usunezumi)", padding: 60 }}>{t.loading}</p>
         ) : projects.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "70px 40px", background: J.shiro, borderRadius: 10, border: "1px solid " + J.keisenL }}>
-            <div style={{ fontSize: 32, fontFamily: "'Noto Serif JP',serif", color: J.usunezumi, marginBottom: 16 }}>映</div>
-            <p style={{ marginBottom: 6, fontSize: 14, color: J.sumi }}>{t.noProject}</p>
-            <p style={{ fontSize: 12, color: J.nezumi, marginBottom: 28, lineHeight: 1.6 }}>{t.noProjectHint}</p>
+          <div style={{ textAlign: "center", padding: "70px 40px", background: "var(--shiro)", borderRadius: 10, border: "1px solid var(--keisenL)" }}>
+            <div style={{ fontSize: 32, fontFamily: "'Noto Serif JP',serif", color: "var(--usunezumi)", marginBottom: 16 }}>映</div>
+            <p style={{ marginBottom: 6, fontSize: 14, color: "var(--sumi)" }}>{t.noProject}</p>
+            <p style={{ fontSize: 12, color: "var(--nezumi)", marginBottom: 28, lineHeight: 1.6 }}>{t.noProjectHint}</p>
             <button type="button" onClick={() => setShowNew(true)} style={pBtn(false)}>{t.firstProject}</button>
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 18 }}>
             {projects.map((up) => (
               <div key={up.id} style={{
-                background: J.shiro, borderRadius: 10, overflow: "hidden",
-                boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 4px 20px rgba(0,0,0,.05), 0 0 0 1px " + J.keisenL,
+                background: "var(--shiro)", borderRadius: 10, overflow: "hidden",
+                boxShadow: "0 1px 3px rgba(0,0,0,.05), 0 4px 20px rgba(0,0,0,.05), 0 0 0 1px " + "var(--keisenL)",
                 transition: "box-shadow .2s, transform .15s",
               }} className="proj-card">
                 {/* Color band based on role */}
-                <div style={{ height: 4, background: up.role === "owner" ? J.kincha : up.role === "admin" ? J.shu : up.role === "editor" ? J.moegi : J.usunezumi }} />
+                <div style={{ height: 4, background: up.role === "owner" ? "var(--kincha)" : up.role === "admin" ? "var(--shu)" : up.role === "editor" ? "var(--moegi)" : "var(--usunezumi)" }} />
                 <div style={{ padding: "20px 22px" }}>
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontWeight: 600, fontSize: 16, color: J.sumi, letterSpacing: "0.02em", marginBottom: 5, fontFamily: "'Noto Serif JP',serif" }}>{up.projects?.name || "—"}</div>
-                    {up.projects?.description && <div style={{ fontSize: 12, color: J.nezumi, lineHeight: 1.5 }}>{up.projects.description}</div>}
+                    <div style={{ fontWeight: 600, fontSize: 16, color: "var(--sumi)", letterSpacing: "0.02em", marginBottom: 5, fontFamily: "'Noto Serif JP',serif" }}>{up.projects?.name || "—"}</div>
+                    {up.projects?.description && <div style={{ fontSize: 12, color: "var(--nezumi)", lineHeight: 1.5 }}>{up.projects.description}</div>}
                   </div>
                   <span style={{ fontSize: 10, padding: "3px 10px", borderRadius: 20, fontWeight: 700, letterSpacing: "0.08em", ...(ROLE_COLORS[up.role] || ROLE_COLORS.viewer) }}>{t[`role_${up.role}`] || up.role}</span>
                 </div>
@@ -1838,7 +1858,7 @@ function ProjectSelector({ user, isSystemOwner, lang, onLangChange, onSelect }) 
               <option value="admin">{t.roleAdminDesc}</option>
             </select>
           </Field>
-          <p style={{ fontSize: 11.5, color: J.nezumi, marginBottom: 18, lineHeight: 1.6 }}>{t.approveNote}</p>
+          <p style={{ fontSize: 11.5, color: "var(--nezumi)", marginBottom: 18, lineHeight: 1.6 }}>{t.approveNote}</p>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <button type="button" onClick={() => setApproveModal(null)} style={{ ...eBtn, marginRight: 0, padding: "9px 18px" }}>{t.cancel}</button>
             <button type="button" onClick={confirmApprove} style={pBtn(false)}>{t.confirmApproveBtn}</button>
@@ -1860,7 +1880,7 @@ function ProjectSelector({ user, isSystemOwner, lang, onLangChange, onSelect }) 
   );
 }
 
-function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange, onBack, onProjectUpdate }) {
+function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThemeChange, onLangChange, onBack, onProjectUpdate }) {
   const pid = project.id;
   const t = T[lang];
   const canEdit = isSystemOwner || ["owner", "admin", "editor"].includes(userRole);
@@ -2389,10 +2409,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
 
   const statusBadge = (s) => {
     const cfg = s === "arranged"
-      ? { bg: J.moegi3, c: J.moegi, border: "rgba(43,90,76,.2)", lb: t.arranged }
+      ? { bg: "var(--moegi3)", c: "var(--moegi)", border: "rgba(43,90,76,.2)", lb: t.arranged }
       : s === "partial"
-      ? { bg: J.kincha2, c: J.kincha, border: "rgba(143,99,24,.2)", lb: t.partial }
-      : { bg: "rgba(112,112,124,.07)", c: J.nezumi, border: "rgba(112,112,124,.18)", lb: t.unArranged };
+      ? { bg: "var(--kincha2)", c: "var(--kincha)", border: "rgba(143,99,24,.2)", lb: t.partial }
+      : { bg: "rgba(112,112,124,.07)", c: "var(--nezumi)", border: "rgba(112,112,124,.18)", lb: t.unArranged };
     return (
       <span style={{ padding: "2px 10px", fontSize: 10, fontWeight: 700, background: cfg.bg, color: cfg.c, border: `1px solid ${cfg.border}`, borderRadius: 20, letterSpacing: "0.06em" }}>{cfg.lb}</span>
     );
@@ -2422,15 +2442,15 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
   const rowsA = filterPersons(debSearchA, deptA);
   const allSelected = rowsA.length > 0 && rowsA.every((p) => selectedIds.includes(p.id));
 
-  const hdrBtn2 = { background: "rgba(253,252,249,.09)", color: J.washi, border: "1px solid rgba(253,252,249,.16)", padding: "7px 14px", cursor: "pointer", fontSize: 11.5, borderRadius: 4, fontFamily: "'Noto Sans JP',sans-serif", transition: "background .15s" };
+  const hdrBtn2 = { background: "var(--hdrBtnBg)", color: "var(--hdrText)", border: "1px solid var(--hdrBtnBorder)", padding: "7px 14px", cursor: "pointer", fontSize: 11.5, borderRadius: 4, fontFamily: "'Noto Sans JP',sans-serif", transition: "background .15s" };
   return (
-    <div style={{ minHeight: "100vh", background: J.bg, fontFamily: "'Noto Sans JP',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Noto Sans JP',sans-serif" }}>
       <Toast msg={toastMsg} />
       {/* ── App Header ── */}
       <header style={{
-        background: J.sumi,
-        backgroundImage: "linear-gradient(135deg, rgba(43,90,76,.28) 0%, transparent 55%)",
-        padding: "13px 28px", color: J.washi,
+        background: "var(--sumiMid)",
+        backgroundImage: "var(--headerGrad)",
+        padding: "13px 28px", color: "var(--washi)",
         display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8,
         alignItems: "center",
         borderBottom: "1px solid rgba(255,255,255,.04)",
@@ -2448,21 +2468,22 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           {canManageMembers && <button type="button" onClick={() => setShowMembers(true)} style={hdrBtn2}>{t.members}</button>}
           {canEdit && <button type="button" onClick={() => setShowCurrency(true)} style={hdrBtn2}>{t.settings}</button>}
-          <button type="button" onClick={() => tabExportFn[tab]?.()} style={{ ...hdrBtn2, background: "rgba(43,90,76,.18)", border: "1px solid rgba(43,90,76,.35)" }}>{t.exportCSV}</button>
+          <button type="button" onClick={() => tabExportFn[tab]?.()} style={{ ...hdrBtn2, background: "var(--moegi3)", border: "1px solid rgba(43,90,76,.35)" }}>{t.exportCSV}</button>
+          <ThemeToggle theme={theme} onChange={onThemeChange} t={t} />
           <LangSwitcher lang={lang} onChange={(l) => { localStorage.setItem("app_lang", l); onLangChange(l); }} />
         </div>
       </header>
 
       {/* ── Tab bar + Progress ── */}
-      <div style={{ background: J.shiro, borderBottom: "1px solid " + J.keisenL }}>
+      <div style={{ background: "var(--shiro)", borderBottom: "1px solid var(--keisenL)" }}>
         <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0 20px" }}>
           <div style={{ display: "flex", overflowX: "auto", gap: 2 }}>
             {TABS.map((tb) => (
               <button key={tb.id} type="button" onClick={() => setTab(tb.id)} style={{
                 padding: "14px 22px", fontWeight: tab === tb.id ? 600 : 400,
-                color: tab === tb.id ? J.moegi : J.nezumi,
+                color: tab === tb.id ? "var(--moegi)" : "var(--nezumi)",
                 border: "none",
-                borderBottom: tab === tb.id ? "2px solid " + J.moegi : "2px solid transparent",
+                borderBottom: tab === tb.id ? "2px solid var(--moegi)" : "2px solid transparent",
                 background: "none", cursor: "pointer", fontSize: 12.5, whiteSpace: "nowrap",
                 transition: "color .15s, border-color .15s",
                 letterSpacing: "0.02em",
@@ -2474,7 +2495,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "80px 0", color: J.nezumi }}>
+        <div style={{ textAlign: "center", padding: "80px 0", color: "var(--nezumi)" }}>
           <div style={{ fontSize: 11, letterSpacing: "0.16em", opacity: 0.6 }}>{t.loading}</div>
         </div>
       ) : (
@@ -2484,13 +2505,13 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
             <div className="tab-content">
               <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 3, height: 18, background: J.moegi, borderRadius: 2 }} />
-                  <h2 style={{ fontSize: 14, fontWeight: 600, color: J.sumi, margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{t.staffList}</h2>
+                  <div style={{ width: 3, height: 18, background: "var(--moegi)", borderRadius: 2 }} />
+                  <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--sumi)", margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{t.staffList}</h2>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <SearchBar value={searchA} onChange={setSearchA} placeholder={t.searchStaff} />
                   <DeptFilter depts={allDepts} value={deptA} onChange={setDeptA} allLabel={t.allDept} />
-                  <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", rowsA.length).replace("{total}", persons.length)}</span>
+                  <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.resultsCount.replace("{n}", rowsA.length).replace("{total}", persons.length)}</span>
                   {canEdit && selectedIds.length > 0 && <button type="button" onClick={bulkDelete} style={dBtn}>{t.bulkDeleteBtn} ({selectedIds.length})</button>}
                   {canEdit && <button type="button" onClick={() => setPersonModal({ mode: "add" })} style={pBtn(false)}>{t.addStaff}</button>}
                 </div>
@@ -2516,14 +2537,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                       return (
                         <tr key={p.id} draggable={canEdit} onDragStart={() => { dragItem.current = persons.indexOf(p); }} onDragEnter={() => { dragOver.current = persons.indexOf(p); }} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}>
                           {canEdit && <td style={tdS()}><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => setSelectedIds((s) => s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id])} /></td>}
-                          <td style={{ ...tdS(), textAlign: "center", color: J.usunezumi }}>{personIndex[p.id] || i + 1}</td>
+                          <td style={{ ...tdS(), textAlign: "center", color: "var(--usunezumi)" }}>{personIndex[p.id] || i + 1}</td>
                           <td style={tdS()}><Highlight text={p.dept} query={debSearchA} /></td>
                           <td style={tdS()}><Highlight text={p.name_kanji} query={debSearchA} /></td>
                           <td style={tdS()}><Highlight text={`${p.last_roman || ""} ${p.first_roman || ""}`.trim()} query={debSearchA} /></td>
                           <td style={{ ...tdS(), textAlign: "center" }}>{starLabel(p.importance) || "—"}</td>
                           <td style={tdS()}>{p.passport || "—"}</td>
                           <td style={tdS()}>{fmtDate(p.dob, lang)}</td>
-                          <td style={{ ...tdS(), color: warn ? J.shu : "inherit" }}>{fmtDate(p.passport_exp, lang)}</td>
+                          <td style={{ ...tdS(), color: warn ? "var(--shu)" : "inherit" }}>{fmtDate(p.passport_exp, lang)}</td>
                           <td style={tdS()}>{p.diet || "—"}</td>
                           <td style={tdS()}>
                             {canEdit && <button type="button" style={eBtn} onClick={() => setPersonModal({ mode: "edit", data: p })}>{t.edit}</button>}
@@ -2542,8 +2563,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
             <div className="tab-content">
               <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 3, height: 18, background: J.asagi, borderRadius: 2 }} />
-                  <h2 style={{ fontSize: 14, fontWeight: 600, color: J.sumi, margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{t.flightMgmt}</h2>
+                  <div style={{ width: 3, height: 18, background: "var(--asagi)", borderRadius: 2 }} />
+                  <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--sumi)", margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{t.flightMgmt}</h2>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <SearchBar value={searchB} onChange={setSearchB} placeholder={t.searchFlight} />
@@ -2552,7 +2573,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                 </div>
               </div>
               {showFlightAdv && (
-                <div style={{ background: J.washi, padding: "16px 18px", marginBottom: 14, borderRadius: 8, border: "1px solid " + J.keisenL, display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
+                <div style={{ background: "var(--washi)", padding: "16px 18px", marginBottom: 14, borderRadius: 8, border: "1px solid var(--keisenL)", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
                   <input style={inpStyle} placeholder={t.searchRoman} value={searchBRoman} onChange={(e) => setSearchBRoman(e.target.value)} className="wa-input" />
                   <input style={inpStyle} placeholder={t.airline} value={searchBAirline} onChange={(e) => setSearchBAirline(e.target.value)} className="wa-input" />
                   <select style={inpStyle} value={searchBStatus} onChange={(e) => setSearchBStatus(e.target.value)} className="wa-input">
@@ -2565,7 +2586,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                 </div>
               )}
               <FilterChips chips={[{ key: "r", label: searchBRoman }, { key: "a", label: searchBAirline }, { key: "s", label: searchBStatus }].filter((c) => c.label)} onClear={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }} t={t} />
-              <p style={{ fontSize: 11, color: J.nezumi, marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", filteredFlightPersons.length).replace("{total}", persons.length)}</p>
+              <p style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", filteredFlightPersons.length).replace("{total}", persons.length)}</p>
               <div style={{ overflowX: "auto" }}>
                 <table style={tblW} className="flight-table">
                   <thead><tr style={thead}>
@@ -2587,16 +2608,16 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                       const arrDT = fmtFlightDateTime(fl?.arr_time, lang);
                       const dtCell = (dt) => dt ? (
                         <div>
-                          <div style={{ fontSize: 12.5, fontWeight: 400, color: J.sumi }}>{dt.date}</div>
-                          <div style={{ fontSize: 12.5, fontWeight: 400, color: J.sumi }}>{dt.time}</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--sumi)" }}>{dt.date}</div>
+                          <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--sumi)" }}>{dt.time}</div>
                         </div>
                       ) : "—";
                       const depT = fl?.dep_terminal ? `T${fl.dep_terminal.replace(/^T/i,"")}` : "";
                       const arrT = fl?.arr_terminal ? `T${fl.arr_terminal.replace(/^T/i,"")}` : "";
                       const aptCell = (code, term) => (
                         <div>
-                          <div style={{ fontSize: 12.5, fontWeight: 400, color: J.sumi }}>{code || "—"}</div>
-                          {term && <div style={{ fontSize: 12.5, fontWeight: 400, color: J.sumi }}>{term}</div>}
+                          <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--sumi)" }}>{code || "—"}</div>
+                          {term && <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--sumi)" }}>{term}</div>}
                         </div>
                       );
                       return (
@@ -2628,9 +2649,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
             <div className="tab-content">
               {/* Cost summary banner */}
               <div style={{
-                background: J.sumi,
-                backgroundImage: "linear-gradient(135deg, rgba(43,90,76,.28) 0%, transparent 60%)",
-                color: J.washi, padding: "18px 24px", marginBottom: 20,
+                background: "var(--sumiMid)",
+                backgroundImage: "var(--headerGrad)",
+                color: "var(--washi)", padding: "18px 24px", marginBottom: 20,
                 borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center",
                 boxShadow: "0 2px 12px rgba(0,0,0,.1)",
               }}>
@@ -2638,14 +2659,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                 <strong style={{ fontSize: 22, fontFamily: "'Noto Serif JP',serif", letterSpacing: "-0.01em" }}>{formatMoney(convertMoney(totalHotelCost, project), project, lang)}</strong>
               </div>
               {/* Sub-tabs */}
-              <div style={{ display: "flex", background: J.washi, borderRadius: 8, padding: 4, marginBottom: 20, width: "fit-content", gap: 2 }}>
+              <div style={{ display: "flex", background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 20, width: "fit-content", gap: 2 }}>
                 {[["stays", t.subStay], ["hotels", t.subHotels]].map(([k, lb]) => (
                   <button key={k} type="button" onClick={() => setAccSub(k)} style={{
                     padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12.5,
                     fontFamily: "'Noto Sans JP',sans-serif", letterSpacing: "0.02em",
                     fontWeight: accSub === k ? 600 : 400,
-                    color: accSub === k ? J.sumi : J.nezumi,
-                    background: accSub === k ? J.shiro : "transparent",
+                    color: accSub === k ? "var(--sumi)" : "var(--nezumi)",
+                    background: accSub === k ? "var(--shiro)" : "transparent",
                     borderRadius: 6,
                     boxShadow: accSub === k ? "0 1px 4px rgba(0,0,0,.08)" : "none",
                     transition: "all .15s",
@@ -2669,7 +2690,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                         <button type="button" style={pBtn(!addStayPerson)} disabled={!addStayPerson} onClick={() => { setStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
                       </>
                     )}
-                    <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
+                    <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
                   {(() => {
                     const sortStayRows = (rows) => [...rows].sort((a, b) => {
@@ -2704,44 +2725,52 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                       const isZeroPrice = row.room_number && row.total_amount === 0;
                       return (
                         <tr key={row.id} style={{ background: groupColor ? `${groupColor}0d` : "transparent" }}>
-                          <td style={{ ...tdS(), textAlign: "center", paddingLeft: groupColor ? 10 : tdS().padding, borderLeft: groupColor ? `3px solid ${groupColor}` : "3px solid transparent" }}>
+                          <td className="td-num col-center" style={{ ...tdS({ maxWidth: "none" }), borderLeft: groupColor ? `3px solid ${groupColor}` : "3px solid transparent" }}>
                             {personIndex[row.person_id]}
                           </td>
-                          <td style={tdS()}>{row.person.dept}</td>
-                          <td style={{ ...tdS(), fontWeight: 600 }}>{row.person.name_kanji}</td>
-                          <td style={tdS()}>{row.stay_label || "—"}</td>
-                          <td style={tdS()}>
+                          <td className="col-text" style={tdS()} title={row.person.dept}>{row.person.dept}</td>
+                          <td className="col-text" style={tdS({ fontWeight: 600 })} title={row.person.name_kanji}>{row.person.name_kanji}</td>
+                          <td className="col-text" style={tdS()} title={row.stay_label || ""}>{row.stay_label || "—"}</td>
+                          <td className="room-no-cell" style={tdS({ maxWidth: "none" })}>
                             {canEdit ? (
                               <input
+                                className="room-no-input wa-input"
                                 defaultValue={row.room_number || ""}
                                 placeholder={t.roomNoPending}
-                                style={{ ...inpStyle, width: 70, padding: "3px 6px", fontSize: 12, background: row.room_number ? `${groupColor}22` : "#fff8f0", borderColor: row.room_number ? groupColor : J.kincha, fontWeight: 600, color: groupColor || J.nezumi }}
+                                style={{
+                                  ...inpStyle, padding: "4px 6px", fontSize: 12,
+                                  background: row.room_number ? `${groupColor}22` : "var(--pendingBg)",
+                                  borderColor: row.room_number ? groupColor : "var(--kincha)",
+                                  fontWeight: 600, color: groupColor || "var(--nezumi)",
+                                }}
                                 onBlur={(e) => { if (e.target.value !== (row.room_number || "")) saveRoomNumber(row.id, row.hotel_id, e.target.value); }}
                                 onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
                               />
                             ) : (
-                              <span style={{ color: row.room_number ? groupColor : J.nezumi, fontWeight: row.room_number ? 700 : 400 }}>
+                              <span className="room-no-read" style={{ color: row.room_number ? groupColor : "var(--nezumi)", fontWeight: row.room_number ? 700 : 400 }} title={row.room_number || t.roomNoPending}>
                                 {row.room_number || t.roomNoPending}
                               </span>
                             )}
                           </td>
-                          <td style={tdS()}>{row.roomLabel}</td>
-                          <td style={tdS()}>{fmtDate(row.check_in, lang)}</td>
-                          <td style={tdS()}>{fmtDate(row.check_out, lang)}</td>
-                          <td style={{ ...tdS(), textAlign: "center" }}>{row.nights}</td>
-                          <td style={{ ...tdS(), fontWeight: 600, color: isZeroPrice ? J.usunezumi : J.asagi, fontVariantNumeric: "tabular-nums" }}>
-                            {isZeroPrice ? <span style={{ fontSize: 11, color: J.usunezumi }}>—</span> : formatMoney(convertMoney(row.total_amount, project), project, lang)}
+                          <td className="col-text" style={tdS()} title={row.roomLabel}>{row.roomLabel}</td>
+                          <td className="col-center" style={tdS({ maxWidth: "none" })}>{fmtDate(row.check_in, lang)}</td>
+                          <td className="col-center" style={tdS({ maxWidth: "none" })}>{fmtDate(row.check_out, lang)}</td>
+                          <td className="col-center" style={tdS({ maxWidth: "none" })}>{row.nights}</td>
+                          <td className="td-amt col-center" style={tdS({ maxWidth: "none", fontWeight: 600, color: isZeroPrice ? "var(--usunezumi)" : "var(--asagi)" })}>
+                            {isZeroPrice ? "—" : formatMoney(convertMoney(row.total_amount, project), project, lang)}
                           </td>
-                          <td style={tdS()}>
-                            {canEdit && <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>}
-                            {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>{t.delete}</button>}
+                          <td className="col-actions" style={tdS({ maxWidth: "none" })}>
+                            <div className="tbl-actions">
+                              {canEdit && <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>}
+                              {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>{t.delete}</button>}
+                            </div>
                           </td>
                         </tr>
                       );
                     };
 
                     if (!hotelGroups.length) {
-                      return <p style={{ fontSize: 13, color: J.nezumi, padding: "24px 0" }}>{t.noData}</p>;
+                      return <p style={{ fontSize: 13, color: "var(--nezumi)", padding: "24px 0" }}>{t.noData}</p>;
                     }
 
                     return (
@@ -2756,19 +2785,22 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                             <section key={String(group.hotelId)} style={{ marginBottom: 32 }}>
                               <div style={{
                                 display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8,
-                                marginBottom: 12, paddingBottom: 10, borderBottom: `2px solid ${J.moegi}`,
+                                marginBottom: 12, paddingBottom: 10, borderBottom: `2px solid ${"var(--moegi)"}`,
                               }}>
-                                <h3 style={{ fontSize: 15, fontWeight: 700, color: J.sumi, margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
+                                <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--sumi)", margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
                                   {group.hotelName}
                                 </h3>
-                                <span style={{ fontSize: 11, color: J.nezumi }}>
+                                <span style={{ fontSize: 11, color: "var(--nezumi)" }}>
                                   {rows.length} {t.guestCount}
                                   {st.rooms != null && st.rooms > 0 ? ` · ${st.rooms} ${t.roomCount}` : ""}
                                   {" · "}{formatMoney(convertMoney(subtotal, project), project, lang)}
                                 </span>
                               </div>
                               <div style={{ overflowX: "auto" }}>
-                                <table style={tblW}>
+                                <table style={tblW} className="data-table stay-table">
+                                  <colgroup>
+                                    {STAY_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
+                                  </colgroup>
                                   <thead><tr style={thead}>
                                     {stayHeaders.map((h) => <th key={h} style={thS}>{h}</th>)}
                                   </tr></thead>
@@ -2776,7 +2808,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                                     {assigned.map(stayRow)}
                                     {unassigned.length > 0 && (
                                       <tr>
-                                        <td colSpan={colSpan} style={{ background: "#fff8ec", padding: "6px 12px", fontSize: 11, fontWeight: 700, color: J.kincha, borderTop: "2px dashed " + J.kincha, letterSpacing: "0.06em" }}>
+                                        <td colSpan={colSpan} className="pending-banner" style={{ padding: "6px 12px", fontSize: 11, fontWeight: 700, color: "var(--kincha)", borderTop: "2px dashed var(--kincha)", letterSpacing: "0.06em" }}>
                                           {t.unassignedRoomSection} ({unassigned.length})
                                         </td>
                                       </tr>
@@ -2790,15 +2822,15 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                         })}
 
                         {personsNoStay.length > 0 && (
-                          <div style={{ marginTop: 8, padding: "14px 18px", background: "#fff8ec", border: "1.5px dashed " + J.kincha, borderRadius: 8 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: J.kincha, marginBottom: 8 }}>{t.unassignedRooms}</div>
-                            <p style={{ fontSize: 11, color: J.nezumi, margin: "0 0 10px" }}>{t.unassignedRoomsHint}</p>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          <div className="pending-banner" style={{ marginTop: 8, padding: "14px 18px", border: "1.5px dashed var(--kincha)", borderRadius: 8 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)", marginBottom: 8 }}>{t.unassignedRooms}</div>
+                            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>{t.unassignedRoomsHint}</p>
+                            <div className="unassigned-tags">
                               {personsNoStay.map((p) => (
-                                <div key={p.id} style={{ background: J.shiro, border: "1px solid " + J.keisenL, borderRadius: 6, padding: "5px 10px", fontSize: 11.5 }}>
-                                  <span style={{ fontWeight: 600 }}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
-                                  {p.dept && <span style={{ color: J.nezumi, marginLeft: 6, fontSize: 10.5 }}>{p.dept}</span>}
-                                  {canEdit && <button type="button" style={{ ...aBtn, marginLeft: 8, fontSize: 10, padding: "2px 7px" }} onClick={() => setStayModal({ pid: p.id, stayId: null, data: null })}>{t.addSegment}</button>}
+                                <div key={p.id} className="unassigned-tag">
+                                  <span className="tag-name" title={p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
+                                  {p.dept && <span className="tag-dept">{p.dept}</span>}
+                                  {canEdit && <button type="button" style={{ ...aBtn, fontSize: 10, padding: "2px 7px", flexShrink: 0 }} onClick={() => setStayModal({ pid: p.id, stayId: null, data: null })}>{t.addSegment}</button>}
                                 </div>
                               ))}
                             </div>
@@ -2809,8 +2841,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                   })()}
                   <div style={{ marginTop: 28 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                      <div style={{ width: 3, height: 14, background: J.kincha, borderRadius: 2 }} />
-                      <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: J.sumi, margin: 0 }}>{t.hotelStats}</h3>
+                      <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
+                      <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStats}</h3>
                     </div>
                     <div style={{ overflowX: "auto" }}>
                       <table style={tblW}>
@@ -2845,11 +2877,11 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                   {hotels.filter((h) => !searchD || [h.name, h.address, h.tel].some((v) => (v || "").toLowerCase().includes(searchD.toLowerCase()))).map((h) => {
                     const hRules = pricingRules.filter((r) => +r.hotel_id === h.id).sort((a, b) => a.date > b.date ? 1 : -1);
                     return (
-                      <div key={h.id} style={{ background: J.shiro, borderRadius: 8, border: "1px solid " + J.keisenL, marginBottom: 14, padding: "18px 20px", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
+                      <div key={h.id} style={{ background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)", marginBottom: 14, padding: "18px 20px", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
-                            <strong style={{ fontSize: 14, color: J.sumi, fontFamily: "'Noto Serif JP',serif" }}>{h.name}</strong>
-                            <div style={{ fontSize: 11.5, color: J.nezumi, marginTop: 3 }}>{h.address}{h.tel ? ` · ${h.tel}` : ""}</div>
+                            <strong style={{ fontSize: 14, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif" }}>{h.name}</strong>
+                            <div style={{ fontSize: 11.5, color: "var(--nezumi)", marginTop: 3 }}>{h.address}{h.tel ? ` · ${h.tel}` : ""}</div>
                           </div>
                           {canEdit && <>
                             <button type="button" style={eBtn} onClick={() => setHotelModal({ mode: "edit", data: h })}>{t.edit}</button>
@@ -2861,7 +2893,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                             <span style={{ fontSize: 11, fontWeight: 600 }}>{t.datePrice}</span>
                             {canEdit && <button type="button" onClick={() => setPriceModal({ mode: "add", hotelId: h.id, hotelName: h.name })} style={{ ...aBtn, margin: 0 }}>{t.addRule}</button>}
                           </div>
-                          {hRules.length === 0 ? <p style={{ fontSize: 12, color: J.usunezumi }}>{t.noData}</p> : (
+                          {hRules.length === 0 ? <p style={{ fontSize: 12, color: "var(--usunezumi)" }}>{t.noData}</p> : (
                             <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
                               <thead><tr>{[t.date, t.roomType, t.finalPrice, t.action].map((lb) => <th key={lb} style={{ textAlign: "left", padding: 6 }}>{lb}</th>)}</tr></thead>
                               <tbody>
@@ -2892,9 +2924,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
             <div className="tab-content">
               {/* Vehicle stats banner */}
               <div style={{
-                background: J.sumi,
-                backgroundImage: "linear-gradient(135deg, rgba(43,90,76,.28) 0%, transparent 60%)",
-                color: J.washi, padding: "18px 24px", marginBottom: 24,
+                background: "var(--sumiMid)",
+                backgroundImage: "var(--headerGrad)",
+                color: "var(--washi)", padding: "18px 24px", marginBottom: 24,
                 borderRadius: 8, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, alignItems: "center",
                 boxShadow: "0 2px 12px rgba(0,0,0,.1)",
               }}>
@@ -2913,13 +2945,13 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                 <div style={{ flex: "1 1 520px", minWidth: 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 3, height: 18, background: J.moegi, borderRadius: 2 }} />
-                      <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: J.sumi, margin: 0 }}>{t.vehicleMgmt}</h2>
+                      <div style={{ width: 3, height: 18, background: "var(--moegi)", borderRadius: 2 }} />
+                      <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.vehicleMgmt}</h2>
                     </div>
                     {canEdit && <button type="button" onClick={() => setVehicleModal({ mode: "add" })} style={pBtn(false)}>{t.addVehicle}</button>}
                   </div>
                   {vehicles.length === 0 ? (
-                    <div style={{ padding: "50px 40px", textAlign: "center", background: J.shiro, border: "1px solid " + J.keisenL, borderRadius: 8, color: J.nezumi, fontSize: 13 }}>{t.noVehicleHint}</div>
+                    <div style={{ padding: "50px 40px", textAlign: "center", background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8, color: "var(--nezumi)", fontSize: 13 }}>{t.noVehicleHint}</div>
                   ) : (<>
                     {/* ── Vehicle card grid ── */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 14 }}>
@@ -2936,26 +2968,26 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                         const pct = cap ? Math.min(100, (onboard / cap) * 100) : 0;
                         const isFull = onboard >= cap;
                         return (
-                          <div key={v.id} style={{ background: J.shiro, borderRadius: 8, border: "1px solid " + J.keisenL, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+                          <div key={v.id} style={{ background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
                             {/* Vehicle header */}
-                            <div style={{ background: J.sumiMid, color: J.washi, padding: "14px 18px" }}>
+                            <div style={{ background: "var(--sumiMid)", color: "var(--washi)", padding: "14px 18px" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                                 <div>
                                   <strong style={{ fontSize: 14, fontFamily: "'Noto Serif JP',serif" }}>{v.name}</strong>
                                   <div style={{ fontSize: 10.5, marginTop: 4, opacity: 0.65, letterSpacing: "0.04em" }}>{v.region} · {v.type} · {onboard}/{cap} {t.passengers_unit}</div>
                                 </div>
                                 <div style={{ display: "flex", gap: 6 }}>
-                                  {canEdit && <button type="button" style={{ ...eBtn, color: J.washi, borderColor: "rgba(253,252,249,.2)", background: "rgba(253,252,249,.08)", marginRight: 0 }} onClick={() => setVehicleModal({ mode: "edit", data: v })}>{t.edit}</button>}
+                                  {canEdit && <button type="button" style={{ ...eBtn, color: "var(--washi)", borderColor: "rgba(253,252,249,.2)", background: "rgba(253,252,249,.08)", marginRight: 0 }} onClick={() => setVehicleModal({ mode: "edit", data: v })}>{t.edit}</button>}
                                   {canDelete && <button type="button" style={{ ...dBtn, color: "#ff9a9a", borderColor: "rgba(255,100,100,.3)", background: "rgba(255,80,80,.08)" }} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.deleteWhere("vehicle_assignments", "vehicle_id", v.id).catch(() => {}); await api.delete("vehicles", v.id); setVehicles((x) => x.filter((y) => y.id !== v.id)); } }}>×</button>}
                                 </div>
                               </div>
                               {/* Capacity bar */}
                               <div style={{ height: 3, background: "rgba(255,255,255,.15)", marginTop: 10, borderRadius: 2, overflow: "hidden" }}>
-                                <div style={{ height: 3, width: pct + "%", background: isFull ? "#ff6b6b" : J.moegi2, borderRadius: 2, transition: "width .4s" }} />
+                                <div style={{ height: 3, width: pct + "%", background: isFull ? "#ff6b6b" : "var(--moegi2)", borderRadius: 2, transition: "width .4s" }} />
                               </div>
                             </div>
                             {(v.vehicle_no || v.driver_phone || v.license_plate || v.pickup_time || v.pickup_location || v.arrival_time || v.arrival_location || v.note) && (
-                              <div style={{ padding: "8px 14px", background: J.washi, borderBottom: "1px solid " + J.keisenL, fontSize: 11.5, color: J.sumi, lineHeight: 1.7 }}>
+                              <div style={{ padding: "8px 14px", background: "var(--washi)", borderBottom: "1px solid var(--keisenL)", fontSize: 11.5, color: "var(--sumi)", lineHeight: 1.7 }}>
                                 {v.vehicle_no && <span style={{ marginRight: 12 }}>{t.vehicleNo}: {v.vehicle_no}</span>}
                                 {v.driver_phone && <span style={{ marginRight: 12 }}>{t.driverPhone}: {v.driver_phone}</span>}
                                 {v.license_plate && <span style={{ marginRight: 12 }}>{t.licensePlate}: {v.license_plate}</span>}
@@ -2964,24 +2996,24 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                                 )}
                                 {(v.pickup_time || v.pickup_location) && <span style={{ marginRight: 12 }}>{v.pickup_time}{v.pickup_location ? ` ${v.pickup_location}` : ""}</span>}
                                 {(v.arrival_time || v.arrival_location) && <span style={{ marginRight: 12 }}>→ {v.arrival_time}{v.arrival_location ? ` ${v.arrival_location}` : ""}</span>}
-                                {v.note && <span style={{ color: J.nezumi }}>{v.note}</span>}
+                                {v.note && <span style={{ color: "var(--nezumi)" }}>{v.note}</span>}
                               </div>
                             )}
                             <div style={{ padding: "12px 14px" }}>
                               {assigns.length > 0 && (
-                                <div style={{ fontSize: 11, color: J.nezumi, marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid " + J.keisenL }}>
-                                  {t.onboardDepts}: <span style={{ fontWeight: 600, color: J.sumi }}>{vehicleDeptSummary(assigns, persons) || "—"}</span>
+                                <div style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid var(--keisenL)" }}>
+                                  {t.onboardDepts}: <span style={{ fontWeight: 600, color: "var(--sumi)" }}>{vehicleDeptSummary(assigns, persons) || "—"}</span>
                                 </div>
                               )}
                               {assigns.map((a) => {
                                 const p = persons.find((x) => x.id === a.person_id);
                                 if (!p) return null;
                                 return (
-                                  <div key={a.id || `${a.person_id}-${a.role}-${a.segment_label}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid " + J.keisenL, fontSize: 12 }}>
+                                  <div key={a.id || `${a.person_id}-${a.role}-${a.segment_label}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--keisenL)", fontSize: 12 }}>
                                     <div>
-                                      <span style={{ fontWeight: 600, color: J.sumi }}>{p.dept || "—"}</span>
-                                      <span style={{ fontSize: 11, color: J.nezumi, marginLeft: 8 }}>{p.name_kanji}</span>
-                                      {a.role === "driver" && <span style={{ fontSize: 9.5, color: J.moegi, fontWeight: 600, marginLeft: 6, padding: "1px 5px", background: J.moegi3, borderRadius: 3 }}>{t.driver}</span>}
+                                      <span style={{ fontWeight: 600, color: "var(--sumi)" }}>{p.dept || "—"}</span>
+                                      <span style={{ fontSize: 11, color: "var(--nezumi)", marginLeft: 8 }}>{p.name_kanji}</span>
+                                      {a.role === "driver" && <span style={{ fontSize: 9.5, color: "var(--moegi)", fontWeight: 600, marginLeft: 6, padding: "1px 5px", background: "var(--moegi3)", borderRadius: 3 }}>{t.driver}</span>}
                                     </div>
                                     {canEdit && <button type="button" style={dBtn} onClick={() => removeAssignment(a)}>×</button>}
                                   </div>
@@ -3004,7 +3036,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                                   }}>+</button>
                                   {addTripVehicle === v.id && tripPerson && (() => {
                                     const sel = persons.find((x) => x.id === +tripPerson);
-                                    return sel?.dept ? <span style={{ fontSize: 11, fontWeight: 600, color: J.moegi, width: "100%" }}>{t.dept}: {sel.dept}</span> : null;
+                                    return sel?.dept ? <span style={{ fontSize: 11, fontWeight: 600, color: "var(--moegi)", width: "100%" }}>{t.dept}: {sel.dept}</span> : null;
                                   })()}
                                 </div>
                               )}
@@ -3016,21 +3048,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                   </>)}
                 </div>
                 <aside style={{ flex: "0 1 280px", position: "sticky", top: 16 }}>
-                  <div style={{ background: J.shiro, border: "1px solid " + J.keisenL }}>
-                    <div style={{ background: personsWithNoTrips.length ? J.shu : J.moegi, color: J.washi, padding: "12px 16px", display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)" }}>
+                    <div style={{ background: personsWithNoTrips.length ? "var(--shu)" : "var(--moegi)", color: "var(--washi)", padding: "12px 16px", display: "flex", justifyContent: "space-between" }}>
                       <span>{t.unassigned}</span><span>{personsWithNoTrips.length}</span>
                     </div>
                     <div style={{ maxHeight: 400, overflowY: "auto" }}>
                       {personsWithNoTrips.map((p) => (
-                        <div key={p.id} style={{ padding: "8px 16px", borderBottom: "1px solid " + J.keisenL, fontSize: 12 }}>
+                        <div key={p.id} style={{ padding: "8px 16px", borderBottom: "1px solid var(--keisenL)", fontSize: 12 }}>
                           <div style={{ fontWeight: 600 }}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</div>
-                          <div style={{ fontSize: 10, color: J.nezumi }}>{p.dept}</div>
+                          <div style={{ fontSize: 10, color: "var(--nezumi)" }}>{p.dept}</div>
                         </div>
                       ))}
                     </div>
-                    <p style={{ padding: 10, fontSize: 10, color: J.nezumi }}>{t.unassignedHint}</p>
+                    <p style={{ padding: 10, fontSize: 10, color: "var(--nezumi)" }}>{t.unassignedHint}</p>
                   </div>
-                  <div style={{ marginTop: 12, background: J.washi, padding: 12, fontSize: 11, color: J.nezumi, lineHeight: 1.5 }}>
+                  <div style={{ marginTop: 12, background: "var(--washi)", padding: 12, fontSize: 11, color: "var(--nezumi)", lineHeight: 1.5 }}>
                     {t.personTrips}: {t.segmentMorning} / {t.segmentEvening} / {t.segmentTransfer}
                   </div>
                 </aside>
@@ -3056,8 +3088,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
         const otherPersons = roomPriceLockModal.sameRoomStays.map((s) => persons.find((p) => p.id === s.person_id)).filter(Boolean);
         return (
           <Modal title={t.roomPriceLockTitle} onClose={() => setRoomPriceLockModal(null)}>
-            <p style={{ fontSize: 13, color: J.sumi, marginBottom: 16, lineHeight: 1.6 }}>{t.roomPriceLockMsg}</p>
-            <div style={{ fontSize: 12, color: J.nezumi, marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: "var(--sumi)", marginBottom: 16, lineHeight: 1.6 }}>{t.roomPriceLockMsg}</p>
+            <div style={{ fontSize: 12, color: "var(--nezumi)", marginBottom: 20 }}>
               <div>・{t.roomNoPending}: <strong>{thisStay?.room_number}</strong></div>
               <div>・{t.nameKanji}: <strong>{thisPerson?.name_kanji}</strong> + {otherPersons.map((p) => p.name_kanji).join("、")}</div>
             </div>
@@ -3065,10 +3097,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
               <button type="button" style={pBtn(false)} onClick={() => applyRoomPriceLock(roomPriceLockModal.stayId)}>
                 {t.roomPriceLockSelf}
               </button>
-              <button type="button" style={{ ...pBtn(false), background: J.shiro, color: J.sumi, border: "1px solid " + J.keisenM }} onClick={() => applyRoomPriceLock(roomPriceLockModal.sameRoomStays[0].id)}>
+              <button type="button" style={{ ...pBtn(false), background: "var(--shiro)", color: "var(--sumi)", border: "1px solid var(--keisenM)" }} onClick={() => applyRoomPriceLock(roomPriceLockModal.sameRoomStays[0].id)}>
                 {t.roomPriceLockOther}
               </button>
-              <button type="button" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: J.nezumi, marginTop: 4 }} onClick={() => setRoomPriceLockModal(null)}>{t.cancel}</button>
+              <button type="button" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "var(--nezumi)", marginTop: 4 }} onClick={() => setRoomPriceLockModal(null)}>{t.cancel}</button>
             </div>
           </Modal>
         );
@@ -3082,73 +3114,39 @@ function GlobalStyles() {
   return (
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=Noto+Serif+JP:wght@300;400;600&display=swap');
-
       *, *::before, *::after { box-sizing: border-box; }
-
-      body {
-        margin: 0;
-        background: ${J.bg};
-        font-family: 'Noto Sans JP', -apple-system, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        color: ${J.sumi};
-      }
-
-      /* ── Scrollbar ── */
+      body { margin: 0; background: var(--bg); font-family: 'Noto Sans JP', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; color: var(--sumi); }
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: ${J.keisenD}; border-radius: 3px; }
-      ::-webkit-scrollbar-thumb:hover { background: ${J.nezumi}; }
-
-      /* ── Input focus ring ── */
-      .wa-input:focus {
-        border-color: ${J.moegi} !important;
-        box-shadow: 0 0 0 3px rgba(43,90,76,.12) !important;
-      }
-      .wa-input::placeholder { color: ${J.usunezumi}; }
-
-      /* ── Table hover rows ── */
-      tbody tr:hover td { background: rgba(43,90,76,.035) !important; }
-
-      /* ── Project card hover ── */
-      .proj-card:hover {
-        box-shadow: 0 4px 24px rgba(0,0,0,.1), 0 0 0 1px ${J.keisenM} !important;
-        transform: translateY(-2px);
-      }
-
-      /* ── Animations ── */
-      @keyframes toastIn {
-        from { opacity: 0; transform: translateY(-10px) scale(.96); }
-        to   { opacity: 1; transform: translateY(0)    scale(1);    }
-      }
-      @keyframes modalIn {
-        from { opacity: 0; transform: scale(.97) translateY(6px); }
-        to   { opacity: 1; transform: scale(1)   translateY(0);   }
-      }
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to   { transform: rotate(360deg); }
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(4px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-
-      /* ── Flight table center alignment ── */
-      .flight-table th,
-      .flight-table td { text-align: center; }
+      ::-webkit-scrollbar-thumb { background: var(--keisenD); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--nezumi); }
+      .wa-input:focus { border-color: var(--moegi) !important; box-shadow: 0 0 0 3px var(--focusRing) !important; }
+      .wa-input::placeholder { color: var(--usunezumi); }
+      tbody tr:hover td { background: var(--rowHover) !important; }
+      .proj-card:hover { box-shadow: 0 4px 24px rgba(0,0,0,.1), 0 0 0 1px var(--keisenM) !important; transform: translateY(-2px); }
+      @keyframes toastIn { from { opacity: 0; transform: translateY(-10px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      @keyframes modalIn { from { opacity: 0; transform: scale(.97) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+      .flight-table th, .flight-table td { text-align: center; }
       .flight-table th:nth-child(3), .flight-table td:nth-child(3),
       .flight-table th:nth-child(4), .flight-table td:nth-child(4) { text-align: left; }
-
-      /* ── PDF/Print removed — use CSV export from header instead ── */
-
-      /* ── Number column (table index) ── */
-      .td-num { color: ${J.usunezumi}; font-variant-numeric: tabular-nums; }
-
-      /* ── Amount highlight ── */
-      .td-amt { font-weight: 600; color: ${J.asagi}; font-variant-numeric: tabular-nums; }
-
-      /* ── Section fade-in ── */
+      .td-num { color: var(--usunezumi); font-variant-numeric: tabular-nums; text-align: center; }
+      .td-amt { font-weight: 600; color: var(--asagi); font-variant-numeric: tabular-nums; text-align: right; }
       .tab-content { animation: fadeIn .22s ease both; }
+      .data-table { table-layout: fixed; width: 100%; }
+      .data-table .col-text { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .data-table .col-center { text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; max-width: none; }
+      .data-table .col-actions { text-align: center; white-space: nowrap; max-width: none; }
+      .data-table .col-actions .tbl-actions { display: inline-flex; flex-wrap: nowrap; gap: 4px; justify-content: center; align-items: center; }
+      .room-no-cell { text-align: center; max-width: none !important; overflow: visible; }
+      .room-no-input { width: 100%; max-width: 72px; margin: 0 auto; display: block; text-align: center; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
+      .room-no-read { display: inline-block; max-width: 72px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+      .pending-banner { background: var(--pendingBg); border-color: var(--pendingBorder); }
+      .unassigned-tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+      .unassigned-tag { display: inline-flex; align-items: center; gap: 8px; flex: 0 1 auto; min-width: 0; max-width: 100%; background: var(--shiro); border: 1px solid var(--keisenL); border-radius: 6px; padding: 6px 12px; font-size: 11.5; }
+      .unassigned-tag .tag-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
+      .unassigned-tag .tag-dept { color: var(--nezumi); font-size: 10.5px; flex-shrink: 0; }
     `}</style>
   );
 }
@@ -3160,8 +3158,14 @@ function App() {
   const [project, setProject] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [lang, setLang] = useState(() => localStorage.getItem("app_lang") || "zh-TW");
+  const [theme, setTheme] = useState(() => (localStorage.getItem("app_theme") === "dark" ? "dark" : "light"));
   const [booting, setBooting] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+
+  useLayoutEffect(() => {
+    applyThemeVars(theme);
+    localStorage.setItem("app_theme", theme);
+  }, [theme]);
 
   // ── Detect password reset link (type=recovery in URL hash) ──
   const recoveryToken = useMemo(() => {
@@ -3231,9 +3235,9 @@ function App() {
   if (booting) return (
     <>
       <GlobalStyles />
-      <div style={{ minHeight: "100vh", background: J.sumi, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-        <div style={{ fontSize: 36, fontFamily: "'Noto Serif JP',serif", color: J.moegi2, animation: "fadeIn 1s ease both" }}>映</div>
-        <div style={{ fontSize: 11, color: J.nezumi, letterSpacing: "0.18em", textTransform: "uppercase" }}>{T[lang].loading}</div>
+      <div style={{ minHeight: "100vh", background: "var(--sumiMid)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <div style={{ fontSize: 36, fontFamily: "'Noto Serif JP',serif", color: "var(--moegi2)", animation: "fadeIn 1s ease both" }}>映</div>
+        <div style={{ fontSize: 11, color: "var(--nezumi)", letterSpacing: "0.18em", textTransform: "uppercase" }}>{T[lang].loading}</div>
       </div>
     </>
   );
@@ -3244,8 +3248,9 @@ function App() {
     </>
   );
   if (!token) return <><GlobalStyles /><LoginScreen onLogin={(tk, u, l) => applyAuth(tk, u, l)} /></>;
-  if (!project) return <><GlobalStyles /><ProjectSelector user={user} isSystemOwner={isSystemOwner} lang={lang} onLangChange={handleLangChange} onSelect={(proj, role) => { setProject(proj); setUserRole(isSystemOwner && !role ? "owner" : role); }} /></>;
-  return <><GlobalStyles /><ProjectApp project={project} userRole={userRole} user={user} isSystemOwner={isSystemOwner} lang={lang} onLangChange={handleLangChange} onBack={() => { setProject(null); setUserRole(null); }} onProjectUpdate={setProject} /></>;
+  const handleThemeChange = (m) => setTheme(m === "dark" ? "dark" : "light");
+  if (!project) return <><GlobalStyles /><ProjectSelector user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onSelect={(proj, role) => { setProject(proj); setUserRole(isSystemOwner && !role ? "owner" : role); }} /></>;
+  return <><GlobalStyles /><ProjectApp project={project} userRole={userRole} user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onBack={() => { setProject(null); setUserRole(null); }} onProjectUpdate={setProject} /></>;
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
