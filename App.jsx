@@ -213,6 +213,10 @@ const T = {
     hotel: "飯店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房價/晚", nights: "天數", totalAmt: "合計",
     roommate: "同室者", singleRoom: "單人房", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同室設定", roommateNone: "無（單人房）",
     totalCost: "飯店總費用", hotelStats: "各飯店統計", guestCount: "入住人次", roomCount: "客室數", roomOccupancy: "每房人數", totalSpend: "總費用",
+    roomAssignTitle: "配房工具", stepPickHotel: "① 選飯店", stepPickDate: "② 選日期", stepPickRoom: "③ 房號與住客",
+    roomAssignRoomPh: "輸入或選擇房號", roomAssignGuests: "勾選住客", roomAssignApply: "套用房號",
+    roomAssignDone: "已更新 {n} 筆房號", roomAssignPickHotel: "請先選擇飯店", roomAssignPickDate: "請選擇入住日",
+    roomAssignPickRoom: "請輸入房號並勾選住客", allHotels: "全部飯店",
     datePrice: "日期別房價", addRule: "新增規則", addHotel: "新增飯店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "節日加算", finalPrice: "最終房價",
     hotelName: "飯店名稱", hotelAddr: "地址", hotelTel: "電話", targetHotel: "對象飯店", customRoomType: "自訂房型", breakdownTitle: "每日房價明細",
@@ -228,7 +232,10 @@ const T = {
     roomPriceLockTitle: "房間費用歸屬", roomPriceLockMsg: "此房號已有其他入住者，由誰負擔房間費用？",
     roomPriceLockSelf: "由此人負擔（其他人設為 ¥0）", roomPriceLockOther: "由原有人負擔（此人設為 ¥0）",
     searchHotelName: "搜尋飯店…", searchRoomType: "搜尋房型…", searchRoman: "羅馬拼音", searchStatus: "安排狀態", allStatus: "全部狀態",
-    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除篩選", exportCSV: "匯出 CSV",
+    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除篩選", exportCSV: "匯出 CSV", importCSV: "匯入 CSV",
+    importEmpty: "檔案內沒有可匯入的資料", importFormatError: "CSV 格式不符，請先「匯出 CSV」取得正確欄位標題後再填入",
+    importConfirm: "將匯入 {n} 筆工作人員（編號相同者更新，否則以「部門＋姓名（漢字）」比對更新，其餘新增）。是否繼續？",
+    importDone: "匯入完成：{ok} 筆成功{fail}", importFailSuffix: "，{fail} 筆失敗", importing: "匯入中…",
     noRequests: "目前沒有待審核申請", pendingBadge: "待審核", approveTitle: "批准申請", approve: "批准", reject: "拒絕", rejectConfirm: "確定拒絕 {email} 的申請？",
     approveProject: "指定專案", approveRole: "權限角色", approveNote: "批准後可在「成員管理」隨時調整。", confirmApproveBtn: "確認批准", selectProject: "請選擇專案",
     roleViewerDesc: "唯讀 — 僅能查看", roleEditorDesc: "編輯 — 可新增修改", roleAdminDesc: "管理員 — 可刪除與成員管理",
@@ -283,6 +290,10 @@ const T = {
     hotel: "饭店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房价/晚", nights: "天数", totalAmt: "合计",
     roommate: "同住者", singleRoom: "单人间", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同住设置", roommateNone: "无（单人间）",
     totalCost: "饭店总费用", hotelStats: "各饭店统计", guestCount: "入住人次", roomCount: "客房数", roomOccupancy: "每房人数", totalSpend: "总费用",
+    roomAssignTitle: "配房工具", stepPickHotel: "① 选饭店", stepPickDate: "② 选日期", stepPickRoom: "③ 房号与住客",
+    roomAssignRoomPh: "输入或选择房号", roomAssignGuests: "勾选住客", roomAssignApply: "套用房号",
+    roomAssignDone: "已更新 {n} 笔房号", roomAssignPickHotel: "请先选择饭店", roomAssignPickDate: "请选择入住日",
+    roomAssignPickRoom: "请输入房号并勾选住客", allHotels: "全部饭店",
     datePrice: "日期别房价", addRule: "新增规则", addHotel: "新增饭店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "节日加算", finalPrice: "最终房价",
     hotelName: "饭店名称", hotelAddr: "地址", hotelTel: "电话", targetHotel: "对象饭店", customRoomType: "自定义房型", breakdownTitle: "每日房价明细",
@@ -298,7 +309,10 @@ const T = {
     roomPriceLockTitle: "房间费用归属", roomPriceLockMsg: "此房号已有其他入住者，由谁承担房间费用？",
     roomPriceLockSelf: "由此人承担（其他人设为 ¥0）", roomPriceLockOther: "由原有人承担（此人设为 ¥0）",
     searchHotelName: "搜索饭店…", searchRoomType: "搜索房型…", searchRoman: "罗马拼音", searchStatus: "安排状态", allStatus: "全部状态",
-    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除筛选", exportCSV: "导出 CSV",
+    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除筛选", exportCSV: "导出 CSV", importCSV: "导入 CSV",
+    importEmpty: "文件内没有可导入的数据", importFormatError: "CSV 格式不符，请先「导出 CSV」取得正确栏位标题后再填入",
+    importConfirm: "将导入 {n} 笔工作人员（编号相同者更新，否则以「部门＋姓名（汉字）」比对更新，其余新增）。是否继续？",
+    importDone: "导入完成：{ok} 笔成功{fail}", importFailSuffix: "，{fail} 笔失败", importing: "导入中…",
     noRequests: "暂无待审核申请", pendingBadge: "待审核", approveTitle: "批准申请", approve: "批准", reject: "拒绝", rejectConfirm: "确定拒绝 {email} 的申请？",
     approveProject: "指定项目", approveRole: "权限角色", approveNote: "批准后可在「成员管理」随时调整。", confirmApproveBtn: "确认批准", selectProject: "请选择项目",
     roleViewerDesc: "只读 — 仅能查看", roleEditorDesc: "编辑 — 可新增修改", roleAdminDesc: "管理员 — 可删除与成员管理",
@@ -366,7 +380,10 @@ const T = {
     roomPriceLockTitle: "Room Cost", roomPriceLockMsg: "This room already has occupants. Who covers the room cost?",
     roomPriceLockSelf: "This person pays (others set to ¥0)", roomPriceLockOther: "Original occupant pays (this person set to ¥0)",
     searchHotelName: "Search hotel…", searchRoomType: "Search room type…", searchRoman: "Romanized", searchStatus: "Status", allStatus: "All",
-    arranged_short: "Done", unArranged_short: "Pending", partial_short: "Partial", clearFilter: "Clear filters", exportCSV: "Export CSV",
+    arranged_short: "Done", unArranged_short: "Pending", partial_short: "Partial", clearFilter: "Clear filters", exportCSV: "Export CSV", importCSV: "Import CSV",
+    importEmpty: "No rows to import", importFormatError: "Invalid CSV — export staff CSV first and use the same headers",
+    importConfirm: "Import {n} staff row(s)? Same No. updates that row; else match dept + name (Kanji); otherwise add new. Continue?",
+    importDone: "Import done: {ok} succeeded{fail}", importFailSuffix: ", {fail} failed", importing: "Importing…",
     noRequests: "No pending requests", pendingBadge: "Pending", approveTitle: "Approve", approve: "Approve", reject: "Reject", rejectConfirm: "Reject {email}?",
     approveProject: "Project", approveRole: "Role", approveNote: "Role can be changed later in Members.", confirmApproveBtn: "Confirm", selectProject: "Select a project",
     roleViewerDesc: "Viewer — read only", roleEditorDesc: "Editor — edit data", roleAdminDesc: "Admin — delete & members",
@@ -433,7 +450,10 @@ const T = {
     roomPriceLockTitle: "객실 비용 귀속", roomPriceLockMsg: "이 객실에 이미 다른 투숙자가 있습니다. 누가 비용을 부담합니까?",
     roomPriceLockSelf: "이 사람이 부담 (나머지 ¥0)", roomPriceLockOther: "기존 투숙자가 부담 (이 사람 ¥0)",
     searchHotelName: "호텔…", searchRoomType: "객실…", searchRoman: "로마자", searchStatus: "상태", allStatus: "전체",
-    arranged_short: "완료", unArranged_short: "미배정", partial_short: "일부", clearFilter: "필터 초기화", exportCSV: "CSV",
+    arranged_short: "완료", unArranged_short: "미배정", partial_short: "일부", clearFilter: "필터 초기화", exportCSV: "CSV보내기", importCSV: "CSV 가져오기",
+    importEmpty: "가져올 데이터 없음", importFormatError: "CSV 형식 오류 — 먼저보내기로 양식 확인",
+    importConfirm: "{n}명 가져오기 (번호 일치 시 수정, 부서+이름 일치 시 수정, 나머지 추가). 계속?",
+    importDone: "완료: {ok}건{fail}", importFailSuffix: ", 실패 {fail}건", importing: "가져오는 중…",
     noRequests: "대기 신청 없음", pendingBadge: "검토 중", approveTitle: "승인", approve: "승인", reject: "거절", rejectConfirm: "{email} 거절?",
     approveProject: "프로젝트", approveRole: "역할", approveNote: "멤버 관리에서 변경 가능합니다.", confirmApproveBtn: "확인", selectProject: "프로젝트 선택",
     roleViewerDesc: "열람만", roleEditorDesc: "편집 가능", roleAdminDesc: "관리자",
@@ -499,7 +519,10 @@ const T = {
     roomPriceLockTitle: "部屋代帰属", roomPriceLockMsg: "この部屋番号にはすでに入室者がいます。部屋代を誰が負担しますか？",
     roomPriceLockSelf: "この人が負担（他は ¥0）", roomPriceLockOther: "既入室者が負担（この人は ¥0）",
     searchHotelName: "ホテル…", searchRoomType: "部屋…", searchRoman: "ローマ字", searchStatus: "状況", allStatus: "すべて",
-    arranged_short: "済", unArranged_short: "未", partial_short: "一部", clearFilter: "クリア", exportCSV: "CSV",
+    arranged_short: "済", unArranged_short: "未", partial_short: "一部", clearFilter: "クリア", exportCSV: "CSV出力", importCSV: "CSV取込",
+    importEmpty: "取込データなし", importFormatError: "CSV形式が違います。先にCSV出力で見本を取得してください",
+    importConfirm: "{n}件を取込（番号一致は更新、部署+氏名一致は更新、他は新規）。続行しますか？",
+    importDone: "完了：{ok}件{fail}", importFailSuffix: "、失敗{fail}件", importing: "取込中…",
     noRequests: "申請なし", pendingBadge: "審査中", approveTitle: "承認", approve: "承認", reject: "拒否", rejectConfirm: "{email} を拒否？",
     approveProject: "プロジェクト", approveRole: "ロール", approveNote: "メンバー管理で変更可", confirmApproveBtn: "確定", selectProject: "プロジェクトを選択",
     roleViewerDesc: "閲覧のみ", roleEditorDesc: "編集可", roleAdminDesc: "管理者",
@@ -533,6 +556,81 @@ const T = {
 
 const starLabel = (s) => (s === 3 ? "★★★" : s === 2 ? "★★" : s === 1 ? "★" : "");
 const IMPORTANCE = [3, 2, 1, 0];
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+  const s = String(text).replace(/^\uFEFF/, "");
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inQuotes) {
+      if (c === '"' && s[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') inQuotes = false;
+      else cell += c;
+    } else if (c === '"') inQuotes = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || (c === "\r" && s[i + 1] === "\n")) {
+      if (c === "\r") i++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else if (c !== "\r") cell += c;
+  }
+  if (cell.length || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter((r) => r.some((x) => String(x ?? "").trim() !== ""));
+}
+
+function staffCsvPersonHeaders(t) {
+  return [t.no, t.dept, t.nameKanji, t.nameRoman, t.importance, t.passport, t.dob, t.passportExp, t.diet];
+}
+
+function isStaffCsvHeader(row, t) {
+  const exp = staffCsvPersonHeaders(t);
+  return exp.every((h, i) => String(row[i] ?? "").trim() === h);
+}
+
+function parseStaffRoman(val) {
+  const s = String(val ?? "").trim();
+  if (!s) return { last_roman: "", first_roman: "" };
+  const i = s.indexOf(" ");
+  if (i < 0) return { last_roman: s, first_roman: "" };
+  return { last_roman: s.slice(0, i), first_roman: s.slice(i + 1).trim() };
+}
+
+function parseStaffImportance(val) {
+  const s = String(val ?? "").trim();
+  if (!s || s === "—" || s === "-") return 0;
+  const n = parseInt(s, 10);
+  if (!Number.isNaN(n) && n >= 0 && n <= 3) return n;
+  const stars = (s.match(/★/g) || []).length;
+  return stars ? Math.min(3, stars) : 0;
+}
+
+function normalizeStaffCsvDate(val) {
+  const s = String(val ?? "").trim();
+  if (!s) return null;
+  const m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (m) return `${m[1]}-${String(m[2]).padStart(2, "0")}-${String(m[3]).padStart(2, "0")}`;
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+
+function rowToStaffPerson(row) {
+  const dept = String(row[1] ?? "").trim();
+  const name_kanji = String(row[2] ?? "").trim();
+  const { last_roman, first_roman } = parseStaffRoman(row[3]);
+  if (!dept && !name_kanji && !last_roman && !first_roman) return null;
+  return {
+    dept,
+    name_kanji,
+    last_roman,
+    first_roman,
+    importance: parseStaffImportance(row[4]),
+    passport: String(row[5] ?? "").trim() || null,
+    dob: normalizeStaffCsvDate(row[6]),
+    passport_exp: normalizeStaffCsvDate(row[7]),
+    diet: String(row[8] ?? "").trim() || null,
+  };
+}
 const CABIN = ["Economy", "Premium Economy", "Business", "First"];
 const ROOM_TYPES = ["Single", "Twin", "Double", "Suite", "Deluxe", "Custom"];
 const VEHICLE_REGION_KEYS = ["TW", "JP", "KR", "US"];
@@ -632,7 +730,7 @@ const STAY_COL_WIDTHS = [44, 72, 88, 80, 76, 72, 84, 84, 44, 88, 108];
 const staffColWidths = (withCheckbox) => (withCheckbox
   ? [40, 48, 88, 96, 120, 56, 104, 88, 88, 108, 116]
   : [48, 88, 96, 120, 56, 104, 88, 88, 108, 116]);
-const HOTEL_STATS_COL_WIDTHS = ["38%", "15%", "15%", "15%", "17%"];
+const HOTEL_STATS_COL_WIDTHS = [140, 56, 56, 100];
 
 function ThemeToggle({ theme, onChange, t }) {
   return (
@@ -717,6 +815,192 @@ function computeHotelStats(stays, roommates) {
     }
   });
   return byHotel;
+}
+
+function hotelStayDates(stays, hotelId) {
+  if (!hotelId) return [];
+  const set = new Set();
+  stays.forEach((s) => {
+    if (String(s.hotel_id) !== String(hotelId) || !s.check_in || !s.check_out) return;
+    const start = parseLocalDate(s.check_in);
+    const end = parseLocalDate(s.check_out);
+    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) set.add(localDateStr(d));
+  });
+  return [...set].sort();
+}
+
+function staysOnHotelDate(stays, hotelId, date) {
+  if (!hotelId || !date) return [];
+  return stays.filter((s) => String(s.hotel_id) === String(hotelId) && s.check_in <= date && date < s.check_out);
+}
+
+function HotelRoomAssignPanel({ hotels, stays, persons, hotelStatsMap, t, lang, project, canEdit, onAssignBatch }) {
+  const [hotelId, setHotelId] = useState("");
+  const [date, setDate] = useState("");
+  const [roomNo, setRoomNo] = useState("");
+  const [selected, setSelected] = useState(() => new Set());
+
+  const dates = useMemo(() => hotelStayDates(stays, hotelId), [stays, hotelId]);
+  const candidates = useMemo(() => {
+    return staysOnHotelDate(stays, hotelId, date).map((s) => ({
+      ...s,
+      person: persons.find((p) => p.id === s.person_id),
+    })).filter((s) => s.person);
+  }, [stays, persons, hotelId, date]);
+
+  const existingRooms = useMemo(() => {
+    const set = new Set();
+    stays.forEach((s) => {
+      if (String(s.hotel_id) === String(hotelId) && s.room_number) set.add(String(s.room_number).trim());
+    });
+    return [...set].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [stays, hotelId]);
+
+  const toggle = (id) => setSelected((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
+  const stepStyle = (n, active) => ({
+    fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+    color: active ? "var(--moegi)" : "var(--usunezumi)",
+    marginBottom: 6,
+  });
+
+  const fieldWrap = { display: "flex", flexDirection: "column", minWidth: 0 };
+
+  return (
+    <div className="acc-tools-card" style={{
+      background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8,
+      padding: "16px 18px", marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.04)",
+    }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
+          <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.roomAssignTitle}</h3>
+        </div>
+        <div style={{ overflowX: "auto", maxWidth: "100%" }}>
+          <table className="hotel-stats-compact" style={{
+            tableLayout: "fixed", borderCollapse: "collapse", width: "auto", marginLeft: "auto",
+            fontSize: 11.5, background: "var(--washi)", borderRadius: 6, overflow: "hidden",
+          }}>
+            <colgroup>
+              {HOTEL_STATS_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
+            </colgroup>
+            <thead>
+              <tr style={{ ...thead, background: "var(--sumiMid)" }}>
+                {[t.hotelName, t.guestCount, t.roomCount, t.totalSpend].map((h, i) => (
+                  <th key={h} style={{ ...thS, padding: "7px 8px", textAlign: i === 0 ? "left" : "right", fontSize: 8 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {hotels.map((h) => {
+                const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0 };
+                return (
+                  <tr key={h.id}>
+                    <td style={{ ...tdS({ padding: "6px 8px" }), fontWeight: 600, textAlign: "left" }} title={h.name}>{h.name}</td>
+                    <td style={tdS({ padding: "6px 8px", textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{st.guests}</td>
+                    <td style={tdS({ padding: "6px 8px", textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{st.rooms}</td>
+                    <td className="td-amt" style={tdS({ padding: "6px 8px", textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600 })}>
+                      {formatMoney(convertMoney(st.total, project), project, lang)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="acc-room-wizard" style={{
+        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: 12, alignItems: "start", marginBottom: 12,
+      }}>
+        <div style={fieldWrap}>
+          <div style={stepStyle(1, !!hotelId)}>{t.stepPickHotel}</div>
+          <select style={inpStyle} value={hotelId} className="wa-input" onChange={(e) => { setHotelId(e.target.value); setDate(""); setSelected(new Set()); }}>
+            <option value="">{t.allHotels}</option>
+            {hotels.map((h) => <option key={h.id} value={String(h.id)}>{h.name}</option>)}
+          </select>
+        </div>
+        <div style={fieldWrap}>
+          <div style={stepStyle(2, !!date)}>{t.stepPickDate}</div>
+          <select style={inpStyle} value={date} className="wa-input" disabled={!hotelId} onChange={(e) => { setDate(e.target.value); setSelected(new Set()); }}>
+            <option value="">{hotelId ? "—" : t.roomAssignPickHotel}</option>
+            {dates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)}</option>)}
+          </select>
+        </div>
+        <div style={{ ...fieldWrap, gridColumn: "1 / -1" }}>
+          <div style={stepStyle(3, !!roomNo && selected.size > 0)}>{t.stepPickRoom}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 8 }}>
+            <input
+              style={{ ...inpStyle, width: 120, flexShrink: 0 }}
+              className="wa-input"
+              list="acc-room-list"
+              placeholder={t.roomAssignRoomPh}
+              value={roomNo}
+              disabled={!date || !canEdit}
+              onChange={(e) => setRoomNo(e.target.value)}
+            />
+            <datalist id="acc-room-list">
+              {existingRooms.map((r) => <option key={r} value={r} />)}
+            </datalist>
+            {existingRooms.slice(0, 8).map((r) => (
+              <button key={r} type="button" disabled={!canEdit || !date} onClick={() => setRoomNo(r)} style={{
+                ...eBtn, marginRight: 0, padding: "4px 10px", fontSize: 10,
+                background: roomNo === r ? "var(--moegi3)" : "transparent",
+                borderColor: roomNo === r ? "var(--moegi)" : "var(--keisenM)",
+              }}>{r}</button>
+            ))}
+          </div>
+          {!date ? (
+            <p style={{ fontSize: 11, color: "var(--usunezumi)", margin: 0 }}>{t.roomAssignPickDate}</p>
+          ) : candidates.length === 0 ? (
+            <p style={{ fontSize: 11, color: "var(--usunezumi)", margin: 0 }}>{t.noData}</p>
+          ) : (
+            <div style={{
+              display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 140, overflowY: "auto",
+              padding: "8px 10px", background: "var(--washi)", borderRadius: 6, border: "1px solid var(--keisenL)",
+            }}>
+              <span style={{ width: "100%", fontSize: 10, color: "var(--nezumi)", marginBottom: 2 }}>{t.roomAssignGuests}</span>
+              {candidates.map((s) => {
+                const on = selected.has(s.id);
+                const p = s.person;
+                return (
+                  <label key={s.id} style={{
+                    display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px",
+                    borderRadius: 6, cursor: canEdit ? "pointer" : "default",
+                    border: `1px solid ${on ? "var(--moegi)" : "var(--keisenL)"}`,
+                    background: on ? "var(--moegi3)" : "var(--shiro)", fontSize: 11.5,
+                  }}>
+                    <input type="checkbox" disabled={!canEdit} checked={on} onChange={() => toggle(s.id)} />
+                    <span style={{ fontWeight: 600 }}>{p.name_kanji}</span>
+                    {p.dept && <span style={{ color: "var(--nezumi)", fontSize: 10 }}>{p.dept}</span>}
+                    {s.room_number && <span style={{ fontSize: 10, color: "var(--kincha)" }}>#{s.room_number}</span>}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {canEdit && (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            style={pBtn(!hotelId || !date || !roomNo.trim() || selected.size === 0)}
+            disabled={!hotelId || !date || !roomNo.trim() || selected.size === 0}
+            onClick={() => onAssignBatch([...selected], hotelId, roomNo.trim())}
+          >
+            {t.roomAssignApply} {selected.size > 0 ? `(${selected.size})` : ""}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function legacyAssignmentsFromVehicle(v) {
@@ -1916,6 +2200,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [selectedIds, setSelectedIds] = useState([]);
   const dragItem = useRef(null);
   const dragOver = useRef(null);
+  const staffImportRef = useRef(null);
+  const [staffImporting, setStaffImporting] = useState(false);
 
   const [personModal, setPersonModal] = useState(null);
   const [flightModal, setFlightModal] = useState(null);
@@ -2091,6 +2377,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
           setRoomPriceLockModal({ stayId, sameRoomStays: sameRoom });
         }
       }
+    } catch (e) { showToast(e.message); }
+  };
+
+  const assignRoomBatch = async (stayIds, hotelId, roomNo) => {
+    if (!stayIds.length || !roomNo) { showToast(t.roomAssignPickRoom); return; }
+    try {
+      for (const id of stayIds) await saveRoomNumber(id, hotelId, roomNo);
+      showToast(t.roomAssignDone.replace("{n}", stayIds.length));
     } catch (e) { showToast(e.message); }
   };
 
@@ -2282,13 +2576,64 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   };
 
   const exportCSV = () => {
-    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.importance, t.passport, t.dob, t.passportExp, t.diet, t.airline, t.flightNo, t.hotel, t.checkIn, t.checkOut, t.totalAmt, t.roommate];
+    const headers = [...staffCsvPersonHeaders(t), t.airline, t.flightNo, t.hotel, t.checkIn, t.checkOut, t.totalAmt, t.roommate];
     const rows = persons.map((p, i) => {
       const fl = flights.find((x) => x.person_id === p.id);
       const s = stays.find((x) => x.person_id === p.id);
-      return [i + 1, p.dept, p.name_kanji, `${p.last_roman} ${p.first_roman}`.trim(), p.importance, p.passport, p.dob, p.passport_exp, p.diet, fl?.airline, fl?.flight_no, s ? getHotelName(s.hotel_id) : "", s?.check_in, s?.check_out, s?.total_amount, getRoommateNames(p.id)];
+      return [personIndex[p.id] || i + 1, p.dept, p.name_kanji, `${p.last_roman} ${p.first_roman}`.trim(), starLabel(p.importance) || p.importance || "", p.passport, p.dob, p.passport_exp, p.diet, fl?.airline, fl?.flight_no, s ? getHotelName(s.hotel_id) : "", s?.check_in, s?.check_out, s?.total_amount, getRoommateNames(p.id)];
     });
     downloadCSV([headers, ...rows], `staff_${todayStr()}.csv`);
+  };
+
+  const importStaffCSV = async (file) => {
+    if (!file || staffImporting) return;
+    setStaffImporting(true);
+    try {
+      const rows = parseCSV(await file.text());
+      if (rows.length < 2) { showToast(t.importEmpty); return; }
+      if (!isStaffCsvHeader(rows[0], t)) { showToast(t.importFormatError); return; }
+      const bodyRows = rows.slice(1);
+      const importRows = bodyRows.map((row) => ({ row, payload: rowToStaffPerson(row) })).filter((x) => x.payload);
+      if (!importRows.length) { showToast(t.importEmpty); return; }
+      if (!window.confirm(t.importConfirm.replace("{n}", importRows.length))) return;
+
+      const sorted = [...persons].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      let ok = 0;
+      let fail = 0;
+      let nextOrder = sorted.length;
+
+      for (const { row, payload } of importRows) {
+        const rawNo = parseInt(String(row[0] ?? "").trim(), 10);
+        let existing = !Number.isNaN(rawNo) && rawNo >= 1 ? sorted[rawNo - 1] : null;
+        if (!existing && payload.name_kanji) {
+          existing = persons.find((p) => (p.name_kanji || "") === payload.name_kanji && (p.dept || "") === payload.dept);
+        }
+        try {
+          if (existing) {
+            const [r] = await api.update("persons", existing.id, payload);
+            setPersons((prev) => prev.map((x) => x.id === existing.id ? r : x));
+            const si = sorted.findIndex((p) => p.id === existing.id);
+            if (si >= 0) sorted[si] = { ...sorted[si], ...r };
+          } else {
+            const [r] = await api.insert("persons", { ...payload, project_id: pid, sort_order: nextOrder++ });
+            setPersons((prev) => [...prev, r]);
+            sorted.push(r);
+          }
+          ok++;
+        } catch (e) {
+          console.error(e);
+          fail++;
+        }
+      }
+      await loadAll();
+      const failMsg = fail > 0 ? (t.importFailSuffix || "").replace("{fail}", fail) : "";
+      showToast(t.importDone.replace("{ok}", ok).replace("{fail}", failMsg));
+    } catch (e) {
+      showToast(e.message || t.importFormatError);
+    } finally {
+      setStaffImporting(false);
+      if (staffImportRef.current) staffImportRef.current.value = "";
+    }
   };
 
   const exportFlightCSV = () => {
@@ -2321,13 +2666,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
     // ── Section 2: hotel statistics ──
     const statsHeaders = ["", t.hotelStats, "", "", "", ""];
-    const statsHead = [t.hotelName, t.guestCount, t.roomCount, t.roomOccupancy, t.totalSpend, ""];
+    const statsHead = [t.hotelName, t.guestCount, t.roomCount, t.totalSpend, ""];
     const statsRows = hotels.map((h) => {
-      const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0, roomDetails: [] };
-      const occ = st.roomDetails.length
-        ? (st.roomDetails.reduce((s, r) => s + r.occupancy, 0) / st.roomDetails.length).toFixed(1)
-        : "—";
-      return [h.name, st.guests, st.rooms, occ, formatMoney(convertMoney(st.total, project), project, lang), ""];
+      const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0 };
+      return [h.name, st.guests, st.rooms, formatMoney(convertMoney(st.total, project), project, lang), ""];
     });
     const totalRow = [t.totalCost, "", "", "", formatMoney(convertMoney(totalHotelCost, project), project, lang), ""];
 
@@ -2454,6 +2796,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           {canManageMembers && <button type="button" onClick={() => setShowMembers(true)} style={hdrBtn2}>{t.members}</button>}
           {canEdit && <button type="button" onClick={() => setShowCurrency(true)} style={hdrBtn2}>{t.settings}</button>}
+          {tab === "A" && canEdit && (
+            <>
+              <input ref={staffImportRef} type="file" accept=".csv,text/csv" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) importStaffCSV(f); }} />
+              <button type="button" disabled={staffImporting} onClick={() => staffImportRef.current?.click()} style={hdrBtn2}>{staffImporting ? t.importing : t.importCSV}</button>
+            </>
+          )}
           <button type="button" onClick={() => tabExportFn[tab]?.()} style={{ ...hdrBtn2, background: "var(--moegi3)", border: "1px solid rgba(43,90,76,.35)" }}>{t.exportCSV}</button>
           <ThemeToggle theme={theme} onChange={onThemeChange} t={t} />
           <LangSwitcher lang={lang} onChange={(l) => { localStorage.setItem("app_lang", l); onLangChange(l); }} />
@@ -2638,19 +2986,16 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
           {tab === "C" && (
             <div className="tab-content">
-              {/* Cost summary banner */}
               <div style={{
-                background: "var(--sumiMid)",
-                backgroundImage: "var(--headerGrad)",
-                color: "var(--washi)", padding: "18px 24px", marginBottom: 20,
-                borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center",
+                background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)",
+                padding: "12px 20px", marginBottom: 16, borderRadius: 8,
+                display: "flex", justifyContent: "space-between", alignItems: "center",
                 boxShadow: "0 2px 12px rgba(0,0,0,.1)",
               }}>
-                <span style={{ fontSize: 12, opacity: 0.7, letterSpacing: "0.06em" }}>{t.totalCost}</span>
-                <strong style={{ fontSize: 22, fontFamily: "'Noto Serif JP',serif", letterSpacing: "-0.01em" }}>{formatMoney(convertMoney(totalHotelCost, project), project, lang)}</strong>
+                <span style={{ fontSize: 11, opacity: 0.75, letterSpacing: "0.06em" }}>{t.totalCost}</span>
+                <strong style={{ fontSize: 20, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(totalHotelCost, project), project, lang)}</strong>
               </div>
-              {/* Sub-tabs */}
-              <div style={{ display: "flex", background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 20, width: "fit-content", gap: 2 }}>
+              <div style={{ display: "flex", background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 16, width: "fit-content", gap: 2 }}>
                 {[["stays", t.subStay], ["hotels", t.subHotels]].map(([k, lb]) => (
                   <button key={k} type="button" onClick={() => setAccSub(k)} style={{
                     padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12.5,
@@ -2667,21 +3012,36 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
               {accSub === "stays" && (
                 <>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
+                  <HotelRoomAssignPanel
+                    hotels={hotels}
+                    stays={stays}
+                    persons={persons}
+                    hotelStatsMap={hotelStatsMap}
+                    t={t}
+                    lang={lang}
+                    project={project}
+                    canEdit={canEdit}
+                    onAssignBatch={assignRoomBatch}
+                  />
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                    gap: 8, marginBottom: 14, alignItems: "end",
+                    padding: "12px 14px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)",
+                  }}>
                     <SearchBar value={searchC} onChange={setSearchC} placeholder={t.searchHotel} />
                     <DeptFilter depts={allDepts} value={deptC} onChange={setDeptC} allLabel={t.allDept} />
-                    <input style={{ ...inpStyle, width: 140 }} placeholder={t.searchHotelName} value={searchCHotel} onChange={(e) => setSearchCHotel(e.target.value)} />
-                    <input style={{ ...inpStyle, width: 120 }} placeholder={t.searchRoomType} value={searchCRoom} onChange={(e) => setSearchCRoom(e.target.value)} />
+                    <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchHotelName} value={searchCHotel} onChange={(e) => setSearchCHotel(e.target.value)} />
+                    <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchRoomType} value={searchCRoom} onChange={(e) => setSearchCRoom(e.target.value)} />
                     {canEdit && (
-                      <>
-                        <select style={{ ...inpStyle, width: 160 }} value={addStayPerson} onChange={(e) => setAddStayPerson(e.target.value)}>
-                          <option value="">{t.addSegment}</option>
-                          {persons.map((p) => <option key={p.id} value={p.id}>{p.name_kanji || p.last_roman}</option>)}
-                        </select>
-                        <button type="button" style={pBtn(!addStayPerson)} disabled={!addStayPerson} onClick={() => { setStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
-                      </>
+                      <select style={{ ...inpStyle, width: "100%" }} className="wa-input" value={addStayPerson} onChange={(e) => setAddStayPerson(e.target.value)}>
+                        <option value="">{t.addSegment}</option>
+                        {persons.map((p) => <option key={p.id} value={p.id}>{p.name_kanji || p.last_roman}</option>)}
+                      </select>
                     )}
-                    <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
+                    {canEdit && (
+                      <button type="button" style={{ ...pBtn(!addStayPerson), width: "100%" }} disabled={!addStayPerson} onClick={() => { setStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
+                    )}
+                    <span style={{ fontSize: 11, color: "var(--nezumi)", gridColumn: "1 / -1" }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
                   {(() => {
                     const sortStayRows = (rows) => [...rows].sort((a, b) => {
@@ -2830,43 +3190,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       </div>
                     );
                   })()}
-                  <div style={{ marginTop: 28 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                      <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
-                      <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStats}</h3>
-                    </div>
-                    <div style={{ overflowX: "auto" }}>
-                      <table style={tblW} className="data-table hotel-stats-table">
-                        <colgroup>
-                          {HOTEL_STATS_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
-                        </colgroup>
-                        <thead><tr style={thead}>
-                          {[
-                            { h: t.hotelName, align: "left" },
-                            { h: t.guestCount, align: "center" },
-                            { h: t.roomCount, align: "center" },
-                            { h: t.roomOccupancy, align: "center" },
-                            { h: t.totalSpend, align: "right" },
-                          ].map(({ h, align }) => <th key={h} style={{ ...thS, textAlign: align }}>{h}</th>)}
-                        </tr></thead>
-                        <tbody>
-                          {hotels.map((h) => {
-                            const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0, roomDetails: [] };
-                            const occ = st.roomDetails.length ? (st.roomDetails.reduce((s, r) => s + r.occupancy, 0) / st.roomDetails.length).toFixed(1) : "—";
-                            return (
-                              <tr key={h.id}>
-                                <td style={tdEllipsis({ fontWeight: 600 })} title={h.name}>{h.name}</td>
-                                <td style={tdS({ textAlign: "center", fontVariantNumeric: "tabular-nums" })}>{st.guests}</td>
-                                <td style={tdS({ textAlign: "center", fontVariantNumeric: "tabular-nums" })}>{st.rooms}</td>
-                                <td style={tdS({ textAlign: "center", fontVariantNumeric: "tabular-nums" })}>{occ}</td>
-                                <td className="td-amt" style={tdS({ textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{formatMoney(convertMoney(st.total, project), project, lang)}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
                 </>
               )}
 
@@ -3148,6 +3471,8 @@ function GlobalStyles() {
       .unassigned-tag { display: inline-flex; align-items: center; gap: 8px; flex: 0 1 auto; min-width: 0; max-width: 100%; background: var(--shiro); border: 1px solid var(--keisenL); border-radius: 6px; padding: 6px 12px; font-size: 11.5; }
       .unassigned-tag .tag-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
       .unassigned-tag .tag-dept { color: var(--nezumi); font-size: 10.5px; flex-shrink: 0; }
+      .hotel-stats-compact th, .hotel-stats-compact td { white-space: nowrap; }
+      .acc-room-wizard select:disabled, .acc-room-wizard input:disabled { opacity: 0.55; }
     `}</style>
   );
 }
