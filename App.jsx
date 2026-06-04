@@ -2336,7 +2336,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
     downloadCSV([headers, ...rows], `vehicles_${todayStr()}.csv`);
   };
 
-  const tabExportFn = { A: exportCSV, B: exportFlightCSV, C: exportStaysCSV, E: exportVehicleCSV };
+  const tabExportFn = { A: exportCSV, B: exportFlightCSV, C: exportVehicleCSV, D: exportStaysCSV };
 
   const statusBadge = (s) => {
     const cfg = s === "arranged"
@@ -2349,7 +2349,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
     );
   };
 
-  const TABS = [{ id: "A", label: t.tabStaff }, { id: "B", label: t.tabFlight }, { id: "C", label: t.tabAccommodation }, { id: "E", label: t.tabVehicle }];
+  const TABS = [{ id: "A", label: t.tabStaff }, { id: "B", label: t.tabFlight }, { id: "C", label: t.tabVehicle }, { id: "D", label: t.tabAccommodation }];
 
   const handleDragEnd = async () => {
     if (dragItem.current === null || dragOver.current === null || dragItem.current === dragOver.current) { dragItem.current = null; dragOver.current = null; return; }
@@ -2575,7 +2575,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
             </div>
           )}
 
-          {tab === "C" && (
+          {tab === "D" && (
             <div className="tab-content">
               {/* Cost summary banner */}
               <div style={{
@@ -2839,7 +2839,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
             </div>
           )}
 
-          {tab === "E" && (
+          {tab === "C" && (
             <div className="tab-content">
               {/* Vehicle stats banner */}
               <div style={{
