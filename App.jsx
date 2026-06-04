@@ -2259,6 +2259,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
           {canManageMembers && <button type="button" onClick={() => setShowMembers(true)} style={hdrBtn2}>{t.members}</button>}
           {canEdit && <button type="button" onClick={() => setShowCurrency(true)} style={hdrBtn2}>{t.settings}</button>}
           <button type="button" onClick={() => tabExportFn[tab]?.()} style={{ ...hdrBtn2, background: "rgba(43,90,76,.18)", border: "1px solid rgba(43,90,76,.35)" }}>{t.exportCSV}</button>
+          <LangSwitcher lang={lang} onChange={(l) => { localStorage.setItem("app_lang", l); onLangChange(l); }} />
         </div>
       </header>
 
