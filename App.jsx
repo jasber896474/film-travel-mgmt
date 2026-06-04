@@ -105,13 +105,42 @@ const diffDays = (a, b) => {
 };
 const todayStr = () => localDateStr();
 const todayDT = () => localDateTimeStr();
+
+// 航班時間：雙排顯示（無年份 / 12小時制）
+const fmtFlightDateTime = (ts, lang) => {
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (isNaN(d)) return null;
+  const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
+  const datePart = d.toLocaleDateString(loc, { month: "numeric", day: "numeric" });
+  const timePart = d.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit", hour12: true });
+  return { date: datePart, time: timePart };
+};
 const passportWarning = (exp) => {
   if (!exp) return false;
   const e = parseLocalDate(exp);
   return (e - new Date()) / 86400000 < 180;
 };
 
-const CURRENCY_SYMBOL = { TWD: "NT$", JPY: "¥", USD: "$" };
+const CURRENCY_SYMBOL = {
+  TWD: "NT$", JPY: "¥", USD: "$", EUR: "€", GBP: "£",
+  KRW: "₩", SGD: "S$", AUD: "A$", HKD: "HK$", THB: "฿",
+  CNY: "¥", MYR: "RM", IDR: "Rp", VND: "₫", PHP: "₱",
+};
+const ALL_CURRENCIES = [
+  { code: "TWD", label: "TWD — 台幣" },
+  { code: "JPY", label: "JPY — 日圓" },
+  { code: "USD", label: "USD — 美元" },
+  { code: "EUR", label: "EUR — 歐元" },
+  { code: "GBP", label: "GBP — 英鎊" },
+  { code: "KRW", label: "KRW — 韓元" },
+  { code: "SGD", label: "SGD — 新加坡元" },
+  { code: "AUD", label: "AUD — 澳幣" },
+  { code: "HKD", label: "HKD — 港幣" },
+  { code: "THB", label: "THB — 泰銖" },
+  { code: "CNY", label: "CNY — 人民幣" },
+  { code: "MYR", label: "MYR — 馬來西亞令吉" },
+];
 const formatMoney = (amount, project, lang) => {
   const n = +amount || 0;
   const cur = project?.display_currency || project?.base_currency || "TWD";
@@ -211,6 +240,7 @@ const T = {
     forgotPwSent: "重設郵件已送出", forgotPwSentHint: "請查看您的信箱並點擊連結重設密碼", forgotPwBtn: "送出重設連結",
     resetPwTitle: "設定新密碼", newPw: "新密碼", confirmNewPw: "確認新密碼", resetPwBtn: "更新密碼",
     resetPwSuccess: "密碼已更新，請重新登入", backToLogin: "返回登入",
+    langSelectLabel: "選擇語言（登入後鎖定）", langLockHint: "登入後語系將固定，如需切換請重新登入",
     errEmailPw: "請輸入電子郵件和密碼", errPwMatch: "密碼不一致", errPwLen: "密碼請輸入6位以上",
     memberAdd: "新增成員", memberCurrent: "目前成員（{n} 人）", memberAlready: "此用戶已是成員", memberSelf: "無法移除自己",
     memberUidHint: "請輸入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查詢 User ID", memberUidInfo: "→ Authentication → Users → 複製 UUID", memberAddBtn: "加入",
@@ -270,6 +300,7 @@ const T = {
     forgotPwSent: "重置邮件已发送", forgotPwSentHint: "请查看您的信箱并点击链接", forgotPwBtn: "发送重置链接",
     resetPwTitle: "设定新密码", newPw: "新密码", confirmNewPw: "确认新密码", resetPwBtn: "更新密码",
     resetPwSuccess: "密码已更新，请重新登录", backToLogin: "返回登录",
+    langSelectLabel: "选择语言（登录后锁定）", langLockHint: "登录后语言将固定，如需切换请重新登录",
     errEmailPw: "请输入电子邮件和密码", errPwMatch: "密码不一致", errPwLen: "密码请输入6位以上",
     memberAdd: "新增成员", memberCurrent: "当前成员（{n} 人）", memberAlready: "该用户已是成员", memberSelf: "无法移除自己",
     memberUidHint: "请输入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查询 User ID", memberUidInfo: "→ Authentication → Users → 复制 UUID", memberAddBtn: "加入",
@@ -329,6 +360,7 @@ const T = {
     forgotPwSent: "Reset email sent", forgotPwSentHint: "Check your inbox and click the link to reset your password", forgotPwBtn: "Send Reset Link",
     resetPwTitle: "Set New Password", newPw: "New Password", confirmNewPw: "Confirm New Password", resetPwBtn: "Update Password",
     resetPwSuccess: "Password updated. Please sign in.", backToLogin: "Back to Login",
+    langSelectLabel: "Language (locked after login)", langLockHint: "Language is fixed after login. Sign out to change.",
     errEmailPw: "Enter email and password", errPwMatch: "Passwords do not match", errPwLen: "Password must be at least 6 characters",
     memberAdd: "Add Member", memberCurrent: "Members ({n})", memberAlready: "Already a member", memberSelf: "Cannot remove yourself",
     memberUidHint: "Enter User ID from Supabase Auth.", memberUidLabel: "Find User ID", memberUidInfo: "→ Authentication → Users → copy UUID", memberAddBtn: "Add",
@@ -388,6 +420,7 @@ const T = {
     forgotPwSent: "재설정 이메일 발송됨", forgotPwSentHint: "받은 편지함을 확인하고 링크를 클릭하세요", forgotPwBtn: "재설정 링크 보내기",
     resetPwTitle: "새 비밀번호 설정", newPw: "새 비밀번호", confirmNewPw: "비밀번호 확인", resetPwBtn: "비밀번호 업데이트",
     resetPwSuccess: "비밀번호가 업데이트되었습니다. 다시 로그인하세요.", backToLogin: "로그인으로 돌아가기",
+    langSelectLabel: "언어 선택 (로그인 후 고정)", langLockHint: "로그인 후 언어가 고정됩니다. 변경하려면 다시 로그인하세요.",
     errEmailPw: "이메일과 비밀번호 입력", errPwMatch: "비밀번호 불일치", errPwLen: "6자 이상",
     memberAdd: "멤버 추가", memberCurrent: "멤버 ({n})", memberAlready: "이미 멤버", memberSelf: "본인 삭제 불가",
     memberUidHint: "User ID 입력", memberUidLabel: "User ID 확인", memberUidInfo: "→ Authentication → Users", memberAddBtn: "추가",
@@ -447,6 +480,7 @@ const T = {
     forgotPwSent: "再設定メールを送信しました", forgotPwSentHint: "受信トレイを確認してリンクをクリックしてください", forgotPwBtn: "リンクを送信",
     resetPwTitle: "新しいパスワードを設定", newPw: "新しいパスワード", confirmNewPw: "パスワードの確認", resetPwBtn: "パスワードを更新",
     resetPwSuccess: "パスワードを更新しました。再度ログインしてください。", backToLogin: "ログインに戻る",
+    langSelectLabel: "言語選択（ログイン後に固定）", langLockHint: "ログイン後は言語が固定されます。変更するには再ログインしてください。",
     errEmailPw: "メールとパスワード", errPwMatch: "不一致", errPwLen: "6文字以上",
     memberAdd: "追加", memberCurrent: "メンバー（{n}）", memberAlready: "追加済", memberSelf: "自分は不可",
     memberUidHint: "User ID", memberUidLabel: "User ID", memberUidInfo: "→ Authentication → Users", memberAddBtn: "追加",
@@ -872,19 +906,38 @@ function PersonForm({ init, onSave, onClose, t, lang }) {
   );
 }
 
+function AirportTerminalField({ label, airportKey, terminalKey, f, set }) {
+  const terminal = (f[terminalKey] || "").trim();
+  const tLabel = terminal ? `T${terminal.replace(/^T/i, "")}` : "";
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: J.nezumi, marginBottom: 6, letterSpacing: "0.18em", textTransform: "uppercase" }}>{label}</label>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <input style={{ ...inpStyle, flex: 1 }} value={f[airportKey] || ""} onChange={set(airportKey)} className="wa-input" placeholder="NRT / TPE…" />
+        <input style={{ ...inpStyle, width: 60, textAlign: "center" }} value={f[terminalKey] || ""} onChange={set(terminalKey)} className="wa-input" placeholder="T#" />
+      </div>
+      {tLabel && <div style={{ fontSize: 10.5, color: J.moegi, marginTop: 4, fontWeight: 600, letterSpacing: "0.05em" }}>{tLabel}</div>}
+    </div>
+  );
+}
+
 function FlightForm({ init, onSave, onClose, t }) {
   const blank = { airline: "", flight_no: "", cabin: "Economy", pnr: "", dep_airport: "", dep_terminal: "", dep_time: todayDT(), arr_airport: "", arr_terminal: "", arr_time: todayDT(), checked_bag: "", cabin_bag: "" };
   const [f, setF] = useState(init ? { ...blank, ...init } : blank);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        {[[t.airline, "airline"], [t.flightNo, "flight_no"], [t.pnr, "pnr"], [t.depAirport, "dep_airport"], [t.depTerminal, "dep_terminal"], [t.arrAirport, "arr_airport"], [t.arrTerminal, "arr_terminal"], [t.checkedBag, "checked_bag"], [t.cabinBag, "cabin_bag"]].map(([lb, k]) => (
-          <Field key={k} label={lb}><input style={inpStyle} value={f[k] || ""} onChange={set(k)} /></Field>
-        ))}
-        <Field label={t.cabin}><select style={inpStyle} value={f.cabin} onChange={set("cabin")}>{CABIN.map((c) => <option key={c}>{c}</option>)}</select></Field>
-        <Field label={t.depTime}><input type="datetime-local" style={inpStyle} value={f.dep_time || ""} onChange={set("dep_time")} /></Field>
-        <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f.arr_time || ""} onChange={set("arr_time")} /></Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+        <Field label={t.airline}><input style={inpStyle} value={f.airline} onChange={set("airline")} className="wa-input" /></Field>
+        <Field label={t.flightNo}><input style={inpStyle} value={f.flight_no} onChange={set("flight_no")} className="wa-input" /></Field>
+        <Field label={t.cabin}><select style={inpStyle} value={f.cabin} onChange={set("cabin")} className="wa-input">{CABIN.map((c) => <option key={c}>{c}</option>)}</select></Field>
+        <Field label={t.pnr}><input style={inpStyle} value={f.pnr} onChange={set("pnr")} className="wa-input" /></Field>
+        <AirportTerminalField label={t.depAirport} airportKey="dep_airport" terminalKey="dep_terminal" f={f} set={set} />
+        <AirportTerminalField label={t.arrAirport} airportKey="arr_airport" terminalKey="arr_terminal" f={f} set={set} />
+        <Field label={t.depTime}><input type="datetime-local" style={inpStyle} value={f.dep_time || ""} onChange={set("dep_time")} className="wa-input" /></Field>
+        <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f.arr_time || ""} onChange={set("arr_time")} className="wa-input" /></Field>
+        <Field label={`${t.checkedBag} (${t.optional})`}><input style={inpStyle} value={f.checked_bag || ""} onChange={set("checked_bag")} className="wa-input" /></Field>
+        <Field label={`${t.cabinBag} (${t.optional})`}><input style={inpStyle} value={f.cabin_bag || ""} onChange={set("cabin_bag")} className="wa-input" /></Field>
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
@@ -995,15 +1048,13 @@ function CurrencySettingsModal({ project, onSave, onClose, t }) {
   return (
     <Modal title={t.currencySettings} onClose={onClose}>
       <Field label={t.baseCurrency}>
-        <select style={inpStyle} value={f.base_currency} onChange={(e) => setF((p) => ({ ...p, base_currency: e.target.value }))}>
-          <option value="TWD">{t.currencyTWD}</option>
-          <option value="JPY">{t.currencyJPY}</option>
+        <select style={inpStyle} value={f.base_currency} onChange={(e) => setF((p) => ({ ...p, base_currency: e.target.value }))} className="wa-input">
+          {ALL_CURRENCIES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
         </select>
       </Field>
       <Field label={t.displayCurrency}>
-        <select style={inpStyle} value={f.display_currency} onChange={(e) => setF((p) => ({ ...p, display_currency: e.target.value }))}>
-          <option value="TWD">{t.currencyTWD}</option>
-          <option value="JPY">{t.currencyJPY}</option>
+        <select style={inpStyle} value={f.display_currency} onChange={(e) => setF((p) => ({ ...p, display_currency: e.target.value }))} className="wa-input">
+          {ALL_CURRENCIES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
         </select>
       </Field>
       <Field label={t.exchangeRate}>
@@ -1310,11 +1361,13 @@ function LoginScreen({ onLogin }) {
         <p style={{ fontSize: 11, color: J.usunezumi, margin: "5px 0 0", letterSpacing: "0.04em" }}>{mode === "login" ? t.loginTitle : t.registerTitle}</p>
       </div>
 
-      {/* ── Lang ── */}
+      {/* ── Lang lock selector (locked after login) ── */}
       <div style={{ marginBottom: 20 }}>
-        <select style={{ ...inpStyle, fontSize: 12 }} value={lang} onChange={(e) => setLang(e.target.value)} className="wa-input">
+        <label style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: J.nezumi, marginBottom: 6, letterSpacing: "0.16em", textTransform: "uppercase" }}>{t.langSelectLabel || "Language / 語言 / 言語"}</label>
+        <select style={{ ...inpStyle, fontSize: 12 }} value={lang} onChange={(e) => { setLang(e.target.value); localStorage.setItem("app_lang", e.target.value); }} className="wa-input">
           {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
+        <p style={{ fontSize: 9.5, color: J.usunezumi, marginTop: 5, lineHeight: 1.5, margin: "5px 0 0" }}>{t.langLockHint || "登入後語系將固定，如需切換請重新登入"}</p>
       </div>
 
       {/* ── Tab pills ── */}
@@ -1461,7 +1514,6 @@ function ProjectSelector({ user, isSystemOwner, lang, onLangChange, onSelect }) 
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <LangSwitcher lang={lang} onChange={onLangChange} />
           <button type="button" onClick={() => { api.logout(); clearSession(); window.location.reload(); }} style={hdrBtn}>{t.logout}</button>
         </div>
       </header>
@@ -1635,7 +1687,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
   const [addTripVehicle, setAddTripVehicle] = useState(null);
   const [tripPerson, setTripPerson] = useState("");
   const [tripRole, setTripRole] = useState("passenger");
-  const [tripSegment, setTripSegment] = useState("");
+  // tripSegment removed — simplified direct add without segment selection
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -1996,7 +2048,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
           </div>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-          <LangSwitcher lang={lang} onChange={onLangChange} />
           {canManageMembers && <button type="button" onClick={() => setShowMembers(true)} style={hdrBtn2}>{t.members}</button>}
           {canEdit && <button type="button" onClick={() => setShowCurrency(true)} style={hdrBtn2}>{t.settings}</button>}
           <button type="button" onClick={() => window.print()} style={hdrBtn2}>{t.print}</button>
@@ -2138,6 +2189,18 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                       const fl = flights.find((x) => x.person_id === p.id);
                       const hasF = fl && fl.airline;
                       const tdC = { ...tdS(), textAlign: "center", whiteSpace: "nowrap" };
+                      const depDT = fmtFlightDateTime(fl?.dep_time, lang);
+                      const arrDT = fmtFlightDateTime(fl?.arr_time, lang);
+                      const dtCell = (dt) => dt ? (
+                        <div>
+                          <div style={{ fontSize: 11, color: J.nezumi }}>{dt.date}</div>
+                          <div style={{ fontSize: 12, fontWeight: 600 }}>{dt.time}</div>
+                        </div>
+                      ) : "—";
+                      const depApt = fl?.dep_airport || "—";
+                      const arrApt = fl?.arr_airport || "—";
+                      const depT = fl?.dep_terminal ? `T${fl.dep_terminal.replace(/^T/i,"")}` : "";
+                      const arrT = fl?.arr_terminal ? `T${fl.arr_terminal.replace(/^T/i,"")}` : "";
                       return (
                         <tr key={p.id}>
                           <td style={tdC}>{personIndex[p.id]}</td>
@@ -2148,12 +2211,18 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                           <td style={tdC}>{fl?.flight_no || "—"}</td>
                           <td style={tdC}>{fl?.cabin || "—"}</td>
                           <td style={tdC}>{fl?.pnr || "—"}</td>
-                          <td style={tdC}>{fl?.dep_airport || "—"}</td>
-                          <td style={tdC}>{fl?.dep_time ? new Date(fl.dep_time).toLocaleString() : "—"}</td>
-                          <td style={tdC}>{fl?.arr_airport || "—"}</td>
-                          <td style={tdC}>{fl?.arr_time ? new Date(fl.arr_time).toLocaleString() : "—"}</td>
+                          <td style={{ ...tdC, whiteSpace: "normal" }}>
+                            <div style={{ fontWeight: 600 }}>{depApt}</div>
+                            {depT && <div style={{ fontSize: 10, color: J.moegi, fontWeight: 700 }}>{depT}</div>}
+                          </td>
+                          <td style={tdC}>{dtCell(depDT)}</td>
+                          <td style={{ ...tdC, whiteSpace: "normal" }}>
+                            <div style={{ fontWeight: 600 }}>{arrApt}</div>
+                            {arrT && <div style={{ fontSize: 10, color: J.moegi, fontWeight: 700 }}>{arrT}</div>}
+                          </td>
+                          <td style={tdC}>{dtCell(arrDT)}</td>
                           <td style={{ ...tdC, minWidth: 80 }}>{statusBadge(hasF ? "arranged" : "none")}</td>
-                          <td style={tdC}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
+                          <td style={tdC} className="print-hide">{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
                         </tr>
                       );
                     })}
@@ -2210,7 +2279,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                     )}
                     <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
-                  <div style={{ overflowX: "auto" }}>
+                  {/* ── Screen web table ── */}
+                  <div className="screen-stay-table" style={{ overflowX: "auto" }}>
                     <table style={tblW}>
                       <thead><tr style={thead}>
                         {[t.no, t.dept, t.nameKanji, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate, t.action].map((h) => <th key={h} style={thS}>{h}</th>)}
@@ -2241,6 +2311,36 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                       </tbody>
                     </table>
                   </div>
+
+                  {/* ── Print-only accommodation allocation list ── */}
+                  <table className="print-stay-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+                    <caption style={{ textAlign: "left", fontSize: 13, fontWeight: 700, padding: "0 0 8px", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.1em" }}>
+                      {t.stayMgmt || "住宿分配清冊"}
+                    </caption>
+                    <thead><tr style={{ background: "#f5f5f5" }}>
+                      {["No.", t.dept, t.nameKanji, `${t.nameRoman || "Roman"}`, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate].map((h) => (
+                        <th key={h} style={{ border: "0.5pt solid #ccc", padding: "5pt 5pt", fontWeight: 700, fontSize: 8, textAlign: "center", background: "#f5f5f5" }}>{h}</th>
+                      ))}
+                    </tr></thead>
+                    <tbody>
+                      {flatStays.map((row) => (
+                        <tr key={row.id} style={{ pageBreakInside: "avoid" }}>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center", fontWeight: 700 }}>{personIndex[row.person_id]}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt" }}>{row.person.dept}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", fontWeight: 700 }}>{row.person.name_kanji}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", fontSize: 8 }}>{`${row.person.last_roman || ""} ${row.person.first_roman || ""}`.trim()}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center" }}>{row.stay_label || "—"}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", fontWeight: 600 }}>{row.hotelName}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center" }}>{row.roomLabel}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center" }}>{fmtDate(row.check_in, lang)}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center" }}>{fmtDate(row.check_out, lang)}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center", fontWeight: 600 }}>{row.nights}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "right", fontWeight: 700 }}>{formatMoney(convertMoney(row.total_amount, project), project, lang)}</td>
+                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt" }}>{getRoommateNames(row.person_id) || t.singleRoom}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                   <div style={{ marginTop: 28 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                       <div style={{ width: 3, height: 14, background: J.kincha, borderRadius: 2 }} />
@@ -2355,35 +2455,39 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                   {vehicles.length === 0 ? (
                     <div style={{ padding: "50px 40px", textAlign: "center", background: J.shiro, border: "1px solid " + J.keisenL, borderRadius: 8, color: J.nezumi, fontSize: 13 }}>{t.noVehicleHint}</div>
                   ) : (<>
-                    {/* ── Print-only vehicle table ── */}
+                    {/* ── Print-only vehicle table (with serial No.) ── */}
                     <div className="vehicle-print-table" style={{ marginBottom: 24 }}>
+                      <h2 style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.06em" }}>{t.vehicleMgmt}</h2>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-                        <thead><tr style={{ background: "#f0f0f0" }}>
-                          {[t.vehicleName, t.vehicleRegion, t.vehicleType, t.maxPassengers, "角色", "人員", "段落"].map((h) => <th key={h} style={{ border: "1px solid #bbb", padding: "6px 8px", textAlign: "center", fontWeight: 700, fontSize: 10 }}>{h}</th>)}
+                        <thead><tr style={{ background: "#f5f5f5" }}>
+                          {["No.", t.vehicleName, t.vehicleRegion, t.vehicleType, t.maxPassengers, "角色 / Role", "成員 / Member"].map((h) => <th key={h} style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "center", fontWeight: 700, fontSize: 9 }}>{h}</th>)}
                         </tr></thead>
                         <tbody>
-                          {vehicles.flatMap((v) => {
+                          {vehicles.flatMap((v, vi) => {
                             const assigns = getAssignmentsForVehicle(v.id);
+                            const seqNo = String(vi + 1).padStart(2, "0");
+                            const cellBase = { border: "1px solid #ccc", padding: "5px 7px" };
                             if (assigns.length === 0) return [(
                               <tr key={v.id}>
-                                <td style={{ border: "1px solid #ddd", padding: "5px 7px", fontWeight: 600 }}>{v.name}</td>
-                                <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{v.region}</td>
-                                <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{v.type}</td>
-                                <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{v.capacity || 4}</td>
-                                <td colSpan={3} style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center", color: "#999" }}>—</td>
+                                <td style={{ ...cellBase, textAlign: "center", fontWeight: 700, color: "#555" }}>{seqNo}</td>
+                                <td style={{ ...cellBase, fontWeight: 600 }}>{v.name}</td>
+                                <td style={{ ...cellBase, textAlign: "center" }}>{v.region}</td>
+                                <td style={{ ...cellBase, textAlign: "center" }}>{v.type}</td>
+                                <td style={{ ...cellBase, textAlign: "center" }}>{v.capacity || 4}</td>
+                                <td colSpan={2} style={{ ...cellBase, textAlign: "center", color: "#999" }}>—</td>
                               </tr>
                             )];
                             return assigns.map((a, ai) => {
                               const person = persons.find((x) => x.id === a.person_id);
                               return (
                                 <tr key={a.id || ai}>
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ border: "1px solid #ddd", padding: "5px 7px", fontWeight: 600, verticalAlign: "top" }}>{v.name}</td> : null}
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center", verticalAlign: "top" }}>{v.region}</td> : null}
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center", verticalAlign: "top" }}>{v.type}</td> : null}
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center", verticalAlign: "top" }}>{v.capacity || 4}</td> : null}
-                                  <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{a.role === "driver" ? t.driver : t.passengers}</td>
-                                  <td style={{ border: "1px solid #ddd", padding: "5px 7px" }}>{person?.name_kanji || "—"}</td>
-                                  <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{a.segment_label || "—"}</td>
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, textAlign: "center", fontWeight: 700, color: "#555", verticalAlign: "top" }}>{seqNo}</td> : null}
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, fontWeight: 600, verticalAlign: "top" }}>{v.name}</td> : null}
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, textAlign: "center", verticalAlign: "top" }}>{v.region}</td> : null}
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, textAlign: "center", verticalAlign: "top" }}>{v.type}</td> : null}
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, textAlign: "center", verticalAlign: "top" }}>{v.capacity || 4}</td> : null}
+                                  <td style={{ ...cellBase, textAlign: "center" }}>{a.role === "driver" ? t.driver : t.passengers}</td>
+                                  <td style={cellBase}>{person?.name_kanji || "—"}</td>
                                 </tr>
                               );
                             });
@@ -2436,35 +2540,20 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                                 );
                               })}
                               {canEdit && (
-                                <div style={{ marginTop: 10 }}>
-                                  {addTripVehicle === v.id ? (
-                                    <div style={{ display: "grid", gap: 8 }}>
-                                      <select style={inpStyle} value={tripPerson} onChange={(e) => setTripPerson(e.target.value)}>
-                                        <option value="">{t.selectPassenger}</option>
-                                        {persons.map((p) => <option key={p.id} value={p.id}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
-                                      </select>
-                                      <select style={inpStyle} value={tripRole} onChange={(e) => setTripRole(e.target.value)}>
-                                        <option value="driver">{t.driver}</option>
-                                        <option value="passenger">{t.passengers}</option>
-                                      </select>
-                                      <select style={inpStyle} value={tripSegment} onChange={(e) => setTripSegment(e.target.value)}>
-                                        <option value="">{t.segmentLabel}</option>
-                                        <option value={t.segmentMorning}>{t.segmentMorning}</option>
-                                        <option value={t.segmentEvening}>{t.segmentEvening}</option>
-                                        <option value={t.segmentTransfer}>{t.segmentTransfer}</option>
-                                      </select>
-                                      <div style={{ display: "flex", gap: 8 }}>
-                                        <button type="button" style={pBtn(false)} onClick={() => {
-                                          if (!tripPerson) return;
-                                          addAssignment(v.id, +tripPerson, tripRole, tripSegment);
-                                          setAddTripVehicle(null); setTripPerson(""); setTripSegment("");
-                                        }}>{t.save}</button>
-                                        <button type="button" style={eBtn} onClick={() => setAddTripVehicle(null)}>{t.cancel}</button>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <button type="button" style={{ ...aBtn, width: "100%" }} onClick={() => { setAddTripVehicle(v.id); setTripPerson(""); setTripRole("passenger"); setTripSegment(""); }}>{t.addTrip}</button>
-                                  )}
+                                <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                                  <select style={{ ...inpStyle, flex: "2 1 120px", minWidth: 0 }} value={addTripVehicle === v.id ? tripPerson : ""} onChange={(e) => { setAddTripVehicle(v.id); setTripPerson(e.target.value); }}>
+                                    <option value="">{t.selectPassenger}</option>
+                                    {persons.map((p) => <option key={p.id} value={p.id}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
+                                  </select>
+                                  <select style={{ ...inpStyle, flex: "1 1 80px", minWidth: 0 }} value={addTripVehicle === v.id ? tripRole : "passenger"} onChange={(e) => { setAddTripVehicle(v.id); setTripRole(e.target.value); }}>
+                                    <option value="driver">{t.driver}</option>
+                                    <option value="passenger">{t.passengers}</option>
+                                  </select>
+                                  <button type="button" style={{ ...pBtn(false), flex: "0 0 auto" }} onClick={() => {
+                                    if (!tripPerson || addTripVehicle !== v.id) return;
+                                    addAssignment(v.id, +tripPerson, tripRole, "");
+                                    setAddTripVehicle(null); setTripPerson(""); setTripRole("passenger");
+                                  }}>+</button>
                                 </div>
                               )}
                             </div>
@@ -2575,38 +2664,99 @@ function GlobalStyles() {
       .flight-table th:nth-child(3), .flight-table td:nth-child(3),
       .flight-table th:nth-child(4), .flight-table td:nth-child(4) { text-align: left; }
 
-      /* ── Print ── */
+      /* ── Print — comprehensive A4 landscape refactor ── */
       @media print {
-        /* 隱藏所有互動元素 */
-        .no-print, header, nav,
-        button, input, select, textarea,
-        .print-hide { display: none !important; }
+        @page {
+          size: A4 landscape;
+          margin: 12mm 10mm 16mm;
+        }
 
-        body { background: white !important; font-size: 11px !important; }
-        * { color: black !important; box-shadow: none !important; }
+        /* Page number footer: 1 / N */
+        @page { @bottom-right { content: counter(page) " / " counter(pages); font-size: 8pt; color: #888; } }
 
-        /* 讓 body 鋪滿整頁 */
+        /* Reset */
+        body {
+          background: white !important;
+          color: black !important;
+          font-size: 9.5pt !important;
+          font-family: 'Noto Sans JP', sans-serif !important;
+          margin: 0 !important; padding: 0 !important;
+        }
+        * {
+          color: black !important;
+          box-shadow: none !important;
+          text-shadow: none !important;
+          animation: none !important;
+          transition: none !important;
+        }
         #root { max-width: 100% !important; }
 
-        /* 表格樣式重設 */
-        table { width: 100% !important; border-collapse: collapse !important; font-size: 10px !important; }
-        th, td { border: 1px solid #bbb !important; padding: 5px 7px !important; background: white !important; }
-        thead tr { background: #f0f0f0 !important; }
-        thead th { font-weight: bold !important; font-size: 9px !important; letter-spacing: 0.06em !important; }
+        /* Hide all interactive / decorative UI */
+        .no-print, header, nav, aside,
+        button, input, select, textarea,
+        .print-hide,
+        .search-bar-wrap, .filter-chips-wrap,
+        .progress-bar-wrap, .tab-bar { display: none !important; }
 
-        /* 配車：卡片式隱藏，改顯示印表格 */
+        /* General table reset — light gray lines, white bg, ink-saving */
+        table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          font-size: 8.5pt !important;
+          table-layout: fixed !important;
+          word-break: break-all !important;
+        }
+        th, td {
+          border: 0.5pt solid #ccc !important;
+          padding: 4pt 5pt !important;
+          background: white !important;
+          vertical-align: middle !important;
+        }
+        thead tr { background: #f5f5f5 !important; }
+        thead th {
+          font-weight: 700 !important;
+          font-size: 8pt !important;
+          letter-spacing: 0.04em !important;
+          text-align: center !important;
+          background: #f5f5f5 !important;
+        }
+        tr { page-break-inside: avoid !important; }
+        h2, h3 { page-break-after: avoid !important; }
+
+        /* ─── 配車表 ─── */
         .vehicle-card-view { display: none !important; }
         .vehicle-print-table { display: block !important; }
 
-        /* 住宿統計保留 */
-        .tab-content { animation: none !important; }
+        /* ─── 航班表：13 columns，精密寬度分配 ─── */
+        /* Hide the 14th column (action buttons) */
+        .flight-table th:nth-child(14),
+        .flight-table td:nth-child(14) { display: none !important; }
 
-        /* 分頁提示 */
-        h2 { page-break-after: avoid !important; }
-        tr { page-break-inside: avoid !important; }
+        /* Column widths: No.(3%) Dept(5%) Kanji(8%) Roman(9%) Airline(6%) FlightNo(6%) Cabin(4%) PNR(7%) DepApt(6%) DepTime(10%) ArrApt(6%) ArrTime(10%) Status(6%) */
+        .flight-table th:nth-child(1),  .flight-table td:nth-child(1)  { width: 3% !important; }
+        .flight-table th:nth-child(2),  .flight-table td:nth-child(2)  { width: 5% !important; }
+        .flight-table th:nth-child(3),  .flight-table td:nth-child(3)  { width: 9% !important; text-align: left !important; }
+        .flight-table th:nth-child(4),  .flight-table td:nth-child(4)  { width: 10% !important; text-align: left !important; }
+        .flight-table th:nth-child(5),  .flight-table td:nth-child(5)  { width: 6% !important; }
+        .flight-table th:nth-child(6),  .flight-table td:nth-child(6)  { width: 6% !important; }
+        .flight-table th:nth-child(7),  .flight-table td:nth-child(7)  { width: 4% !important; }
+        .flight-table th:nth-child(8),  .flight-table td:nth-child(8)  { width: 7% !important; }
+        .flight-table th:nth-child(9),  .flight-table td:nth-child(9)  { width: 7% !important; }
+        .flight-table th:nth-child(10), .flight-table td:nth-child(10) { width: 11% !important; white-space: normal !important; }
+        .flight-table th:nth-child(11), .flight-table td:nth-child(11) { width: 7% !important; }
+        .flight-table th:nth-child(12), .flight-table td:nth-child(12) { width: 11% !important; white-space: normal !important; }
+        .flight-table th:nth-child(13), .flight-table td:nth-child(13) { width: 7% !important; }
+
+        /* ─── 住宿表：網頁版操作欄完全隱藏，顯示 print-stay-table ─── */
+        .screen-stay-table { display: none !important; }
+        .print-stay-table { display: table !important; }
+
+        .tab-content { animation: none !important; }
       }
+
       @media screen {
         .vehicle-print-table { display: none !important; }
+        .print-stay-table { display: none !important; }
       }
 
       /* ── Number column (table index) ── */
