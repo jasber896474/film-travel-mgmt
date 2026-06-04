@@ -6,6 +6,8 @@ const OWNER_ID = "006bf3d7-934c-4a86-a14c-17757334b618";
 let _token = null;
 
 const SESSION_KEY = "sb_session";
+/** 部署版本（畫面右下角可對照是否為最新版） */
+const APP_BUILD = "2026-06-05-c";
 
 const saveSession = (res) => {
   localStorage.setItem(SESSION_KEY, JSON.stringify({
@@ -203,7 +205,7 @@ const T = {
     subStay: "住宿一覽", subHotels: "飯店主檔",
     staffList: "工作人員列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "飯店清單",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配車", progressOf: "{done}/{total}",
-    no: "編號", dept: "部門", nameKanji: "姓名（漢字）", nameRoman: "羅馬拼音", importance: "重要度",
+    no: "編號", dept: "部門", nameKanji: "姓名（漢字）", nameRoman: "羅馬拼音", nameSurname: "姓", nameGiven: "名", importance: "重要度",
     status: "安排狀態", passport: "護照 / ID Card", dob: "出生年月日", passportExp: "護照效期", diet: "飲食限制", action: "操作", select: "選取",
     arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩餘不足180天",
     addStaff: "新增工作人員", editStaff: "編輯工作人員",
@@ -213,10 +215,13 @@ const T = {
     hotel: "飯店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房價/晚", nights: "天數", totalAmt: "合計",
     roommate: "同室者", singleRoom: "單人房", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同室設定", roommateNone: "無（單人房）",
     totalCost: "飯店總費用", hotelStats: "各飯店統計", guestCount: "入住人次", roomCount: "客室數", roomOccupancy: "每房人數", totalSpend: "總費用",
-    roomAssignTitle: "配房工具", stepPickHotel: "① 選飯店", stepPickDate: "② 選日期", stepPickRoom: "③ 房號與住客",
-    roomAssignRoomPh: "輸入或選擇房號", roomAssignGuests: "勾選住客", roomAssignApply: "套用房號",
+    hotelStatsToolTitle: "飯店統計工具", stepPickHotel: "① 選飯店", stepPickDate: "② 選日期", stepPickRoom: "③ 選房號・勾選人數",
+    stepStatsResult: "④ 統計結果", statsPickHint: "完成前三步後自動計算",
+    roomAssignRoomPh: "輸入或選擇房號", roomAssignGuests: "勾選住客（可複選）", roomAssignApply: "套用房號",
     roomAssignDone: "已更新 {n} 筆房號", roomAssignPickHotel: "請先選擇飯店", roomAssignPickDate: "請選擇入住日",
     roomAssignPickRoom: "請輸入房號並勾選住客", allHotels: "全部飯店",
+    statsSelectedCount: "勾選人數", statsRoomGuests: "該房人數", statsSelectedTotal: "勾選合計",
+    statsHotelGuests: "飯店入住人次", statsHotelRooms: "飯店客室數", statsHotelSpend: "飯店總費用",
     datePrice: "日期別房價", addRule: "新增規則", addHotel: "新增飯店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "節日加算", finalPrice: "最終房價",
     hotelName: "飯店名稱", hotelAddr: "地址", hotelTel: "電話", targetHotel: "對象飯店", customRoomType: "自訂房型", breakdownTitle: "每日房價明細",
@@ -280,7 +285,7 @@ const T = {
     subStay: "住宿一览", subHotels: "饭店主档",
     staffList: "工作人员列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "饭店列表",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配车", progressOf: "{done}/{total}",
-    no: "编号", dept: "部门", nameKanji: "姓名（汉字）", nameRoman: "罗马拼音", importance: "重要度",
+    no: "编号", dept: "部门", nameKanji: "姓名（汉字）", nameRoman: "罗马拼音", nameSurname: "姓", nameGiven: "名", importance: "重要度",
     status: "安排状态", passport: "护照 / ID Card", dob: "出生年月日", passportExp: "护照效期", diet: "饮食限制", action: "操作", select: "选取",
     arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩余不足180天",
     addStaff: "新增工作人员", editStaff: "编辑工作人员",
@@ -290,10 +295,13 @@ const T = {
     hotel: "饭店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房价/晚", nights: "天数", totalAmt: "合计",
     roommate: "同住者", singleRoom: "单人间", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同住设置", roommateNone: "无（单人间）",
     totalCost: "饭店总费用", hotelStats: "各饭店统计", guestCount: "入住人次", roomCount: "客房数", roomOccupancy: "每房人数", totalSpend: "总费用",
-    roomAssignTitle: "配房工具", stepPickHotel: "① 选饭店", stepPickDate: "② 选日期", stepPickRoom: "③ 房号与住客",
-    roomAssignRoomPh: "输入或选择房号", roomAssignGuests: "勾选住客", roomAssignApply: "套用房号",
+    hotelStatsToolTitle: "饭店统计工具", stepPickHotel: "① 选饭店", stepPickDate: "② 选日期", stepPickRoom: "③ 选房号・勾选人数",
+    stepStatsResult: "④ 统计结果", statsPickHint: "完成前三步后自动计算",
+    roomAssignRoomPh: "输入或选择房号", roomAssignGuests: "勾选住客（可多选）", roomAssignApply: "套用房号",
     roomAssignDone: "已更新 {n} 笔房号", roomAssignPickHotel: "请先选择饭店", roomAssignPickDate: "请选择入住日",
     roomAssignPickRoom: "请输入房号并勾选住客", allHotels: "全部饭店",
+    statsSelectedCount: "勾选人数", statsRoomGuests: "该房人数", statsSelectedTotal: "勾选合计",
+    statsHotelGuests: "饭店入住人次", statsHotelRooms: "饭店客房数", statsHotelSpend: "饭店总费用",
     datePrice: "日期别房价", addRule: "新增规则", addHotel: "新增饭店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "节日加算", finalPrice: "最终房价",
     hotelName: "饭店名称", hotelAddr: "地址", hotelTel: "电话", targetHotel: "对象饭店", customRoomType: "自定义房型", breakdownTitle: "每日房价明细",
@@ -356,7 +364,7 @@ const T = {
     subStay: "Stay List", subHotels: "Hotel Master",
     staffList: "Staff List", flightMgmt: "Flight Management", hotelMgmt: "Accommodation", hotelList: "Hotel List",
     progressFlight: "Flights", progressHotel: "Hotels", progressVehicle: "Unassigned", progressOf: "{done}/{total}",
-    no: "No.", dept: "Dept", nameKanji: "Name", nameRoman: "Romanized", importance: "Priority",
+    no: "No.", dept: "Dept", nameKanji: "Name", nameRoman: "Romanized", nameSurname: "Last", nameGiven: "First", importance: "Priority",
     status: "Status", passport: "Passport / ID Card", dob: "DOB", passportExp: "Expiry", diet: "Dietary", action: "Actions", select: "Select",
     arranged: "Arranged", partial: "Partial", unArranged: "Pending", passportWarn: "Expires within 180 days",
     addStaff: "Add Staff", editStaff: "Edit Staff",
@@ -405,6 +413,13 @@ const T = {
     errEmailPw: "Enter email and password", errPwMatch: "Passwords do not match", errPwLen: "Password must be at least 6 characters",
     memberAdd: "Add Member", memberCurrent: "Members ({n})", memberAlready: "Already a member", memberSelf: "Cannot remove yourself",
     memberUidHint: "Enter User ID from Supabase Auth.", memberUidLabel: "Find User ID", memberUidInfo: "→ Authentication → Users → copy UUID", memberAddBtn: "Add",
+    hotelStatsToolTitle: "Hotel stats", stepPickHotel: "① Hotel", stepPickDate: "② Date", stepPickRoom: "③ Room · guests",
+    stepStatsResult: "④ Results", statsPickHint: "Stats update after steps 1–3",
+    roomAssignRoomPh: "Room no.", roomAssignGuests: "Select guests", roomAssignApply: "Apply room no.",
+    roomAssignDone: "Updated {n} stays", roomAssignPickHotel: "Select hotel", roomAssignPickDate: "Select date",
+    roomAssignPickRoom: "Enter room and select guests", allHotels: "All hotels",
+    statsSelectedCount: "Selected", statsRoomGuests: "In room", statsSelectedTotal: "Selected total",
+    statsHotelGuests: "Hotel guest-nights", statsHotelRooms: "Hotel rooms", statsHotelSpend: "Hotel spend",
     stayRequired: "Select hotel and dates", syncRoommateTitle: "Sync roommates", syncRoommateMsg: "Sync hotel, room type and dates for roommates?",
     currencySettings: "Currency", baseCurrency: "Base currency", displayCurrency: "Display currency", exchangeRate: "Rate", exchangeRateHint: "1 base = ? display",
     currencyTWD: "TWD", currencyJPY: "JPY", optional: "Optional", loading: "Loading…", resultsCount: "Showing {n} / {total}", activeFilters: "Active filters",
@@ -426,7 +441,7 @@ const T = {
     subStay: "숙박 목록", subHotels: "호텔 마스터",
     staffList: "스태프 목록", flightMgmt: "항공 관리", hotelMgmt: "숙박 관리", hotelList: "호텔 목록",
     progressFlight: "항공", progressHotel: "숙박", progressVehicle: "미배정", progressOf: "{done}/{total}",
-    no: "번호", dept: "부서", nameKanji: "이름", nameRoman: "로마자", importance: "중요도",
+    no: "번호", dept: "부서", nameKanji: "이름", nameRoman: "로마자", nameSurname: "성", nameGiven: "이름", importance: "중요도",
     status: "상태", passport: "여권 / ID Card", dob: "생년월일", passportExp: "만료", diet: "식단", action: "작업", select: "선택",
     arranged: "완료", partial: "일부", unArranged: "미배정", passportWarn: "180일 미만",
     addStaff: "스태프 추가", editStaff: "스태프 편집",
@@ -475,6 +490,13 @@ const T = {
     errEmailPw: "이메일과 비밀번호를 입력하세요", errPwMatch: "비밀번호가 일치하지 않습니다", errPwLen: "6자 이상 입력하세요",
     memberAdd: "멤버 추가", memberCurrent: "현재 멤버 ({n}명)", memberAlready: "이미 멤버입니다", memberSelf: "본인은 삭제할 수 없습니다",
     memberUidHint: "Supabase Authentication의 User ID를 입력하세요.", memberUidLabel: "User ID 확인 방법", memberUidInfo: "→ Authentication → Users → UUID 복사", memberAddBtn: "추가",
+    hotelStatsToolTitle: "호텔 통계", stepPickHotel: "① 호텔", stepPickDate: "② 날짜", stepPickRoom: "③ 객실·인원",
+    stepStatsResult: "④ 결과", statsPickHint: "1–3단계 후 자동 계산",
+    roomAssignRoomPh: "객실 번호", roomAssignGuests: "투숙자 선택", roomAssignApply: "객실 적용",
+    roomAssignDone: "{n}건 업데이트", roomAssignPickHotel: "호텔 선택", roomAssignPickDate: "날짜 선택",
+    roomAssignPickRoom: "객실·투숙자 선택", allHotels: "전체 호텔",
+    statsSelectedCount: "선택 인원", statsRoomGuests: "객실 인원", statsSelectedTotal: "선택 합계",
+    statsHotelGuests: "호텔 투숙", statsHotelRooms: "객실 수", statsHotelSpend: "호텔 비용",
     stayRequired: "호텔과 날짜를 입력하세요", syncRoommateTitle: "룸메이트 동기화", syncRoommateMsg: "룸메이트의 호텔·객실·날짜를 동기화하시겠습니까?",
     currencySettings: "통화 설정", baseCurrency: "기준 통화", displayCurrency: "표시 통화", exchangeRate: "환율", exchangeRateHint: "1 기준 = ? 표시",
     currencyTWD: "대만 달러 TWD", currencyJPY: "일본 엔 JPY", optional: "선택사항", loading: "로딩 중…", resultsCount: "{n} / {total}명", activeFilters: "활성 필터",
@@ -495,7 +517,7 @@ const T = {
     subStay: "宿泊一覧", subHotels: "ホテルマスタ",
     staffList: "スタッフ", flightMgmt: "フライト管理", hotelMgmt: "宿泊管理", hotelList: "ホテル",
     progressFlight: "フライト", progressHotel: "宿泊", progressVehicle: "未配車", progressOf: "{done}/{total}",
-    no: "No.", dept: "部署", nameKanji: "氏名", nameRoman: "ローマ字", importance: "重要度",
+    no: "No.", dept: "部署", nameKanji: "氏名", nameRoman: "ローマ字", nameSurname: "姓", nameGiven: "名", importance: "重要度",
     status: "状況", passport: "パスポート / ID", dob: "生年月日", passportExp: "有効期限", diet: "食事制限", action: "操作", select: "選択",
     arranged: "手配済", partial: "一部", unArranged: "未手配", passportWarn: "180日未満",
     addStaff: "追加", editStaff: "編集",
@@ -544,6 +566,13 @@ const T = {
     errEmailPw: "メールとパスワード", errPwMatch: "不一致", errPwLen: "6文字以上",
     memberAdd: "追加", memberCurrent: "メンバー（{n}）", memberAlready: "追加済", memberSelf: "自分は不可",
     memberUidHint: "User ID", memberUidLabel: "User ID", memberUidInfo: "→ Authentication → Users", memberAddBtn: "追加",
+    hotelStatsToolTitle: "ホテル統計", stepPickHotel: "① ホテル", stepPickDate: "② 日付", stepPickRoom: "③ 部屋・人数",
+    stepStatsResult: "④ 集計", statsPickHint: "①〜③で自動計算",
+    roomAssignRoomPh: "部屋番号", roomAssignGuests: "宿泊者を選択", roomAssignApply: "部屋番号を適用",
+    roomAssignDone: "{n}件更新", roomAssignPickHotel: "ホテルを選択", roomAssignPickDate: "日付を選択",
+    roomAssignPickRoom: "部屋と宿泊者を選択", allHotels: "すべて",
+    statsSelectedCount: "選択人数", statsRoomGuests: "部屋人数", statsSelectedTotal: "選択合計",
+    statsHotelGuests: "宿泊者数", statsHotelRooms: "客室数", statsHotelSpend: "ホテル費用",
     stayRequired: "ホテルと日付", syncRoommateTitle: "同室者同期", syncRoommateMsg: "同室者の宿泊を同期しますか？",
     currencySettings: "通貨", baseCurrency: "基準", displayCurrency: "表示", exchangeRate: "レート", exchangeRateHint: "1 基準 = ? 表示",
     currencyTWD: "TWD", currencyJPY: "JPY", optional: "任意", loading: "読込中…", resultsCount: "{n} / {total}", activeFilters: "フィルター",
@@ -556,6 +585,27 @@ const T = {
 
 const starLabel = (s) => (s === 3 ? "★★★" : s === 2 ? "★★" : s === 1 ? "★" : "");
 const IMPORTANCE = [3, 2, 1, 0];
+
+function RomanNameCell({ last, first }) {
+  const ln = (last || "").trim();
+  const fn = (first || "").trim();
+  if (!ln && !fn) return <span>—</span>;
+  return (
+    <div className="roman-name-cell" style={{ lineHeight: 1.35, textAlign: "center" }}>
+      <div style={{ fontSize: 12, fontWeight: 500, color: "var(--sumi)" }}>{ln || "—"}</div>
+      <div style={{ fontSize: 12, fontWeight: 400, color: "var(--sumi)" }}>{fn || "—"}</div>
+    </div>
+  );
+}
+
+function NameColumnHeader({ t }) {
+  return (
+    <div className="roman-name-cell" style={{ lineHeight: 1.3, textAlign: "center", fontSize: 8 }}>
+      <div>{t.nameSurname}</div>
+      <div>{t.nameGiven}</div>
+    </div>
+  );
+}
 
 function parseCSV(text) {
   const rows = [];
@@ -726,10 +776,10 @@ const pBtn = (dis) => ({
   boxShadow: dis ? "none" : "0 2px 8px rgba(43,90,76,.22)",
 });
 
-const STAY_COL_WIDTHS = [44, 72, 88, 80, 76, 72, 84, 84, 44, 88, 108];
+const STAY_COL_WIDTHS = [32, 80, 96, 58, 64, 60, 50, 68, 68, 34, 70, 88];
 const staffColWidths = (withCheckbox) => (withCheckbox
-  ? [40, 48, 88, 96, 120, 56, 104, 88, 88, 108, 116]
-  : [48, 88, 96, 120, 56, 104, 88, 88, 108, 116]);
+  ? [32, 32, 80, 96, 54, 44, 76, 68, 68, 72, 88]
+  : [32, 80, 96, 54, 44, 76, 68, 68, 72, 88]);
 const HOTEL_STATS_COL_WIDTHS = [140, 56, 56, 100];
 
 function ThemeToggle({ theme, onChange, t }) {
@@ -834,19 +884,16 @@ function staysOnHotelDate(stays, hotelId, date) {
   return stays.filter((s) => String(s.hotel_id) === String(hotelId) && s.check_in <= date && date < s.check_out);
 }
 
-function HotelRoomAssignPanel({ hotels, stays, persons, hotelStatsMap, t, lang, project, canEdit, onAssignBatch }) {
+function HotelStatsToolPanel({ hotels, stays, persons, hotelStatsMap, t, lang, project, canEdit, onAssignBatch }) {
   const [hotelId, setHotelId] = useState("");
   const [date, setDate] = useState("");
   const [roomNo, setRoomNo] = useState("");
   const [selected, setSelected] = useState(() => new Set());
 
   const dates = useMemo(() => hotelStayDates(stays, hotelId), [stays, hotelId]);
-  const candidates = useMemo(() => {
-    return staysOnHotelDate(stays, hotelId, date).map((s) => ({
-      ...s,
-      person: persons.find((p) => p.id === s.person_id),
-    })).filter((s) => s.person);
-  }, [stays, persons, hotelId, date]);
+  const candidates = useMemo(() => staysOnHotelDate(stays, hotelId, date).map((s) => ({
+    ...s, person: persons.find((p) => p.id === s.person_id),
+  })).filter((s) => s.person), [stays, persons, hotelId, date]);
 
   const existingRooms = useMemo(() => {
     const set = new Set();
@@ -856,102 +903,83 @@ function HotelRoomAssignPanel({ hotels, stays, persons, hotelStatsMap, t, lang, 
     return [...set].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }, [stays, hotelId]);
 
+  const liveStats = useMemo(() => {
+    if (!hotelId || !date) return null;
+    const sel = candidates.filter((s) => selected.has(s.id));
+    const st = hotelStatsMap[hotelId] || { guests: 0, rooms: 0, total: 0 };
+    const selectedTotal = sel.reduce((sum, s) => sum + (s.total_amount || 0), 0);
+    return {
+      selectedCount: sel.length,
+      roomNo: roomNo.trim(),
+      roomGuests: sel.length,
+      selectedTotal,
+      hotelGuests: st.guests,
+      hotelRooms: st.rooms,
+      hotelSpend: st.total,
+    };
+  }, [hotelId, date, candidates, selected, roomNo, hotelStatsMap]);
+
   const toggle = (id) => setSelected((prev) => {
     const next = new Set(prev);
     if (next.has(id)) next.delete(id); else next.add(id);
     return next;
   });
 
-  const stepStyle = (n, active) => ({
+  const stepStyle = (active) => ({
     fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
-    color: active ? "var(--moegi)" : "var(--usunezumi)",
-    marginBottom: 6,
+    color: active ? "var(--moegi)" : "var(--usunezumi)", marginBottom: 6,
   });
-
   const fieldWrap = { display: "flex", flexDirection: "column", minWidth: 0 };
+  const statBox = (label, value, highlight) => (
+    <div key={label} style={{
+      padding: "10px 12px", background: highlight ? "var(--moegi3)" : "var(--washi)",
+      border: `1px solid ${highlight ? "var(--moegi)" : "var(--keisenL)"}`, borderRadius: 6, minWidth: 88, textAlign: "right",
+    }}>
+      <div style={{ fontSize: 9, color: "var(--nezumi)", marginBottom: 4, letterSpacing: "0.06em" }}>{label}</div>
+      <div style={{ fontSize: 15, fontWeight: 700, color: highlight ? "var(--moegi)" : "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>{value}</div>
+    </div>
+  );
 
   return (
     <div className="acc-tools-card" style={{
       background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8,
-      padding: "16px 18px", marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,.04)",
+      padding: "16px 18px", marginTop: 28, boxShadow: "0 1px 4px rgba(0,0,0,.04)",
     }}>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
-          <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.roomAssignTitle}</h3>
-        </div>
-        <div style={{ overflowX: "auto", maxWidth: "100%" }}>
-          <table className="hotel-stats-compact" style={{
-            tableLayout: "fixed", borderCollapse: "collapse", width: "auto", marginLeft: "auto",
-            fontSize: 11.5, background: "var(--washi)", borderRadius: 6, overflow: "hidden",
-          }}>
-            <colgroup>
-              {HOTEL_STATS_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
-            </colgroup>
-            <thead>
-              <tr style={{ ...thead, background: "var(--sumiMid)" }}>
-                {[t.hotelName, t.guestCount, t.roomCount, t.totalSpend].map((h, i) => (
-                  <th key={h} style={{ ...thS, padding: "7px 8px", textAlign: i === 0 ? "left" : "right", fontSize: 8 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {hotels.map((h) => {
-                const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0 };
-                return (
-                  <tr key={h.id}>
-                    <td style={{ ...tdS({ padding: "6px 8px" }), fontWeight: 600, textAlign: "left" }} title={h.name}>{h.name}</td>
-                    <td style={tdS({ padding: "6px 8px", textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{st.guests}</td>
-                    <td style={tdS({ padding: "6px 8px", textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{st.rooms}</td>
-                    <td className="td-amt" style={tdS({ padding: "6px 8px", textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600 })}>
-                      {formatMoney(convertMoney(st.total, project), project, lang)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+        <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
+        <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>
+          {t.hotelStatsToolTitle}
+          <span style={{ marginLeft: 8, fontSize: 9, fontWeight: 500, color: "var(--moegi)", textTransform: "none" }}>{APP_BUILD}</span>
+        </h3>
       </div>
 
       <div className="acc-room-wizard" style={{
-        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: 12, alignItems: "start", marginBottom: 12,
+        display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, alignItems: "start",
       }}>
         <div style={fieldWrap}>
-          <div style={stepStyle(1, !!hotelId)}>{t.stepPickHotel}</div>
+          <div style={stepStyle(!!hotelId)}>{t.stepPickHotel}</div>
           <select style={inpStyle} value={hotelId} className="wa-input" onChange={(e) => { setHotelId(e.target.value); setDate(""); setSelected(new Set()); }}>
             <option value="">{t.allHotels}</option>
             {hotels.map((h) => <option key={h.id} value={String(h.id)}>{h.name}</option>)}
           </select>
         </div>
         <div style={fieldWrap}>
-          <div style={stepStyle(2, !!date)}>{t.stepPickDate}</div>
+          <div style={stepStyle(!!date)}>{t.stepPickDate}</div>
           <select style={inpStyle} value={date} className="wa-input" disabled={!hotelId} onChange={(e) => { setDate(e.target.value); setSelected(new Set()); }}>
             <option value="">{hotelId ? "—" : t.roomAssignPickHotel}</option>
             {dates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)}</option>)}
           </select>
         </div>
         <div style={{ ...fieldWrap, gridColumn: "1 / -1" }}>
-          <div style={stepStyle(3, !!roomNo && selected.size > 0)}>{t.stepPickRoom}</div>
+          <div style={stepStyle(!!roomNo && selected.size > 0)}>{t.stepPickRoom}</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <input
-              style={{ ...inpStyle, width: 120, flexShrink: 0 }}
-              className="wa-input"
-              list="acc-room-list"
-              placeholder={t.roomAssignRoomPh}
-              value={roomNo}
-              disabled={!date || !canEdit}
-              onChange={(e) => setRoomNo(e.target.value)}
-            />
-            <datalist id="acc-room-list">
-              {existingRooms.map((r) => <option key={r} value={r} />)}
-            </datalist>
-            {existingRooms.slice(0, 8).map((r) => (
-              <button key={r} type="button" disabled={!canEdit || !date} onClick={() => setRoomNo(r)} style={{
-                ...eBtn, marginRight: 0, padding: "4px 10px", fontSize: 10,
+            <input style={{ ...inpStyle, width: 100, flexShrink: 0 }} className="wa-input" list="acc-room-list"
+              placeholder={t.roomAssignRoomPh} value={roomNo} disabled={!date} onChange={(e) => setRoomNo(e.target.value)} />
+            <datalist id="acc-room-list">{existingRooms.map((r) => <option key={r} value={r} />)}</datalist>
+            {existingRooms.slice(0, 10).map((r) => (
+              <button key={r} type="button" disabled={!date} onClick={() => setRoomNo(r)} style={{
+                ...eBtn, marginRight: 0, padding: "4px 8px", fontSize: 10,
                 background: roomNo === r ? "var(--moegi3)" : "transparent",
-                borderColor: roomNo === r ? "var(--moegi)" : "var(--keisenM)",
               }}>{r}</button>
             ))}
           </div>
@@ -961,24 +989,22 @@ function HotelRoomAssignPanel({ hotels, stays, persons, hotelStatsMap, t, lang, 
             <p style={{ fontSize: 11, color: "var(--usunezumi)", margin: 0 }}>{t.noData}</p>
           ) : (
             <div style={{
-              display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 140, overflowY: "auto",
+              display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 120, overflowY: "auto",
               padding: "8px 10px", background: "var(--washi)", borderRadius: 6, border: "1px solid var(--keisenL)",
             }}>
-              <span style={{ width: "100%", fontSize: 10, color: "var(--nezumi)", marginBottom: 2 }}>{t.roomAssignGuests}</span>
+              <span style={{ width: "100%", fontSize: 10, color: "var(--nezumi)" }}>{t.roomAssignGuests}</span>
               {candidates.map((s) => {
                 const on = selected.has(s.id);
                 const p = s.person;
                 return (
                   <label key={s.id} style={{
-                    display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px",
-                    borderRadius: 6, cursor: canEdit ? "pointer" : "default",
-                    border: `1px solid ${on ? "var(--moegi)" : "var(--keisenL)"}`,
-                    background: on ? "var(--moegi3)" : "var(--shiro)", fontSize: 11.5,
+                    display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px", borderRadius: 6,
+                    cursor: "pointer", border: `1px solid ${on ? "var(--moegi)" : "var(--keisenL)"}`,
+                    background: on ? "var(--moegi3)" : "var(--shiro)", fontSize: 11,
                   }}>
-                    <input type="checkbox" disabled={!canEdit} checked={on} onChange={() => toggle(s.id)} />
+                    <input type="checkbox" checked={on} onChange={() => toggle(s.id)} />
                     <span style={{ fontWeight: 600 }}>{p.name_kanji}</span>
                     {p.dept && <span style={{ color: "var(--nezumi)", fontSize: 10 }}>{p.dept}</span>}
-                    {s.room_number && <span style={{ fontSize: 10, color: "var(--kincha)" }}>#{s.room_number}</span>}
                   </label>
                 );
               })}
@@ -987,15 +1013,29 @@ function HotelRoomAssignPanel({ hotels, stays, persons, hotelStatsMap, t, lang, 
         </div>
       </div>
 
+      <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--keisenL)" }}>
+        <div style={stepStyle(!!liveStats)}>{t.stepStatsResult}</div>
+        {!liveStats ? (
+          <p style={{ fontSize: 11, color: "var(--usunezumi)", margin: 0 }}>{t.statsPickHint}</p>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "flex-end" }}>
+            {statBox(t.statsSelectedCount, liveStats.selectedCount, true)}
+            {statBox(t.roomNo, liveStats.roomNo || "—", false)}
+            {statBox(t.statsRoomGuests, liveStats.roomGuests, true)}
+            {statBox(t.statsSelectedTotal, formatMoney(convertMoney(liveStats.selectedTotal, project), project, lang), true)}
+            {statBox(t.statsHotelGuests, liveStats.hotelGuests, false)}
+            {statBox(t.statsHotelRooms, liveStats.hotelRooms, false)}
+            {statBox(t.statsHotelSpend, formatMoney(convertMoney(liveStats.hotelSpend, project), project, lang), false)}
+          </div>
+        )}
+      </div>
+
       {canEdit && (
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            style={pBtn(!hotelId || !date || !roomNo.trim() || selected.size === 0)}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+          <button type="button" style={pBtn(!hotelId || !date || !roomNo.trim() || selected.size === 0)}
             disabled={!hotelId || !date || !roomNo.trim() || selected.size === 0}
-            onClick={() => onAssignBatch([...selected], hotelId, roomNo.trim())}
-          >
-            {t.roomAssignApply} {selected.size > 0 ? `(${selected.size})` : ""}
+            onClick={() => onAssignBatch([...selected], hotelId, roomNo.trim())}>
+            {t.roomAssignApply}{selected.size > 0 ? ` (${selected.size})` : ""}
           </button>
         </div>
       )}
@@ -1351,8 +1391,8 @@ function PersonForm({ init, onSave, onClose, t, lang }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <Field label={t.dept}><input style={inpStyle} value={f.dept} onChange={set("dept")} /></Field>
         <Field label={t.nameKanji}><input style={inpStyle} value={f.name_kanji} onChange={set("name_kanji")} /></Field>
-        <Field label={`${t.nameRoman} (${t.optional})`}><input style={inpStyle} value={f.last_roman} onChange={set("last_roman")} placeholder={lang.startsWith("ja") ? "姓" : ""} /></Field>
-        <Field label={`${t.nameRoman} 2`}><input style={inpStyle} value={f.first_roman} onChange={set("first_roman")} /></Field>
+        <Field label={`${t.nameSurname} (${t.optional})`}><input style={inpStyle} value={f.last_roman} onChange={set("last_roman")} className="wa-input" /></Field>
+        <Field label={t.nameGiven}><input style={inpStyle} value={f.first_roman} onChange={set("first_roman")} className="wa-input" /></Field>
         <Field label={t.importance}><select style={inpStyle} value={f.importance} onChange={(e) => setF((p) => ({ ...p, importance: +e.target.value }))}>{IMPORTANCE.map((i) => <option key={i} value={i}>{i === 0 ? "—" : starLabel(i)}</option>)}</select></Field>
         <Field label={`${t.passport} (${t.optional})`}><input style={inpStyle} value={f.passport || ""} onChange={set("passport")} /></Field>
         <Field label={`${t.dob} (${t.optional})`}><input type="date" style={inpStyle} value={f.dob || ""} onChange={set("dob")} /></Field>
@@ -2860,7 +2900,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <th style={{ ...thS, textAlign: "center" }}>{t.no}</th>
                     <th style={{ ...thS, textAlign: "left" }}>{t.dept}</th>
                     <th style={{ ...thS, textAlign: "left" }}>{t.nameKanji}</th>
-                    <th style={{ ...thS, textAlign: "left" }}>{t.nameRoman}</th>
+                    <th style={{ ...thS, textAlign: "center" }}><NameColumnHeader t={t} /></th>
                     <th style={{ ...thS, textAlign: "center" }}>{t.importance}</th>
                     <th style={{ ...thS, textAlign: "left" }}>{t.passport}</th>
                     <th style={{ ...thS, textAlign: "center" }}>{t.dob}</th>
@@ -2877,7 +2917,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           <td className="td-num" style={tdS({ textAlign: "center" })}>{personIndex[p.id] || i + 1}</td>
                           <td style={tdEllipsis()} title={p.dept}><Highlight text={p.dept} query={debSearchA} /></td>
                           <td style={tdEllipsis({ fontWeight: 600 })} title={p.name_kanji}><Highlight text={p.name_kanji} query={debSearchA} /></td>
-                          <td style={tdEllipsis()} title={`${p.last_roman || ""} ${p.first_roman || ""}`.trim()}><Highlight text={`${p.last_roman || ""} ${p.first_roman || ""}`.trim()} query={debSearchA} /></td>
+                          <td style={tdS({ textAlign: "center", maxWidth: "none" })}><RomanNameCell last={p.last_roman} first={p.first_roman} /></td>
                           <td style={tdS({ textAlign: "center" })}>{starLabel(p.importance) || "—"}</td>
                           <td style={tdEllipsis()} title={p.passport}>{p.passport || "—"}</td>
                           <td style={tdS({ textAlign: "center", whiteSpace: "nowrap" })}>{fmtDate(p.dob, lang)}</td>
@@ -2930,14 +2970,25 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                 <table style={tblW} className="flight-table">
                   <thead><tr style={thead}>
                     {[
-                      { label: t.no, w: 48 }, { label: t.dept, w: 70 },
-                      { label: t.nameKanji, w: 90 }, { label: t.nameRoman, w: 110 },
-                      { label: t.airline, w: 80 }, { label: t.flightNo, w: 70 },
-                      { label: t.cabin, w: 70 }, { label: t.pnr, w: 80 },
-                      { label: t.depAirport, w: 90 }, { label: t.depTime, w: 130 },
-                      { label: t.arrAirport, w: 90 }, { label: t.arrTime, w: 130 },
-                      { label: t.status, w: 80 }, { label: t.action, w: 60 },
-                    ].map(({ label, w }) => <th key={label} style={{ ...thS, textAlign: "center", minWidth: w }}>{label}</th>)}
+                      { key: "no", label: t.no, w: 32 },
+                      { key: "dept", label: t.dept, w: 62 },
+                      { key: "kanji", label: t.nameKanji, w: 80 },
+                      { key: "roman", roman: true, w: 66 },
+                      { key: "airline", label: t.airline, w: 72 },
+                      { key: "flight", label: t.flightNo, w: 64 },
+                      { key: "cabin", label: t.cabin, w: 58 },
+                      { key: "pnr", label: t.pnr, w: 64 },
+                      { key: "depA", label: t.depAirport, w: 76 },
+                      { key: "depT", label: t.depTime, w: 88 },
+                      { key: "arrA", label: t.arrAirport, w: 76 },
+                      { key: "arrT", label: t.arrTime, w: 88 },
+                      { key: "status", label: t.status, w: 68 },
+                      { key: "act", label: t.action, w: 56 },
+                    ].map(({ key, label, w, roman }) => (
+                      <th key={key} style={{ ...thS, textAlign: "center", minWidth: w, maxWidth: w, width: w }}>
+                        {roman ? <NameColumnHeader t={t} /> : label}
+                      </th>
+                    ))}
                   </tr></thead>
                   <tbody>
                     {filteredFlightPersons.map((p) => {
@@ -2964,7 +3015,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           <td style={flightCell()}>{personIndex[p.id]}</td>
                           <td style={flightCell()}>{p.dept || "—"}</td>
                           <td style={flightCell()}>{p.name_kanji || "—"}</td>
-                          <td style={flightCell()}>{`${p.last_roman || ""} ${p.first_roman || ""}`.trim() || "—"}</td>
+                          <td style={flightCell({ whiteSpace: "normal", padding: "8px 4px" })}><RomanNameCell last={p.last_roman} first={p.first_roman} /></td>
                           <td style={flightCell()}>{fl?.airline || "—"}</td>
                           <td style={flightCell()}>{fl?.flight_no || "—"}</td>
                           <td style={flightCell()}>{fl?.cabin || "—"}</td>
@@ -3012,17 +3063,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
               {accSub === "stays" && (
                 <>
-                  <HotelRoomAssignPanel
-                    hotels={hotels}
-                    stays={stays}
-                    persons={persons}
-                    hotelStatsMap={hotelStatsMap}
-                    t={t}
-                    lang={lang}
-                    project={project}
-                    canEdit={canEdit}
-                    onAssignBatch={assignRoomBatch}
-                  />
                   <div style={{
                     display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
                     gap: 8, marginBottom: 14, alignItems: "end",
@@ -3067,8 +3107,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     hotelGroups.sort((a, b) => a.hotelName.localeCompare(b.hotelName, lang === "ja" ? "ja" : "zh-Hant"));
 
                     const personsNoStay = persons.filter((p) => !stays.some((s) => s.person_id === p.id));
-                    const stayHeaders = [t.no, t.dept, t.nameKanji, t.staySegment, t.roomNo, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.action];
-                    const colSpan = stayHeaders.length;
+                    const stayHeaderDefs = [
+                      { key: "no", label: t.no },
+                      { key: "dept", label: t.dept },
+                      { key: "kanji", label: t.nameKanji },
+                      { key: "roman", roman: true },
+                      { key: "seg", label: t.staySegment },
+                      { key: "room", label: t.roomNo },
+                      { key: "type", label: t.roomType },
+                      { key: "in", label: t.checkIn },
+                      { key: "out", label: t.checkOut },
+                      { key: "nights", label: t.nights },
+                      { key: "amt", label: t.totalAmt },
+                      { key: "act", label: t.action },
+                    ];
+                    const colSpan = stayHeaderDefs.length;
 
                     const stayRow = (row) => {
                       const roomKey = row.room_number ? `${row.hotel_id}::${row.room_number}` : null;
@@ -3081,6 +3134,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           </td>
                           <td className="col-text" style={tdEllipsis()} title={row.person.dept}>{row.person.dept}</td>
                           <td className="col-text" style={tdEllipsis({ fontWeight: 600 })} title={row.person.name_kanji}>{row.person.name_kanji}</td>
+                          <td style={tdS({ textAlign: "center", maxWidth: "none" })}><RomanNameCell last={row.person.last_roman} first={row.person.first_roman} /></td>
                           <td className="col-text" style={tdEllipsis()} title={row.stay_label || ""}>{row.stay_label || "—"}</td>
                           <td className="room-no-cell" style={tdS({ maxWidth: "none" })}>
                             {canEdit ? (
@@ -3153,7 +3207,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                     {STAY_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
                                   </colgroup>
                                   <thead><tr style={thead}>
-                                    {stayHeaders.map((h) => <th key={h} style={thS}>{h}</th>)}
+                                    {stayHeaderDefs.map(({ key, label, roman }) => (
+                                      <th key={key} style={thS}>{roman ? <NameColumnHeader t={t} /> : label}</th>
+                                    ))}
                                   </tr></thead>
                                   <tbody>
                                     {assigned.map(stayRow)}
@@ -3242,6 +3298,18 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   })}
                 </>
               )}
+
+              <HotelStatsToolPanel
+                hotels={hotels}
+                stays={stays}
+                persons={persons}
+                hotelStatsMap={hotelStatsMap}
+                t={t}
+                lang={lang}
+                project={project}
+                canEdit={canEdit}
+                onAssignBatch={assignRoomBatch}
+              />
             </div>
           )}
 
@@ -3473,6 +3541,8 @@ function GlobalStyles() {
       .unassigned-tag .tag-dept { color: var(--nezumi); font-size: 10.5px; flex-shrink: 0; }
       .hotel-stats-compact th, .hotel-stats-compact td { white-space: nowrap; }
       .acc-room-wizard select:disabled, .acc-room-wizard input:disabled { opacity: 0.55; }
+      .roman-name-cell { min-width: 0; }
+      .flight-table .roman-name-cell { font-size: 11px; }
     `}</style>
   );
 }
