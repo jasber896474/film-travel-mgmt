@@ -1090,26 +1090,81 @@ function CurrencySettingsModal({ project, onSave, onClose, t }) {
   );
 }
 
-function RoommateModal({ pid, persons, roommates, onSave, onClose, t }) {
+// 配房輔助：判斷兩段住宿是否同飯店且日期重疊
+function staysOverlap(a, b) {
+  return a.hotel_id && b.hotel_id && String(a.hotel_id) === String(b.hotel_id) &&
+    a.check_in < b.check_out && b.check_in < a.check_out;
+}
+
+function RoommateModal({ pid, persons, roommates, stays, onSave, onClose, t }) {
   const current = roommates.filter((r) => r.person_id === pid).map((r) => r.partner_id);
   const [selected, setSelected] = useState(current);
+  const [showAll, setShowAll] = useState(false);
   const person = persons.find((p) => p.id === pid);
+  const myStays = stays.filter((s) => s.person_id === pid);
+
+  // Smart filter: only persons with overlapping hotel stays
+  const sameHotelIds = useMemo(() => {
+    if (!myStays.length) return new Set();
+    return new Set(
+      persons
+        .filter((p) => p.id !== pid)
+        .filter((p) => stays.filter((s) => s.person_id === p.id).some((s) => myStays.some((ms) => staysOverlap(ms, s))))
+        .map((p) => p.id)
+    );
+  }, [pid, myStays, persons, stays]);
+
+  const candidates = showAll
+    ? persons.filter((p) => p.id !== pid)
+    : persons.filter((p) => p.id !== pid && (sameHotelIds.has(p.id) || selected.includes(p.id)));
+
   const toggle = (id) => setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
+
   return (
     <Modal title={`${t.roommateSet} — ${person?.name_kanji || ""}`} onClose={onClose}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto" }}>
-        {persons.filter((p) => p.id !== pid).map((p) => (
-          <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", border: `1px solid ${selected.includes(p.id) ? J.moegi : J.keisenM}`, cursor: "pointer" }}>
-            <input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggle(p.id)} />
-            <span style={{ fontWeight: 600, fontSize: 13 }}>{p.name_kanji}</span>
-            <span style={{ fontSize: 12, color: J.nezumi }}>{p.last_roman} {p.first_roman}</span>
-          </label>
-        ))}
+      {/* My stays context */}
+      {myStays.length > 0 && (
+        <div style={{ background: J.moegi3, border: "1px solid rgba(43,90,76,.15)", borderRadius: 6, padding: "8px 12px", marginBottom: 12, fontSize: 11, color: J.moegi, lineHeight: 1.6 }}>
+          {myStays.map((s) => <div key={s.id}>{s.hotelName || s.hotel_id} · {s.check_in} – {s.check_out} ({s.roomLabel || s.room_type})</div>)}
+        </div>
+      )}
+      {/* Filter toggle */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span style={{ fontSize: 10.5, color: J.usunezumi }}>
+          {showAll ? `全部 ${persons.length - 1} 人` : `同飯店重疊日期 ${sameHotelIds.size} 人`}
+        </span>
+        <button type="button" onClick={() => setShowAll((v) => !v)}
+          style={{ fontSize: 10.5, background: "none", border: "none", cursor: "pointer", color: J.moegi, textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>
+          {showAll ? "只顯示同飯店" : "顯示全部"}
+        </button>
       </div>
-      <div style={{ marginTop: 12, padding: 10, background: J.washi, fontSize: 12 }}>
-        {selected.length === 0 ? t.roommateNone : selected.map((id) => persons.find((p) => p.id === id)?.name_kanji).filter(Boolean).join("、")}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 280, overflowY: "auto" }}>
+        {candidates.length === 0 && (
+          <div style={{ padding: "20px", textAlign: "center", color: J.usunezumi, fontSize: 12 }}>
+            {showAll ? "無其他成員" : "無同飯店重疊住宿成員，請點「顯示全部」"}
+          </div>
+        )}
+        {candidates.map((p) => {
+          const pStays = stays.filter((s) => s.person_id === p.id && myStays.some((ms) => staysOverlap(ms, s)));
+          const isSelected = selected.includes(p.id);
+          return (
+            <label key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", border: `1px solid ${isSelected ? J.moegi : J.keisenM}`, borderRadius: 6, cursor: "pointer", background: isSelected ? J.moegi3 : J.shiro, transition: "all .12s" }}>
+              <input type="checkbox" checked={isSelected} onChange={() => toggle(p.id)} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name_kanji}
+                  <span style={{ fontSize: 11, color: J.nezumi, fontWeight: 400, marginLeft: 8 }}>{p.dept}</span>
+                </div>
+                {pStays.length > 0 && <div style={{ fontSize: 10, color: J.moegi, marginTop: 1 }}>{pStays[0].hotelName || ""} {pStays[0].check_in}–{pStays[0].check_out}</div>}
+              </div>
+            </label>
+          );
+        })}
       </div>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+      <div style={{ marginTop: 10, padding: "8px 12px", background: J.washi, fontSize: 11.5, borderRadius: 4, color: J.sumi }}>
+        {selected.length === 0 ? <span style={{ color: J.usunezumi }}>{t.roommateNone}</span>
+          : selected.map((id) => persons.find((p) => p.id === id)?.name_kanji).filter(Boolean).join("、")}
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid " + J.keisenM, background: J.shiro, cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => onSave(pid, selected)} style={pBtn(false)}>{t.save}</button>
       </div>
@@ -1996,6 +2051,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
     await finishSaveStay(data, null);
   };
 
+  const downloadCSV = (rows, filename) => {
+    const csv = rows.map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+  };
+
   const exportCSV = () => {
     const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.importance, t.passport, t.dob, t.passportExp, t.diet, t.status, t.airline, t.flightNo, t.hotel, t.checkIn, t.checkOut, t.totalAmt, t.roommate];
     const rows = persons.map((p, i) => {
@@ -2005,10 +2066,54 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
       const stLabel = st === "arranged" ? t.arranged_short : st === "partial" ? t.partial_short : t.unArranged_short;
       return [i + 1, p.dept, p.name_kanji, `${p.last_roman} ${p.first_roman}`.trim(), p.importance, p.passport, p.dob, p.passport_exp, p.diet, stLabel, fl?.airline, fl?.flight_no, s ? getHotelName(s.hotel_id) : "", s?.check_in, s?.check_out, s?.total_amount, getRoommateNames(p.id)];
     });
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `staff_${todayStr()}.csv`; a.click();
+    downloadCSV([headers, ...rows], `staff_${todayStr()}.csv`);
   };
+
+  const exportFlightCSV = () => {
+    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.airline, t.flightNo, t.cabin, t.pnr, t.depAirport, t.depTime, t.arrAirport, t.arrTime, t.status];
+    const rows = persons.map((p, i) => {
+      const fl = flights.find((x) => x.person_id === p.id);
+      const depT = fl?.dep_terminal ? `T${fl.dep_terminal.replace(/^T/i,"")}` : "";
+      const arrT = fl?.arr_terminal ? `T${fl.arr_terminal.replace(/^T/i,"")}` : "";
+      return [personIndex[p.id], p.dept, p.name_kanji, `${p.last_roman} ${p.first_roman}`.trim(),
+        fl?.airline || "", fl?.flight_no || "", fl?.cabin || "", fl?.pnr || "",
+        fl?.dep_airport ? `${fl.dep_airport}${depT ? " "+depT : ""}` : "",
+        fl?.dep_time ? new Date(fl.dep_time).toLocaleString() : "",
+        fl?.arr_airport ? `${fl.arr_airport}${arrT ? " "+arrT : ""}` : "",
+        fl?.arr_time ? new Date(fl.arr_time).toLocaleString() : "",
+        fl?.airline ? t.arranged_short : t.unArranged_short];
+    });
+    downloadCSV([headers, ...rows], `flights_${todayStr()}.csv`);
+  };
+
+  const exportStaysCSV = () => {
+    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate];
+    const rows = flatStays.map((row) => [
+      personIndex[row.person_id], row.person.dept, row.person.name_kanji,
+      `${row.person.last_roman || ""} ${row.person.first_roman || ""}`.trim(),
+      row.stay_label || "", row.hotelName, row.roomLabel,
+      row.check_in, row.check_out, row.nights,
+      formatMoney(convertMoney(row.total_amount, project), project, lang),
+      getRoommateNames(row.person_id) || t.singleRoom,
+    ]);
+    downloadCSV([headers, ...rows], `stays_${todayStr()}.csv`);
+  };
+
+  const exportVehicleCSV = () => {
+    const headers = ["No.", t.vehicleName, t.vehicleRegion, t.vehicleType, t.maxPassengers, "角色 / Role", "成員 / Member", "部門 / Dept"];
+    const rows = vehicles.flatMap((v, vi) => {
+      const assigns = getAssignmentsForVehicle(v.id);
+      const no = String(vi + 1).padStart(2, "0");
+      if (!assigns.length) return [[no, v.name, v.region, v.type, v.capacity || 4, "", "", ""]];
+      return assigns.map((a) => {
+        const p = persons.find((x) => x.id === a.person_id);
+        return [no, v.name, v.region, v.type, v.capacity || 4, a.role === "driver" ? t.driver : t.passengers, p?.name_kanji || "", p?.dept || ""];
+      });
+    });
+    downloadCSV([headers, ...rows], `vehicles_${todayStr()}.csv`);
+  };
+
+  const tabExportFn = { A: exportCSV, B: exportFlightCSV, C: exportStaysCSV, E: exportVehicleCSV };
 
   const statusBadge = (s) => {
     const cfg = s === "arranged"
@@ -2071,12 +2176,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           {canManageMembers && <button type="button" onClick={() => setShowMembers(true)} style={hdrBtn2}>{t.members}</button>}
           {canEdit && <button type="button" onClick={() => setShowCurrency(true)} style={hdrBtn2}>{t.settings}</button>}
-          <button type="button" onClick={() => window.print()} style={hdrBtn2}>{t.print}</button>
+          <button type="button" onClick={() => tabExportFn[tab]?.()} style={{ ...hdrBtn2, background: "rgba(43,90,76,.18)", border: "1px solid rgba(43,90,76,.35)" }}>{t.exportCSV}</button>
         </div>
       </header>
 
       {/* ── Tab bar + Progress ── */}
-      <div className="no-print" style={{ background: J.shiro, borderBottom: "1px solid " + J.keisenL }}>
+      <div style={{ background: J.shiro, borderBottom: "1px solid " + J.keisenL }}>
         <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0 20px" }}>
           <div style={{ display: "flex", overflowX: "auto", gap: 2 }}>
             {TABS.map((tb) => (
@@ -2113,7 +2218,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                   <SearchBar value={searchA} onChange={setSearchA} placeholder={t.searchStaff} />
                   <DeptFilter depts={allDepts} value={deptA} onChange={setDeptA} allLabel={t.allDept} />
                   <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", rowsA.length).replace("{total}", persons.length)}</span>
-                  <button type="button" onClick={exportCSV} style={eBtn}>{t.exportCSV}</button>
                   {canEdit && selectedIds.length > 0 && <button type="button" onClick={bulkDelete} style={dBtn}>{t.bulkDeleteBtn} ({selectedIds.length})</button>}
                   {canEdit && <button type="button" onClick={() => setPersonModal({ mode: "add" })} style={pBtn(false)}>{t.addStaff}</button>}
                 </div>
@@ -2151,7 +2255,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                           <td style={tdS()}>{fmtDate(p.dob, lang)}</td>
                           <td style={{ ...tdS(), color: warn ? J.shu : "inherit" }}>{fmtDate(p.passport_exp, lang)}</td>
                           <td style={tdS()}>{p.diet || "—"}</td>
-                          <td style={tdS()} className="print-hide">
+                          <td style={tdS()}>
                             {canEdit && <button type="button" style={eBtn} onClick={() => setPersonModal({ mode: "edit", data: p })}>{t.edit}</button>}
                             {canDelete && <button type="button" style={dBtn} onClick={() => deletePerson(p.id)}>{t.delete}</button>}
                           </td>
@@ -2243,7 +2347,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                           </td>
                           <td style={tdC}>{dtCell(arrDT)}</td>
                           <td style={{ ...tdC, minWidth: 80 }}>{statusBadge(hasF ? "arranged" : "none")}</td>
-                          <td style={tdC} className="print-hide">{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
+                          <td style={tdC}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
                         </tr>
                       );
                     })}
@@ -2300,8 +2404,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                     )}
                     <span style={{ fontSize: 11, color: J.nezumi }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
-                  {/* ── Screen web table ── */}
-                  <div className="screen-stay-table" style={{ overflowX: "auto" }}>
+                  <div style={{ overflowX: "auto" }}>
                     <table style={tblW}>
                       <thead><tr style={thead}>
                         {[t.no, t.dept, t.nameKanji, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate, t.action].map((h) => <th key={h} style={thS}>{h}</th>)}
@@ -2320,7 +2423,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                             <td style={{ ...tdS(), textAlign: "center" }}>{row.nights}</td>
                             <td style={{ ...tdS(), fontWeight: 600, color: J.asagi, fontVariantNumeric: "tabular-nums" }}>{formatMoney(convertMoney(row.total_amount, project), project, lang)}</td>
                             <td style={tdS()}>{getRoommateNames(row.person_id) || t.singleRoom}</td>
-                            <td style={tdS()} className="print-hide">
+                            <td style={tdS()}>
                               {canEdit && <>
                                 <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>
                                 <button type="button" style={eBtn} onClick={() => setRoommateModal({ pid: row.person_id })}>{t.roommateSet}</button>
@@ -2333,35 +2436,64 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                     </table>
                   </div>
 
-                  {/* ── Print-only accommodation allocation list ── */}
-                  <table className="print-stay-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
-                    <caption style={{ textAlign: "left", fontSize: 13, fontWeight: 700, padding: "0 0 8px", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.1em" }}>
-                      {t.stayMgmt || "住宿分配清冊"}
-                    </caption>
-                    <thead><tr style={{ background: "#f5f5f5" }}>
-                      {["No.", t.dept, t.nameKanji, `${t.nameRoman || "Roman"}`, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate].map((h) => (
-                        <th key={h} style={{ border: "0.5pt solid #ccc", padding: "5pt 5pt", fontWeight: 700, fontSize: 8, textAlign: "center", background: "#f5f5f5" }}>{h}</th>
-                      ))}
-                    </tr></thead>
-                    <tbody>
-                      {flatStays.map((row) => (
-                        <tr key={row.id} style={{ pageBreakInside: "avoid" }}>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center", fontWeight: 700 }}>{personIndex[row.person_id]}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt" }}>{row.person.dept}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", fontWeight: 700 }}>{row.person.name_kanji}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", fontSize: 8 }}>{`${row.person.last_roman || ""} ${row.person.first_roman || ""}`.trim()}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center" }}>{row.stay_label || "—"}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", fontWeight: 600 }}>{row.hotelName}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center" }}>{row.roomLabel}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center" }}>{fmtDate(row.check_in, lang)}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center" }}>{fmtDate(row.check_out, lang)}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "center", fontWeight: 600 }}>{row.nights}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt", textAlign: "right", fontWeight: 700 }}>{formatMoney(convertMoney(row.total_amount, project), project, lang)}</td>
-                          <td style={{ border: "0.5pt solid #ccc", padding: "4pt 5pt" }}>{getRoommateNames(row.person_id) || t.singleRoom}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {/* ── 配房視圖：依飯店 → 房間群組顯示 ── */}
+                  {(() => {
+                    const grps = buildRoommateGroups(roommates);
+                    const byHotel = {};
+                    flatStays.forEach((row) => {
+                      const hid = String(row.hotel_id || row.hotelName || "?");
+                      const rk = stayRoomKey(row, row.person_id, grps);
+                      if (!byHotel[hid]) byHotel[hid] = { name: row.hotelName, rooms: {} };
+                      if (!byHotel[hid].rooms[rk]) byHotel[hid].rooms[rk] = [];
+                      byHotel[hid].rooms[rk].push(row);
+                    });
+                    if (!Object.keys(byHotel).length) return null;
+                    return (
+                      <div style={{ marginTop: 28 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                          <div style={{ width: 3, height: 14, background: J.fuji, borderRadius: 2 }} />
+                          <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: J.sumi, margin: 0 }}>配房視圖</h3>
+                          <span style={{ fontSize: 10.5, color: J.usunezumi }}>— 依飯店 / 同室群組</span>
+                        </div>
+                        {Object.entries(byHotel).map(([hid, hData]) => (
+                          <div key={hid} style={{ marginBottom: 22 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: J.sumi, marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid " + J.keisenL, fontFamily: "'Noto Serif JP',serif" }}>{hData.name}</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 10 }}>
+                              {Object.entries(hData.rooms).map(([rk, roomStays]) => {
+                                const occupants = roomStays.map((rs) => persons.find((p) => p.id === rs.person_id)).filter(Boolean);
+                                const isSingle = occupants.length === 1;
+                                const sample = roomStays[0];
+                                return (
+                                  <div key={rk} style={{ background: J.shiro, border: `1px solid ${isSingle ? J.keisenL : J.moegi}`, borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
+                                    <div style={{ background: isSingle ? J.washi : J.moegi3, padding: "7px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                      <span style={{ fontSize: 10, fontWeight: 700, color: isSingle ? J.usunezumi : J.moegi, letterSpacing: "0.05em" }}>
+                                        {isSingle ? t.singleRoom : `同室 ×${occupants.length}`}
+                                      </span>
+                                      <span style={{ fontSize: 9.5, color: J.nezumi }}>{sample.roomLabel}</span>
+                                    </div>
+                                    <div style={{ padding: "8px 12px" }}>
+                                      <div style={{ fontSize: 9.5, color: J.usunezumi, marginBottom: 6 }}>{fmtDate(sample.check_in, lang)} – {fmtDate(sample.check_out, lang)} · {sample.nights}{lang === "en" ? "nts" : "泊"}</div>
+                                      {occupants.map((p) => (
+                                        <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, padding: "4px 0", borderBottom: "1px solid " + J.keisenL }}>
+                                          <span style={{ fontWeight: 600 }}>{p.name_kanji}</span>
+                                          <span style={{ fontSize: 10, color: J.nezumi }}>{p.dept}</span>
+                                        </div>
+                                      ))}
+                                      {canEdit && (
+                                        <button type="button" style={{ ...eBtn, width: "100%", marginTop: 8, fontSize: 10.5 }} onClick={() => setRoommateModal({ pid: occupants[0]?.id })}>
+                                          {t.roommateSet}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                   <div style={{ marginTop: 28 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                       <div style={{ width: 3, height: 14, background: J.kincha, borderRadius: 2 }} />
@@ -2476,48 +2608,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                   {vehicles.length === 0 ? (
                     <div style={{ padding: "50px 40px", textAlign: "center", background: J.shiro, border: "1px solid " + J.keisenL, borderRadius: 8, color: J.nezumi, fontSize: 13 }}>{t.noVehicleHint}</div>
                   ) : (<>
-                    {/* ── Print-only vehicle table (with serial No.) ── */}
-                    <div className="vehicle-print-table" style={{ marginBottom: 24 }}>
-                      <h2 style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.06em" }}>{t.vehicleMgmt}</h2>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-                        <thead><tr style={{ background: "#f5f5f5" }}>
-                          {["No.", t.vehicleName, t.vehicleRegion, t.vehicleType, t.maxPassengers, "角色 / Role", "成員 / Member"].map((h) => <th key={h} style={{ border: "1px solid #ccc", padding: "6px 8px", textAlign: "center", fontWeight: 700, fontSize: 9 }}>{h}</th>)}
-                        </tr></thead>
-                        <tbody>
-                          {vehicles.flatMap((v, vi) => {
-                            const assigns = getAssignmentsForVehicle(v.id);
-                            const seqNo = String(vi + 1).padStart(2, "0");
-                            const cellBase = { border: "1px solid #ccc", padding: "5px 7px" };
-                            if (assigns.length === 0) return [(
-                              <tr key={v.id}>
-                                <td style={{ ...cellBase, textAlign: "center", fontWeight: 700, color: "#555" }}>{seqNo}</td>
-                                <td style={{ ...cellBase, fontWeight: 600 }}>{v.name}</td>
-                                <td style={{ ...cellBase, textAlign: "center" }}>{v.region}</td>
-                                <td style={{ ...cellBase, textAlign: "center" }}>{v.type}</td>
-                                <td style={{ ...cellBase, textAlign: "center" }}>{v.capacity || 4}</td>
-                                <td colSpan={2} style={{ ...cellBase, textAlign: "center", color: "#999" }}>—</td>
-                              </tr>
-                            )];
-                            return assigns.map((a, ai) => {
-                              const person = persons.find((x) => x.id === a.person_id);
-                              return (
-                                <tr key={a.id || ai}>
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, textAlign: "center", fontWeight: 700, color: "#555", verticalAlign: "top" }}>{seqNo}</td> : null}
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, fontWeight: 600, verticalAlign: "top" }}>{v.name}</td> : null}
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, textAlign: "center", verticalAlign: "top" }}>{v.region}</td> : null}
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, textAlign: "center", verticalAlign: "top" }}>{v.type}</td> : null}
-                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ ...cellBase, textAlign: "center", verticalAlign: "top" }}>{v.capacity || 4}</td> : null}
-                                  <td style={{ ...cellBase, textAlign: "center" }}>{a.role === "driver" ? t.driver : t.passengers}</td>
-                                  <td style={cellBase}>{person?.name_kanji || "—"}</td>
-                                </tr>
-                              );
-                            });
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                    {/* ── Screen card view ── */}
-                    <div className="vehicle-card-view" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 14 }}>
+                    {/* ── Vehicle card grid ── */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 14 }}>
                       {vehicles.map((v) => {
                         const assigns = getAssignmentsForVehicle(v.id);
                         const cap = v.capacity || 4;
@@ -2584,7 +2676,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                     </div>
                   </>)}
                 </div>
-                <aside className="no-print" style={{ flex: "0 1 280px", position: "sticky", top: 16 }}>
+                <aside style={{ flex: "0 1 280px", position: "sticky", top: 16 }}>
                   <div style={{ background: J.shiro, border: "1px solid " + J.keisenL }}>
                     <div style={{ background: personsWithNoTrips.length ? J.shu : J.moegi, color: J.washi, padding: "12px 16px", display: "flex", justifyContent: "space-between" }}>
                       <span>{t.unassigned}</span><span>{personsWithNoTrips.length}</span>
@@ -2615,7 +2707,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.datePrice} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
       {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} /></Modal>}
-      {roommateModal && <RoommateModal pid={roommateModal.pid} persons={persons} roommates={roommates} onSave={async (rpid, partnerIds) => { try { const group = [...new Set([rpid, ...partnerIds])]; for (const gid of group) await api.deleteWhere("roommates", "person_id", gid); if (partnerIds.length) for (const gid of group) { const partners = group.filter((x) => x !== gid); if (partners.length) await api.insert("roommates", partners.map((x) => ({ person_id: gid, partner_id: x, project_id: pid }))); } await loadAll(); showToast(t.saved); setRoommateModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setRoommateModal(null)} t={t} />}
+      {roommateModal && <RoommateModal pid={roommateModal.pid} persons={persons} roommates={roommates} stays={flatStays} onSave={async (rpid, partnerIds) => { try { const group = [...new Set([rpid, ...partnerIds])]; for (const gid of group) await api.deleteWhere("roommates", "person_id", gid); if (partnerIds.length) for (const gid of group) { const partners = group.filter((x) => x !== gid); if (partners.length) await api.insert("roommates", partners.map((x) => ({ person_id: gid, partner_id: x, project_id: pid }))); } await loadAll(); showToast(t.saved); setRoommateModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setRoommateModal(null)} t={t} />}
       {syncRoommate && pendingStay && stayModal && <SyncRoommateModal names={syncRoommate} t={t} onClose={() => finishSaveStay(pendingStay, null)} onConfirm={() => finishSaveStay(pendingStay, roommates.filter((r) => r.person_id === stayModal.pid))} />}
       {showMembers && <MemberManager project={project} user={user} canManage={canManageMembers} onClose={() => setShowMembers(false)} t={t} />}
       {showCurrency && <CurrencySettingsModal project={project} onSave={saveCurrency} onClose={() => setShowCurrency(false)} t={t} />}
@@ -2685,100 +2777,7 @@ function GlobalStyles() {
       .flight-table th:nth-child(3), .flight-table td:nth-child(3),
       .flight-table th:nth-child(4), .flight-table td:nth-child(4) { text-align: left; }
 
-      /* ── Print — comprehensive A4 landscape refactor ── */
-      @media print {
-        @page {
-          size: A4 landscape;
-          margin: 12mm 10mm 16mm;
-        }
-
-        /* Page number footer: 1 / N */
-        @page { @bottom-right { content: counter(page) " / " counter(pages); font-size: 8pt; color: #888; } }
-
-        /* Reset */
-        body {
-          background: white !important;
-          color: black !important;
-          font-size: 9.5pt !important;
-          font-family: 'Noto Sans JP', sans-serif !important;
-          margin: 0 !important; padding: 0 !important;
-        }
-        * {
-          color: black !important;
-          box-shadow: none !important;
-          text-shadow: none !important;
-          animation: none !important;
-          transition: none !important;
-        }
-        #root { max-width: 100% !important; }
-
-        /* Hide all interactive / decorative UI */
-        .no-print, header, nav, aside,
-        button, input, select, textarea,
-        .print-hide,
-        .search-bar-wrap, .filter-chips-wrap,
-        .progress-bar-wrap, .tab-bar { display: none !important; }
-
-        /* General table reset — light gray lines, white bg, ink-saving */
-        table {
-          width: 100% !important;
-          border-collapse: collapse !important;
-          font-size: 8.5pt !important;
-          table-layout: fixed !important;
-          word-break: break-all !important;
-        }
-        th, td {
-          border: 0.5pt solid #ccc !important;
-          padding: 4pt 5pt !important;
-          background: white !important;
-          vertical-align: middle !important;
-        }
-        thead tr { background: #f5f5f5 !important; }
-        thead th {
-          font-weight: 700 !important;
-          font-size: 8pt !important;
-          letter-spacing: 0.04em !important;
-          text-align: center !important;
-          background: #f5f5f5 !important;
-        }
-        tr { page-break-inside: avoid !important; }
-        h2, h3 { page-break-after: avoid !important; }
-
-        /* ─── 配車表 ─── */
-        .vehicle-card-view { display: none !important; }
-        .vehicle-print-table { display: block !important; }
-
-        /* ─── 航班表：13 columns，精密寬度分配 ─── */
-        /* Hide the 14th column (action buttons) */
-        .flight-table th:nth-child(14),
-        .flight-table td:nth-child(14) { display: none !important; }
-
-        /* Column widths: No.(3%) Dept(5%) Kanji(8%) Roman(9%) Airline(6%) FlightNo(6%) Cabin(4%) PNR(7%) DepApt(6%) DepTime(10%) ArrApt(6%) ArrTime(10%) Status(6%) */
-        .flight-table th:nth-child(1),  .flight-table td:nth-child(1)  { width: 3% !important; }
-        .flight-table th:nth-child(2),  .flight-table td:nth-child(2)  { width: 5% !important; }
-        .flight-table th:nth-child(3),  .flight-table td:nth-child(3)  { width: 9% !important; text-align: left !important; }
-        .flight-table th:nth-child(4),  .flight-table td:nth-child(4)  { width: 10% !important; text-align: left !important; }
-        .flight-table th:nth-child(5),  .flight-table td:nth-child(5)  { width: 6% !important; }
-        .flight-table th:nth-child(6),  .flight-table td:nth-child(6)  { width: 6% !important; }
-        .flight-table th:nth-child(7),  .flight-table td:nth-child(7)  { width: 4% !important; }
-        .flight-table th:nth-child(8),  .flight-table td:nth-child(8)  { width: 7% !important; }
-        .flight-table th:nth-child(9),  .flight-table td:nth-child(9)  { width: 7% !important; }
-        .flight-table th:nth-child(10), .flight-table td:nth-child(10) { width: 11% !important; white-space: normal !important; }
-        .flight-table th:nth-child(11), .flight-table td:nth-child(11) { width: 7% !important; }
-        .flight-table th:nth-child(12), .flight-table td:nth-child(12) { width: 11% !important; white-space: normal !important; }
-        .flight-table th:nth-child(13), .flight-table td:nth-child(13) { width: 7% !important; }
-
-        /* ─── 住宿表：網頁版操作欄完全隱藏，顯示 print-stay-table ─── */
-        .screen-stay-table { display: none !important; }
-        .print-stay-table { display: table !important; }
-
-        .tab-content { animation: none !important; }
-      }
-
-      @media screen {
-        .vehicle-print-table { display: none !important; }
-        .print-stay-table { display: none !important; }
-      }
+      /* ── PDF/Print removed — use CSV export from header instead ── */
 
       /* ── Number column (table index) ── */
       .td-num { color: ${J.usunezumi}; font-variant-numeric: tabular-nums; }
