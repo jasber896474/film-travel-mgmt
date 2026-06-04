@@ -2121,6 +2121,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
   };
 
   const exportStaysCSV = () => {
+    // ── Section 1: individual stay rows ──
     const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.staySegment, t.hotel, t.roomType, t.checkIn, t.checkOut, t.nights, t.totalAmt, t.roommate];
     const rows = flatStays.map((row) => [
       personIndex[row.person_id], row.person.dept, row.person.name_kanji,
@@ -2130,7 +2131,45 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
       formatMoney(convertMoney(row.total_amount, project), project, lang),
       getRoommateNames(row.person_id) || t.singleRoom,
     ]);
-    downloadCSV([headers, ...rows], `stays_${todayStr()}.csv`);
+
+    // ── Section 2: hotel statistics ──
+    const statsHeaders = ["", t.hotelStats, "", "", "", ""];
+    const statsHead = [t.hotelName, t.guestCount, t.roomCount, t.roomOccupancy, t.totalSpend, ""];
+    const statsRows = hotels.map((h) => {
+      const st = hotelStatsMap[h.id] || { guests: 0, rooms: 0, total: 0, roomDetails: [] };
+      const occ = st.roomDetails.length
+        ? (st.roomDetails.reduce((s, r) => s + r.occupancy, 0) / st.roomDetails.length).toFixed(1)
+        : "—";
+      return [h.name, st.guests, st.rooms, occ, formatMoney(convertMoney(st.total, project), project, lang), ""];
+    });
+    const totalRow = [t.totalCost, "", "", "", formatMoney(convertMoney(totalHotelCost, project), project, lang), ""];
+
+    // ── Section 3: dept cost breakdown ──
+    const deptMap = {};
+    flatStays.forEach((row) => {
+      const dept = row.person.dept || "—";
+      deptMap[dept] = (deptMap[dept] || 0) + (row.total_amount || 0);
+    });
+    const deptHeaders = ["", t.deptCostTitle, "", "", "", ""];
+    const deptHead = [t.dept, t.totalAmt, "", "", "", ""];
+    const deptRows = Object.entries(deptMap)
+      .sort((a, b) => b[1] - a[1])
+      .map(([dept, amt]) => [dept, formatMoney(convertMoney(amt, project), project, lang), "", "", "", ""]);
+
+    const allData = [
+      headers,
+      ...rows,
+      [],
+      statsHeaders,
+      statsHead,
+      ...statsRows,
+      totalRow,
+      [],
+      deptHeaders,
+      deptHead,
+      ...deptRows,
+    ];
+    downloadCSV(allData, `stays_${todayStr()}.csv`);
   };
 
   const exportVehicleCSV = () => {
