@@ -74,6 +74,15 @@ const api = {
   login: (email, pw) => authFetch("token?grant_type=password", { email, password: pw }),
   signup: (email, pw) => authFetch("signup", { email, password: pw }),
   refresh: (refresh_token) => authFetch("token?grant_type=refresh_token", { refresh_token }),
+  recoverPw: (email) => fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+    method: "POST", headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  }).then((r) => r.json()),
+  updatePw: (token, password) => fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    method: "PUT",
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  }).then((r) => r.json()),
   logout: () =>
     fetch(`${SUPABASE_URL}/auth/v1/logout`, {
       method: "POST",
@@ -219,6 +228,10 @@ const T = {
     totalVehicles: "車輛數", totalAssigned: "已配車人次", totalUnassigned: "未配車人數", vehicleFull: "已達車輛容量上限",
     segmentLabel: "段落", segmentPlaceholder: "例：早班去程、收工返程", segmentMorning: "早班", segmentEvening: "收工", segmentTransfer: "轉場", segmentCustom: "自訂",
     personTrips: "乘車段落", addTrip: "新增乘車段", removeTrip: "移除",
+    forgotPw: "忘記密碼", forgotPwTitle: "重設密碼", forgotPwHint: "輸入您的電子郵件，系統將寄送重設連結",
+    forgotPwSent: "重設郵件已送出", forgotPwSentHint: "請查看您的信箱並點擊連結重設密碼", forgotPwBtn: "送出重設連結",
+    resetPwTitle: "設定新密碼", newPw: "新密碼", confirmNewPw: "確認新密碼", resetPwBtn: "更新密碼",
+    resetPwSuccess: "密碼已更新，請重新登入", backToLogin: "返回登入",
     errEmailPw: "請輸入電子郵件和密碼", errPwMatch: "密碼不一致", errPwLen: "密碼請輸入6位以上",
     memberAdd: "新增成員", memberCurrent: "目前成員（{n} 人）", memberAlready: "此用戶已是成員", memberSelf: "無法移除自己",
     memberUidHint: "請輸入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查詢 User ID", memberUidInfo: "→ Authentication → Users → 複製 UUID", memberAddBtn: "加入",
@@ -274,6 +287,10 @@ const T = {
     totalVehicles: "车辆数", totalAssigned: "已配车人次", totalUnassigned: "未配车人数", vehicleFull: "已达车辆容量上限",
     segmentLabel: "段落", segmentPlaceholder: "例：早班去程、收工返程", segmentMorning: "早班", segmentEvening: "收工", segmentTransfer: "转场", segmentCustom: "自定义",
     personTrips: "乘车段落", addTrip: "新增乘车段", removeTrip: "移除",
+    forgotPw: "忘记密码", forgotPwTitle: "重置密码", forgotPwHint: "输入您的电子邮件，系统将发送重置链接",
+    forgotPwSent: "重置邮件已发送", forgotPwSentHint: "请查看您的信箱并点击链接", forgotPwBtn: "发送重置链接",
+    resetPwTitle: "设定新密码", newPw: "新密码", confirmNewPw: "确认新密码", resetPwBtn: "更新密码",
+    resetPwSuccess: "密码已更新，请重新登录", backToLogin: "返回登录",
     errEmailPw: "请输入电子邮件和密码", errPwMatch: "密码不一致", errPwLen: "密码请输入6位以上",
     memberAdd: "新增成员", memberCurrent: "当前成员（{n} 人）", memberAlready: "该用户已是成员", memberSelf: "无法移除自己",
     memberUidHint: "请输入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查询 User ID", memberUidInfo: "→ Authentication → Users → 复制 UUID", memberAddBtn: "加入",
@@ -329,6 +346,10 @@ const T = {
     totalVehicles: "Vehicles", totalAssigned: "Trip assignments", totalUnassigned: "Unassigned", vehicleFull: "Vehicle at capacity",
     segmentLabel: "Segment", segmentPlaceholder: "e.g. Morning, Wrap, Transfer", segmentMorning: "Morning", segmentEvening: "Wrap", segmentTransfer: "Transfer", segmentCustom: "Custom",
     personTrips: "Trip segments", addTrip: "Add segment", removeTrip: "Remove",
+    forgotPw: "Forgot Password", forgotPwTitle: "Reset Password", forgotPwHint: "Enter your email and we'll send you a reset link",
+    forgotPwSent: "Reset email sent", forgotPwSentHint: "Check your inbox and click the link to reset your password", forgotPwBtn: "Send Reset Link",
+    resetPwTitle: "Set New Password", newPw: "New Password", confirmNewPw: "Confirm New Password", resetPwBtn: "Update Password",
+    resetPwSuccess: "Password updated. Please sign in.", backToLogin: "Back to Login",
     errEmailPw: "Enter email and password", errPwMatch: "Passwords do not match", errPwLen: "Password must be at least 6 characters",
     memberAdd: "Add Member", memberCurrent: "Members ({n})", memberAlready: "Already a member", memberSelf: "Cannot remove yourself",
     memberUidHint: "Enter User ID from Supabase Auth.", memberUidLabel: "Find User ID", memberUidInfo: "→ Authentication → Users → copy UUID", memberAddBtn: "Add",
@@ -384,6 +405,10 @@ const T = {
     totalVehicles: "차량", totalAssigned: "배정", totalUnassigned: "미배정", vehicleFull: "定員 초과",
     segmentLabel: "구간", segmentPlaceholder: "예:早班, 收工", segmentMorning: "早班", segmentEvening: "收工", segmentTransfer: "転場", segmentCustom: "カスタム",
     personTrips: "乗車区間", addTrip: "区間追加", removeTrip: "削除",
+    forgotPw: "비밀번호 찾기", forgotPwTitle: "비밀번호 재설정", forgotPwHint: "이메일을 입력하면 재설정 링크를 보내드립니다",
+    forgotPwSent: "재설정 이메일 발송됨", forgotPwSentHint: "받은 편지함을 확인하고 링크를 클릭하세요", forgotPwBtn: "재설정 링크 보내기",
+    resetPwTitle: "새 비밀번호 설정", newPw: "새 비밀번호", confirmNewPw: "비밀번호 확인", resetPwBtn: "비밀번호 업데이트",
+    resetPwSuccess: "비밀번호가 업데이트되었습니다. 다시 로그인하세요.", backToLogin: "로그인으로 돌아가기",
     errEmailPw: "이메일과 비밀번호 입력", errPwMatch: "비밀번호 불일치", errPwLen: "6자 이상",
     memberAdd: "멤버 추가", memberCurrent: "멤버 ({n})", memberAlready: "이미 멤버", memberSelf: "본인 삭제 불가",
     memberUidHint: "User ID 입력", memberUidLabel: "User ID 확인", memberUidInfo: "→ Authentication → Users", memberAddBtn: "추가",
@@ -439,6 +464,10 @@ const T = {
     totalVehicles: "車両", totalAssigned: "配車", totalUnassigned: "未配車", vehicleFull: "定員超過",
     segmentLabel: "区間", segmentPlaceholder: "例：早番、終業", segmentMorning: "早番", segmentEvening: "終業", segmentTransfer: "移動", segmentCustom: "カスタム",
     personTrips: "乗車区間", addTrip: "区間追加", removeTrip: "削除",
+    forgotPw: "パスワードを忘れた", forgotPwTitle: "パスワード再設定", forgotPwHint: "メールアドレスを入力すると再設定リンクを送信します",
+    forgotPwSent: "再設定メールを送信しました", forgotPwSentHint: "受信トレイを確認してリンクをクリックしてください", forgotPwBtn: "リンクを送信",
+    resetPwTitle: "新しいパスワードを設定", newPw: "新しいパスワード", confirmNewPw: "パスワードの確認", resetPwBtn: "パスワードを更新",
+    resetPwSuccess: "パスワードを更新しました。再度ログインしてください。", backToLogin: "ログインに戻る",
     errEmailPw: "メールとパスワード", errPwMatch: "不一致", errPwLen: "6文字以上",
     memberAdd: "追加", memberCurrent: "メンバー（{n}）", memberAlready: "追加済", memberSelf: "自分は不可",
     memberUidHint: "User ID", memberUidLabel: "User ID", memberUidInfo: "→ Authentication → Users", memberAddBtn: "追加",
@@ -1116,6 +1145,108 @@ function MemberManager({ project, user, canManage, onClose, t }) {
   );
 }
 
+// ─── Forgot Password Panel ─────────────────────────────────────
+function ForgotPasswordPanel({ t, onBack }) {
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSend = async () => {
+    if (!email.trim()) { setError(t.errEmailPw); return; }
+    setLoading(true); setError("");
+    try {
+      await api.recoverPw(email.trim());
+      setSent(true);
+    } catch (e) { setError(String(e.message)); } finally { setLoading(false); }
+  };
+
+  if (sent) return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ fontSize: 32, marginBottom: 14, color: J.moegi }}>✓</div>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: J.sumi, marginBottom: 8 }}>{t.forgotPwSent}</h3>
+      <p style={{ fontSize: 12.5, color: J.nezumi, lineHeight: 1.7, marginBottom: 22 }}>{t.forgotPwSentHint}</p>
+      <button type="button" onClick={onBack} style={{ ...pBtn(false), width: "100%" }}>{t.backToLogin}</button>
+    </div>
+  );
+
+  return (
+    <>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: J.sumi, marginBottom: 8, fontFamily: "'Noto Serif JP',serif" }}>{t.forgotPwTitle}</h3>
+      <p style={{ fontSize: 12, color: J.nezumi, marginBottom: 20, lineHeight: 1.6 }}>{t.forgotPwHint}</p>
+      {error && <div style={{ background: "rgba(173,48,48,.06)", color: J.shu, padding: "10px 14px", marginBottom: 16, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)" }}>{error}</div>}
+      <Field label={t.loginEmail}>
+        <input style={inpStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSend()} className="wa-input" />
+      </Field>
+      <button type="button" onClick={handleSend} disabled={loading} style={{ ...pBtn(loading), width: "100%", padding: "11px 0", marginTop: 4 }}>
+        {loading ? <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>◌</span> : t.forgotPwBtn}
+      </button>
+      <div style={{ textAlign: "center", marginTop: 14 }}>
+        <button type="button" onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11.5, color: J.nezumi, textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>{t.backToLogin}</button>
+      </div>
+    </>
+  );
+}
+
+// ─── Reset Password Screen (after clicking email link) ──────────
+function ResetPasswordScreen({ recoveryToken, lang }) {
+  const t = T[lang] || T["zh-TW"];
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  const wrap = {
+    minHeight: "100vh", background: J.sumi,
+    backgroundImage: "radial-gradient(ellipse 80% 60% at 20% 80%, rgba(43,90,76,.22) 0%, transparent 60%)",
+    display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Noto Sans JP',sans-serif",
+  };
+  const card = {
+    background: J.shiro, borderRadius: 12, padding: "44px 48px",
+    width: 420, maxWidth: "95vw",
+    boxShadow: "0 24px 80px rgba(0,0,0,.26), 0 0 0 1px rgba(255,255,255,.06)",
+  };
+
+  const handleReset = async () => {
+    if (!pw || !pw2) { setError(t.errEmailPw); return; }
+    if (pw !== pw2) { setError(t.errPwMatch); return; }
+    if (pw.length < 6) { setError(t.errPwLen); return; }
+    setLoading(true); setError("");
+    try {
+      const res = await api.updatePw(recoveryToken, pw);
+      if (res.error) { setError(res.error.message || "Error"); return; }
+      setDone(true);
+    } catch (e) { setError(String(e.message)); } finally { setLoading(false); }
+  };
+
+  if (done) return (
+    <div style={wrap}><div style={card}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 36, fontFamily: "'Noto Serif JP',serif", color: J.moegi, marginBottom: 16 }}>映</div>
+        <div style={{ fontSize: 32, marginBottom: 12, color: J.moegi }}>✓</div>
+        <h3 style={{ fontSize: 16, fontWeight: 600, color: J.sumi, marginBottom: 12, fontFamily: "'Noto Serif JP',serif" }}>{t.resetPwSuccess}</h3>
+        <button type="button" onClick={() => { window.location.hash = ""; window.location.reload(); }} style={{ ...pBtn(false), width: "100%", padding: "11px 0", marginTop: 8 }}>{t.backToLogin}</button>
+      </div>
+    </div></div>
+  );
+
+  return (
+    <div style={wrap}><div style={card}>
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ fontSize: 36, lineHeight: 1, color: J.moegi, marginBottom: 10, fontFamily: "'Noto Serif JP',serif" }}>映</div>
+        <h1 style={{ fontSize: 16, fontWeight: 600, color: J.sumi, margin: 0, letterSpacing: "0.08em", fontFamily: "'Noto Serif JP',serif" }}>{t.resetPwTitle}</h1>
+      </div>
+      {error && <div style={{ background: "rgba(173,48,48,.06)", color: J.shu, padding: "10px 14px", marginBottom: 18, fontSize: 12, borderRadius: 6, border: "1px solid rgba(173,48,48,.15)" }}>{error}</div>}
+      <Field label={t.newPw}><input style={inpStyle} type="password" value={pw} onChange={(e) => setPw(e.target.value)} className="wa-input" /></Field>
+      <Field label={t.confirmNewPw}><input style={inpStyle} type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleReset()} className="wa-input" /></Field>
+      <button type="button" onClick={handleReset} disabled={loading} style={{ ...pBtn(loading), width: "100%", padding: "11px 0", marginTop: 4 }}>
+        {loading ? <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>◌</span> : t.resetPwBtn}
+      </button>
+    </div></div>
+  );
+}
+
 function LoginScreen({ onLogin }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -1232,8 +1363,13 @@ function LoginScreen({ onLogin }) {
           <button type="button" onClick={handleLogin} disabled={loading} style={{ ...pBtn(loading), width: "100%", marginTop: 10, padding: "11px 0" }}>
             {loading ? <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>◌</span> : t.loginBtn}
           </button>
-          <p style={{ fontSize: 10.5, color: J.nezumi, textAlign: "center", marginTop: 16, lineHeight: 1.6 }}>{t.loginHint}</p>
+          <div style={{ textAlign: "center", marginTop: 14 }}>
+            <button type="button" onClick={() => { setMode("forgot"); setError(""); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11.5, color: J.nezumi, textDecoration: "underline", fontFamily: "'Noto Sans JP',sans-serif" }}>{t.forgotPw}</button>
+          </div>
+          <p style={{ fontSize: 10.5, color: J.nezumi, textAlign: "center", marginTop: 10, lineHeight: 1.6 }}>{t.loginHint}</p>
         </>
+      ) : mode === "forgot" ? (
+        <ForgotPasswordPanel t={t} lang={lang} onBack={() => { setMode("login"); setError(""); }} />
       ) : (
         <>
           <Field label={t.loginEmail}><input style={inpStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="wa-input" /></Field>
@@ -1474,7 +1610,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
   const [toastMsg, showToast] = useToast();
 
   const [persons, setPersons] = useState([]);
-  const [personIndex, setPersonIndex] = useState({});
   const [flights, setFlights] = useState([]);
   const [stays, setStays] = useState([]);
   const [hotels, setHotels] = useState([]);
@@ -1538,7 +1673,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
         api.get("vehicle_assignments", pf + "&order=sort_order.asc,id.asc").catch(() => null),
       ]);
       setPersons(p);
-      setPersonIndex(Object.fromEntries(p.map((x, i) => [x.id, i + 1])));
       setFlights(f); setStays(s); setHotels(h); setPricingRules(pr); setRoommates(rm); setVehicles(vh || []);
       if (va === null) { setUseAssignmentTable(false); setVehicleAssignments([]); }
       else { setUseAssignmentTable(true); setVehicleAssignments(va); }
@@ -1590,6 +1724,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
   }, [flights, stays]);
 
   const allDepts = useMemo(() => [...new Set(persons.map((p) => p.dept).filter(Boolean))], [persons]);
+  // 員工編號：純依列表順序（拖移後即更新）
+  const personIndex = useMemo(() => Object.fromEntries(persons.map((x, i) => [x.id, i + 1])), [persons]);
   const hotelStatsMap = useMemo(() => computeHotelStats(stays, roommates), [stays, roommates]);
   const totalHotelCost = useMemo(() => stays.reduce((s, st) => s + (st.total_amount || 0), 0), [stays]);
 
@@ -1964,7 +2100,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                           <td style={tdS()}>{fmtDate(p.dob, lang)}</td>
                           <td style={{ ...tdS(), color: warn ? J.shu : "inherit" }}>{fmtDate(p.passport_exp, lang)}</td>
                           <td style={tdS()}>{p.diet || "—"}</td>
-                          <td style={tdS()}>
+                          <td style={tdS()} className="print-hide">
                             {canEdit && <button type="button" style={eBtn} onClick={() => setPersonModal({ mode: "edit", data: p })}>{t.edit}</button>}
                             {canDelete && <button type="button" style={dBtn} onClick={() => deletePerson(p.id)}>{t.delete}</button>}
                           </td>
@@ -2006,30 +2142,39 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
               <FilterChips chips={[{ key: "r", label: searchBRoman }, { key: "a", label: searchBAirline }, { key: "s", label: searchBStatus }].filter((c) => c.label)} onClear={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }} t={t} />
               <p style={{ fontSize: 11, color: J.nezumi, marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", filteredFlightPersons.length).replace("{total}", persons.length)}</p>
               <div style={{ overflowX: "auto" }}>
-                <table style={tblW}>
+                <table style={tblW} className="flight-table">
                   <thead><tr style={thead}>
-                    {[t.no, t.dept, t.nameKanji, t.nameRoman, t.airline, t.flightNo, t.cabin, t.pnr, t.depAirport, t.depTime, t.arrAirport, t.arrTime, t.status, t.action].map((h) => <th key={h} style={thS}>{h}</th>)}
+                    {[
+                      { label: t.no, w: 48 }, { label: t.dept, w: 70 },
+                      { label: t.nameKanji, w: 90 }, { label: t.nameRoman, w: 110 },
+                      { label: t.airline, w: 80 }, { label: t.flightNo, w: 70 },
+                      { label: t.cabin, w: 70 }, { label: t.pnr, w: 80 },
+                      { label: t.depAirport, w: 90 }, { label: t.depTime, w: 130 },
+                      { label: t.arrAirport, w: 90 }, { label: t.arrTime, w: 130 },
+                      { label: t.status, w: 80 }, { label: t.action, w: 60 },
+                    ].map(({ label, w }) => <th key={label} style={{ ...thS, textAlign: "center", minWidth: w }}>{label}</th>)}
                   </tr></thead>
                   <tbody>
-                    {filteredFlightPersons.map((p, i) => {
+                    {filteredFlightPersons.map((p) => {
                       const fl = flights.find((x) => x.person_id === p.id);
                       const hasF = fl && fl.airline;
+                      const tdC = { ...tdS(), textAlign: "center", whiteSpace: "nowrap" };
                       return (
                         <tr key={p.id}>
-                          <td style={{ ...tdS(), textAlign: "center" }}>{personIndex[p.id]}</td>
-                          <td style={tdS()}>{p.dept}</td>
-                          <td style={tdS()}>{p.name_kanji}</td>
-                          <td style={tdS()}>{p.last_roman} {p.first_roman}</td>
-                          <td style={tdS()}>{fl?.airline || "—"}</td>
-                          <td style={tdS()}>{fl?.flight_no || "—"}</td>
-                          <td style={tdS()}>{fl?.cabin || "—"}</td>
-                          <td style={tdS()}>{fl?.pnr || "—"}</td>
-                          <td style={tdS()}>{fl?.dep_airport || "—"}</td>
-                          <td style={tdS()}>{fl?.dep_time ? new Date(fl.dep_time).toLocaleString() : "—"}</td>
-                          <td style={tdS()}>{fl?.arr_airport || "—"}</td>
-                          <td style={tdS()}>{fl?.arr_time ? new Date(fl.arr_time).toLocaleString() : "—"}</td>
-                          <td style={tdS()}>{hasF ? statusBadge("arranged") : statusBadge("none")}</td>
-                          <td style={tdS()}>{canEdit && <button type="button" style={aBtn} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
+                          <td style={tdC}>{personIndex[p.id]}</td>
+                          <td style={tdC}>{p.dept}</td>
+                          <td style={{ ...tdC, textAlign: "left" }}>{p.name_kanji}</td>
+                          <td style={{ ...tdC, textAlign: "left" }}>{p.last_roman} {p.first_roman}</td>
+                          <td style={tdC}>{fl?.airline || "—"}</td>
+                          <td style={tdC}>{fl?.flight_no || "—"}</td>
+                          <td style={tdC}>{fl?.cabin || "—"}</td>
+                          <td style={tdC}>{fl?.pnr || "—"}</td>
+                          <td style={tdC}>{fl?.dep_airport || "—"}</td>
+                          <td style={tdC}>{fl?.dep_time ? new Date(fl.dep_time).toLocaleString() : "—"}</td>
+                          <td style={tdC}>{fl?.arr_airport || "—"}</td>
+                          <td style={tdC}>{fl?.arr_time ? new Date(fl.arr_time).toLocaleString() : "—"}</td>
+                          <td style={{ ...tdC, minWidth: 80 }}>{statusBadge(hasF ? "arranged" : "none")}</td>
+                          <td style={tdC}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
                         </tr>
                       );
                     })}
@@ -2105,7 +2250,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                             <td style={{ ...tdS(), textAlign: "center" }}>{row.nights}</td>
                             <td style={{ ...tdS(), fontWeight: 600, color: J.asagi, fontVariantNumeric: "tabular-nums" }}>{formatMoney(convertMoney(row.total_amount, project), project, lang)}</td>
                             <td style={tdS()}>{getRoommateNames(row.person_id) || t.singleRoom}</td>
-                            <td style={tdS()}>
+                            <td style={tdS()} className="print-hide">
                               {canEdit && <>
                                 <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>
                                 <button type="button" style={eBtn} onClick={() => setRoommateModal({ pid: row.person_id })}>{t.roommateSet}</button>
@@ -2230,8 +2375,45 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                   </div>
                   {vehicles.length === 0 ? (
                     <div style={{ padding: "50px 40px", textAlign: "center", background: J.shiro, border: "1px solid " + J.keisenL, borderRadius: 8, color: J.nezumi, fontSize: 13 }}>{t.noVehicleHint}</div>
-                  ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 14 }}>
+                  ) : (<>
+                    {/* ── Print-only vehicle table ── */}
+                    <div className="vehicle-print-table" style={{ marginBottom: 24 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                        <thead><tr style={{ background: "#f0f0f0" }}>
+                          {[t.vehicleName, t.vehicleRegion, t.vehicleType, t.maxPassengers, "角色", "人員", "段落"].map((h) => <th key={h} style={{ border: "1px solid #bbb", padding: "6px 8px", textAlign: "center", fontWeight: 700, fontSize: 10 }}>{h}</th>)}
+                        </tr></thead>
+                        <tbody>
+                          {vehicles.flatMap((v) => {
+                            const assigns = getAssignmentsForVehicle(v.id);
+                            if (assigns.length === 0) return [(
+                              <tr key={v.id}>
+                                <td style={{ border: "1px solid #ddd", padding: "5px 7px", fontWeight: 600 }}>{v.name}</td>
+                                <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{v.region}</td>
+                                <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{v.type}</td>
+                                <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{v.capacity || 4}</td>
+                                <td colSpan={3} style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center", color: "#999" }}>—</td>
+                              </tr>
+                            )];
+                            return assigns.map((a, ai) => {
+                              const person = persons.find((x) => x.id === a.person_id);
+                              return (
+                                <tr key={a.id || ai}>
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ border: "1px solid #ddd", padding: "5px 7px", fontWeight: 600, verticalAlign: "top" }}>{v.name}</td> : null}
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center", verticalAlign: "top" }}>{v.region}</td> : null}
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center", verticalAlign: "top" }}>{v.type}</td> : null}
+                                  {ai === 0 ? <td rowSpan={assigns.length} style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center", verticalAlign: "top" }}>{v.capacity || 4}</td> : null}
+                                  <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{a.role === "driver" ? t.driver : t.passengers}</td>
+                                  <td style={{ border: "1px solid #ddd", padding: "5px 7px" }}>{person?.name_kanji || "—"}</td>
+                                  <td style={{ border: "1px solid #ddd", padding: "5px 7px", textAlign: "center" }}>{a.segment_label || "—"}</td>
+                                </tr>
+                              );
+                            });
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* ── Screen card view ── */}
+                    <div className="vehicle-card-view" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 14 }}>
                       {vehicles.map((v) => {
                         const assigns = getAssignmentsForVehicle(v.id);
                         const cap = v.capacity || 4;
@@ -2311,7 +2493,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, onLangChange
                         );
                       })}
                     </div>
-                  )}
+                  </>)}
                 </div>
                 <aside className="no-print" style={{ flex: "0 1 280px", position: "sticky", top: 16 }}>
                   <div style={{ background: J.shiro, border: "1px solid " + J.keisenL }}>
@@ -2408,11 +2590,44 @@ function GlobalStyles() {
         to   { opacity: 1; transform: translateY(0); }
       }
 
+      /* ── Flight table center alignment ── */
+      .flight-table th,
+      .flight-table td { text-align: center; }
+      .flight-table th:nth-child(3), .flight-table td:nth-child(3),
+      .flight-table th:nth-child(4), .flight-table td:nth-child(4) { text-align: left; }
+
       /* ── Print ── */
       @media print {
-        .no-print { display: none !important; }
-        header { display: none !important; }
-        body { background: white !important; }
+        /* 隱藏所有互動元素 */
+        .no-print, header, nav,
+        button, input, select, textarea,
+        .print-hide { display: none !important; }
+
+        body { background: white !important; font-size: 11px !important; }
+        * { color: black !important; box-shadow: none !important; }
+
+        /* 讓 body 鋪滿整頁 */
+        #root { max-width: 100% !important; }
+
+        /* 表格樣式重設 */
+        table { width: 100% !important; border-collapse: collapse !important; font-size: 10px !important; }
+        th, td { border: 1px solid #bbb !important; padding: 5px 7px !important; background: white !important; }
+        thead tr { background: #f0f0f0 !important; }
+        thead th { font-weight: bold !important; font-size: 9px !important; letter-spacing: 0.06em !important; }
+
+        /* 配車：卡片式隱藏，改顯示印表格 */
+        .vehicle-card-view { display: none !important; }
+        .vehicle-print-table { display: block !important; }
+
+        /* 住宿統計保留 */
+        .tab-content { animation: none !important; }
+
+        /* 分頁提示 */
+        h2 { page-break-after: avoid !important; }
+        tr { page-break-inside: avoid !important; }
+      }
+      @media screen {
+        .vehicle-print-table { display: none !important; }
       }
 
       /* ── Number column (table index) ── */
@@ -2436,6 +2651,14 @@ function App() {
   const [lang, setLang] = useState(() => localStorage.getItem("app_lang") || "zh-TW");
   const [booting, setBooting] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+
+  // ── Detect password reset link (type=recovery in URL hash) ──
+  const recoveryToken = useMemo(() => {
+    const hash = window.location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    if (params.get("type") === "recovery") return params.get("access_token") || null;
+    return null;
+  }, []);
 
   useEffect(() => {
     window.__onSessionExpired = () => setSessionExpired(true);
@@ -2491,6 +2714,8 @@ function App() {
       } catch (e) { console.error(e); }
     }
   };
+
+  if (recoveryToken) return <><GlobalStyles /><ResetPasswordScreen recoveryToken={recoveryToken} lang={lang} /></>;
 
   if (booting) return (
     <>
