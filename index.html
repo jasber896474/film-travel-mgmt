@@ -227,8 +227,8 @@ const T = {
     subStay: "住宿一覽", subHotels: "飯店主檔",
     staffList: "工作人員列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "飯店清單",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配車", progressOf: "{done}/{total}",
-    no: "編號", dept: "部門", nameKanji: "姓名（漢字）", nameRoman: "羅馬拼音", nameSurname: "姓", nameGiven: "名", importance: "重要度",
-    status: "安排狀態", passport: "護照 / ID Card", dob: "出生年月日", passportExp: "護照效期", diet: "飲食限制", action: "操作", select: "選取",
+    no: "編號", dept: "部門", nameKanji: "姓名（漢字）", nameEnglish: "姓名(英文)", nameRoman: "羅馬拼音", nameSurname: "姓", nameGiven: "名", importance: "重要度",
+    status: "安排狀態", passport: "護照 / ID Card", dob: "出生年月日", passportExp: "護照效期", dietNotes: "飲食限制/備註", action: "操作", select: "選取",
     arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩餘不足180天",
     addStaff: "新增工作人員", editStaff: "編輯工作人員",
     airline: "航空公司", flightNo: "航班號", cabin: "艙等", pnr: "訂位代號",
@@ -237,8 +237,11 @@ const T = {
     hotel: "飯店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房價/晚", nights: "天數", totalAmt: "合計",
     roommate: "同室者", singleRoom: "單人房", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同室設定", roommateNone: "無（單人房）",
     totalCost: "飯店總費用", hotelStats: "各飯店統計", hotelStatsByDate: "日期別飯店統計",
-    hotelStatsByDateHint: "人數與房數依住宿一覽；當日費用依飯店主檔「日期別房價」，同房號或同室者只計一筆（以該房第一位在住者的房型對應當日房費）。",
-    statsPickDate: "選擇日期", statsDaySummary: "{date}：{guests} 人 · {rooms} 間房 · {cost}（{hotels} 間飯店）", noStayDates: "尚無住宿日期可統計",
+    hotelStatsByDateHint: "請先選擇飯店與日期，分開計算各飯店當晚人數、房數與費用（費用依主檔「日期別房價」，同房號或同室者只計一筆）。",
+    hotelStatsByDateWhere: "位置：頂部「住宿」分頁 →「住宿一覽」",
+    statsPickHotel: "選擇飯店", statsPickDate: "選擇日期", statsSelectHotelFirst: "請先選擇飯店",
+    statsDaySummaryOne: "{date} · {hotel}：{guests} 人 · {rooms} 間房 · {cost}",
+    statsDaySummary: "{date}：{guests} 人 · {rooms} 間房 · {cost}（{hotels} 間飯店）", noStayDates: "尚無住宿日期可統計",
     guestCount: "入住人次", guestCountDay: "當日人數", roomCount: "客室數", roomCountDay: "當日房數", totalSpendDay: "當日費用", roomOccupancy: "每房人數", totalSpend: "總費用",
     datePrice: "日期別房價", addRule: "新增規則", addHotel: "新增飯店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "節日加算", finalPrice: "最終房價",
@@ -303,8 +306,8 @@ const T = {
     subStay: "住宿一览", subHotels: "饭店主档",
     staffList: "工作人员列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "饭店列表",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配车", progressOf: "{done}/{total}",
-    no: "编号", dept: "部门", nameKanji: "姓名（汉字）", nameRoman: "罗马拼音", nameSurname: "姓", nameGiven: "名", importance: "重要度",
-    status: "安排状态", passport: "护照 / ID Card", dob: "出生年月日", passportExp: "护照效期", diet: "饮食限制", action: "操作", select: "选取",
+    no: "编号", dept: "部门", nameKanji: "姓名（汉字）", nameEnglish: "姓名(英文)", nameRoman: "罗马拼音", nameSurname: "姓", nameGiven: "名", importance: "重要度",
+    status: "安排状态", passport: "护照 / ID Card", dob: "出生年月日", passportExp: "护照效期", dietNotes: "饮食限制/备注", action: "操作", select: "选取",
     arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩余不足180天",
     addStaff: "新增工作人员", editStaff: "编辑工作人员",
     airline: "航空公司", flightNo: "航班号", cabin: "舱位", pnr: "订座代号",
@@ -313,8 +316,11 @@ const T = {
     hotel: "饭店", roomType: "房型", checkIn: "入住", checkOut: "退房", basePrice: "基本房价/晚", nights: "天数", totalAmt: "合计",
     roommate: "同住者", singleRoom: "单人间", hotelDone: "已安排", hotelNone: "未安排", roommateSet: "同住设置", roommateNone: "无（单人间）",
     totalCost: "饭店总费用", hotelStats: "各饭店统计", hotelStatsByDate: "日期别饭店统计",
-    hotelStatsByDateHint: "人数与房数依住宿一览；当日费用依饭店主档「日期别房价」，同房号或同室者只计一笔。",
-    statsPickDate: "选择日期", statsDaySummary: "{date}：{guests} 人 · {rooms} 间房 · {cost}（{hotels} 间饭店）", noStayDates: "尚无住宿日期可统计",
+    hotelStatsByDateHint: "请先选择饭店与日期，分开计算各饭店当晚人数、房数与费用。",
+    hotelStatsByDateWhere: "位置：顶部「住宿」分页 →「住宿一览」",
+    statsPickHotel: "选择饭店", statsPickDate: "选择日期", statsSelectHotelFirst: "请先选择饭店",
+    statsDaySummaryOne: "{date} · {hotel}：{guests} 人 · {rooms} 间房 · {cost}",
+    statsDaySummary: "{date}：{guests} 人 · {rooms} 间房 · {cost}（{hotels} 间饭店）", noStayDates: "尚无住宿日期可统计",
     guestCount: "入住人次", guestCountDay: "当日人数", roomCount: "客房数", roomCountDay: "当日房数", totalSpendDay: "当日费用", roomOccupancy: "每房人数", totalSpend: "总费用",
     datePrice: "日期别房价", addRule: "新增规则", addHotel: "新增饭店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "节日加算", finalPrice: "最终房价",
@@ -378,8 +384,8 @@ const T = {
     subStay: "Stay List", subHotels: "Hotel Master",
     staffList: "Staff List", flightMgmt: "Flight Management", hotelMgmt: "Accommodation", hotelList: "Hotel List",
     progressFlight: "Flights", progressHotel: "Hotels", progressVehicle: "Unassigned", progressOf: "{done}/{total}",
-    no: "No.", dept: "Dept", nameKanji: "Name", nameRoman: "Romanized", nameSurname: "Last", nameGiven: "First", importance: "Priority",
-    status: "Status", passport: "Passport / ID Card", dob: "DOB", passportExp: "Expiry", diet: "Dietary", action: "Actions", select: "Select",
+    no: "No.", dept: "Dept", nameKanji: "Name", nameEnglish: "Name (English)", nameRoman: "Romanized", nameSurname: "Last", nameGiven: "First", importance: "Priority",
+    status: "Status", passport: "Passport / ID Card", dob: "DOB", passportExp: "Expiry", dietNotes: "Diet / Notes", action: "Actions", select: "Select",
     arranged: "Arranged", partial: "Partial", unArranged: "Pending", passportWarn: "Expires within 180 days",
     addStaff: "Add Staff", editStaff: "Edit Staff",
     airline: "Airline", flightNo: "Flight No.", cabin: "Cabin", pnr: "PNR",
@@ -388,8 +394,11 @@ const T = {
     hotel: "Hotel", roomType: "Room Type", checkIn: "Check-in", checkOut: "Check-out", basePrice: "Base/night", nights: "Nights", totalAmt: "Total",
     roommate: "Roommate", singleRoom: "Single", hotelDone: "Arranged", hotelNone: "Pending", roommateSet: "Roommate", roommateNone: "None (Single)",
     totalCost: "Total Hotel Cost", hotelStats: "Hotel Statistics", hotelStatsByDate: "Daily hotel stats",
-    hotelStatsByDateHint: "Auto-calculated from the stay list. Pick a date to see crew headcount and room count per hotel that night.",
-    statsPickDate: "Date", statsDaySummary: "{date}: {guests} guests · {rooms} rooms · {cost} ({hotels} hotel(s))", noStayDates: "No stay dates to summarize",
+    hotelStatsByDateHint: "Guests and rooms from the stay list; cost from hotel master daily rates (one charge per room / roommate group).",
+    hotelStatsByDateWhere: "Location: Hotels tab → Stay list (top of page)",
+    statsPickHotel: "Hotel", statsPickDate: "Date", statsSelectHotelFirst: "Select a hotel first",
+    statsDaySummaryOne: "{date} · {hotel}: {guests} guests · {rooms} rooms · {cost}",
+    statsDaySummary: "{date}: {guests} guests · {rooms} rooms · {cost} ({hotels} hotel(s))", noStayDates: "No stay dates to summarize",
     guestCount: "Guest-nights", guestCountDay: "Guests", roomCount: "Rooms", roomCountDay: "Rooms", totalSpendDay: "Cost", roomOccupancy: "Per room", totalSpend: "Total",
     datePrice: "Date Pricing", addRule: "Add Rule", addHotel: "Add Hotel", date: "Date", basePriceShort: "Base",
     importanceSurcharge: "Priority Sur.", holidaySurcharge: "Holiday Sur.", finalPrice: "Final",
@@ -451,8 +460,8 @@ const T = {
     subStay: "숙박 목록", subHotels: "호텔 마스터",
     staffList: "스태프 목록", flightMgmt: "항공 관리", hotelMgmt: "숙박 관리", hotelList: "호텔 목록",
     progressFlight: "항공", progressHotel: "숙박", progressVehicle: "미배정", progressOf: "{done}/{total}",
-    no: "번호", dept: "부서", nameKanji: "이름", nameRoman: "로마자", nameSurname: "성", nameGiven: "이름", importance: "중요도",
-    status: "상태", passport: "여권 / ID Card", dob: "생년월일", passportExp: "만료", diet: "식단", action: "작업", select: "선택",
+    no: "번호", dept: "부서", nameKanji: "이름", nameEnglish: "이름(영문)", nameRoman: "로마자", nameSurname: "성", nameGiven: "이름", importance: "중요도",
+    status: "상태", passport: "여권 / ID Card", dob: "생년월일", passportExp: "만료", dietNotes: "식단/비고", action: "작업", select: "선택",
     arranged: "완료", partial: "일부", unArranged: "미배정", passportWarn: "180일 미만",
     addStaff: "스태프 추가", editStaff: "스태프 편집",
     airline: "항공사", flightNo: "편명", cabin: "좌석", pnr: "PNR",
@@ -461,8 +470,11 @@ const T = {
     hotel: "호텔", roomType: "객실", checkIn: "체크인", checkOut: "체크아웃", basePrice: "기본/박", nights: "박数", totalAmt: "합계",
     roommate: "룸메이트", singleRoom: "1인실", hotelDone: "완료", hotelNone: "미배정", roommateSet: "룸메이트", roommateNone: "없음",
     totalCost: "호텔 총비용", hotelStats: "호텔별 통계", hotelStatsByDate: "일자별 호텔 통계",
-    hotelStatsByDateHint: "숙박 목록에서 자동 계산합니다. 날짜를 선택하면 해당 밤 호텔별 인원·객실 수가 표시됩니다.",
-    statsPickDate: "날짜 선택", statsDaySummary: "{date}: {guests}명 · {rooms}실 · {cost} ({hotels}개 호텔)", noStayDates: "통계할 숙박 일자가 없습니다",
+    hotelStatsByDateHint: "인원·객실은 숙박 목록, 비용은 호텔 마스터 일자별 요금(같은 방·룸메이트 1회만).",
+    hotelStatsByDateWhere: "위치: 숙박 → 숙박 일람 (상단)",
+    statsPickHotel: "호텔 선택", statsPickDate: "날짜 선택", statsSelectHotelFirst: "호텔을 먼저 선택하세요",
+    statsDaySummaryOne: "{date} · {hotel}: {guests}명 · {rooms}실 · {cost}",
+    statsDaySummary: "{date}: {guests}명 · {rooms}실 · {cost} ({hotels}개 호텔)", noStayDates: "통계할 숙박 일자가 없습니다",
     guestCount: "투숙 인원", guestCountDay: "당일 인원", roomCount: "객실 수", roomCountDay: "당일 객실", totalSpendDay: "당일 비용", roomOccupancy: "객실당", totalSpend: "총비용",
     datePrice: "날짜별 요금", addRule: "규칙 추가", addHotel: "호텔 추가", date: "날짜", basePriceShort: "기본",
     importanceSurcharge: "중요도", holidaySurcharge: "특별일", finalPrice: "최종",
@@ -523,8 +535,8 @@ const T = {
     subStay: "宿泊一覧", subHotels: "ホテルマスタ",
     staffList: "スタッフ", flightMgmt: "フライト管理", hotelMgmt: "宿泊管理", hotelList: "ホテル",
     progressFlight: "フライト", progressHotel: "宿泊", progressVehicle: "未配車", progressOf: "{done}/{total}",
-    no: "No.", dept: "部署", nameKanji: "氏名", nameRoman: "ローマ字", nameSurname: "姓", nameGiven: "名", importance: "重要度",
-    status: "状況", passport: "パスポート / ID", dob: "生年月日", passportExp: "有効期限", diet: "食事制限", action: "操作", select: "選択",
+    no: "No.", dept: "部署", nameKanji: "氏名", nameEnglish: "氏名(英語)", nameRoman: "ローマ字", nameSurname: "姓", nameGiven: "名", importance: "重要度",
+    status: "状況", passport: "パスポート / ID", dob: "生年月日", passportExp: "有効期限", dietNotes: "食事制限/備考", action: "操作", select: "選択",
     arranged: "手配済", partial: "一部", unArranged: "未手配", passportWarn: "180日未満",
     addStaff: "追加", editStaff: "編集",
     airline: "航空会社", flightNo: "便名", cabin: "クラス", pnr: "PNR",
@@ -533,8 +545,11 @@ const T = {
     hotel: "ホテル", roomType: "部屋", checkIn: "IN", checkOut: "OUT", basePrice: "基本/泊", nights: "泊数", totalAmt: "合計",
     roommate: "同室者", singleRoom: "個室", hotelDone: "済", hotelNone: "未", roommateSet: "同室設定", roommateNone: "なし",
     totalCost: "ホテル総費用", hotelStats: "ホテル別", hotelStatsByDate: "日付別ホテル統計",
-    hotelStatsByDateHint: "宿泊一覧から自動集計。日付を選ぶと、その夜のホテル別人数・部屋数を表示します。",
-    statsPickDate: "日付", statsDaySummary: "{date}：{guests}名・{rooms}室・{cost}（{hotels}ホテル）", noStayDates: "集計できる宿泊日がありません",
+    hotelStatsByDateHint: "人数・部屋は宿泊一覧、費用はホテルマスタの日別料金（同室・ルームメイトは1回のみ）。",
+    hotelStatsByDateWhere: "場所：宿泊 → 宿泊一覧（ページ上部）",
+    statsPickHotel: "ホテル選択", statsPickDate: "日付", statsSelectHotelFirst: "ホテルを選択してください",
+    statsDaySummaryOne: "{date} · {hotel}：{guests}名・{rooms}室・{cost}",
+    statsDaySummary: "{date}：{guests}名・{rooms}室・{cost}（{hotels}ホテル）", noStayDates: "集計できる宿泊日がありません",
     guestCount: "宿泊者数", guestCountDay: "当日人数", roomCount: "客室数", roomCountDay: "当日室数", totalSpendDay: "当日費用", roomOccupancy: "1室あたり", totalSpend: "総費用",
     datePrice: "日付別料金", addRule: "追加", addHotel: "ホテル追加", date: "日付", basePriceShort: "基本",
     importanceSurcharge: "重要度", holidaySurcharge: "祝日", finalPrice: "最終",
@@ -600,15 +615,6 @@ function RomanNameCell({ last, first }) {
   );
 }
 
-function NameColumnHeader({ t }) {
-  return (
-    <div className="roman-name-cell" style={{ lineHeight: 1.3, textAlign: "center", fontSize: 8 }}>
-      <div>{t.nameSurname}</div>
-      <div>{t.nameGiven}</div>
-    </div>
-  );
-}
-
 function parseCSV(text) {
   const rows = [];
   let row = [];
@@ -633,7 +639,7 @@ function parseCSV(text) {
 }
 
 function staffCsvPersonHeaders(t) {
-  return [t.no, t.dept, t.nameKanji, t.nameRoman, t.importance, t.passport, t.dob, t.passportExp, t.diet];
+  return [t.no, t.dept, t.nameKanji, t.nameEnglish, t.importance, t.passport, t.dob, t.passportExp, t.dietNotes];
 }
 
 function isStaffCsvHeader(row, t) {
@@ -778,10 +784,10 @@ const pBtn = (dis) => ({
   boxShadow: dis ? "none" : "0 2px 8px rgba(43,90,76,.22)",
 });
 
-const STAY_COL_WIDTHS = [32, 80, 96, 58, 64, 60, 50, 68, 68, 34, 70, 88];
+const STAY_COL_WIDTHS = [32, 72, 88, 54, 64, 60, 50, 68, 68, 34, 70, 88];
 const staffColWidths = (withCheckbox) => (withCheckbox
-  ? [32, 32, 80, 96, 54, 44, 76, 68, 68, 72, 88]
-  : [32, 80, 96, 54, 44, 76, 68, 68, 72, 88]);
+  ? [32, 32, 68, 58, 64, 46, 36, 52, 52, 112, 84]
+  : [32, 68, 58, 64, 46, 36, 52, 52, 112, 84]);
 const HOTEL_STATS_COL_WIDTHS = ["34%", "18%", "18%", "30%"];
 
 function ThemeToggle({ theme, onChange, t }) {
@@ -915,6 +921,82 @@ function computeHotelStatsForDate(stays, roommates, dateStr, pricingRules) {
     out[hid] = { guests: v.guestIds.size, rooms: v.roomKeys.size, cost: v.cost };
   });
   return out;
+}
+
+function HotelStatsByDatePanel({
+  t, lang, project, statsDate, setStatsDate, statsHotelId, setStatsHotelId,
+  stayNightDates, hotels, selectedHotelDayStats, hotelStatsDayCostFmt,
+}) {
+  const hasSelection = statsDate && statsHotelId && selectedHotelDayStats;
+  return (
+    <div style={{ marginBottom: 20, padding: "16px 18px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
+        <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStatsByDate}</h3>
+      </div>
+      <p style={{ fontSize: 10, color: "var(--nezumi)", margin: "0 0 6px" }}>{t.hotelStatsByDateWhere}</p>
+      <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickHotel}</label>
+          <select
+            style={{ ...inpStyle, minWidth: 180, maxWidth: "100%" }}
+            value={statsHotelId}
+            disabled={!hotels.length}
+            onChange={(e) => setStatsHotelId(e.target.value)}
+          >
+            {!hotels.length && <option value="">{t.noData}</option>}
+            {hotels.length > 0 && !statsHotelId && <option value="">{t.statsSelectHotelFirst}</option>}
+            {[...hotels].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((h) => (
+              <option key={h.id} value={String(h.id)}>{h.name}</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickDate}</label>
+          <select
+            style={{ ...inpStyle, minWidth: 168, maxWidth: "100%" }}
+            value={statsDate}
+            disabled={!stayNightDates.length}
+            onChange={(e) => setStatsDate(e.target.value)}
+          >
+            {!stayNightDates.length && <option value="">{t.noStayDates}</option>}
+            {stayNightDates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)} ({d})</option>)}
+          </select>
+        </div>
+      </div>
+      {!statsHotelId && hotels.length > 0 && (
+        <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.statsSelectHotelFirst}</p>
+      )}
+      {statsDate && statsHotelId && !selectedHotelDayStats && (
+        <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.noData}</p>
+      )}
+      {hasSelection && (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
+            {[
+              { label: t.guestCountDay, value: selectedHotelDayStats.st.guests },
+              { label: t.roomCountDay, value: selectedHotelDayStats.st.rooms },
+              { label: t.totalSpendDay, value: hotelStatsDayCostFmt, isMoney: true },
+            ].map(({ label, value, isMoney }) => (
+              <div key={label} style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 6, padding: "12px 14px", textAlign: "center" }}>
+                <div style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
+                <div style={{ fontSize: isMoney ? 15 : 22, fontWeight: 700, color: "var(--sumi)", fontVariantNumeric: "tabular-nums", fontFamily: isMoney ? "'Noto Serif JP',serif" : "inherit" }}>{value}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "var(--moegi)", margin: 0 }}>
+            {t.statsDaySummaryOne
+              .replace("{date}", fmtDate(statsDate, lang))
+              .replace("{hotel}", selectedHotelDayStats.hotel.name || "—")
+              .replace("{guests}", String(selectedHotelDayStats.st.guests))
+              .replace("{rooms}", String(selectedHotelDayStats.st.rooms))
+              .replace("{cost}", hotelStatsDayCostFmt)}
+          </p>
+        </>
+      )}
+    </div>
+  );
 }
 
 function computeHotelStats(stays, roommates) {
@@ -1298,7 +1380,7 @@ function PersonForm({ init, onSave, onClose, t, lang }) {
           <input type="date" style={{ ...inpStyle, ...(passportWarning(f.passport_exp) ? { borderColor: "var(--shu)" } : {}) }} value={f.passport_exp || ""} onChange={set("passport_exp")} />
           {passportWarning(f.passport_exp) && <p style={{ color: "var(--shu)", fontSize: 10, marginTop: 4 }}>{t.passportWarn}</p>}
         </Field>
-        <Field label={`${t.diet} (${t.optional})`}><input style={inpStyle} value={f.diet || ""} onChange={set("diet")} /></Field>
+        <Field label={`${t.dietNotes} (${t.optional})`}><input style={inpStyle} value={f.diet || ""} onChange={set("diet")} /></Field>
       </div>
       {!canSave && <p style={{ fontSize: 11, color: "var(--shu)" }}>{t.minOneField}</p>}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
@@ -2126,6 +2208,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [searchCHotel, setSearchCHotel] = useState("");
   const [searchCRoom, setSearchCRoom] = useState("");
   const [statsDate, setStatsDate] = useState("");
+  const [statsHotelId, setStatsHotelId] = useState("");
   const [searchD, setSearchD] = useState("");
   const [showFlightAdv, setShowFlightAdv] = useState(false);
   const [searchBRoman, setSearchBRoman] = useState("");
@@ -2231,23 +2314,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     () => (statsDate ? computeHotelStatsForDate(stays, roommates, statsDate, pricingRules) : {}),
     [stays, roommates, statsDate, pricingRules],
   );
-  const hotelStatsDayRows = useMemo(() => hotels
-    .map((h) => ({ hotel: h, st: hotelStatsByDateMap[h.id] || { guests: 0, rooms: 0, cost: 0 } }))
-    .filter(({ st }) => st.guests > 0)
-    .sort((a, b) => b.st.guests - a.st.guests || (a.hotel.name || "").localeCompare(b.hotel.name || "")),
+  const hotelStatsHotelsOnDate = useMemo(() => hotels
+    .filter((h) => (hotelStatsByDateMap[h.id] || hotelStatsByDateMap[+h.id])?.guests > 0)
+    .sort((a, b) => (a.name || "").localeCompare(b.name || "")),
   [hotels, hotelStatsByDateMap]);
-  const hotelStatsDayTotals = useMemo(() => hotelStatsDayRows.reduce(
-    (acc, { st }) => ({
-      guests: acc.guests + st.guests,
-      rooms: acc.rooms + st.rooms,
-      cost: acc.cost + st.cost,
-      hotels: acc.hotels + 1,
-    }),
-    { guests: 0, rooms: 0, cost: 0, hotels: 0 },
-  ), [hotelStatsDayRows]);
+  const selectedHotelDayStats = useMemo(() => {
+    if (!statsHotelId || !statsDate) return null;
+    const hotel = hotels.find((h) => String(h.id) === String(statsHotelId));
+    if (!hotel) return null;
+    const st = hotelStatsByDateMap[hotel.id] || hotelStatsByDateMap[+hotel.id];
+    if (!st || st.guests <= 0) return null;
+    return { hotel, st };
+  }, [statsHotelId, statsDate, hotels, hotelStatsByDateMap]);
   const hotelStatsDayCostFmt = useMemo(
-    () => formatMoney(convertMoney(hotelStatsDayTotals.cost, project), project, lang),
-    [hotelStatsDayTotals.cost, project, lang],
+    () => formatMoney(convertMoney(selectedHotelDayStats?.st.cost || 0, project), project, lang),
+    [selectedHotelDayStats, project, lang],
   );
   useEffect(() => {
     if (!stayNightDates.length) {
@@ -2261,6 +2342,15 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       return stayNightDates[0];
     });
   }, [stayNightDates]);
+  useEffect(() => {
+    if (!statsDate) return;
+    setStatsHotelId((prev) => {
+      if (prev && hotelStatsHotelsOnDate.some((h) => String(h.id) === String(prev))) return prev;
+      if (hotelStatsHotelsOnDate[0]) return String(hotelStatsHotelsOnDate[0].id);
+      if (prev && hotels.some((h) => String(h.id) === String(prev))) return prev;
+      return hotels[0] ? String(hotels[0].id) : "";
+    });
+  }, [statsDate, hotelStatsHotelsOnDate, hotels]);
   const totalHotelCost = useMemo(() => stays.reduce((s, st) => s + (st.total_amount || 0), 0), [stays]);
 
   const personsWithNoTrips = useMemo(() => {
@@ -2826,12 +2916,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <th style={{ ...thS, textAlign: "center" }}>{t.no}</th>
                     <th style={{ ...thS, textAlign: "left" }}>{t.dept}</th>
                     <th style={{ ...thS, textAlign: "left" }}>{t.nameKanji}</th>
-                    <th style={{ ...thS, textAlign: "center" }}><NameColumnHeader t={t} /></th>
+                    <th style={{ ...thS, textAlign: "center" }}>{t.nameEnglish}</th>
                     <th style={{ ...thS, textAlign: "center" }}>{t.importance}</th>
                     <th style={{ ...thS, textAlign: "left" }}>{t.passport}</th>
                     <th style={{ ...thS, textAlign: "center" }}>{t.dob}</th>
                     <th style={{ ...thS, textAlign: "center" }}>{t.passportExp}</th>
-                    <th style={{ ...thS, textAlign: "left" }}>{t.diet}</th>
+                    <th style={{ ...thS, textAlign: "left" }}>{t.dietNotes}</th>
                     <th style={{ ...thS, textAlign: "center" }}>{t.action}</th>
                   </tr></thead>
                   <tbody>
@@ -2899,7 +2989,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       { key: "no", label: t.no, w: 32 },
                       { key: "dept", label: t.dept, w: 62 },
                       { key: "kanji", label: t.nameKanji, w: 80 },
-                      { key: "roman", roman: true, w: 66 },
+                      { key: "roman", label: t.nameEnglish, w: 58 },
                       { key: "airline", label: t.airline, w: 72 },
                       { key: "flight", label: t.flightNo, w: 64 },
                       { key: "cabin", label: t.cabin, w: 58 },
@@ -2910,9 +3000,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       { key: "arrT", label: t.arrTime, w: 88 },
                       { key: "status", label: t.status, w: 68 },
                       { key: "act", label: t.action, w: 56 },
-                    ].map(({ key, label, w, roman }) => (
+                    ].map(({ key, label, w }) => (
                       <th key={key} style={{ ...thS, textAlign: "center", minWidth: w, maxWidth: w, width: w }}>
-                        {roman ? <NameColumnHeader t={t} /> : label}
+                        {label}
                       </th>
                     ))}
                   </tr></thead>
@@ -3009,6 +3099,19 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     )}
                     <span style={{ fontSize: 11, color: "var(--nezumi)", gridColumn: "1 / -1" }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
+                  <HotelStatsByDatePanel
+                    t={t}
+                    lang={lang}
+                    project={project}
+                    statsDate={statsDate}
+                    setStatsDate={setStatsDate}
+                    statsHotelId={statsHotelId}
+                    setStatsHotelId={setStatsHotelId}
+                    stayNightDates={stayNightDates}
+                    hotels={hotels}
+                    selectedHotelDayStats={selectedHotelDayStats}
+                    hotelStatsDayCostFmt={hotelStatsDayCostFmt}
+                  />
                   {(() => {
                     const sortStayRows = (rows) => [...rows].sort((a, b) => {
                       const aHas = a.room_number ? 0 : 1;
@@ -3037,7 +3140,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       { key: "no", label: t.no },
                       { key: "dept", label: t.dept },
                       { key: "kanji", label: t.nameKanji },
-                      { key: "roman", roman: true },
+                      { key: "roman", label: t.nameEnglish },
                       { key: "seg", label: t.staySegment },
                       { key: "room", label: t.roomNo },
                       { key: "type", label: t.roomType },
@@ -3133,8 +3236,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                     {STAY_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
                                   </colgroup>
                                   <thead><tr style={thead}>
-                                    {stayHeaderDefs.map(({ key, label, roman }) => (
-                                      <th key={key} style={thS}>{roman ? <NameColumnHeader t={t} /> : label}</th>
+                                    {stayHeaderDefs.map(({ key, label }) => (
+                                      <th key={key} style={thS}>{label}</th>
                                     ))}
                                   </tr></thead>
                                   <tbody>
@@ -3172,81 +3275,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       </div>
                     );
                   })()}
-                  <div style={{ marginTop: 28, padding: "16px 18px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                      <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
-                      <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStatsByDate}</h3>
-                    </div>
-                    <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 12 }}>
-                      <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickDate}</label>
-                      <select
-                        style={{ ...inpStyle, minWidth: 168, maxWidth: "100%" }}
-                        value={statsDate}
-                        disabled={!stayNightDates.length}
-                        onChange={(e) => setStatsDate(e.target.value)}
-                      >
-                        {!stayNightDates.length && <option value="">{t.noStayDates}</option>}
-                        {stayNightDates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)} ({d})</option>)}
-                      </select>
-                    </div>
-                    {statsDate && hotelStatsDayRows.length > 0 && (
-                      <>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
-                          {[
-                            { label: t.guestCountDay, value: hotelStatsDayTotals.guests },
-                            { label: t.roomCountDay, value: hotelStatsDayTotals.rooms },
-                            { label: t.totalSpendDay, value: hotelStatsDayCostFmt, isMoney: true },
-                          ].map(({ label, value, isMoney }) => (
-                            <div key={label} style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 6, padding: "12px 14px", textAlign: "center" }}>
-                              <div style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
-                              <div style={{ fontSize: isMoney ? 15 : 22, fontWeight: 700, color: "var(--sumi)", fontVariantNumeric: "tabular-nums", fontFamily: isMoney ? "'Noto Serif JP',serif" : "inherit" }}>{value}</div>
-                            </div>
-                          ))}
-                        </div>
-                        <p style={{ fontSize: 12, fontWeight: 600, color: "var(--moegi)", margin: "0 0 12px" }}>
-                          {t.statsDaySummary
-                            .replace("{date}", fmtDate(statsDate, lang))
-                            .replace("{guests}", String(hotelStatsDayTotals.guests))
-                            .replace("{rooms}", String(hotelStatsDayTotals.rooms))
-                            .replace("{cost}", hotelStatsDayCostFmt)
-                            .replace("{hotels}", String(hotelStatsDayTotals.hotels))}
-                        </p>
-                      </>
-                    )}
-                    {statsDate && hotelStatsDayRows.length === 0 && (
-                      <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.noData}</p>
-                    )}
-                    {statsDate && hotelStatsDayRows.length > 0 && (
-                      <div style={{ overflowX: "auto", background: "var(--shiro)", borderRadius: 6, border: "1px solid var(--keisenL)" }}>
-                        <table style={tblW} className="data-table hotel-stats-table">
-                          <colgroup>
-                            {HOTEL_STATS_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
-                          </colgroup>
-                          <thead><tr style={thead}>
-                            {[
-                              { h: t.hotelName, align: "left" },
-                              { h: t.guestCountDay, align: "right" },
-                              { h: t.roomCountDay, align: "right" },
-                              { h: t.totalSpendDay, align: "right" },
-                            ].map(({ h, align }) => <th key={h} style={{ ...thS, textAlign: align }}>{h}</th>)}
-                          </tr></thead>
-                          <tbody>
-                            {hotelStatsDayRows.map(({ hotel, st }) => (
-                              <tr key={hotel.id}>
-                                <td style={tdEllipsis({ fontWeight: 600 })} title={hotel.name}>{hotel.name}</td>
-                                <td style={tdS({ textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{st.guests}</td>
-                                <td style={tdS({ textAlign: "right", fontVariantNumeric: "tabular-nums" })}>{st.rooms}</td>
-                                <td className="td-amt" style={tdS({ textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 600 })}>
-                                  {formatMoney(convertMoney(st.cost, project), project, lang)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
                 </>
               )}
 
