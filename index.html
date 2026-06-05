@@ -603,10 +603,18 @@ const T = {
 const starLabel = (s) => (s === 3 ? "★★★" : s === 2 ? "★★" : s === 1 ? "★" : "");
 const IMPORTANCE = [3, 2, 1, 0];
 
-function RomanNameCell({ last, first }) {
+function RomanNameCell({ last, first, inline }) {
   const ln = (last || "").trim();
   const fn = (first || "").trim();
   if (!ln && !fn) return <span>—</span>;
+  if (inline) {
+    const full = [ln, fn].filter(Boolean).join(" ");
+    return (
+      <span className="roman-name-cell roman-name-inline" style={{ fontSize: 11.5, fontWeight: 500, color: "var(--sumi)", letterSpacing: "0.02em" }} title={full}>
+        {full}
+      </span>
+    );
+  }
   return (
     <div className="roman-name-cell" style={{ lineHeight: 1.35, textAlign: "center" }}>
       <div style={{ fontSize: 12, fontWeight: 500, color: "var(--sumi)" }}>{ln || "—"}</div>
@@ -785,9 +793,10 @@ const pBtn = (dis) => ({
 });
 
 const STAY_COL_WIDTHS = [32, 72, 88, 54, 64, 60, 50, 68, 68, 34, 70, 88];
+/** 工作人員表欄寬：checkbox, 編號, 部門, 漢字, 英文, 重要度, 護照(≥12字), 生日, 效期, 飲食, 操作 */
 const staffColWidths = (withCheckbox) => (withCheckbox
-  ? [32, 32, 68, 58, 64, 46, 36, 52, 52, 112, 84]
-  : [32, 68, 58, 64, 46, 36, 52, 52, 112, 84]);
+  ? [28, 28, 52, 60, 82, 30, "12.5ch", 68, 68, "auto", 72]
+  : [28, 52, 60, 82, 30, "12.5ch", 68, 68, "auto", 72]);
 const HOTEL_STATS_COL_WIDTHS = ["34%", "18%", "18%", "30%"];
 
 function ThemeToggle({ theme, onChange, t }) {
@@ -2914,14 +2923,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   <thead><tr style={thead}>
                     {canEdit && <th style={{ ...thS, textAlign: "center" }}><input type="checkbox" checked={allSelected} onChange={() => setSelectedIds(allSelected ? [] : rowsA.map((p) => p.id))} aria-label={t.select} /></th>}
                     <th style={{ ...thS, textAlign: "center" }}>{t.no}</th>
-                    <th style={{ ...thS, textAlign: "left" }}>{t.dept}</th>
-                    <th style={{ ...thS, textAlign: "left" }}>{t.nameKanji}</th>
-                    <th style={{ ...thS, textAlign: "center" }}>{t.nameEnglish}</th>
-                    <th style={{ ...thS, textAlign: "center" }}>{t.importance}</th>
-                    <th style={{ ...thS, textAlign: "left" }}>{t.passport}</th>
-                    <th style={{ ...thS, textAlign: "center" }}>{t.dob}</th>
-                    <th style={{ ...thS, textAlign: "center" }}>{t.passportExp}</th>
-                    <th style={{ ...thS, textAlign: "left" }}>{t.dietNotes}</th>
+                    <th className="col-dept" style={{ ...thS, textAlign: "left" }}>{t.dept}</th>
+                    <th className="col-kanji" style={{ ...thS, textAlign: "left" }}>{t.nameKanji}</th>
+                    <th className="col-english" style={{ ...thS, textAlign: "left" }}>{t.nameEnglish}</th>
+                    <th className="col-importance" style={{ ...thS, textAlign: "center" }}>{t.importance}</th>
+                    <th className="col-passport" style={{ ...thS, textAlign: "left" }}>{t.passport}</th>
+                    <th className="col-dob" style={{ ...thS, textAlign: "center" }}>{t.dob}</th>
+                    <th className="col-passport-exp" style={{ ...thS, textAlign: "center" }}>{t.passportExp}</th>
+                    <th className="col-diet" style={{ ...thS, textAlign: "left" }}>{t.dietNotes}</th>
                     <th style={{ ...thS, textAlign: "center" }}>{t.action}</th>
                   </tr></thead>
                   <tbody>
@@ -2931,14 +2940,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                         <tr key={p.id} draggable={canEdit} onDragStart={() => { dragItem.current = persons.indexOf(p); }} onDragEnter={() => { dragOver.current = persons.indexOf(p); }} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}>
                           {canEdit && <td style={{ ...tdS(), textAlign: "center" }}><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => setSelectedIds((s) => s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id])} /></td>}
                           <td className="td-num" style={tdS({ textAlign: "center" })}>{personIndex[p.id] || i + 1}</td>
-                          <td style={tdEllipsis()} title={p.dept}><Highlight text={p.dept} query={debSearchA} /></td>
-                          <td style={tdEllipsis({ fontWeight: 600 })} title={p.name_kanji}><Highlight text={p.name_kanji} query={debSearchA} /></td>
-                          <td style={tdS({ textAlign: "center", maxWidth: "none" })}><RomanNameCell last={p.last_roman} first={p.first_roman} /></td>
-                          <td style={tdS({ textAlign: "center" })}>{starLabel(p.importance) || "—"}</td>
-                          <td style={tdEllipsis()} title={p.passport}>{p.passport || "—"}</td>
-                          <td style={tdS({ textAlign: "center", whiteSpace: "nowrap" })}>{fmtDate(p.dob, lang)}</td>
-                          <td style={tdS({ textAlign: "center", whiteSpace: "nowrap", color: warn ? "var(--shu)" : "inherit" })}>{fmtDate(p.passport_exp, lang)}</td>
-                          <td style={tdEllipsis()} title={p.diet}>{p.diet || "—"}</td>
+                          <td className="col-dept" style={tdEllipsis()} title={p.dept}><Highlight text={p.dept} query={debSearchA} /></td>
+                          <td className="col-kanji" style={tdEllipsis({ fontWeight: 600 })} title={p.name_kanji}><Highlight text={p.name_kanji} query={debSearchA} /></td>
+                          <td className="col-english" style={tdS({ textAlign: "left", maxWidth: "none" })}><RomanNameCell inline last={p.last_roman} first={p.first_roman} /></td>
+                          <td className="col-importance" style={tdS({ textAlign: "center" })}>{starLabel(p.importance) || "—"}</td>
+                          <td className="col-passport" style={tdS({ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontVariantNumeric: "tabular-nums" })} title={p.passport}>{p.passport || "—"}</td>
+                          <td className="col-dob" style={tdS({ textAlign: "center", whiteSpace: "nowrap" })}>{fmtDate(p.dob, lang)}</td>
+                          <td className="col-passport-exp" style={tdS({ textAlign: "center", whiteSpace: "nowrap", color: warn ? "var(--shu)" : "inherit" })}>{fmtDate(p.passport_exp, lang)}</td>
+                          <td className="col-diet" style={tdEllipsis()} title={p.diet}>{p.diet || "—"}</td>
                           <td className="col-actions" style={tdS({ textAlign: "center" })}>
                             <div className="tbl-actions">
                               {canEdit && <button type="button" style={eBtn} onClick={() => setPersonModal({ mode: "edit", data: p })}>{t.edit}</button>}
@@ -3557,7 +3566,16 @@ function GlobalStyles() {
       .unassigned-tag .tag-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
       .unassigned-tag .tag-dept { color: var(--nezumi); font-size: 10.5px; flex-shrink: 0; }
       .roman-name-cell { min-width: 0; }
+      .roman-name-inline { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .flight-table .roman-name-cell { font-size: 11px; }
+      .staff-table th, .staff-table td { padding: 7px 5px; }
+      .staff-table .col-dept { padding-right: 4px; }
+      .staff-table .col-kanji { padding-right: 2px; }
+      .staff-table .col-english { padding-left: 2px; padding-right: 2px; }
+      .staff-table .col-importance { padding-left: 2px; padding-right: 4px; }
+      .staff-table .col-passport { min-width: 12ch; width: 12.5ch; letter-spacing: 0.03em; }
+      .staff-table .col-dob, .staff-table .col-passport-exp { padding-left: 4px; padding-right: 4px; }
+      .staff-table .col-diet { padding-left: 8px; }
     `}</style>
   );
 }
