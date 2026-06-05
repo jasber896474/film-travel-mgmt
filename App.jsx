@@ -43,7 +43,7 @@ const sb = async (path, opts = {}) => {
     },
     ...opts,
   });
-  if (res.status === 401 || res.status === 403) {
+  if (res.status === 401) {
     clearSession();
     if (typeof window.__onSessionExpired === "function") window.__onSessionExpired();
     return [];
@@ -189,14 +189,8 @@ function useToast() {
   return [m, show];
 }
 
-async function resolveIsSystemOwner(userId) {
-  if (OWNER_ID && userId === OWNER_ID) return true;
-  try {
-    const rows = await api.get("user_projects", `&user_id=eq.${userId}&role=eq.owner`);
-    return rows.length > 0;
-  } catch {
-    return false;
-  }
+function resolveIsSystemOwner(userId) {
+  return !!(OWNER_ID && userId === OWNER_ID);
 }
 
 // ─── i18n ───────────────────────────────────────────────────
@@ -1874,11 +1868,13 @@ function LoginScreen({ onLogin }) {
       const res = await api.signup(email.trim(), pw);
       if (res.error || res.code >= 400) { setError(res.error?.message || res.message); return; }
       const userId = res.id || res.user?.id || null;
-      await fetch(`${SUPABASE_URL}/rest/v1/user_requests`, {
+      const reqToken = res.access_token || SUPABASE_KEY;
+      const reqRes = await fetch(`${SUPABASE_URL}/rest/v1/user_requests`, {
         method: "POST",
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${reqToken}`, "Content-Type": "application/json", Prefer: "return=minimal" },
         body: JSON.stringify({ email: email.trim(), display_name: displayName.trim(), message: message.trim(), status: "pending", user_id: userId }),
       });
+      if (!reqRes.ok) throw new Error(parseApiError(await reqRes.text(), reqRes.status));
       setMode("verify");
     } catch (e) { setError(String(e.message)); } finally { setLoading(false); }
   };
