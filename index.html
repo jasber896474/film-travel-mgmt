@@ -809,8 +809,8 @@ const pBtn = (dis) => ({
 const STAY_COL_WIDTHS = [32, 72, 88, 54, 64, 60, 50, 68, 68, 34, 70, 88];
 /** 工作人員表欄寬：checkbox, 編號, 部門, 漢字, 英文, 重要度, 護照, 生日, 效期, 飲食, 操作 */
 const staffColWidths = (withCheckbox) => (withCheckbox
-  ? [28, 28, "9ch", "5.5em", "11%", "5%", "12%", "8.5%", "8.5%", "24%", 92]
-  : [28, "9ch", "5.5em", "11%", "5%", "12%", "8.5%", "8.5%", "24%", 92]);
+  ? [36, 30, "9ch", "5.5em", "10%", "5%", "11%", "8%", "8%", "18%", 100]
+  : [30, "9ch", "5.5em", "10%", "5%", "11%", "8%", "8%", "18%", 100]);
 const HOTEL_STATS_COL_WIDTHS = ["34%", "18%", "18%", "30%"];
 
 function ThemeToggle({ theme, onChange, t }) {
@@ -2957,13 +2957,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   {canEdit && <button type="button" onClick={() => setPersonModal({ mode: "add" })} style={pBtn(false)}>{t.addStaff}</button>}
                 </div>
               </div>
-              <div className="staff-table-wrap">
-                <table style={tblW} className="data-table staff-table">
+              <div className="staff-table-card">
+                <div className="staff-table-wrap">
+                <table style={{ ...tblW, boxShadow: "none", borderRadius: 0 }} className="data-table staff-table">
                   <colgroup>
                     {staffColWidths(canEdit).map((w, i) => <col key={i} style={{ width: w }} />)}
                   </colgroup>
                   <thead><tr style={thead}>
-                    {canEdit && <th style={{ ...thS, textAlign: "center" }}><input type="checkbox" checked={allSelected} onChange={() => setSelectedIds(allSelected ? [] : rowsA.map((p) => p.id))} aria-label={t.select} /></th>}
+                    {canEdit && <th className="col-check" style={{ ...thS, textAlign: "center" }}><input type="checkbox" checked={allSelected} onChange={() => setSelectedIds(allSelected ? [] : rowsA.map((p) => p.id))} aria-label={t.select} /></th>}
                     <th style={{ ...thS, textAlign: "center" }}>{t.no}</th>
                     <th className="col-dept" style={{ ...thS, textAlign: "left" }}>{t.dept}</th>
                     <th className="col-kanji" style={{ ...thS, textAlign: "left" }}>{t.nameKanji}</th>
@@ -2980,7 +2981,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       const warn = passportWarning(p.passport_exp);
                       return (
                         <tr key={p.id} draggable={canEdit} onDragStart={() => { dragItem.current = persons.indexOf(p); }} onDragEnter={() => { dragOver.current = persons.indexOf(p); }} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}>
-                          {canEdit && <td style={{ ...tdS(), textAlign: "center" }}><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => setSelectedIds((s) => s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id])} /></td>}
+                          {canEdit && <td className="col-check" style={{ ...tdS(), textAlign: "center" }}><input type="checkbox" checked={selectedIds.includes(p.id)} onChange={() => setSelectedIds((s) => s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id])} /></td>}
                           <td className="td-num" style={tdS({ textAlign: "center" })}>{personIndex[p.id] || i + 1}</td>
                           <td className="col-dept" style={tdEllipsis()} title={p.dept}><Highlight text={p.dept} query={debSearchA} /></td>
                           <td className="col-kanji" style={tdEllipsis({ fontWeight: 600 })} title={p.name_kanji}><Highlight text={p.name_kanji} query={debSearchA} /></td>
@@ -3001,6 +3002,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}
@@ -3610,18 +3612,29 @@ function GlobalStyles() {
       .roman-name-cell { min-width: 0; }
       .roman-name-inline { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .flight-table .roman-name-cell { font-size: 11px; }
-      .staff-table-wrap { overflow-x: auto; width: 100%; max-width: 100%; padding: 0 4px 6px 0; -webkit-overflow-scrolling: touch; }
-      .staff-table { width: 100%; max-width: 100%; }
-      .staff-table th, .staff-table td { padding: 7px 8px; }
+      .staff-table-card {
+        background: var(--shiro);
+        border-radius: 6px;
+        border: 1px solid var(--keisenL);
+        box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 20px rgba(0,0,0,.04);
+        padding: 4px 14px 10px;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .staff-table-wrap { overflow-x: auto; width: 100%; max-width: 100%; -webkit-overflow-scrolling: touch; }
+      .staff-table.staff-table { width: 100%; max-width: 100%; box-shadow: none; border-radius: 0; border: none; }
+      .staff-table th, .staff-table td { padding: 7px 7px; }
+      .staff-table .col-check { padding-left: 12px; padding-right: 6px; width: 36px; box-sizing: border-box; }
       .staff-table .col-dept { min-width: 8ch; padding-right: 6px; }
       .staff-table .col-kanji { padding-right: 6px; }
       .staff-table .col-english { text-align: left; padding-right: 6px; }
       .staff-table .col-importance { text-align: center; padding-left: 6px; padding-right: 6px; white-space: nowrap; }
       .staff-table .col-passport { text-align: left; min-width: 12ch; letter-spacing: 0.03em; padding-left: 6px; padding-right: 6px; }
       .staff-table .col-dob, .staff-table .col-passport-exp { text-align: center; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
-      .staff-table .col-diet { text-align: left; padding-left: 10px; padding-right: 12px; }
-      .staff-table .col-actions { width: 92px; min-width: 92px; max-width: 92px; padding-left: 6px; padding-right: 12px; box-sizing: border-box; }
-      .staff-table .col-actions .tbl-actions { display: inline-flex; flex-wrap: nowrap; gap: 5px; justify-content: center; max-width: 100%; }
+      .staff-table .col-diet { text-align: left; padding-left: 8px; padding-right: 8px; }
+      .staff-table .col-actions { width: 100px; min-width: 100px; max-width: 100px; padding-left: 4px; padding-right: 14px; box-sizing: border-box; }
+      .staff-table .col-actions .tbl-actions { display: inline-flex; flex-wrap: nowrap; gap: 4px; justify-content: center; align-items: center; }
+      .staff-table .col-actions button { font-size: 10.5px; padding: 4px 7px; margin: 0; }
       .staff-table .roman-name-inline { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.35; }
     `}</style>
   );
