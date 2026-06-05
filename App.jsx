@@ -785,8 +785,8 @@ const pBtn = (dis) => ({
 const STAY_COL_WIDTHS = [32, 72, 88, 54, 64, 60, 50, 68, 68, 34, 70, 88];
 /** 工作人員表欄寬：checkbox, 編號, 部門, 漢字, 英文, 重要度, 護照, 生日, 效期, 飲食, 操作 */
 const staffColWidths = (withCheckbox) => (withCheckbox
-  ? [36, 30, "9ch", "5.5em", "10%", "5%", "11%", "8%", "8%", "18%", 100]
-  : [30, "9ch", "5.5em", "10%", "5%", "11%", "8%", "8%", "18%", 100]);
+  ? [36, 30, "9ch", "5.5em", "10%", "5%", "13ch", "9%", "8%", "18%", 100]
+  : [30, "9ch", "5.5em", "10%", "5%", "13ch", "9%", "8%", "18%", 100]);
 const HOTEL_STATS_COL_WIDTHS = ["34%", "18%", "18%", "30%"];
 
 function ThemeToggle({ theme, onChange, t }) {
@@ -3604,9 +3604,10 @@ function GlobalStyles() {
       .staff-table .col-dept { min-width: 8ch; padding-right: 6px; }
       .staff-table .col-kanji { padding-right: 6px; }
       .staff-table .col-english { text-align: left; padding-right: 6px; }
-      .staff-table .col-importance { text-align: center; padding-left: 6px; padding-right: 6px; white-space: nowrap; }
-      .staff-table .col-passport { text-align: left; min-width: 12ch; letter-spacing: 0.03em; padding-left: 6px; padding-right: 6px; }
-      .staff-table .col-dob, .staff-table .col-passport-exp { text-align: center; white-space: nowrap; padding-left: 8px; padding-right: 8px; }
+      .staff-table .col-importance { text-align: center; padding-left: 8px; padding-right: 10px; white-space: nowrap; }
+      .staff-table .col-passport { text-align: left; width: 13ch; min-width: 13ch; max-width: 13ch; letter-spacing: 0.03em; padding-left: 4px; padding-right: 4px; }
+      .staff-table .col-dob { text-align: center; white-space: nowrap; padding-left: 4px; padding-right: 6px; }
+      .staff-table .col-passport-exp { text-align: center; white-space: nowrap; padding-left: 6px; padding-right: 8px; }
       .staff-table .col-diet { text-align: left; padding-left: 8px; padding-right: 8px; }
       .staff-table .col-actions { width: 100px; min-width: 100px; max-width: 100px; padding-left: 4px; padding-right: 14px; box-sizing: border-box; }
       .staff-table .col-actions .tbl-actions { display: inline-flex; flex-wrap: nowrap; gap: 4px; justify-content: center; align-items: center; }
