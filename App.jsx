@@ -19,6 +19,20 @@ const clearSession = () => {
   localStorage.removeItem(SESSION_KEY);
 };
 
+function parseApiError(raw, status) {
+  if (!raw) return status === 401 || status === 403 ? "權限不足，請重新登入" : `請求失敗 (${status || "?"})`;
+  try {
+    const j = JSON.parse(raw);
+    const msg = j.message || j.error || j.msg || "";
+    if (j.code === "23514" && /role/i.test(String(msg) + String(j.details || ""))) {
+      return "成員角色設定錯誤（資料庫尚未支援 owner 角色，請聯絡管理員更新資料庫）";
+    }
+    if (msg) return msg;
+  } catch (_) { /* not JSON */ }
+  const s = String(raw).trim();
+  return s.length > 240 ? `${s.slice(0, 240)}…` : s;
+}
+
 const sb = async (path, opts = {}) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
@@ -36,7 +50,7 @@ const sb = async (path, opts = {}) => {
   }
   if (!res.ok) {
     const e = await res.text();
-    throw new Error(e);
+    throw new Error(parseApiError(e, res.status));
   }
   const txt = await res.text();
   return txt ? JSON.parse(txt) : [];
@@ -769,10 +783,10 @@ const pBtn = (dis) => ({
 });
 
 const STAY_COL_WIDTHS = [32, 72, 88, 54, 64, 60, 50, 68, 68, 34, 70, 88];
-/** 工作人員表欄寬：checkbox, 編號, 部門, 漢字, 英文, 重要度, 護照(≥12字), 生日, 效期, 飲食, 操作 */
+/** 工作人員表欄寬：checkbox, 編號, 部門(≥8字), 漢字, 英文, 重要度, 護照, 生日, 效期, 飲食(約1/3), 操作 */
 const staffColWidths = (withCheckbox) => (withCheckbox
-  ? [28, 28, 52, 60, 82, 30, "12.5ch", 68, 68, "auto", 72]
-  : [28, 52, 60, 82, 30, "12.5ch", 68, 68, "auto", 72]);
+  ? [30, 30, "9ch", 68, 124, 40, "12.5ch", 72, 72, "33%", 76]
+  : [30, "9ch", 68, 124, 40, "12.5ch", 72, 72, "33%", 76]);
 const HOTEL_STATS_COL_WIDTHS = ["34%", "18%", "18%", "30%"];
 
 function ThemeToggle({ theme, onChange, t }) {
@@ -1989,12 +2003,40 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
   const createProject = async () => {
     if (!newName.trim()) return;
     setSaving(true);
+    let createdProjId = null;
     try {
-      const [proj] = await api.insert("projects", { name: newName.trim(), description: newDesc, created_by: user.id, base_currency: "TWD", display_currency: "TWD", exchange_rate: 1 });
+      const inserted = await api.insert("projects", {
+        name: newName.trim(),
+        description: newDesc || null,
+        created_by: user.id,
+        base_currency: "TWD",
+        display_currency: "TWD",
+        exchange_rate: 1,
+      });
+      const proj = Array.isArray(inserted) ? inserted[0] : inserted;
+      if (!proj?.id) throw new Error("建立專案失敗：伺服器未回傳專案資料");
+      createdProjId = proj.id;
       const creatorRole = isSystemOwner ? "owner" : "admin";
-      await api.insert("user_projects", { user_id: user.id, project_id: proj.id, role: creatorRole });
-      showToast(t.saved); setShowNew(false); setNewName(""); setNewDesc(""); load();
-    } catch (e) { showToast(e.message); } finally { setSaving(false); }
+      try {
+        await api.insert("user_projects", { user_id: user.id, project_id: proj.id, role: creatorRole });
+      } catch (linkErr) {
+        if (creatorRole === "owner") {
+          await api.insert("user_projects", { user_id: user.id, project_id: proj.id, role: "admin" });
+        } else throw linkErr;
+      }
+      showToast(t.saved);
+      setShowNew(false);
+      setNewName("");
+      setNewDesc("");
+      load();
+    } catch (e) {
+      if (createdProjId) {
+        try { await api.delete("projects", createdProjId); } catch (_) { /* rollback best-effort */ }
+      }
+      showToast(e.message || String(e));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const deleteProject = async (projId) => {
@@ -3544,14 +3586,15 @@ function GlobalStyles() {
       .roman-name-cell { min-width: 0; }
       .roman-name-inline { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .flight-table .roman-name-cell { font-size: 11px; }
-      .staff-table th, .staff-table td { padding: 7px 5px; }
-      .staff-table .col-dept { padding-right: 4px; }
-      .staff-table .col-kanji { padding-right: 2px; }
-      .staff-table .col-english { padding-left: 2px; padding-right: 2px; }
-      .staff-table .col-importance { padding-left: 2px; padding-right: 4px; }
+      .staff-table th, .staff-table td { padding: 7px 6px; }
+      .staff-table .col-dept { min-width: 8ch; width: 9ch; padding-right: 6px; }
+      .staff-table .col-kanji { padding-right: 4px; max-width: 5.5em; }
+      .staff-table .col-english { min-width: 108px; padding-left: 4px; padding-right: 8px; }
+      .staff-table .roman-name-inline { white-space: normal; line-height: 1.35; word-break: break-word; }
+      .staff-table .col-importance { padding-left: 4px; padding-right: 6px; white-space: nowrap; }
       .staff-table .col-passport { min-width: 12ch; width: 12.5ch; letter-spacing: 0.03em; }
-      .staff-table .col-dob, .staff-table .col-passport-exp { padding-left: 4px; padding-right: 4px; }
-      .staff-table .col-diet { padding-left: 8px; }
+      .staff-table .col-dob, .staff-table .col-passport-exp { padding-left: 4px; padding-right: 4px; white-space: nowrap; }
+      .staff-table .col-diet { width: 33%; min-width: 160px; padding-left: 10px; padding-right: 10px; }
     `}</style>
   );
 }
