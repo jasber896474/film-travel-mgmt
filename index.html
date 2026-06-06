@@ -272,7 +272,12 @@ const T = {
     create: "建立", creating: "建立中…", cancel: "取消", save: "儲存", edit: "編輯", delete: "刪除", add: "新增",
     saved: "已儲存", deleted: "已刪除", confirm: "確認",
     tabStaff: "工作人員", tabFlight: "航班", tabAccommodation: "住宿", tabVehicle: "配車",
-    subStay: "住宿一覽", subHotels: "飯店主檔",
+    subStay: "住宿一覽", subHotels: "飯店設定", subInvoice: "請款對帳",
+    invoiceTitle: "請款對帳表", invoiceSubtitle: "依飯店分類‧批次聚合計算",
+    invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "計價明細",
+    invoiceSubtotal: "房費小計", invoiceRooms: "間", invoiceNights: "晚",
+    invoiceDateRange: "至", invoicePrint: "列印對帳表",
+    invoiceNoData: "尚無住宿資料可對帳",
     staffList: "工作人員列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "飯店清單",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配車", progressOf: "{done}/{total}",
     no: "編號", dept: "部門", jobTitle: "職稱", titleTopPh: "上排（自訂）", titleBottomPh: "下排（自訂）", titleTopCol: "職稱（上）", titleBottomCol: "職稱（下）",
@@ -359,7 +364,12 @@ const T = {
     create: "创建", creating: "创建中…", cancel: "取消", save: "保存", edit: "编辑", delete: "删除", add: "新增",
     saved: "已保存", deleted: "已删除", confirm: "确认",
     tabStaff: "工作人员", tabFlight: "航班", tabAccommodation: "住宿", tabVehicle: "配车",
-    subStay: "住宿一览", subHotels: "饭店主档",
+    subStay: "住宿一览", subHotels: "饭店设定", subInvoice: "请款对账",
+    invoiceTitle: "请款对账表", invoiceSubtitle: "按饭店分类·批次聚合计算",
+    invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "计价明细",
+    invoiceSubtotal: "房费小计", invoiceRooms: "间", invoiceNights: "晚",
+    invoiceDateRange: "至", invoicePrint: "打印对账表",
+    invoiceNoData: "暂无住宿数据可对账",
     staffList: "工作人员列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "饭店列表",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配车", progressOf: "{done}/{total}",
     no: "编号", dept: "部门", jobTitle: "职称", titleTopPh: "上排（自定义）", titleBottomPh: "下排（自定义）", titleTopCol: "职称（上）", titleBottomCol: "职称（下）",
@@ -445,7 +455,12 @@ const T = {
     create: "Create", creating: "Creating…", cancel: "Cancel", save: "Save", edit: "Edit", delete: "Delete", add: "Add",
     saved: "Saved", deleted: "Deleted", confirm: "Confirm",
     tabStaff: "Staff", tabFlight: "Flights", tabAccommodation: "Hotels", tabVehicle: "Vehicles",
-    subStay: "Stay List", subHotels: "Hotel Master",
+    subStay: "Stay List", subHotels: "Hotel Settings", subInvoice: "Invoice",
+    invoiceTitle: "Hotel Invoice", invoiceSubtitle: "Grouped by hotel · Batch aggregation",
+    invoiceBatch: "Batch", invoiceRoomType: "Room Type", invoiceFormula: "Pricing Detail",
+    invoiceSubtotal: "Subtotal", invoiceRooms: "rm", invoiceNights: "nts",
+    invoiceDateRange: "to", invoicePrint: "Print Invoice",
+    invoiceNoData: "No stay data available for invoicing",
     staffList: "Staff List", flightMgmt: "Flight Management", hotelMgmt: "Accommodation", hotelList: "Hotel List",
     progressFlight: "Flights", progressHotel: "Hotels", progressVehicle: "Unassigned", progressOf: "{done}/{total}",
     no: "No.", dept: "Dept", jobTitle: "Title", titleTopPh: "Top line (custom)", titleBottomPh: "Bottom line (custom)", titleTopCol: "Title (top)", titleBottomCol: "Title (bottom)",
@@ -529,7 +544,12 @@ const T = {
     create: "생성", creating: "생성 중…", cancel: "취소", save: "저장", edit: "편집", delete: "삭제", add: "추가",
     saved: "저장됨", deleted: "삭제됨", confirm: "확인",
     tabStaff: "스태프", tabFlight: "항공", tabAccommodation: "숙박", tabVehicle: "차량",
-    subStay: "숙박 목록", subHotels: "호텔 마스터",
+    subStay: "숙박 목록", subHotels: "호텔 설정", subInvoice: "청구서",
+    invoiceTitle: "호텔 청구서", invoiceSubtitle: "호텔별 분류·일괄 집계",
+    invoiceBatch: "일괄", invoiceRoomType: "객실 유형", invoiceFormula: "요금 내역",
+    invoiceSubtotal: "소계", invoiceRooms: "실", invoiceNights: "박",
+    invoiceDateRange: "~", invoicePrint: "청구서 인쇄",
+    invoiceNoData: "청구할 숙박 데이터가 없습니다",
     staffList: "스태프 목록", flightMgmt: "항공 관리", hotelMgmt: "숙박 관리", hotelList: "호텔 목록",
     progressFlight: "항공", progressHotel: "숙박", progressVehicle: "미배정", progressOf: "{done}/{total}",
     no: "번호", dept: "부서", jobTitle: "직함", titleTopPh: "상단 (직접 입력)", titleBottomPh: "하단 (직접 입력)", titleTopCol: "직함 (상)", titleBottomCol: "직함 (하)",
@@ -612,7 +632,12 @@ const T = {
     create: "作成", creating: "作成中…", cancel: "キャンセル", save: "保存", edit: "編集", delete: "削除", add: "追加",
     saved: "保存しました", deleted: "削除しました", confirm: "確定",
     tabStaff: "スタッフ", tabFlight: "フライト", tabAccommodation: "宿泊", tabVehicle: "配車",
-    subStay: "宿泊一覧", subHotels: "ホテルマスタ",
+    subStay: "宿泊一覧", subHotels: "ホテル設定", subInvoice: "請求明細",
+    invoiceTitle: "ホテル請求書", invoiceSubtitle: "ホテル別分類・バッチ集計",
+    invoiceBatch: "バッチ", invoiceRoomType: "部屋タイプ", invoiceFormula: "料金内訳",
+    invoiceSubtotal: "小計", invoiceRooms: "室", invoiceNights: "泊",
+    invoiceDateRange: "〜", invoicePrint: "請求書を印刷",
+    invoiceNoData: "請求できる宿泊データがありません",
     staffList: "スタッフ", flightMgmt: "フライト管理", hotelMgmt: "宿泊管理", hotelList: "ホテル",
     progressFlight: "フライト", progressHotel: "宿泊", progressVehicle: "未配車", progressOf: "{done}/{total}",
     no: "No.", dept: "部署", jobTitle: "職名", titleTopPh: "上段（自由入力）", titleBottomPh: "下段（自由入力）", titleTopCol: "職名（上）", titleBottomCol: "職名（下）",
@@ -1930,6 +1955,214 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
         <button type="button" onClick={handlePreview} disabled={selCount === 0} style={pBtn(selCount === 0)}>{t.previewReport}</button>
       </div>
     </Modal>
+  );
+}
+
+// ─── 請款對帳面板 ─────────────────────────────────────────────
+/**
+ * 計算邏輯：hotel_id → (check_in + check_out + room_type/room_custom) 兩層聚合
+ * 每批次間數 = 相異 room_number 數（或 person_id 數，特殊空間算 1 間）
+ * 單價 = stayNightPriceFromRules 第一晚；晚數 = diffDays(check_in, check_out)
+ */
+function buildInvoiceBatches(stays, pricingRules, hotels) {
+  const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
+  // 一層：依 hotel_id
+  const hotelMap = {};
+  stays.forEach((s) => {
+    if (!s.hotel_id || !s.check_in || !s.check_out) return;
+    const hid = +s.hotel_id;
+    if (!hotelMap[hid]) hotelMap[hid] = {};
+    const roomLabel = s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "—");
+    const batchKey = `${s.check_in}|${s.check_out}|${roomLabel}`;
+    if (!hotelMap[hid][batchKey]) hotelMap[hid][batchKey] = { check_in: s.check_in, check_out: s.check_out, roomLabel, stays: [] };
+    hotelMap[hid][batchKey].stays.push(s);
+  });
+  // 二層：每批次計算間數 + 單價 + 金額
+  const result = [];
+  Object.entries(hotelMap).forEach(([hidStr, batchMap]) => {
+    const hid = +hidStr;
+    const hotel = hMap[hid];
+    const batches = [];
+    Object.values(batchMap).forEach((batch) => {
+      const nights = diffDays(batch.check_in, batch.check_out);
+      if (nights <= 0) return;
+      // 間數：先用 room_number 去重，沒有則用 person_id；特殊空間各算 1 間
+      const roomNums = new Set();
+      const personIds = new Set();
+      batch.stays.forEach((s) => {
+        if (s.room_number) roomNums.add(s.room_number);
+        else if (s.special_room_name) roomNums.add(`__special__${s.id}`);
+        else if (s.person_id) personIds.add(s.person_id);
+      });
+      const roomCount = roomNums.size + personIds.size;
+      if (roomCount === 0) return;
+      // 單價：取第一筆 stay 第一晚房價
+      const firstStay = batch.stays[0];
+      const unitPrice = stayNightPriceFromRules(firstStay, firstStay.check_in, pricingRules, hMap);
+      const batchTotal = unitPrice * roomCount * nights;
+      batches.push({ check_in: batch.check_in, check_out: batch.check_out, roomLabel: batch.roomLabel, roomCount, nights, unitPrice, batchTotal });
+    });
+    // 依 check_in 排序
+    batches.sort((a, b) => a.check_in.localeCompare(b.check_in));
+    const hotelTotal = batches.reduce((s, b) => s + b.batchTotal, 0);
+    result.push({ hotel, hid, batches, hotelTotal });
+  });
+  result.sort((a, b) => (a.hotel?.name || "").localeCompare(b.hotel?.name || ""));
+  return result;
+}
+
+function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t }) {
+  const data = useMemo(() => buildInvoiceBatches(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
+  const grandTotal = data.reduce((s, h) => s + h.hotelTotal, 0);
+
+  const handlePrint = () => {
+    const rows = data.map((hd) => {
+      const batchRows = hd.batches.map((b, i) => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.check_in} ${t.invoiceDateRange} ${b.check_out}<br><small style="color:#666;">(${t.nights || "共"} ${b.nights} ${t.invoiceNights})</small></td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.unitPrice, project), project, lang)} × ${b.roomCount} ${t.invoiceRooms} × ${b.nights} ${t.invoiceNights}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.batchTotal, project), project, lang)}</td>
+        </tr>`).join("");
+      return `
+        <div style="margin-bottom:28px;">
+          <div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:10px 16px;border-radius:6px 6px 0 0;font-size:13pt;font-family:'Noto Serif JP',serif;font-weight:600;">${hd.hotel?.name || "—"}</div>
+          <table style="width:100%;border-collapse:collapse;border:1px solid #e0ebe4;border-top:none;">
+            <thead>
+              <tr style="background:#f0f5f1;">
+                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.nights}數 / 日期</th>
+                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceRoomType}</th>
+                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceFormula}</th>
+                <th style="padding:8px 12px;text-align:right;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceSubtotal}</th>
+              </tr>
+            </thead>
+            <tbody>${batchRows}
+              <tr style="background:#eaf2ec;">
+                <td colspan="3" style="padding:10px 12px;font-weight:700;font-size:10pt;">${t.invoiceSubtotal}</td>
+                <td style="padding:10px 12px;text-align:right;font-weight:800;font-size:12pt;color:#1a3028;">${formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>`;
+    }).join("");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t.invoiceTitle}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:10pt;color:#1a2820;padding:12mm;}
+@page{size:A4 portrait;margin:10mm 12mm;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style>
+</head><body>
+<div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:14px 18px;border-radius:6px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
+  <div><div style="font-family:'Noto Serif JP',serif;font-size:15pt;font-weight:600;">${t.invoiceTitle}</div><div style="font-size:9pt;opacity:.75;margin-top:4px;">${project?.name || ""} · ${new Date().toLocaleDateString()}</div></div>
+  <div style="font-size:9pt;opacity:.75;text-align:right;">${t.invoiceSubtitle}</div>
+</div>
+${rows}
+<div style="margin-top:16px;padding:12px 16px;background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
+  <span style="font-size:12pt;font-weight:700;">${t.totalCost}</span>
+  <span style="font-size:18pt;font-family:'Noto Serif JP',serif;font-weight:600;">${formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
+</div>
+</body></html>`;
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800); }
+  };
+
+  if (!data.length) {
+    return (
+      <div style={{ padding: "60px 0", textAlign: "center", color: "var(--usunezumi)", fontSize: 13 }}>
+        {t.invoiceNoData}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* 頁首 Banner */}
+      <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", marginBottom: 20, borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.04em" }}>{t.invoiceTitle}</div>
+          <div style={{ fontSize: 10, opacity: 0.65, marginTop: 3 }}>{t.invoiceSubtitle}</div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 10, opacity: 0.65 }}>{t.totalCost}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</div>
+          </div>
+          <button type="button" onClick={handlePrint} style={{ background: "rgba(255,255,255,.12)", color: "var(--washi)", border: "1px solid rgba(255,255,255,.22)", borderRadius: 6, padding: "8px 16px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>🖨 {t.invoicePrint}</button>
+        </div>
+      </div>
+
+      {/* 各飯店表格 */}
+      {data.map((hd) => (
+        <section key={hd.hid} style={{ marginBottom: 32, background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+          {/* 飯店標題列 */}
+          <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--theadGrad)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{hd.hotel?.name || "—"}</h3>
+            <span style={{ fontSize: 11, color: "var(--washi)", opacity: 0.75 }}>{hd.batches.length} {t.invoiceBatch}</span>
+          </div>
+
+          {/* 批次表格 */}
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+              <colgroup>
+                <col style={{ width: "28%" }} />
+                <col style={{ width: "18%" }} />
+                <col style={{ width: "34%" }} />
+                <col style={{ width: "20%" }} />
+              </colgroup>
+              <thead>
+                <tr style={{ background: "var(--washi)", borderBottom: "2px solid var(--keisenM)" }}>
+                  {[t.nights + " / " + t.checkIn + "〜" + t.checkOut, t.invoiceRoomType, t.invoiceFormula, t.invoiceSubtotal].map((h, i) => (
+                    <th key={i} style={{ padding: "9px 14px", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "var(--nezumi)", textAlign: i === 3 ? "right" : "left", whiteSpace: "nowrap" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {hd.batches.map((b, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "var(--shiro)" : "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
+                    {/* 日期 */}
+                    <td style={{ padding: "11px 14px", verticalAlign: "top" }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
+                        {fmtDate(b.check_in, lang)} {t.invoiceDateRange} {fmtDate(b.check_out, lang)}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 3, fontWeight: 600 }}>
+                        {t.nights ? "" : "共"} {b.nights} {t.invoiceNights}
+                      </div>
+                    </td>
+                    {/* 房型 */}
+                    <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>{b.roomLabel}</td>
+                    {/* 計價公式 */}
+                    <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
+                      <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
+                      <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
+                      <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
+                      <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
+                      <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.nights} {t.invoiceNights}</span>
+                    </td>
+                    {/* 金額 */}
+                    <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, fontSize: 13, color: "var(--asagi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
+                      {formatMoney(convertMoney(b.batchTotal, project), project, lang)}
+                    </td>
+                  </tr>
+                ))}
+                {/* 小計列 */}
+                <tr style={{ background: "var(--moegi3)", borderTop: "2px solid var(--moegi)" }}>
+                  <td colSpan={3} style={{ padding: "11px 14px", fontWeight: 700, fontSize: 12.5, color: "var(--moegi)" }}>{t.invoiceSubtotal}</td>
+                  <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 800, fontSize: 15, color: "var(--moegi)", fontFamily: "'Noto Serif JP',serif", fontVariantNumeric: "tabular-nums" }}>
+                    {formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))}
+
+      {/* 全域總計 */}
+      <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
+        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.04em" }}>{t.totalCost}</span>
+        <span style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
+      </div>
+    </div>
   );
 }
 
@@ -3620,7 +3853,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                 </div>
               </div>
               <div style={{ display: "flex", background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 16, width: "fit-content", gap: 2 }}>
-                {[["stays", t.subStay], ["hotels", t.subHotels]].map(([k, lb]) => (
+                {[["stays", t.subStay], ["hotels", t.subHotels], ["invoice", t.subInvoice]].map(([k, lb]) => (
                   <button key={k} type="button" onClick={() => setAccSub(k)} style={{
                     padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12.5,
                     fontFamily: "'Noto Sans JP',sans-serif", letterSpacing: "0.02em",
@@ -3976,6 +4209,17 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     );
                   })}
                 </>
+              )}
+
+              {accSub === "invoice" && (
+                <HotelGroupInvoicePanel
+                  stays={stays}
+                  pricingRules={pricingRules}
+                  hotels={hotels}
+                  project={project}
+                  lang={lang}
+                  t={t}
+                />
               )}
             </div>
           )}
