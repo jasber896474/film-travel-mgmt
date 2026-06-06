@@ -267,6 +267,8 @@ const T = {
     guestCount: "入住人次", guestCountDay: "當日人數", roomCount: "客室數", roomCountDay: "當日房數", totalSpendDay: "當日費用", roomOccupancy: "每房人數", totalSpend: "總費用",
     datePrice: "日期別房價", addRule: "新增規則", addHotel: "新增飯店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "節日加算", finalPrice: "最終房價",
+    roomTypeRates: "各房型預設價", allSamePrice: "全房型統一價", pricePerNight: "每晚房價",
+    dateException: "日期例外", dateExceptionHint: "特定日期與房型預設不同時才需新增", noDateException: "目前皆採用上方房型預設價", addDateException: "新增例外日期",
     hotelName: "飯店名稱", hotelAddr: "地址", hotelTel: "電話", targetHotel: "對象飯店", customRoomType: "自訂房型", breakdownTitle: "每日房價明細",
     noData: "無資料", searchStaff: "搜尋姓名・部門・護照…", searchFlight: "搜尋姓名・航空公司…", searchHotel: "搜尋姓名・飯店…", searchHotelList: "搜尋飯店名・地址…",
     allDept: "全部門", deptUnset: "未填部門", role_owner: "擁有者", role_admin: "管理員", role_editor: "編輯", role_viewer: "唯讀", me: "本人",
@@ -347,6 +349,8 @@ const T = {
     guestCount: "入住人次", guestCountDay: "当日人数", roomCount: "客房数", roomCountDay: "当日房数", totalSpendDay: "当日费用", roomOccupancy: "每房人数", totalSpend: "总费用",
     datePrice: "日期别房价", addRule: "新增规则", addHotel: "新增饭店", date: "日期", basePriceShort: "基本",
     importanceSurcharge: "重要度加算", holidaySurcharge: "节日加算", finalPrice: "最终房价",
+    roomTypeRates: "各房型默认价格", allSamePrice: "全房型统一价", pricePerNight: "每晚房价",
+    dateException: "日期例外", dateExceptionHint: "特定日期与房型默认不同时才需新增", noDateException: "目前皆采用上方房型默认价格", addDateException: "新增例外日期",
     hotelName: "饭店名称", hotelAddr: "地址", hotelTel: "电话", targetHotel: "对象饭店", customRoomType: "自定义房型", breakdownTitle: "每日房价明细",
     noData: "无数据", searchStaff: "搜索姓名・部门・护照…", searchFlight: "搜索姓名・航空公司…", searchHotel: "搜索姓名・饭店…", searchHotelList: "搜索饭店名・地址…",
     allDept: "全部门", deptUnset: "未填部门", role_owner: "所有者", role_admin: "管理员", role_editor: "编辑", role_viewer: "只读", me: "本人",
@@ -426,6 +430,8 @@ const T = {
     guestCount: "Guest-nights", guestCountDay: "Guests", roomCount: "Rooms", roomCountDay: "Rooms", totalSpendDay: "Cost", roomOccupancy: "Per room", totalSpend: "Total",
     datePrice: "Date Pricing", addRule: "Add Rule", addHotel: "Add Hotel", date: "Date", basePriceShort: "Base",
     importanceSurcharge: "Priority Sur.", holidaySurcharge: "Holiday Sur.", finalPrice: "Final",
+    roomTypeRates: "Default Rates by Room Type", allSamePrice: "Same price for all room types", pricePerNight: "Price/night",
+    dateException: "Date Exceptions", dateExceptionHint: "Add only when a specific date differs from defaults above", noDateException: "All dates use default rates above", addDateException: "Add exception date",
     hotelName: "Hotel Name", hotelAddr: "Address", hotelTel: "Phone", targetHotel: "Hotel", customRoomType: "Custom Type", breakdownTitle: "Daily Breakdown",
     noData: "No data", searchStaff: "Search name, dept…", searchFlight: "Search name, airline…", searchHotel: "Search name, hotel…", searchHotelList: "Search hotels…",
     allDept: "All Depts", deptUnset: "No department", role_owner: "Owner", role_admin: "Admin", role_editor: "Editor", role_viewer: "Viewer", me: "You",
@@ -503,6 +509,8 @@ const T = {
     guestCount: "투숙 인원", guestCountDay: "당일 인원", roomCount: "객실 수", roomCountDay: "당일 객실", totalSpendDay: "당일 비용", roomOccupancy: "객실당", totalSpend: "총비용",
     datePrice: "날짜별 요금", addRule: "규칙 추가", addHotel: "호텔 추가", date: "날짜", basePriceShort: "기본",
     importanceSurcharge: "중요도", holidaySurcharge: "특별일", finalPrice: "최종",
+    roomTypeRates: "객실 유형별 기본 요금", allSamePrice: "모든 객실 동일 요금", pricePerNight: "1박 요금",
+    dateException: "날짜 예외", dateExceptionHint: "특정 날짜가 기본과 다를 때만 추가하세요", noDateException: "모든 날짜는 기본 요금 적용", addDateException: "예외 날짜 추가",
     hotelName: "호텔명", hotelAddr: "주소", hotelTel: "전화", targetHotel: "호텔", customRoomType: "사용자 정의", breakdownTitle: "일별 내역",
     noData: "데이터 없음", searchStaff: "검색…", searchFlight: "검색…", searchHotel: "검색…", searchHotelList: "호텔 검색…",
     allDept: "전체", deptUnset: "부서 미입력", role_owner: "소유자", role_admin: "관리자", role_editor: "편집", role_viewer: "열람", me: "본인",
@@ -579,6 +587,8 @@ const T = {
     guestCount: "宿泊者数", guestCountDay: "当日人数", roomCount: "客室数", roomCountDay: "当日室数", totalSpendDay: "当日費用", roomOccupancy: "1室あたり", totalSpend: "総費用",
     datePrice: "日付別料金", addRule: "追加", addHotel: "ホテル追加", date: "日付", basePriceShort: "基本",
     importanceSurcharge: "重要度", holidaySurcharge: "祝日", finalPrice: "最終",
+    roomTypeRates: "部屋タイプ別定価", allSamePrice: "全部屋タイプ同一料金", pricePerNight: "1泊料金",
+    dateException: "日付例外", dateExceptionHint: "特定日付が上の定価と異なる場合のみ追加", noDateException: "全日付は上の定価を適用", addDateException: "例外日付を追加",
     hotelName: "ホテル名", hotelAddr: "住所", hotelTel: "電話", targetHotel: "対象", customRoomType: "カスタム", breakdownTitle: "日別",
     noData: "なし", searchStaff: "検索…", searchFlight: "検索…", searchHotel: "検索…", searchHotelList: "検索…",
     allDept: "全部署", deptUnset: "部署未入力", role_owner: "オーナー", role_admin: "管理者", role_editor: "編集", role_viewer: "閲覧", me: "自分",
@@ -973,17 +983,30 @@ function findPricingRule(pricingRules, hotelId, dateStr, roomLabel) {
   return pricingRules.find((r) => +r.hotel_id === +hotelId && r.date === dateStr && pricingRuleMatchesRoom(r, roomLabel));
 }
 
-/** 該入住夜房費：飯店主檔「日期別房價」；無規則時 fallback 該筆住宿的基本房價 */
-function stayNightPriceFromRules(stay, dateStr, pricingRules) {
+/** 房型預設價：All 表示全房型統一、否則依房型標籤查詢 */
+function findRoomTypeRate(hotel, roomLabel) {
+  const rates = hotel?.room_type_rates || {};
+  if (rates[roomLabel] != null && rates[roomLabel] !== "") return +rates[roomLabel];
+  if (rates["All"] != null && rates["All"] !== "") return +rates["All"];
+  return null;
+}
+
+/** 該入住夜房費：日期例外規則 → 房型預設價 → fallback 該筆住宿的基本房價 */
+function stayNightPriceFromRules(stay, dateStr, pricingRules, hMap) {
   if (!stayActiveOnDate(stay, dateStr)) return 0;
   const rule = findPricingRule(pricingRules, stay.hotel_id, dateStr, stayRoomLabel(stay));
   if (rule) return +rule.final_price || 0;
+  if (hMap) {
+    const rtr = findRoomTypeRate(hMap[+stay.hotel_id], stayRoomLabel(stay));
+    if (rtr != null) return rtr;
+  }
   return +stay.base_price || 0;
 }
 
 /** 指定入住夜：各飯店當日人數、房數、費用（費用：同房號或同室者只計一筆主檔房價） */
-function computeHotelStatsForDate(stays, roommates, dateStr, pricingRules) {
+function computeHotelStatsForDate(stays, roommates, dateStr, pricingRules, hotels) {
   const groups = buildRoommateGroups(roommates);
+  const hMap = hotels ? Object.fromEntries(hotels.map((h) => [+h.id, h])) : {};
   const byHotel = {};
   stays.forEach((s) => {
     if (!stayActiveOnDate(s, dateStr)) return;
@@ -994,7 +1017,7 @@ function computeHotelStatsForDate(stays, roommates, dateStr, pricingRules) {
     byHotel[hid].roomKeys.add(rk);
     if (!byHotel[hid].chargedRooms.has(rk)) {
       byHotel[hid].chargedRooms.add(rk);
-      byHotel[hid].cost += stayNightPriceFromRules(s, dateStr, pricingRules);
+      byHotel[hid].cost += stayNightPriceFromRules(s, dateStr, pricingRules, hMap);
     }
   });
   const out = {};
@@ -1010,12 +1033,11 @@ function HotelStatsByDatePanel({
 }) {
   const hasSelection = statsDate && statsHotelId && selectedHotelDayStats;
   return (
-    <div style={{ marginBottom: 20, padding: "16px 18px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
+    <div style={{ marginTop: 24, marginBottom: 20, padding: "16px 18px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
         <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
         <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStatsByDate}</h3>
       </div>
-      <p style={{ fontSize: 10, color: "var(--nezumi)", margin: "0 0 6px" }}>{t.hotelStatsByDateWhere}</p>
       <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginBottom: 12 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -1527,16 +1549,18 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
   const { totalAmount, breakdown } = useMemo(() => {
     if (!f.check_in || !f.check_out || nights === 0) return { totalAmount: 0, breakdown: [] };
     const roomLabel = f.room_type === "Custom" ? f.room_custom : f.room_type;
+    const selectedHotel = hotels.find((h) => +h.id === +f.hotel_id);
     let total = 0; const bd = [];
     for (let i = 0; i < nights; i++) {
       const d = parseLocalDate(f.check_in); d.setDate(d.getDate() + i);
       const ds = localDateStr(d);
       const rule = findPricingRule(pricingRules, f.hotel_id, ds, roomLabel);
-      const price = rule ? (+rule.final_price || 0) : (+f.base_price || 0);
-      total += price; bd.push({ date: ds, price, fromRule: !!rule });
+      const rtr = !rule ? findRoomTypeRate(selectedHotel, roomLabel) : null;
+      const price = rule ? (+rule.final_price || 0) : (rtr != null ? rtr : (+f.base_price || 0));
+      total += price; bd.push({ date: ds, price, fromRule: !!rule, fromRoomRate: !rule && rtr != null });
     }
     return { totalAmount: total, breakdown: bd };
-  }, [f, nights, pricingRules]);
+  }, [f, nights, pricingRules, hotels]);
   const canSave = !!f.hotel_id && !!f.check_in && !!f.check_out && diffDays(f.check_in, f.check_out) > 0;
   const dispTotal = convertMoney(totalAmount, project);
   return (
@@ -1575,18 +1599,64 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
   );
 }
 
+const ROOM_TYPES_FOR_RATES = ROOM_TYPES.filter((r) => r !== "Custom");
+
 function HotelMasterForm({ init, onSave, onClose, t }) {
   const blank = { name: "", address: "", tel: "" };
   const [f, setF] = useState(init ? { ...blank, ...init } : blank);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+
+  const initRates = init?.room_type_rates || {};
+  const isInitUniform = "All" in initRates;
+  const [uniformPrice, setUniformPrice] = useState(isInitUniform);
+  const [uniformRate, setUniformRate] = useState(String(initRates["All"] ?? ""));
+  const [typeRates, setTypeRates] = useState(
+    Object.fromEntries(ROOM_TYPES_FOR_RATES.map((r) => [r, String(initRates[r] ?? "")]))
+  );
+
+  const buildRates = () => {
+    if (uniformPrice) return uniformRate !== "" ? { All: +uniformRate } : {};
+    const out = {};
+    Object.entries(typeRates).forEach(([k, v]) => { if (v !== "") out[k] = +v; });
+    return out;
+  };
+
   return (
     <div>
       <Field label={t.hotelName}><input style={inpStyle} value={f.name} onChange={set("name")} /></Field>
       <Field label={t.hotelAddr}><input style={inpStyle} value={f.address} onChange={set("address")} /></Field>
       <Field label={t.hotelTel}><input style={inpStyle} value={f.tel} onChange={set("tel")} /></Field>
+
+      <div style={{ marginTop: 18, borderTop: "1px solid var(--keisenL)", paddingTop: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <div style={{ width: 3, height: 14, background: "var(--asagi)", borderRadius: 2 }} />
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", color: "var(--sumi)" }}>{t.roomTypeRates}</span>
+          <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--nezumi)", cursor: "pointer", marginLeft: "auto" }}>
+            <input type="checkbox" checked={uniformPrice} onChange={(e) => setUniformPrice(e.target.checked)} />
+            {t.allSamePrice}
+          </label>
+        </div>
+        {uniformPrice ? (
+          <Field label={t.pricePerNight}>
+            <input type="number" min="0" style={inpStyle} placeholder="0" value={uniformRate} onChange={(e) => setUniformRate(e.target.value)} />
+          </Field>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {ROOM_TYPES_FOR_RATES.map((rt) => (
+              <Field key={rt} label={rt}>
+                <input type="number" min="0" style={inpStyle} placeholder="0"
+                  value={typeRates[rt] || ""}
+                  onChange={(e) => setTypeRates((p) => ({ ...p, [rt]: e.target.value }))} />
+              </Field>
+            ))}
+          </div>
+        )}
+        <p style={{ fontSize: 10, color: "var(--usunezumi)", margin: "8px 0 0", lineHeight: 1.5 }}>{t.dateExceptionHint}</p>
+      </div>
+
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
-        <button type="button" onClick={() => onSave(f)} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
+        <button type="button" onClick={() => onSave({ ...f, room_type_rates: buildRates() })} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
       </div>
     </div>
   );
@@ -2427,8 +2497,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const hotelStatsMap = useMemo(() => computeHotelStats(stays, roommates), [stays, roommates]);
   const stayNightDates = useMemo(() => collectStayNightDates(stays), [stays]);
   const hotelStatsByDateMap = useMemo(
-    () => (statsDate ? computeHotelStatsForDate(stays, roommates, statsDate, pricingRules) : {}),
-    [stays, roommates, statsDate, pricingRules],
+    () => (statsDate ? computeHotelStatsForDate(stays, roommates, statsDate, pricingRules, hotels) : {}),
+    [stays, roommates, statsDate, pricingRules, hotels],
   );
   const hotelStatsHotelsOnDate = useMemo(() => hotels
     .filter((h) => (hotelStatsByDateMap[h.id] || hotelStatsByDateMap[+h.id])?.guests > 0)
@@ -3226,19 +3296,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     )}
                     <span style={{ fontSize: 11, color: "var(--nezumi)", gridColumn: "1 / -1" }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
                   </div>
-                  <HotelStatsByDatePanel
-                    t={t}
-                    lang={lang}
-                    project={project}
-                    statsDate={statsDate}
-                    setStatsDate={setStatsDate}
-                    statsHotelId={statsHotelId}
-                    setStatsHotelId={setStatsHotelId}
-                    stayNightDates={stayNightDates}
-                    hotels={hotels}
-                    selectedHotelDayStats={selectedHotelDayStats}
-                    hotelStatsDayCostFmt={hotelStatsDayCostFmt}
-                  />
                   {(() => {
                     const sortStayRows = (rows) => [...rows].sort((a, b) => {
                       const aHas = a.room_number ? 0 : 1;
@@ -3415,6 +3472,19 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       </div>
                     );
                   })()}
+                  <HotelStatsByDatePanel
+                    t={t}
+                    lang={lang}
+                    project={project}
+                    statsDate={statsDate}
+                    setStatsDate={setStatsDate}
+                    statsHotelId={statsHotelId}
+                    setStatsHotelId={setStatsHotelId}
+                    stayNightDates={stayNightDates}
+                    hotels={hotels}
+                    selectedHotelDayStats={selectedHotelDayStats}
+                    hotelStatsDayCostFmt={hotelStatsDayCostFmt}
+                  />
                 </>
               )}
 
@@ -3426,6 +3496,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   </div>
                   {hotels.filter((h) => !searchD || [h.name, h.address, h.tel].some((v) => (v || "").toLowerCase().includes(searchD.toLowerCase()))).map((h) => {
                     const hRules = pricingRules.filter((r) => +r.hotel_id === h.id).sort((a, b) => a.date > b.date ? 1 : -1);
+                    const rates = h.room_type_rates || {};
+                    const rateEntries = Object.entries(rates);
                     return (
                       <div key={h.id} style={{ background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)", marginBottom: 14, padding: "18px 20px", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -3438,12 +3510,34 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                             {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("hotels", h.id); setHotels((x) => x.filter((y) => y.id !== h.id)); } }}>{t.delete}</button>}
                           </>}
                         </div>
+
+                        {/* Room Type Default Rates */}
+                        <div style={{ marginTop: 12, padding: "10px 14px", background: "var(--washi)", borderRadius: 6, border: "1px solid var(--keisenL)" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: rateEntries.length ? 8 : 0 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--asagi)", letterSpacing: "0.04em" }}>{t.roomTypeRates}</span>
+                            {canEdit && <button type="button" onClick={() => setHotelModal({ mode: "edit", data: h })} style={{ ...aBtn, margin: 0, fontSize: 10 }}>{t.edit}</button>}
+                          </div>
+                          {rateEntries.length === 0 ? (
+                            <span style={{ fontSize: 11, color: "var(--usunezumi)", fontStyle: "italic" }}>{t.noData}</span>
+                          ) : (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
+                              {rateEntries.map(([rt, price]) => (
+                                <span key={rt} style={{ fontSize: 11.5, color: "var(--sumi)" }}>
+                                  <span style={{ color: "var(--nezumi)", marginRight: 4 }}>{rt === "All" ? t.allSamePrice : rt}</span>
+                                  <strong>{formatMoney(convertMoney(+price, project), project, lang)}</strong>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Date Exceptions */}
                         <div style={{ marginTop: 12 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                            <span style={{ fontSize: 11, fontWeight: 600 }}>{t.datePrice}</span>
-                            {canEdit && <button type="button" onClick={() => setPriceModal({ mode: "add", hotelId: h.id, hotelName: h.name })} style={{ ...aBtn, margin: 0 }}>{t.addRule}</button>}
+                            <span style={{ fontSize: 11, fontWeight: 600 }}>{t.dateException}</span>
+                            {canEdit && <button type="button" onClick={() => setPriceModal({ mode: "add", hotelId: h.id, hotelName: h.name })} style={{ ...aBtn, margin: 0 }}>{t.addDateException}</button>}
                           </div>
-                          {hRules.length === 0 ? <p style={{ fontSize: 12, color: "var(--usunezumi)" }}>{t.noData}</p> : (
+                          {hRules.length === 0 ? <p style={{ fontSize: 11, color: "var(--usunezumi)", fontStyle: "italic", margin: 0 }}>{t.noDateException}</p> : (
                             <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
                               <thead><tr>{[t.date, t.roomType, t.finalPrice, t.action].map((lb) => <th key={lb} style={{ textAlign: "left", padding: 6 }}>{lb}</th>)}</tr></thead>
                               <tbody>
@@ -3626,7 +3720,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       {flightModal && <Modal title={t.flightMgmt} onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = { ...f, person_id: flightModal.pid, project_id: pid }; if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
       {stayModal && <Modal title={t.hotelMgmt} onClose={() => setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={() => setStayModal(null)} t={t} project={project} lang={lang} roommateNames={getRoommateNames(stayModal.pid) || null} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
-      {priceModal && <Modal title={t.datePrice} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
+      {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
       {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} /></Modal>}
       {roommateModal && <RoommateModal pid={roommateModal.pid} persons={persons} roommates={roommates} stays={flatStays} onSave={async (rpid, partnerIds) => { try { const group = [...new Set([rpid, ...partnerIds])]; for (const gid of group) await api.deleteWhere("roommates", "person_id", gid); if (partnerIds.length) for (const gid of group) { const partners = group.filter((x) => x !== gid); if (partners.length) await api.insert("roommates", partners.map((x) => ({ person_id: gid, partner_id: x, project_id: pid }))); } await loadAll(); showToast(t.saved); setRoommateModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setRoommateModal(null)} t={t} />}
       {showMembers && <MemberManager project={project} user={user} canManage={canManageMembers} onClose={() => setShowMembers(false)} t={t} />}
