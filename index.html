@@ -803,8 +803,8 @@ const pBtn = (dis) => ({
 const STAY_COL_WIDTHS = [32, 72, 88, 54, 64, 60, 50, 68, 68, 34, 70, 88];
 /** 工作人員表欄寬：checkbox, 編號, 部門, 漢字, 英文, 重要度, 護照, 生日, 效期, 飲食, 操作 */
 const staffColWidths = (withCheckbox) => (withCheckbox
-  ? [36, 30, "9ch", "5.5em", "10%", "5%", "13ch", "9%", "8%", "18%", 100]
-  : [30, "9ch", "5.5em", "10%", "5%", "13ch", "9%", "8%", "18%", 100]);
+  ? [36, 30, "9ch", "5.5em", "10%", "4%", "13ch", "8.5%", "8%", "18%", 100]
+  : [30, "9ch", "5.5em", "10%", "4%", "13ch", "8.5%", "8%", "18%", 100]);
 const HOTEL_STATS_COL_WIDTHS = ["34%", "18%", "18%", "30%"];
 
 function ThemeToggle({ theme, onChange, t }) {
@@ -2966,7 +2966,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <th className="col-kanji" style={{ ...thS, textAlign: "left" }}>{t.nameKanji}</th>
                     <th className="col-english" style={{ ...thS, textAlign: "left" }}>{t.nameEnglish}</th>
                     <th className="col-importance" style={{ ...thS, textAlign: "center" }}>{t.importance}</th>
-                    <th className="col-passport" style={{ ...thS, textAlign: "left" }}>{t.passport}</th>
+                    <th className="col-passport" style={{ ...thS, textAlign: "right" }}>{t.passport}</th>
                     <th className="col-dob" style={{ ...thS, textAlign: "center" }}>{t.dob}</th>
                     <th className="col-passport-exp" style={{ ...thS, textAlign: "center" }}>{t.passportExp}</th>
                     <th className="col-diet" style={{ ...thS, textAlign: "left" }}>{t.dietNotes}</th>
@@ -2983,7 +2983,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           <td className="col-kanji" style={tdEllipsis({ fontWeight: 600 })} title={p.name_kanji}><Highlight text={p.name_kanji} query={debSearchA} /></td>
                           <td className="col-english" style={tdS({ textAlign: "left", maxWidth: "none" })}><RomanNameCell inline last={p.last_roman} first={p.first_roman} /></td>
                           <td className="col-importance" style={tdS({ textAlign: "center" })}>{starLabel(p.importance) || "—"}</td>
-                          <td className="col-passport" style={tdS({ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontVariantNumeric: "tabular-nums" })} title={p.passport}>{p.passport || "—"}</td>
+                          <td className="col-passport" style={tdS({ textAlign: "right", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontVariantNumeric: "tabular-nums" })} title={p.passport}>{p.passport || "—"}</td>
                           <td className="col-dob" style={tdS({ textAlign: "center", whiteSpace: "nowrap" })}>{fmtDate(p.dob, lang)}</td>
                           <td className="col-passport-exp" style={tdS({ textAlign: "center", whiteSpace: "nowrap", color: warn ? "var(--shu)" : "inherit" })}>{fmtDate(p.passport_exp, lang)}</td>
                           <td className="col-diet" style={tdEllipsis()} title={p.diet}>{p.diet || "—"}</td>
@@ -3624,9 +3624,9 @@ function GlobalStyles() {
       .staff-table .col-dept { min-width: 8ch; padding-right: 6px; }
       .staff-table .col-kanji { padding-right: 6px; }
       .staff-table .col-english { text-align: left; padding-right: 6px; }
-      .staff-table .col-importance { text-align: center; padding-left: 8px; padding-right: 10px; white-space: nowrap; }
-      .staff-table .col-passport { text-align: left; width: 13ch; min-width: 13ch; max-width: 13ch; letter-spacing: 0.03em; padding-left: 4px; padding-right: 4px; }
-      .staff-table .col-dob { text-align: center; white-space: nowrap; padding-left: 4px; padding-right: 6px; }
+      .staff-table .col-importance { text-align: center; padding-left: 6px; padding-right: 4px; white-space: nowrap; }
+      .staff-table .col-passport { text-align: right; width: 13ch; min-width: 13ch; max-width: 13ch; letter-spacing: 0.03em; padding-left: 2px; padding-right: 0; }
+      .staff-table .col-dob { text-align: center; white-space: nowrap; padding-left: 0; padding-right: 6px; }
       .staff-table .col-passport-exp { text-align: center; white-space: nowrap; padding-left: 6px; padding-right: 8px; }
       .staff-table .col-diet { text-align: left; padding-left: 8px; padding-right: 8px; }
       .staff-table .col-actions { width: 100px; min-width: 100px; max-width: 100px; padding-left: 4px; padding-right: 14px; box-sizing: border-box; }
