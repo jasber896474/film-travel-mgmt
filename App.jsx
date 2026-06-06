@@ -232,7 +232,7 @@ const T = {
     importanceSurcharge: "重要度加算", holidaySurcharge: "節日加算", finalPrice: "最終房價",
     hotelName: "飯店名稱", hotelAddr: "地址", hotelTel: "電話", targetHotel: "對象飯店", customRoomType: "自訂房型", breakdownTitle: "每日房價明細",
     noData: "無資料", searchStaff: "搜尋姓名・部門・護照…", searchFlight: "搜尋姓名・航空公司…", searchHotel: "搜尋姓名・飯店…", searchHotelList: "搜尋飯店名・地址…",
-    allDept: "全部門", role_owner: "擁有者", role_admin: "管理員", role_editor: "編輯", role_viewer: "唯讀", me: "本人",
+    allDept: "全部門", deptUnset: "未填部門", role_owner: "擁有者", role_admin: "管理員", role_editor: "編輯", role_viewer: "唯讀", me: "本人",
     noProject: "尚無專案", noProjectHint: "建立新專案，或等待管理員邀請", firstProject: "建立第一個專案",
     deleteConfirm: "確定刪除？", deleteProjConfirm: "確定刪除此專案？所有相關資料也會一併刪除。",
     bulkDeleteConfirm: "確定刪除選取的 {n} 人？此操作無法復原。",
@@ -312,7 +312,7 @@ const T = {
     importanceSurcharge: "重要度加算", holidaySurcharge: "节日加算", finalPrice: "最终房价",
     hotelName: "饭店名称", hotelAddr: "地址", hotelTel: "电话", targetHotel: "对象饭店", customRoomType: "自定义房型", breakdownTitle: "每日房价明细",
     noData: "无数据", searchStaff: "搜索姓名・部门・护照…", searchFlight: "搜索姓名・航空公司…", searchHotel: "搜索姓名・饭店…", searchHotelList: "搜索饭店名・地址…",
-    allDept: "全部门", role_owner: "所有者", role_admin: "管理员", role_editor: "编辑", role_viewer: "只读", me: "本人",
+    allDept: "全部门", deptUnset: "未填部门", role_owner: "所有者", role_admin: "管理员", role_editor: "编辑", role_viewer: "只读", me: "本人",
     noProject: "暂无项目", noProjectHint: "创建新项目，或等待管理员邀请", firstProject: "创建第一个项目",
     deleteConfirm: "确定删除？", deleteProjConfirm: "确定删除此项目？所有相关数据也会一并删除。",
     bulkDeleteConfirm: "确定删除选取的 {n} 人？此操作无法复原。",
@@ -391,7 +391,7 @@ const T = {
     importanceSurcharge: "Priority Sur.", holidaySurcharge: "Holiday Sur.", finalPrice: "Final",
     hotelName: "Hotel Name", hotelAddr: "Address", hotelTel: "Phone", targetHotel: "Hotel", customRoomType: "Custom Type", breakdownTitle: "Daily Breakdown",
     noData: "No data", searchStaff: "Search name, dept…", searchFlight: "Search name, airline…", searchHotel: "Search name, hotel…", searchHotelList: "Search hotels…",
-    allDept: "All Depts", role_owner: "Owner", role_admin: "Admin", role_editor: "Editor", role_viewer: "Viewer", me: "You",
+    allDept: "All Depts", deptUnset: "No department", role_owner: "Owner", role_admin: "Admin", role_editor: "Editor", role_viewer: "Viewer", me: "You",
     noProject: "No Projects", noProjectHint: "Create a project or wait for an invitation", firstProject: "Create First Project",
     deleteConfirm: "Confirm delete?", deleteProjConfirm: "Delete this project and all related data?",
     bulkDeleteConfirm: "Delete {n} selected staff? This cannot be undone.",
@@ -468,7 +468,7 @@ const T = {
     importanceSurcharge: "중요도", holidaySurcharge: "특별일", finalPrice: "최종",
     hotelName: "호텔명", hotelAddr: "주소", hotelTel: "전화", targetHotel: "호텔", customRoomType: "사용자 정의", breakdownTitle: "일별 내역",
     noData: "데이터 없음", searchStaff: "검색…", searchFlight: "검색…", searchHotel: "검색…", searchHotelList: "호텔 검색…",
-    allDept: "전체", role_owner: "소유자", role_admin: "관리자", role_editor: "편집", role_viewer: "열람", me: "본인",
+    allDept: "전체", deptUnset: "부서 미입력", role_owner: "소유자", role_admin: "관리자", role_editor: "편집", role_viewer: "열람", me: "본인",
     noProject: "프로젝트 없음", noProjectHint: "새 프로젝트를 만들거나 초대를 기다리세요", firstProject: "첫 프로젝트",
     deleteConfirm: "삭제하시겠습니까?", deleteProjConfirm: "프로젝트와 모든 데이터를 삭제하시겠습니까?",
     bulkDeleteConfirm: "선택한 {n}명을 삭제하시겠습니까?",
@@ -544,7 +544,7 @@ const T = {
     importanceSurcharge: "重要度", holidaySurcharge: "祝日", finalPrice: "最終",
     hotelName: "ホテル名", hotelAddr: "住所", hotelTel: "電話", targetHotel: "対象", customRoomType: "カスタム", breakdownTitle: "日別",
     noData: "なし", searchStaff: "検索…", searchFlight: "検索…", searchHotel: "検索…", searchHotelList: "検索…",
-    allDept: "全部署", role_owner: "オーナー", role_admin: "管理者", role_editor: "編集", role_viewer: "閲覧", me: "自分",
+    allDept: "全部署", deptUnset: "部署未入力", role_owner: "オーナー", role_admin: "管理者", role_editor: "編集", role_viewer: "閲覧", me: "自分",
     noProject: "なし", noProjectHint: "作成または招待待ち", firstProject: "最初のプロジェクト",
     deleteConfirm: "削除しますか？", deleteProjConfirm: "プロジェクトと全データを削除しますか？",
     bulkDeleteConfirm: "選択した {n} 名を削除しますか？",
@@ -591,6 +591,22 @@ const T = {
 
 const starLabel = (s) => (s === 3 ? "★★★" : s === 2 ? "★★" : s === 1 ? "★" : "");
 const IMPORTANCE = [3, 2, 1, 0];
+
+function groupByDeptLabel(items, getDept, lang, emptyLabel) {
+  const map = new Map();
+  items.forEach((item) => {
+    const raw = (getDept(item) || "").trim();
+    const key = raw || "\0";
+    if (!map.has(key)) map.set(key, { label: raw || emptyLabel, items: [] });
+    map.get(key).items.push(item);
+  });
+  const loc = lang === "ja" ? "ja" : lang?.startsWith("en") ? "en" : "zh-Hant";
+  return [...map.values()].sort((a, b) => {
+    if (a.label === emptyLabel) return 1;
+    if (b.label === emptyLabel) return -1;
+    return a.label.localeCompare(b.label, loc);
+  });
+}
 
 function TitleCell({ top, bottom }) {
   const line1 = (top || "").trim();
@@ -3323,7 +3339,16 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                         </td>
                                       </tr>
                                     )}
-                                    {unassigned.map(stayRow)}
+                                    {groupByDeptLabel(unassigned, (r) => r.person.dept, lang, t.deptUnset).map((g) => (
+                                      <React.Fragment key={g.label}>
+                                        <tr>
+                                          <td colSpan={colSpan} style={{ padding: "5px 12px", fontSize: 10.5, fontWeight: 700, color: "var(--sumi)", background: "var(--washi)", borderTop: "1px solid var(--keisenL)", letterSpacing: "0.04em" }}>
+                                            {g.label} ({g.items.length})
+                                          </td>
+                                        </tr>
+                                        {[...g.items].sort((a, b) => (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0)).map(stayRow)}
+                                      </React.Fragment>
+                                    ))}
                                   </tbody>
                                 </table>
                               </div>
@@ -3335,15 +3360,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           <div className="pending-banner" style={{ marginTop: 8, padding: "14px 18px", border: "1.5px dashed var(--kincha)", borderRadius: 8 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)", marginBottom: 8 }}>{t.unassignedRooms}</div>
                             <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>{t.unassignedRoomsHint}</p>
-                            <div className="unassigned-tags">
-                              {personsNoStay.map((p) => (
-                                <div key={p.id} className="unassigned-tag">
-                                  <span className="tag-name" title={p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
-                                  {p.dept && <span className="tag-dept">{p.dept}</span>}
-                                  {canEdit && <button type="button" style={{ ...aBtn, fontSize: 10, padding: "2px 7px", flexShrink: 0 }} onClick={() => setStayModal({ pid: p.id, stayId: null, data: null })}>{t.addSegment}</button>}
+                            {groupByDeptLabel(personsNoStay, (p) => p.dept, lang, t.deptUnset).map((g) => (
+                              <div key={g.label} className="unassigned-dept-group" style={{ marginBottom: 14 }}>
+                                <div className="unassigned-dept-label" style={{ fontSize: 11, fontWeight: 700, color: "var(--sumi)", marginBottom: 8, letterSpacing: "0.04em", paddingBottom: 4, borderBottom: "1px solid var(--keisenL)" }}>
+                                  {g.label} ({g.items.length})
                                 </div>
-                              ))}
-                            </div>
+                                <div className="unassigned-tags">
+                                  {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => (
+                                    <div key={p.id} className="unassigned-tag">
+                                      <span className="tag-name" title={p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
+                                      {canEdit && <button type="button" style={{ ...aBtn, fontSize: 10, padding: "2px 7px", flexShrink: 0 }} onClick={() => setStayModal({ pid: p.id, stayId: null, data: null })}>{t.addSegment}</button>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
