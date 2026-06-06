@@ -3402,10 +3402,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                     )}
                                     {groupByDeptLabel(unassigned, (r) => r.person.dept, lang, t.deptUnset).map((g) => (
                                       <React.Fragment key={g.label}>
-                                        <tr>
-                                          <td colSpan={colSpan} style={{ padding: "5px 12px", fontSize: 10.5, fontWeight: 700, color: "var(--sumi)", background: "var(--washi)", borderTop: "1px solid var(--keisenL)", letterSpacing: "0.04em" }}>
-                                            {g.label} ({g.items.length})
-                                          </td>
+                                        <tr className="stay-dept-banner">
+                                          <td colSpan={colSpan}>{g.label} ({g.items.length})</td>
                                         </tr>
                                         {[...g.items].sort((a, b) => (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0)).map(stayRow)}
                                       </React.Fragment>
@@ -3718,6 +3716,12 @@ function GlobalStyles() {
       .room-no-input { width: 100%; max-width: 72px; margin: 0 auto; display: block; text-align: center; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
       .room-no-read { display: inline-block; max-width: 72px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
       .pending-banner { background: var(--pendingBg); border-color: var(--pendingBorder); }
+      .stay-table tr.stay-dept-banner td {
+        padding: 5px 12px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-align: left;
+        color: var(--kincha) !important; background: var(--kincha2) !important;
+        border-top: 1px solid var(--keisenM);
+      }
+      .stay-table tr.stay-dept-banner:hover td { background: var(--kincha2) !important; }
       .unassigned-tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
       .unassigned-tag { display: inline-flex; align-items: center; gap: 8px; flex: 0 1 auto; min-width: 0; max-width: 100%; background: var(--shiro); border: 1px solid var(--keisenL); border-radius: 6px; padding: 6px 12px; font-size: 11.5; }
       .unassigned-tag .tag-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
