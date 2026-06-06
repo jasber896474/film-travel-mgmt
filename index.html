@@ -1072,7 +1072,6 @@ function computeHotelStatsForDate(stays, roommates, dateStr, pricingRules, hotel
       byHotel[hid].chargedRooms.add(rk);
       byHotel[hid].cost += stayNightPriceFromRules(s, dateStr, pricingRules, hMap);
     }
-    }
   });
   const out = {};
   Object.entries(byHotel).forEach(([hid, v]) => {
@@ -2938,7 +2937,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       if (nameOk && hotelOk && roomOk && deptOk) {
         rows.push({ ...s, person: p || { dept: "", name_kanji: s.special_room_name, last_roman: "", first_roman: "" }, hotelName: hname, roomLabel: rt, isSpecialRoom: !!s.special_room_name });
       }
-    });
     });
     // Sort: assigned rooms first (hotel → room_number), unassigned last
     rows.sort((a, b) => {
