@@ -117,6 +117,43 @@ const diffDays = (a, b) => {
   const db = parseLocalDate(b);
   return Math.max(0, Math.round((db - da) / 86400000));
 };
+
+const normalizeStayDate = (val) => {
+  if (!val) return "";
+  const s = String(val).slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
+};
+
+function stayFormInit(raw) {
+  if (!raw) return null;
+  return {
+    hotel_id: String(raw.hotel_id ?? ""),
+    room_type: raw.room_type || "Single",
+    room_custom: raw.room_custom || "",
+    check_in: normalizeStayDate(raw.check_in),
+    check_out: normalizeStayDate(raw.check_out),
+    base_price: raw.base_price ?? "",
+    stay_label: raw.stay_label || "",
+    room_number: raw.room_number || "",
+  };
+}
+
+function buildStayPayload(f, personId, projectId) {
+  return {
+    hotel_id: +f.hotel_id || null,
+    room_type: f.room_type || "Single",
+    room_custom: (f.room_custom || "").trim() || null,
+    check_in: normalizeStayDate(f.check_in) || null,
+    check_out: normalizeStayDate(f.check_out) || null,
+    base_price: f.base_price === "" || f.base_price === null ? null : +f.base_price,
+    nights: f.nights || 0,
+    total_amount: f.total_amount || 0,
+    stay_label: (f.stay_label || "").trim() || null,
+    room_number: (f.room_number || "").trim() || null,
+    person_id: personId,
+    project_id: projectId,
+  };
+}
 const todayStr = () => localDateStr();
 const todayDT = () => localDateTimeStr();
 
@@ -1482,8 +1519,8 @@ function FlightForm({ init, onSave, onClose, t }) {
 }
 
 function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, roommateNames }) {
-  const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "" };
-  const [f, setF] = useState(init ? { ...blank, ...init, hotel_id: String(init.hotel_id || "") } : blank);
+  const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "", room_number: "" };
+  const [f, setF] = useState(() => (init ? { ...blank, ...stayFormInit(init) } : blank));
   const [syncRoommates, setSyncRoommates] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const nights = diffDays(f.check_in, f.check_out);
@@ -1500,7 +1537,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
     }
     return { totalAmount: total, breakdown: bd };
   }, [f, nights, pricingRules]);
-  const canSave = !!f.hotel_id && !!f.check_in && !!f.check_out;
+  const canSave = !!f.hotel_id && !!f.check_in && !!f.check_out && diffDays(f.check_in, f.check_out) > 0;
   const dispTotal = convertMoney(totalAmount, project);
   return (
     <div>
@@ -2703,9 +2740,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
   const saveStay = async (f) => {
     if (!f.hotel_id || !f.check_in || !f.check_out) { showToast(t.stayRequired); return; }
-    if (f.check_out <= f.check_in) { showToast(t.checkoutAfterCheckin); return; }
-    const { sync_roommates: syncRoommates, ...rest } = f;
-    const data = { ...rest, person_id: stayModal.pid, project_id: pid, base_price: f.base_price === "" || f.base_price === null ? null : +f.base_price, nights: f.nights || 0, total_amount: f.total_amount || 0 };
+    if (diffDays(f.check_in, f.check_out) <= 0) { showToast(t.checkoutAfterCheckin); return; }
+    const { sync_roommates: syncRoommates } = f;
+    const data = buildStayPayload(f, stayModal.pid, pid);
     const myRoommates = syncRoommates ? roommates.filter((r) => r.person_id === stayModal.pid) : [];
     await finishSaveStay(data, myRoommates.length ? myRoommates : null);
   };
@@ -3285,7 +3322,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           </td>
                           <td className="col-actions" style={tdS({ maxWidth: "none" })}>
                             <div className="tbl-actions">
-                              {canEdit && <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: row })}>{t.edit}</button>}
+                              {canEdit && <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: stayFormInit(row) })}>{t.edit}</button>}
                               {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>{t.delete}</button>}
                             </div>
                           </td>
