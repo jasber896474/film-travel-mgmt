@@ -160,7 +160,6 @@ function stayFormInit(raw) {
     stay_label: raw.stay_label || "",
     room_number: raw.room_number || "",
     special_room_name: raw.special_room_name || "",
-    location_tag: raw.location_tag || "",
   };
 }
 
@@ -178,7 +177,6 @@ function buildStayPayload(f, personId, projectId) {
     stay_label: (f.stay_label || "").trim() || null,
     room_number: (f.room_number || "").trim() || null,
     special_room_name: (f.special_room_name || "").trim() || null,
-    location_tag: (f.location_tag || "").trim() || null,
     person_id: isSpecial ? null : (personId || null),
     project_id: projectId,
   };
@@ -302,7 +300,11 @@ const T = {
     hideFromStaysHint: "開啟後，此人不顯示於住宿一覽與住宿篩選名單",
     hideFromVehiclesHint: "開啟後，此人不顯示於派車配置與每日配車單",
     locationTag: "拍攝地點", locationTagPh: "例：花蓮 Phase 1、高雄 Phase 2",
-    allLocations: "全部地點",
+    allLocations: "全部地點", allHotels: "全部飯店", filterByHotel: "依飯店篩選",
+    stayGuestCount: "人", stayRoomCount: "間",
+    shootPhases: "拍攝區域", addShootPhase: "新增區域", shootPhaseNamePh: "例：花蓮、高雄",
+    allPhases: "全部", assignShootPhase: "所屬拍攝區域", shootPhaseUnset: "未指定區域",
+    maxPhasesHint: "最多 4 個區域", manageShootPhases: "管理拍攝區域",
     dailyDispatch: "每日配車單", dispatchDate: "配車日期", copyPrevDay: "複製前一天",
     noDispatchData: "此日尚無配車記錄，可手動新增或複製前一天的配車配置",
     dispatchCopied: "已複製前一天配車配置", dispatchNoYesterday: "找不到前一天的配車記錄",
@@ -403,7 +405,11 @@ const T = {
     hideFromStaysHint: "开启后，此人不显示于住宿一览与住宿筛选名单",
     hideFromVehiclesHint: "开启后，此人不显示于派车配置与每日配车单",
     locationTag: "拍摄地点", locationTagPh: "例：花莲 Phase 1、高雄 Phase 2",
-    allLocations: "全部地点",
+    allLocations: "全部地点", allHotels: "全部饭店", filterByHotel: "按饭店筛选",
+    stayGuestCount: "人", stayRoomCount: "间",
+    shootPhases: "拍摄区域", addShootPhase: "新增区域", shootPhaseNamePh: "例：花莲、高雄",
+    allPhases: "全部", assignShootPhase: "所属拍摄区域", shootPhaseUnset: "未指定区域",
+    maxPhasesHint: "最多 4 个区域", manageShootPhases: "管理拍摄区域",
     dailyDispatch: "每日配车单", dispatchDate: "配车日期", copyPrevDay: "复制前一天",
     noDispatchData: "此日暂无配车记录，可手动新增或复制前一天的配车配置",
     dispatchCopied: "已复制前一天配车配置", dispatchNoYesterday: "找不到前一天的配车记录",
@@ -503,7 +509,11 @@ const T = {
     hideFromStaysHint: "When on, this person won't appear in the accommodation list",
     hideFromVehiclesHint: "When on, this person won't appear in vehicle assignments",
     locationTag: "Location", locationTagPh: "e.g. Hualien Phase 1, Kaohsiung Phase 2",
-    allLocations: "All Locations",
+    allLocations: "All Locations", allHotels: "All Hotels", filterByHotel: "Filter by hotel",
+    stayGuestCount: "pax", stayRoomCount: "rm",
+    shootPhases: "Shooting Phase", addShootPhase: "Add Phase", shootPhaseNamePh: "e.g. Hualien, Kaohsiung",
+    allPhases: "All", assignShootPhase: "Shooting Phase", shootPhaseUnset: "Unassigned",
+    maxPhasesHint: "Max 4 phases", manageShootPhases: "Manage Phases",
     dailyDispatch: "Daily Dispatch", dispatchDate: "Dispatch Date", copyPrevDay: "Copy Previous Day",
     noDispatchData: "No dispatch for this day. Add manually or copy previous day.",
     dispatchCopied: "Copied previous day dispatch", dispatchNoYesterday: "No previous day dispatch found",
@@ -601,7 +611,11 @@ const T = {
     hideFromStaysHint: "켜면 숙박 목록에서 표시되지 않습니다",
     hideFromVehiclesHint: "켜면 차량 배정 목록에서 표시되지 않습니다",
     locationTag: "촬영 장소", locationTagPh: "예: 화련 Phase 1, 가오슝 Phase 2",
-    allLocations: "전체 장소",
+    allLocations: "전체 장소", allHotels: "전체 호텔", filterByHotel: "호텔별 필터",
+    stayGuestCount: "명", stayRoomCount: "실",
+    shootPhases: "촬영 구역", addShootPhase: "구역 추가", shootPhaseNamePh: "예: 화련, 가오슝",
+    allPhases: "전체", assignShootPhase: "촬영 구역", shootPhaseUnset: "미지정",
+    maxPhasesHint: "최대 4개 구역", manageShootPhases: "구역 관리",
     dailyDispatch: "일일 배차표", dispatchDate: "배차 날짜", copyPrevDay: "전날 복사",
     noDispatchData: "이날 배차 기록이 없습니다. 수동 추가 또는 전날 복사를 이용하세요.",
     dispatchCopied: "전날 배차 설정을 복사했습니다", dispatchNoYesterday: "전날 배차 기록을 찾을 수 없습니다",
@@ -698,7 +712,11 @@ const T = {
     hideFromStaysHint: "オンにすると宿泊一覧から非表示になります",
     hideFromVehiclesHint: "オンにすると配車リストから非表示になります",
     locationTag: "撮影地", locationTagPh: "例：花蓮 Phase 1、高雄 Phase 2",
-    allLocations: "全ての撮影地",
+    allLocations: "全ての撮影地", allHotels: "全ホテル", filterByHotel: "ホテルで絞込",
+    stayGuestCount: "名", stayRoomCount: "室",
+    shootPhases: "撮影エリア", addShootPhase: "エリア追加", shootPhaseNamePh: "例：花蓮、高雄",
+    allPhases: "すべて", assignShootPhase: "撮影エリア", shootPhaseUnset: "未指定",
+    maxPhasesHint: "最大4エリア", manageShootPhases: "エリア管理",
     dailyDispatch: "日別配車表", dispatchDate: "配車日", copyPrevDay: "前日をコピー",
     noDispatchData: "この日の配車記録がありません。手動追加または前日コピーをご利用ください。",
     dispatchCopied: "前日の配車設定をコピーしました", dispatchNoYesterday: "前日の配車記録が見つかりません",
@@ -1253,6 +1271,29 @@ function computeHotelStats(stays, roommates) {
   return byHotel;
 }
 
+/** 從同一飯店分組的住宿列，算出整體入住區間、人數、間數 */
+function computeHotelGroupMeta(rows) {
+  let minIn = null;
+  let maxOut = null;
+  const guestIds = new Set();
+  const roomKeys = new Set();
+  rows.forEach((r) => {
+    if (r.check_in && (!minIn || r.check_in < minIn)) minIn = r.check_in;
+    if (r.check_out && (!maxOut || r.check_out > maxOut)) maxOut = r.check_out;
+    if (r.person_id && !r.isSpecialRoom && !r.special_room_name) guestIds.add(r.person_id);
+    const rn = (r.room_number || "").trim();
+    if (rn) roomKeys.add(`${r.hotel_id}|${rn}`);
+    else if (r.special_room_name) roomKeys.add(`special:${r.id}`);
+    else if (r.person_id) roomKeys.add(`solo:${r.person_id}`);
+  });
+  return { minIn, maxOut, guestCount: guestIds.size, roomCount: roomKeys.size };
+}
+
+function getShootPhases(project) {
+  const raw = project?.shoot_phases;
+  return Array.isArray(raw) ? raw.slice(0, 4) : [];
+}
+
 /** 累計統計：客室泊數 = Σ(各日客室數), 人次 = Σ(各日入住人數), 費用 = Σ(各日費用) */
 function computeHotelStatsCumulative(stays, roommates, pricingRules, hotels) {
   const allDates = collectStayNightDates(stays);
@@ -1692,7 +1733,7 @@ function FlightForm({ init, onSave, onClose, t }) {
 }
 
 function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, roommateNames, isSpecialRoom }) {
-  const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "", room_number: "", special_room_name: "", location_tag: "" };
+  const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "", room_number: "", special_room_name: "" };
   const [f, setF] = useState(() => (init ? { ...blank, ...stayFormInit(init) } : blank));
   const [syncRoommates, setSyncRoommates] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -1760,11 +1801,6 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
         <Field label={t.nights}><input style={{ ...inpStyle, background: "var(--washi)", textAlign: "center" }} value={nights || ""} readOnly /></Field>
         <Field label={t.totalAmt}><input style={{ ...inpStyle, background: "var(--washi)", fontWeight: 700, color: "var(--asagi)" }} value={totalAmount ? formatMoney(dispTotal, project, lang) : "—"} readOnly /></Field>
         {!isSpecialRoom && <Field label={t.roomNo}><input style={inpStyle} value={f.room_number} onChange={set("room_number")} placeholder={t.roomNoPending} /></Field>}
-        <div style={{ gridColumn: "1 / -1" }}>
-          <Field label={t.locationTag}>
-            <input style={inpStyle} value={f.location_tag || ""} onChange={set("location_tag")} placeholder={t.locationTagPh} />
-          </Field>
-        </div>
       </div>
       {breakdown.length > 0 && (
         <div style={{ marginTop: 10, background: "var(--washi)", padding: 10 }}>
@@ -2267,9 +2303,35 @@ function DailyDispatchAddRow({ vehicleId, persons, t, onAdd }) {
   );
 }
 
-function HotelMasterForm({ init, onSave, onClose, t }) {
-  const blank = { name: "", address: "", tel: "" };
-  const [f, setF] = useState(init ? { ...blank, ...init } : blank);
+function ShootPhaseBar({ phases, active, onSelect, onAdd, onDelete, t, canEdit }) {
+  const [name, setName] = useState("");
+  if (!phases.length && !canEdit) return null;
+  return (
+    <div style={{ marginBottom: 14, padding: "12px 14px", background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>{t.manageShootPhases}</div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <button type="button" onClick={() => onSelect("")} style={{ padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 20, fontWeight: !active ? 700 : 400, color: !active ? "var(--shiro)" : "var(--sumi)", background: !active ? "var(--moegi)" : "var(--washi)" }}>{t.allPhases}</button>
+        {phases.map((p) => (
+          <span key={p.id} style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+            <button type="button" onClick={() => onSelect(p.id)} style={{ padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 20, fontWeight: active === p.id ? 700 : 400, color: active === p.id ? "var(--shiro)" : "var(--sumi)", background: active === p.id ? "var(--moegi)" : "var(--washi)" }}>{p.name}</button>
+            {canEdit && <button type="button" onClick={() => onDelete(p.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--usunezumi)", fontSize: 14, lineHeight: 1, padding: "0 4px" }} title={t.delete}>×</button>}
+          </span>
+        ))}
+      </div>
+      {canEdit && phases.length < 4 && (
+        <div style={{ display: "flex", gap: 6, marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <input style={{ ...inpStyle, flex: "1 1 140px", minWidth: 0 }} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.shootPhaseNamePh} onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) { onAdd(name.trim()); setName(""); } }} />
+          <button type="button" style={pBtn(!name.trim())} disabled={!name.trim()} onClick={() => { onAdd(name.trim()); setName(""); }}>+ {t.addShootPhase}</button>
+          <span style={{ fontSize: 10, color: "var(--usunezumi)" }}>{t.maxPhasesHint}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HotelMasterForm({ init, onSave, onClose, t, shootPhases }) {
+  const blank = { name: "", address: "", tel: "", shoot_phase_id: "" };
+  const [f, setF] = useState(init ? { ...blank, ...init, shoot_phase_id: init.shoot_phase_id || "" } : blank);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   const initRates = init?.room_type_rates || {};
@@ -2292,6 +2354,14 @@ function HotelMasterForm({ init, onSave, onClose, t }) {
       <Field label={t.hotelName}><input style={inpStyle} value={f.name} onChange={set("name")} /></Field>
       <Field label={t.hotelAddr}><input style={inpStyle} value={f.address} onChange={set("address")} /></Field>
       <Field label={t.hotelTel}><input style={inpStyle} value={f.tel} onChange={set("tel")} /></Field>
+      {shootPhases?.length > 0 && (
+        <Field label={t.assignShootPhase}>
+          <select style={inpStyle} value={f.shoot_phase_id || ""} onChange={(e) => setF((p) => ({ ...p, shoot_phase_id: e.target.value }))}>
+            <option value="">{t.shootPhaseUnset}</option>
+            {shootPhases.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </Field>
+      )}
 
       <div style={{ marginTop: 18, borderTop: "1px solid var(--keisenL)", paddingTop: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -2322,7 +2392,7 @@ function HotelMasterForm({ init, onSave, onClose, t }) {
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
-        <button type="button" onClick={() => onSave({ ...f, room_type_rates: buildRates() })} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
+        <button type="button" onClick={() => onSave({ ...f, room_type_rates: buildRates(), shoot_phase_id: f.shoot_phase_id || null })} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
       </div>
     </div>
   );
@@ -3062,7 +3132,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [deptC, setDeptC] = useState("");
   const [searchCHotel, setSearchCHotel] = useState("");
   const [searchCRoom, setSearchCRoom] = useState("");
-  const [filterLocationTag, setFilterLocationTag] = useState("");
+  const [activeStayPhase, setActiveStayPhase] = useState("");
   const [statsDate, setStatsDate] = useState("");
   const [statsHotelId, setStatsHotelId] = useState("");
   const [searchD, setSearchD] = useState("");
@@ -3164,6 +3234,35 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     return "none";
   }, [flights, stays]);
 
+  const shootPhases = useMemo(() => getShootPhases(project), [project]);
+  const hotelPhaseMap = useMemo(() => Object.fromEntries(hotels.map((h) => [+h.id, h.shoot_phase_id || ""])), [hotels]);
+
+  const saveShootPhases = async (nextPhases) => {
+    try {
+      const [updated] = await api.update("projects", pid, { shoot_phases: nextPhases });
+      onProjectUpdate(updated);
+      showToast(t.saved);
+    } catch (e) { showToast(e.message); }
+  };
+
+  const addShootPhase = (name) => {
+    if (!name || shootPhases.length >= 4) return;
+    saveShootPhases([...shootPhases, { id: `ph${Date.now()}`, name }]);
+  };
+
+  const deleteShootPhase = async (phaseId) => {
+    if (!window.confirm(t.deleteConfirm)) return;
+    await saveShootPhases(shootPhases.filter((p) => p.id !== phaseId));
+    const affected = hotels.filter((h) => h.shoot_phase_id === phaseId);
+    for (const h of affected) {
+      try {
+        const [r] = await api.update("hotels", h.id, { shoot_phase_id: null });
+        setHotels((list) => list.map((x) => x.id === h.id ? r : x));
+      } catch (e) { showToast(e.message); }
+    }
+    if (activeStayPhase === phaseId) setActiveStayPhase("");
+  };
+
   const allDepts = useMemo(() => [...new Set(persons.map((p) => p.dept).filter(Boolean))], [persons]);
   // 員工編號：純依列表順序（拖移後即更新）
   const personIndex = useMemo(() => Object.fromEntries(persons.map((x, i) => [x.id, i + 1])), [persons]);
@@ -3173,6 +3272,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
     const map = {};
     stays.forEach((s) => {
+      // 同房僅一人付費：room price lock 將非付費者 total_amount 設為 0
+      if (Number(s.total_amount) === 0) { map[s.id] = 0; return; }
       const nights = diffDays(s.check_in, s.check_out);
       if (nights <= 0 || !s.hotel_id || !s.check_in) { map[s.id] = s.total_amount || 0; return; }
       let total = 0;
@@ -3274,8 +3375,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       const hotelOk = !searchCHotel || hname.toLowerCase().includes(searchCHotel.toLowerCase());
       const roomOk = !searchCRoom || (rt || "").toLowerCase().includes(searchCRoom.toLowerCase());
       const deptOk = !deptC || (p?.dept === deptC);
-      const locOk = !filterLocationTag || (s.location_tag || "") === filterLocationTag;
-      if (nameOk && hotelOk && roomOk && deptOk && locOk) {
+      const phaseOk = !activeStayPhase || hotelPhaseMap[+s.hotel_id] === activeStayPhase;
+      if (nameOk && hotelOk && roomOk && deptOk && phaseOk) {
         rows.push({ ...s, person: p || { dept: "", name_kanji: s.special_room_name, last_roman: "", first_roman: "" }, hotelName: hname, roomLabel: rt, isSpecialRoom: !!s.special_room_name });
       }
     });
@@ -3290,7 +3391,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       return (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0);
     });
     return rows;
-  }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, filterLocationTag, personIndex, hotels]);
+  }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, activeStayPhase, hotelPhaseMap, personIndex, hotels]);
 
   // Room group colours (cycle through palette for each unique hotel+room_number key)
   const ROOM_COLORS = ["#2b5a4c", "#6b4c9a", "#8b4513", "#1a5276", "#7b241c", "#117a65", "#6e2f1a", "#1b4f72"];
@@ -3333,6 +3434,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         await api.update("stays", id, { total_amount: 0 });
         setStays((prev) => prev.map((s) => s.id === id ? { ...s, total_amount: 0 } : s));
       }
+      showToast(t.saved);
     } catch (e) { showToast(e.message); }
     setRoomPriceLockModal(null);
   };
@@ -3990,6 +4092,15 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
               {accSub === "stays" && (
                 <>
+                  <ShootPhaseBar
+                    phases={shootPhases}
+                    active={activeStayPhase}
+                    onSelect={setActiveStayPhase}
+                    onAdd={addShootPhase}
+                    onDelete={deleteShootPhase}
+                    t={t}
+                    canEdit={canEdit}
+                  />
                   <div style={{
                     display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
                     gap: 8, marginBottom: 14, alignItems: "end",
@@ -3999,17 +4110,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <DeptFilter depts={allDepts} value={deptC} onChange={setDeptC} allLabel={t.allDept} />
                     <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchHotelName} value={searchCHotel} onChange={(e) => setSearchCHotel(e.target.value)} />
                     <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchRoomType} value={searchCRoom} onChange={(e) => setSearchCRoom(e.target.value)} />
-                    {/* location_tag filter */}
-                    {(() => {
-                      const tags = [...new Set(stays.map((s) => s.location_tag).filter(Boolean))].sort();
-                      if (!tags.length) return null;
-                      return (
-                        <select style={{ ...inpStyle, width: "100%" }} value={filterLocationTag} onChange={(e) => setFilterLocationTag(e.target.value)}>
-                          <option value="">{t.allLocations}</option>
-                          {tags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
-                        </select>
-                      );
-                    })()}
                     {canEdit && (
                       <select style={{ ...inpStyle, width: "100%" }} className="wa-input" value={addStayPerson} onChange={(e) => setAddStayPerson(e.target.value)}>
                         <option value="">{t.addSegment}</option>
@@ -4064,7 +4164,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       }
                       groupMap.get(hid).rows.push(row);
                     });
-                    hotelGroups.sort((a, b) => a.hotelName.localeCompare(b.hotelName, lang === "ja" ? "ja" : "zh-Hant"));
+                    hotelGroups.sort((a, b) => {
+                      const ma = computeHotelGroupMeta(a.rows);
+                      const mb = computeHotelGroupMeta(b.rows);
+                      if (ma.minIn && mb.minIn && ma.minIn !== mb.minIn) return ma.minIn.localeCompare(mb.minIn);
+                      return a.hotelName.localeCompare(b.hotelName, lang === "ja" ? "ja" : "zh-Hant");
+                    });
 
                     const personsNoStay = persons.filter((p) => !stays.some((s) => s.person_id === p.id));
                     const stayHeaderDefs = [
@@ -4177,8 +4282,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           const rows = sortStayRows(group.rows);
                           const assigned = rows.filter((r) => r.room_number);
                           const unassigned = rows.filter((r) => !r.room_number);
-                          const st = hotelStatsMap[group.hotelId] || {};
                           const cs = hotelCumulativeStats[group.hotelId] || hotelCumulativeStats[+group.hotelId] || {};
+                          const meta = computeHotelGroupMeta(rows);
                           const displayCost = cs.cost != null ? cs.cost : rows.reduce((s, r) => s + (stayDisplayTotals[r.id] || 0), 0);
                           return (
                             <section key={String(group.hotelId)} style={{ marginBottom: 32 }}>
@@ -4186,12 +4291,20 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                 display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8,
                                 marginBottom: 12, paddingBottom: 10, borderBottom: `2px solid ${"var(--moegi)"}`,
                               }}>
-                                <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--sumi)", margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
-                                  {group.hotelName}
-                                </h3>
+                                <div>
+                                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--sumi)", margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
+                                    {group.hotelName}
+                                  </h3>
+                                  {meta.minIn && meta.maxOut && (
+                                    <div style={{ fontSize: 12, color: "var(--moegi)", marginTop: 4, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                                      {fmtDate(meta.minIn, lang)} ～ {fmtDate(meta.maxOut, lang)}
+                                    </div>
+                                  )}
+                                </div>
                                 <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+                                  {meta.guestCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.guestCount}</strong> {t.stayGuestCount}</span>}
+                                  {meta.roomCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.roomCount}</strong> {t.stayRoomCount}</span>}
                                   {cs.roomNights > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.roomNights}: <strong style={{ color: "var(--sumi)" }}>{cs.roomNights}</strong></span>}
-                                  {cs.guestNights > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.guestNights}: <strong style={{ color: "var(--sumi)" }}>{cs.guestNights}</strong></span>}
                                   <span style={{ fontSize: 11, fontWeight: 600, color: "var(--asagi)" }}>{formatMoney(convertMoney(displayCost, project), project, lang)}</span>
                                 </div>
                               </div>
@@ -4284,6 +4397,11 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                           <div>
                             <strong style={{ fontSize: 14, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif" }}>{h.name}</strong>
+                            {h.shoot_phase_id && shootPhases.find((p) => p.id === h.shoot_phase_id) && (
+                              <span style={{ marginLeft: 8, fontSize: 10, padding: "2px 8px", borderRadius: 10, background: "var(--moegi3)", color: "var(--moegi)", fontWeight: 700 }}>
+                                {shootPhases.find((p) => p.id === h.shoot_phase_id)?.name}
+                              </span>
+                            )}
                             <div style={{ fontSize: 11.5, color: "var(--nezumi)", marginTop: 3 }}>{h.address}{h.tel ? ` · ${h.tel}` : ""}</div>
                           </div>
                           {canEdit && <>
@@ -4622,7 +4740,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       {flightModal && <Modal title={t.flightMgmt} onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = { ...f, person_id: flightModal.pid, project_id: pid }; if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
       {stayModal && <Modal title={t.hotelMgmt} onClose={() => setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={() => setStayModal(null)} t={t} project={project} lang={lang} roommateNames={stayModal.pid ? getRoommateNames(stayModal.pid) : null} isSpecialRoom={stayModal.special || stayModal.pid === null} /></Modal>}
-      {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
+      {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
       {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} /></Modal>}
       {roommateModal && <RoommateModal pid={roommateModal.pid} persons={persons} roommates={roommates} stays={flatStays} onSave={async (rpid, partnerIds) => { try { const group = [...new Set([rpid, ...partnerIds])]; for (const gid of group) await api.deleteWhere("roommates", "person_id", gid); if (partnerIds.length) for (const gid of group) { const partners = group.filter((x) => x !== gid); if (partners.length) await api.insert("roommates", partners.map((x) => ({ person_id: gid, partner_id: x, project_id: pid }))); } await loadAll(); showToast(t.saved); setRoommateModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setRoommateModal(null)} t={t} />}
