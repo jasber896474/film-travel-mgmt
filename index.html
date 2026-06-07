@@ -329,7 +329,9 @@ const formatMoney = (amount, project, lang) => {
   const cur = project?.display_currency || project?.base_currency || "TWD";
   const sym = CURRENCY_SYMBOL[cur] || cur + " ";
   const loc = lang?.startsWith("en") ? "en-US" : "zh-TW";
-  return `${sym}${n.toLocaleString(loc)}`;
+  const integerCur = cur === "TWD" || cur === "JPY" || cur === "KRW";
+  const val = integerCur ? Math.round(n) : n;
+  return `${sym}${val.toLocaleString(loc, integerCur ? { maximumFractionDigits: 0 } : undefined)}`;
 };
 const convertMoney = (amount, project) => {
   const n = +amount || 0;
@@ -3344,6 +3346,33 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
 }
 
 // ─── 請款對帳面板 ─────────────────────────────────────────────
+/** 依連續相同房價切分請款列（對齊飯店帳單，避免均價產生小數） */
+function buildInvoicePriceSegmentRows({ checkIn, totalNights, roomLabel, roomCount, subLabel, nightUnitPrice }) {
+  const rows = [];
+  let i = 0;
+  while (i < totalNights) {
+    const price = nightUnitPrice(i);
+    if (price == null) { i += 1; continue; }
+    let j = i + 1;
+    while (j < totalNights && nightUnitPrice(j) === price) j += 1;
+    const segNights = j - i;
+    const startD = parseLocalDate(checkIn); startD.setDate(startD.getDate() + i);
+    const endD = parseLocalDate(checkIn); endD.setDate(endD.getDate() + j);
+    rows.push({
+      check_in: localDateStr(startD),
+      check_out: localDateStr(endD),
+      roomLabel,
+      subLabel,
+      roomCount,
+      nights: segNights,
+      unitPrice: price,
+      batchTotal: price * roomCount * segNights,
+    });
+    i = j;
+  }
+  return rows;
+}
+
 /**
  * 對齊飯店請款習慣：同飯店內，相同入住日+退房日+房型合併為一批
  * 公式：單價 × 間數 × 晚數（間數依房號或人數；每晚依 pricing_rules 計價）
@@ -3381,31 +3410,17 @@ function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
       const roomCount = countInvoiceRooms(batchStays);
       const rep = batchStays[0];
 
-      let batchTotal = 0;
-      const nightPrices = [];
-      for (let i = 0; i < nights; i++) {
-        const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
-        const ds = localDateStr(d);
-        const nightPrice = stayNightPriceFromRules(rep, ds, pricingRules, hMap);
-        nightPrices.push(nightPrice);
-        batchTotal += nightPrice * roomCount;
-      }
-
-      const allSame = nightPrices.length > 0 && nightPrices.every((p) => p === nightPrices[0]);
-      const unitPrice = allSame
-        ? (nightPrices[0] || 0)
-        : (roomCount * nights > 0 ? batchTotal / (roomCount * nights) : 0);
-
-      batches.push({
-        check_in,
-        check_out,
+      buildInvoicePriceSegmentRows({
+        checkIn: check_in,
+        totalNights: nights,
         roomLabel,
         roomCount,
-        nights,
-        unitPrice,
-        unitPriceVarying: !allSame,
-        batchTotal,
-      });
+        subLabel: null,
+        nightUnitPrice: (i) => {
+          const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
+          return stayNightPriceFromRules(rep, localDateStr(d), pricingRules, hMap);
+        },
+      }).forEach((row) => batches.push(row));
     });
 
     batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.roomLabel.localeCompare(b.roomLabel));
@@ -3453,37 +3468,21 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
       const subLabel = rep.special_room_name ? rep.special_room_name : rn;
       const feeMap = Object.fromEntries(unitStays.map((s) => [s.id, calcStayTotalFromRules(s, pricingRules, hotels)]));
 
-      let batchTotal = 0;
-      let billedNights = 0;
-      const nightPrices = [];
-      for (let i = 0; i < spanNights; i++) {
-        const d = parseLocalDate(minIn); d.setDate(d.getDate() + i);
-        const ds = localDateStr(d);
-        const occupants = unitStays.filter((s) => stayActiveOnDate(s, ds));
-        if (!occupants.length) continue;
-        const payer = occupants.length === 1 ? occupants[0] : pickSharedRoomPayer(occupants, feeMap);
-        const nightPrice = stayNightPriceFromRules(payer, ds, pricingRules, hMap);
-        batchTotal += nightPrice;
-        nightPrices.push(nightPrice);
-        billedNights += 1;
-      }
-
-      const allSame = nightPrices.length > 0 && nightPrices.every((p) => p === nightPrices[0]);
-      const unitPrice = allSame
-        ? (nightPrices[0] || 0)
-        : (billedNights > 0 ? batchTotal / billedNights : stayNightPriceFromRules(rep, minIn, pricingRules, hMap));
-
-      batches.push({
-        check_in: minIn,
-        check_out: maxOut,
+      buildInvoicePriceSegmentRows({
+        checkIn: minIn,
+        totalNights: spanNights,
         roomLabel,
-        subLabel,
         roomCount: 1,
-        nights: billedNights,
-        unitPrice,
-        unitPriceVarying: !allSame,
-        batchTotal,
-      });
+        subLabel,
+        nightUnitPrice: (i) => {
+          const d = parseLocalDate(minIn); d.setDate(d.getDate() + i);
+          const ds = localDateStr(d);
+          const occupants = unitStays.filter((s) => stayActiveOnDate(s, ds));
+          if (!occupants.length) return null;
+          const payer = occupants.length === 1 ? occupants[0] : pickSharedRoomPayer(occupants, feeMap);
+          return stayNightPriceFromRules(payer, ds, pricingRules, hMap);
+        },
+      }).forEach((row) => batches.push(row));
     });
 
     batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || (a.subLabel || "").localeCompare(b.subLabel || ""));
@@ -3653,7 +3652,6 @@ ${rows}
                     </td>
                     {/* 計價公式 */}
                     <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
-                      {b.unitPriceVarying && <div style={{ fontSize: 10, color: "var(--kincha)", marginBottom: 3, fontWeight: 600 }}>{t.invoiceAvgRate}</div>}
                       <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
                       <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
                       <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
