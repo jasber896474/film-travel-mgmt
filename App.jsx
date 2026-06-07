@@ -86,6 +86,7 @@ const api = {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${_token}` },
     }).then((r) => (r.ok ? r.json() : null)),
   get: (table, filter) => sb(`${table}?select=*${filter || ""}`),
+  rpc: (fn, params) => sb(`rpc/${fn}`, { method: "POST", body: JSON.stringify(params || {}) }),
   insert: (table, data) => sb(table, { method: "POST", body: JSON.stringify(data) }),
   update: (table, id, data) => sb(`${table}?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   delete: (table, id) => sb(`${table}?id=eq.${id}`, { method: "DELETE", prefer: "return=minimal" }),
@@ -304,7 +305,9 @@ const formatMoney = (amount, project, lang) => {
   const cur = project?.display_currency || project?.base_currency || "TWD";
   const sym = CURRENCY_SYMBOL[cur] || cur + " ";
   const loc = lang?.startsWith("en") ? "en-US" : "zh-TW";
-  return `${sym}${n.toLocaleString(loc)}`;
+  const integerCur = cur === "TWD" || cur === "JPY" || cur === "KRW";
+  const val = integerCur ? Math.round(n) : n;
+  return `${sym}${val.toLocaleString(loc, integerCur ? { maximumFractionDigits: 0 } : undefined)}`;
 };
 const convertMoney = (amount, project) => {
   const n = +amount || 0;
@@ -347,6 +350,7 @@ const T = {
     loginTitle: "請登入", loginEmail: "電子郵件", loginPw: "密碼", loginBtn: "登入", loginHint: "存取權限由管理員邀請授予",
     registerTitle: "新帳號申請", registerBtn: "申請登入", registerName: "姓名（選填）", registerMessage: "申請訊息（選填）", registerMessagePh: "所屬・職務等", registerPwConfirm: "確認密碼",
     verifyTitle: "驗證信已發送", verifyHint: "管理員審核通過後即可存取專案。", verifyContact: "若有急件請聯絡系統管理員。", toLoginBtn: "返回登入",
+    registerFailed: "申請送出失敗，請稍後再試或聯絡管理員。",
     sessionExpiredTitle: "登入已過期", sessionExpiredMsg: "請重新登入以繼續操作。", sessionExpiredBtn: "重新登入",
     projects: "專案列表", newProject: "新增專案", openProject: "開啟", projectName: "專案名稱", projectDesc: "說明（選填）",
     create: "建立", creating: "建立中…", cancel: "取消", save: "儲存", edit: "編輯", delete: "刪除", add: "新增",
@@ -3318,6 +3322,33 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
 }
 
 // ─── 請款對帳面板 ─────────────────────────────────────────────
+/** 依連續相同房價切分請款列（對齊飯店帳單，避免均價產生小數） */
+function buildInvoicePriceSegmentRows({ checkIn, totalNights, roomLabel, roomCount, subLabel, nightUnitPrice }) {
+  const rows = [];
+  let i = 0;
+  while (i < totalNights) {
+    const price = nightUnitPrice(i);
+    if (price == null) { i += 1; continue; }
+    let j = i + 1;
+    while (j < totalNights && nightUnitPrice(j) === price) j += 1;
+    const segNights = j - i;
+    const startD = parseLocalDate(checkIn); startD.setDate(startD.getDate() + i);
+    const endD = parseLocalDate(checkIn); endD.setDate(endD.getDate() + j);
+    rows.push({
+      check_in: localDateStr(startD),
+      check_out: localDateStr(endD),
+      roomLabel,
+      subLabel,
+      roomCount,
+      nights: segNights,
+      unitPrice: price,
+      batchTotal: price * roomCount * segNights,
+    });
+    i = j;
+  }
+  return rows;
+}
+
 /**
  * 對齊飯店請款習慣：同飯店內，相同入住日+退房日+房型合併為一批
  * 公式：單價 × 間數 × 晚數（間數依房號或人數；每晚依 pricing_rules 計價）
@@ -3355,31 +3386,17 @@ function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
       const roomCount = countInvoiceRooms(batchStays);
       const rep = batchStays[0];
 
-      let batchTotal = 0;
-      const nightPrices = [];
-      for (let i = 0; i < nights; i++) {
-        const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
-        const ds = localDateStr(d);
-        const nightPrice = stayNightPriceFromRules(rep, ds, pricingRules, hMap);
-        nightPrices.push(nightPrice);
-        batchTotal += nightPrice * roomCount;
-      }
-
-      const allSame = nightPrices.length > 0 && nightPrices.every((p) => p === nightPrices[0]);
-      const unitPrice = allSame
-        ? (nightPrices[0] || 0)
-        : (roomCount * nights > 0 ? batchTotal / (roomCount * nights) : 0);
-
-      batches.push({
-        check_in,
-        check_out,
+      buildInvoicePriceSegmentRows({
+        checkIn: check_in,
+        totalNights: nights,
         roomLabel,
         roomCount,
-        nights,
-        unitPrice,
-        unitPriceVarying: !allSame,
-        batchTotal,
-      });
+        subLabel: null,
+        nightUnitPrice: (i) => {
+          const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
+          return stayNightPriceFromRules(rep, localDateStr(d), pricingRules, hMap);
+        },
+      }).forEach((row) => batches.push(row));
     });
 
     batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.roomLabel.localeCompare(b.roomLabel));
@@ -3427,37 +3444,21 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
       const subLabel = rep.special_room_name ? rep.special_room_name : rn;
       const feeMap = Object.fromEntries(unitStays.map((s) => [s.id, calcStayTotalFromRules(s, pricingRules, hotels)]));
 
-      let batchTotal = 0;
-      let billedNights = 0;
-      const nightPrices = [];
-      for (let i = 0; i < spanNights; i++) {
-        const d = parseLocalDate(minIn); d.setDate(d.getDate() + i);
-        const ds = localDateStr(d);
-        const occupants = unitStays.filter((s) => stayActiveOnDate(s, ds));
-        if (!occupants.length) continue;
-        const payer = occupants.length === 1 ? occupants[0] : pickSharedRoomPayer(occupants, feeMap);
-        const nightPrice = stayNightPriceFromRules(payer, ds, pricingRules, hMap);
-        batchTotal += nightPrice;
-        nightPrices.push(nightPrice);
-        billedNights += 1;
-      }
-
-      const allSame = nightPrices.length > 0 && nightPrices.every((p) => p === nightPrices[0]);
-      const unitPrice = allSame
-        ? (nightPrices[0] || 0)
-        : (billedNights > 0 ? batchTotal / billedNights : stayNightPriceFromRules(rep, minIn, pricingRules, hMap));
-
-      batches.push({
-        check_in: minIn,
-        check_out: maxOut,
+      buildInvoicePriceSegmentRows({
+        checkIn: minIn,
+        totalNights: spanNights,
         roomLabel,
-        subLabel,
         roomCount: 1,
-        nights: billedNights,
-        unitPrice,
-        unitPriceVarying: !allSame,
-        batchTotal,
-      });
+        subLabel,
+        nightUnitPrice: (i) => {
+          const d = parseLocalDate(minIn); d.setDate(d.getDate() + i);
+          const ds = localDateStr(d);
+          const occupants = unitStays.filter((s) => stayActiveOnDate(s, ds));
+          if (!occupants.length) return null;
+          const payer = occupants.length === 1 ? occupants[0] : pickSharedRoomPayer(occupants, feeMap);
+          return stayNightPriceFromRules(payer, ds, pricingRules, hMap);
+        },
+      }).forEach((row) => batches.push(row));
     });
 
     batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || (a.subLabel || "").localeCompare(b.subLabel || ""));
@@ -3627,7 +3628,6 @@ ${rows}
                     </td>
                     {/* 計價公式 */}
                     <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
-                      {b.unitPriceVarying && <div style={{ fontSize: 10, color: "var(--kincha)", marginBottom: 3, fontWeight: 600 }}>{t.invoiceAvgRate}</div>}
                       <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
                       <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
                       <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
@@ -4232,17 +4232,25 @@ function LoginScreen({ onLogin }) {
     setLoading(true); setError("");
     try {
       const res = await api.signup(email.trim(), pw);
-      if (res.error || res.code >= 400) { setError(res.error?.message || res.message); return; }
+      if (res.error || (res.code && res.code >= 400)) { setError(res.error?.message || res.msg || res.message || t.registerFailed); return; }
       const userId = res.id || res.user?.id || null;
+      const hasSession = !!res.access_token;
+      const reqBody = {
+        email: email.trim(),
+        display_name: displayName.trim() || null,
+        message: message.trim() || null,
+        status: "pending",
+      };
+      if (hasSession && userId) reqBody.user_id = userId;
       const reqToken = res.access_token || SUPABASE_KEY;
       const reqRes = await fetch(`${SUPABASE_URL}/rest/v1/user_requests`, {
         method: "POST",
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${reqToken}`, "Content-Type": "application/json", Prefer: "return=minimal" },
-        body: JSON.stringify({ email: email.trim(), display_name: displayName.trim(), message: message.trim(), status: "pending", user_id: userId }),
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${reqToken}`, "Content-Type": "application/json", Prefer: "return=representation" },
+        body: JSON.stringify(reqBody),
       });
       if (!reqRes.ok) throw new Error(parseApiError(await reqRes.text(), reqRes.status));
       setMode("verify");
-    } catch (e) { setError(String(e.message)); } finally { setLoading(false); }
+    } catch (e) { setError(String(e.message) || t.registerFailed); } finally { setLoading(false); }
   };
 
   if (mode === "verify") return (
@@ -4357,7 +4365,12 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
 
   const loadRequests = async () => {
     if (!isSystemOwner) return;
-    try { setRequests(await api.get("user_requests", "&status=eq.pending&order=created_at.desc")); } catch (e) { console.error(e); }
+    try {
+      setRequests(await api.get("user_requests", "&status=eq.pending&order=created_at.desc"));
+    } catch (e) {
+      console.error(e);
+      showToast(e.message || String(e));
+    }
   };
 
   useEffect(() => { load(); if (isSystemOwner) loadRequests(); }, [isSystemOwner]);
@@ -4417,9 +4430,14 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
     if (!projectId) { showToast(t.selectProject); return; }
     try {
       await api.update("user_requests", req.id, { status: "approved" });
-      if (req.user_id) {
-        const existing = await api.get("user_projects", `&user_id=eq.${req.user_id}&project_id=eq.${projectId}`);
-        if (!existing.length) await api.insert("user_projects", { user_id: req.user_id, project_id: projectId, role });
+      let uid = req.user_id;
+      if (!uid && req.email) {
+        const found = await api.rpc("find_user_id_by_email", { p_email: req.email.trim() });
+        uid = typeof found === "string" ? found : (Array.isArray(found) ? found[0] : found?.id || null);
+      }
+      if (uid) {
+        const existing = await api.get("user_projects", `&user_id=eq.${uid}&project_id=eq.${projectId}`);
+        if (!existing.length) await api.insert("user_projects", { user_id: uid, project_id: projectId, role });
         else await api.update("user_projects", existing[0].id, { role });
       }
       showToast(t.approved.replace("{email}", req.email));
