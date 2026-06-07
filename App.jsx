@@ -1060,6 +1060,29 @@ const tdS = (extra = {}) => ({
 });
 const tdEllipsis = (extra = {}) => tdS({ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", ...extra });
 const flightCell = (extra = {}) => tdS({ textAlign: "center", whiteSpace: "nowrap", fontWeight: 400, maxWidth: "none", ...extra });
+
+const FLIGHT_LEG_TABLE_COLS = [
+  { field: "airline", labelKey: "airline", w: 72, type: "text" },
+  { field: "flight_no", labelKey: "flightNo", w: 64, type: "text" },
+  { field: "cabin", labelKey: "cabin", w: 58, type: "text" },
+  { field: "pnr", labelKey: "pnr", w: 64, type: "text" },
+  { field: "dep_airport", labelKey: "depAirport", w: 76, type: "apt", termField: "dep_terminal" },
+  { field: "dep_time", labelKey: "depTime", w: 88, type: "time" },
+  { field: "arr_airport", labelKey: "arrAirport", w: 76, type: "apt", termField: "arr_terminal" },
+  { field: "arr_time", labelKey: "arrTime", w: 88, type: "time" },
+];
+
+function flightLegCellContent(fl, col, lang, aptCell, dtCell, leg = "out") {
+  const field = leg === "ret" ? `ret_${col.field}` : col.field;
+  if (col.type === "text") return fl?.[field] || "—";
+  if (col.type === "time") return dtCell(fmtFlightDateTime(fl?.[field], lang));
+  if (col.type === "apt") {
+    const termField = leg === "ret" ? `ret_${col.termField}` : col.termField;
+    const term = fl?.[termField] ? `T${String(fl[termField]).replace(/^T/i, "")}` : "";
+    return aptCell(fl?.[field], term);
+  }
+  return "—";
+}
 const tblW = {
   width: "100%", tableLayout: "fixed", borderCollapse: "collapse", background: "var(--shiro)",
   borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,.04), 0 4px 20px rgba(0,0,0,.04), 0 0 0 1px var(--keisenL)",
@@ -1925,10 +1948,10 @@ function AirportTerminalField({ label, airportKey, terminalKey, f, set }) {
 
 function FlightLegFields({ title, prefix, f, set, t }) {
   const k = (name) => (prefix ? `${prefix}_${name}` : name);
-  const sectionStyle = { gridColumn: "1 / -1", fontSize: 12, fontWeight: 700, color: "var(--moegi)", letterSpacing: "0.08em", margin: "8px 0 4px", paddingBottom: 6, borderBottom: "1px solid var(--keisenL)" };
+  const sectionStyle = { fontSize: 12, fontWeight: 700, color: "var(--moegi)", letterSpacing: "0.08em", margin: "8px 0 4px", paddingBottom: 6, borderBottom: "1px solid var(--keisenL)" };
   return (
-    <>
-      <div style={sectionStyle}>{title}</div>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+      <div style={{ ...sectionStyle, gridColumn: "1 / -1" }}>{title}</div>
       <Field label={t.airline}><input style={inpStyle} value={f[k("airline")] || ""} onChange={set(k("airline"))} className="wa-input" /></Field>
       <Field label={t.flightNo}><input style={inpStyle} value={f[k("flight_no")] || ""} onChange={set(k("flight_no"))} className="wa-input" /></Field>
       <Field label={t.cabin}><select style={inpStyle} value={f[k("cabin")] || "Economy"} onChange={set(k("cabin"))} className="wa-input">{CABIN.map((c) => <option key={c}>{c}</option>)}</select></Field>
@@ -1939,7 +1962,7 @@ function FlightLegFields({ title, prefix, f, set, t }) {
       <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f[k("arr_time")] || ""} onChange={set(k("arr_time"))} className="wa-input" /></Field>
       <Field label={`${t.checkedBag} (${t.optional})`}><input style={inpStyle} value={f[k("checked_bag")] || ""} onChange={set(k("checked_bag"))} className="wa-input" /></Field>
       <Field label={`${t.cabinBag} (${t.optional})`}><input style={inpStyle} value={f[k("cabin_bag")] || ""} onChange={set(k("cabin_bag"))} className="wa-input" /></Field>
-    </>
+    </div>
   );
 }
 
@@ -1948,7 +1971,7 @@ function FlightForm({ init, onSave, onClose, t }) {
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px", maxHeight: "70vh", overflowY: "auto", paddingRight: 4 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20, maxHeight: "70vh", overflowY: "auto", paddingRight: 4 }}>
         <FlightLegFields title={t.flightOutbound} prefix="" f={f} set={set} t={t} />
         <FlightLegFields title={t.flightReturn} prefix="ret" f={f} set={set} t={t} />
       </div>
@@ -4322,17 +4345,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       { key: "dept", label: t.dept, w: 62 },
                       { key: "kanji", label: t.nameKanji, w: 80 },
                       { key: "roman", label: t.nameEnglish, w: 58 },
-                      { key: "airline", label: t.airline, w: 72 },
-                      { key: "flight", label: t.flightNo, w: 64 },
-                      { key: "cabin", label: t.cabin, w: 58 },
-                      { key: "pnr", label: t.pnr, w: 64 },
-                      { key: "depA", label: t.depAirport, w: 76 },
-                      { key: "depT", label: t.depTime, w: 88 },
-                      { key: "arrA", label: t.arrAirport, w: 76 },
-                      { key: "arrT", label: t.arrTime, w: 88 },
-                      { key: "retFlight", label: `${t.flightReturn}${t.flightNo}`, w: 64 },
-                      { key: "retDepT", label: `${t.flightReturn}${t.depTime}`, w: 88 },
-                      { key: "retArrT", label: `${t.flightReturn}${t.arrTime}`, w: 88 },
+                      ...FLIGHT_LEG_TABLE_COLS.map((c) => ({ key: c.field, label: t[c.labelKey], w: c.w })),
+                      ...FLIGHT_LEG_TABLE_COLS.map((c) => ({ key: `ret_${c.field}`, label: t[c.labelKey], w: c.w })),
                       { key: "status", label: t.status, w: 68 },
                       { key: "act", label: t.action, w: 56 },
                     ].map(({ key, label, w }) => (
@@ -4345,19 +4359,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     {filteredFlightPersons.map((p) => {
                       const fl = flights.find((x) => x.person_id === p.id);
                       const hasF = fl && fl.airline;
-                      const depDT = fmtFlightDateTime(fl?.dep_time, lang);
-                      const arrDT = fmtFlightDateTime(fl?.arr_time, lang);
-                      const retDepDT = fmtFlightDateTime(fl?.ret_dep_time, lang);
-                      const retArrDT = fmtFlightDateTime(fl?.ret_arr_time, lang);
-                      const hasRet = fl && (fl.ret_airline || fl.ret_flight_no);
                       const dtCell = (dt) => dt ? (
                         <div>
                           <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--sumi)" }}>{dt.date}</div>
                           <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--sumi)" }}>{dt.time}</div>
                         </div>
                       ) : "—";
-                      const depT = fl?.dep_terminal ? `T${fl.dep_terminal.replace(/^T/i,"")}` : "";
-                      const arrT = fl?.arr_terminal ? `T${fl.arr_terminal.replace(/^T/i,"")}` : "";
                       const aptCell = (code, term) => (
                         <div>
                           <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--sumi)" }}>{code || "—"}</div>
@@ -4370,17 +4377,16 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           <td style={flightCell()}>{p.dept || "—"}</td>
                           <td style={flightCell()}>{p.name_kanji || "—"}</td>
                           <td style={flightCell({ whiteSpace: "normal", padding: "8px 4px" })}><RomanNameCell last={p.last_roman} first={p.first_roman} /></td>
-                          <td style={flightCell()}>{fl?.airline || "—"}</td>
-                          <td style={flightCell()}>{fl?.flight_no || "—"}</td>
-                          <td style={flightCell()}>{fl?.cabin || "—"}</td>
-                          <td style={flightCell()}>{fl?.pnr || "—"}</td>
-                          <td style={flightCell({ whiteSpace: "normal" })}>{aptCell(fl?.dep_airport, depT)}</td>
-                          <td style={flightCell()}>{dtCell(depDT)}</td>
-                          <td style={flightCell({ whiteSpace: "normal" })}>{aptCell(fl?.arr_airport, arrT)}</td>
-                          <td style={flightCell()}>{dtCell(arrDT)}</td>
-                          <td style={flightCell()}>{hasRet ? (fl.ret_flight_no || "—") : "—"}</td>
-                          <td style={flightCell()}>{dtCell(retDepDT)}</td>
-                          <td style={flightCell()}>{dtCell(retArrDT)}</td>
+                          {FLIGHT_LEG_TABLE_COLS.map((c) => (
+                            <td key={c.field} style={flightCell(c.type === "apt" ? { whiteSpace: "normal" } : undefined)}>
+                              {flightLegCellContent(fl, c, lang, aptCell, dtCell, "out")}
+                            </td>
+                          ))}
+                          {FLIGHT_LEG_TABLE_COLS.map((c) => (
+                            <td key={`ret_${c.field}`} style={flightCell(c.type === "apt" ? { whiteSpace: "normal" } : undefined)}>
+                              {flightLegCellContent(fl, c, lang, aptCell, dtCell, "ret")}
+                            </td>
+                          ))}
                           <td style={flightCell({ minWidth: 80 })}>{statusBadge(hasF ? "arranged" : "none")}</td>
                           <td style={flightCell()}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
                         </tr>
