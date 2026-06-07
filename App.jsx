@@ -1286,6 +1286,65 @@ function personHasStayInPhase(personId, phaseId, stays, hotels) {
   return stays.some((s) => s.person_id === personId && phaseHotelIds.has(+s.hotel_id));
 }
 
+/** 同房默認付費者：住宿天數最長 → 房費最高 */
+function stayNightsCount(stay) {
+  const n = diffDays(stay.check_in, stay.check_out);
+  return n > 0 ? n : (Number(stay.nights) || 0);
+}
+
+function compareSharedRoomPayer(a, b, feeMap) {
+  const nightsDiff = stayNightsCount(b) - stayNightsCount(a);
+  if (nightsDiff !== 0) return nightsDiff;
+  const feeDiff = (feeMap[b.id] || 0) - (feeMap[a.id] || 0);
+  if (feeDiff !== 0) return feeDiff;
+  return a.id - b.id;
+}
+
+function pickSharedRoomPayer(group, feeMap) {
+  return [...group].sort((a, b) => compareSharedRoomPayer(a, b, feeMap))[0];
+}
+
+/** 同房僅一人付費：調整列表合計顯示 */
+function applySharedRoomDisplayTotals(stays, map) {
+  const groups = {};
+  stays.forEach((s) => {
+    const rn = (s.room_number || "").trim();
+    if (!rn || !s.hotel_id) return;
+    const key = `${s.hotel_id}|${rn}`;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(s);
+  });
+  Object.values(groups).forEach((group) => {
+    if (group.length < 2) return;
+    const explicitZeros = group.filter((s) => Number(s.total_amount) === 0);
+    const explicitPayers = group.filter((s) => Number(s.total_amount) !== 0);
+
+    if (explicitZeros.length > 0) {
+      explicitZeros.forEach((s) => { map[s.id] = 0; });
+      if (explicitPayers.length === 1) return;
+      const payerPool = explicitPayers.length > 0 ? explicitPayers : group;
+      const payer = pickSharedRoomPayer(payerPool, map);
+      payerPool.filter((s) => s.id !== payer.id).forEach((s) => { map[s.id] = 0; });
+      return;
+    }
+
+    const payer = pickSharedRoomPayer(group, map);
+    group.filter((s) => s.id !== payer.id).forEach((s) => { map[s.id] = 0; });
+  });
+}
+
+function calcStayTotalFromRules(stay, pricingRules, hotels) {
+  const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
+  const nights = diffDays(stay.check_in, stay.check_out);
+  if (nights <= 0 || !stay.hotel_id || !stay.check_in) return Number(stay.total_amount) || 0;
+  let total = 0;
+  for (let i = 0; i < nights; i++) {
+    const d = parseLocalDate(stay.check_in); d.setDate(d.getDate() + i);
+    total += stayNightPriceFromRules(stay, localDateStr(d), pricingRules, hMap);
+  }
+  return total;
+}
+
 /** 累計統計：客室泊數 = Σ(各日客室數), 人次 = Σ(各日入住人數), 費用 = Σ(各日費用) */
 function computeHotelStatsCumulative(stays, roommates, pricingRules, hotels) {
   const allDates = collectStayNightDates(stays);
@@ -3277,10 +3336,11 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
     const map = {};
     stays.forEach((s) => {
-      // 同房僅一人付費：room price lock 將非付費者 total_amount 設為 0
-      if (Number(s.total_amount) === 0) { map[s.id] = 0; return; }
       const nights = diffDays(s.check_in, s.check_out);
-      if (nights <= 0 || !s.hotel_id || !s.check_in) { map[s.id] = s.total_amount || 0; return; }
+      if (nights <= 0 || !s.hotel_id || !s.check_in) {
+        map[s.id] = Number(s.total_amount) || 0;
+        return;
+      }
       let total = 0;
       for (let i = 0; i < nights; i++) {
         const d = parseLocalDate(s.check_in); d.setDate(d.getDate() + i);
@@ -3288,6 +3348,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       }
       map[s.id] = total;
     });
+    applySharedRoomDisplayTotals(stays, map);
     return map;
   }, [stays, pricingRules, hotels]);
   const stayNightDates = useMemo(() => collectStayNightDates(stays), [stays]);
@@ -3418,13 +3479,32 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     try {
       const trimmed = newRoomNo.trim();
       await api.update("stays", stayId, { room_number: trimmed || null });
-      setStays((prev) => prev.map((s) => s.id === stayId ? { ...s, room_number: trimmed || null } : s));
-      // Check for same-room conflicts → price lock
+      const nextStays = stays.map((s) => s.id === stayId ? { ...s, room_number: trimmed || null } : s);
+      setStays(nextStays);
       if (trimmed) {
-        const sameRoom = stays.filter((s) => s.id !== stayId && s.hotel_id === hotelId && s.room_number === trimmed);
+        const sameRoom = nextStays.filter((s) => s.id !== stayId && s.hotel_id === hotelId && (s.room_number || "").trim() === trimmed);
         if (sameRoom.length > 0) {
-          setRoomPriceLockModal({ stayId, sameRoomStays: sameRoom });
+          const group = [nextStays.find((s) => s.id === stayId), ...sameRoom];
+          const feeMap = Object.fromEntries(group.map((s) => [s.id, calcStayTotalFromRules(s, pricingRules, hotels)]));
+          const payer = pickSharedRoomPayer(group, feeMap);
+          await applySharedRoomPricing(payer.id, group.map((s) => s.id), nextStays);
         }
+      }
+    } catch (e) { showToast(e.message); }
+  };
+
+  const applySharedRoomPricing = async (payerStayId, groupStayIds, staysSrc = stays) => {
+    const zeroes = groupStayIds.filter((id) => id !== payerStayId);
+    const payerStay = staysSrc.find((s) => s.id === payerStayId);
+    try {
+      for (const id of zeroes) {
+        await api.update("stays", id, { total_amount: 0 });
+        setStays((prev) => prev.map((s) => s.id === id ? { ...s, total_amount: 0 } : s));
+      }
+      if (payerStay) {
+        const payerTotal = calcStayTotalFromRules(payerStay, pricingRules, hotels);
+        await api.update("stays", payerStayId, { total_amount: payerTotal });
+        setStays((prev) => prev.map((s) => s.id === payerStayId ? { ...s, total_amount: payerTotal } : s));
       }
     } catch (e) { showToast(e.message); }
   };
@@ -3433,12 +3513,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     if (!roomPriceLockModal) return;
     const { stayId, sameRoomStays } = roomPriceLockModal;
     const allIds = [stayId, ...sameRoomStays.map((s) => s.id)];
-    const zeroes = allIds.filter((id) => id !== payerStayId);
     try {
-      for (const id of zeroes) {
-        await api.update("stays", id, { total_amount: 0 });
-        setStays((prev) => prev.map((s) => s.id === id ? { ...s, total_amount: 0 } : s));
-      }
+      await applySharedRoomPricing(payerStayId, allIds);
       showToast(t.saved);
     } catch (e) { showToast(e.message); }
     setRoomPriceLockModal(null);
@@ -3599,7 +3675,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         } else throw e1;
       }
       if (syncPartners?.length) {
-        const syncData = { hotel_id: data.hotel_id, room_type: data.room_type, room_custom: data.room_custom, check_in: data.check_in, check_out: data.check_out, stay_label: data.stay_label, nights: data.nights, base_price: data.base_price, total_amount: data.total_amount, project_id: pid };
+        const syncData = { hotel_id: data.hotel_id, room_type: data.room_type, room_custom: data.room_custom, check_in: data.check_in, check_out: data.check_out, stay_label: data.stay_label, nights: data.nights, base_price: data.base_price, total_amount: data.total_amount, room_number: data.room_number, project_id: pid };
         for (const rm of syncPartners) {
           const partnerStays = stays.filter((s) => s.person_id === rm.partner_id);
           const match = partnerStays.find((s) =>
@@ -3607,7 +3683,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
             (!data.stay_label && s.hotel_id == data.hotel_id && s.check_in === data.check_in && s.check_out === data.check_out)
           );
           if (match) {
-            const [r] = await api.update("stays", match.id, { ...syncData, person_id: rm.partner_id });
+            let partnerTotal = syncData.total_amount;
+            const rn = (data.room_number || "").trim();
+            if (Number(match.total_amount) === 0 && rn && (match.room_number || "").trim() === rn) partnerTotal = 0;
+            const [r] = await api.update("stays", match.id, { ...syncData, total_amount: partnerTotal, person_id: rm.partner_id });
             setStays((st) => st.map((x) => x.id === match.id ? r : x));
           } else {
             const [r] = await api.insert("stays", { ...syncData, person_id: rm.partner_id });
@@ -3626,6 +3705,15 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     const { sync_roommates: syncRoommates } = f;
     const data = buildStayPayload(f, stayModal.pid, pid);
     const isSpecial = !!data.special_room_name;
+    // 同房非付費者：編輯其他欄位時保留 total_amount = 0
+    if (stayModal.stayId) {
+      const existing = stays.find((s) => s.id === stayModal.stayId);
+      const rn = (data.room_number || "").trim();
+      if (existing && Number(existing.total_amount) === 0 && rn) {
+        const sameRoom = stays.filter((s) => s.id !== stayModal.stayId && s.hotel_id === data.hotel_id && (s.room_number || "").trim() === rn);
+        if (sameRoom.length > 0) data.total_amount = 0;
+      }
+    }
     const myRoommates = (!isSpecial && syncRoommates) ? roommates.filter((r) => r.person_id === stayModal.pid) : [];
     await finishSaveStay(data, myRoommates.length ? myRoommates : null);
   };
@@ -4196,8 +4284,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     const stayRow = (row) => {
                       const roomKey = row.room_number ? `${row.hotel_id}::${row.room_number}` : null;
                       const groupColor = roomKey ? roomGroupColorMap[roomKey] : null;
-                      const dispTotal = stayDisplayTotals[row.id] || 0;
-                      const isZeroPrice = row.room_number && dispTotal === 0;
+                      const dispTotal = stayDisplayTotals[row.id] ?? 0;
+                      const isZeroPrice = dispTotal === 0;
                       if (row.isSpecialRoom) {
                         return (
                           <tr key={row.id} style={{ background: "rgba(74,127,165,.04)" }}>
