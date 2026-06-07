@@ -161,25 +161,7 @@ const todayStr = () => localDateStr();
 const todayDT = () => localDateTimeStr();
 
 function readScrollPosition() {
-  if (document.body.style.position === "fixed" && document.body.style.top) {
-    const n = parseInt(document.body.style.top, 10);
-    if (!Number.isNaN(n)) return Math.abs(n);
-  }
   return window.scrollY || document.documentElement.scrollTop || 0;
-}
-
-function scheduleScrollRestore(ref, y) {
-  if (typeof y !== "number" || Number.isNaN(y)) return;
-  ref.current = y;
-}
-
-function applyScrollRestore(y) {
-  if (typeof y !== "number" || Number.isNaN(y)) return;
-  window.scrollTo(0, y);
-  requestAnimationFrame(() => {
-    window.scrollTo(0, y);
-    requestAnimationFrame(() => window.scrollTo(0, y));
-  });
 }
 
 // 航班時間：雙排顯示（無年份 / 12小時制）
@@ -3331,38 +3313,40 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [tripRole, setTripRole] = useState("passenger");
   // tripSegment removed — simplified direct add without segment selection
   const firstLoadDone = useRef(false);
-  const scrollRestoreRef = useRef(null);
-  const pageScrollY = useRef(0);
+  const contentReadyRef = useRef(false);
+  const stayScrollAnchorId = useRef(null);
+  const pendingScrollY = useRef(null);
 
   useLayoutEffect(() => {
-    if (scrollRestoreRef.current == null) return;
-    const y = scrollRestoreRef.current;
-    scrollRestoreRef.current = null;
-    applyScrollRestore(y);
-  });
+    if (stayModal) return;
+    const anchorId = stayScrollAnchorId.current;
+    if (anchorId != null) {
+      stayScrollAnchorId.current = null;
+      const el = document.querySelector(`[data-stay-row="${CSS.escape(String(anchorId))}"]`);
+      if (el) {
+        el.scrollIntoView({ block: "nearest", inline: "nearest" });
+        return;
+      }
+    }
+    if (pendingScrollY.current != null) {
+      const y = pendingScrollY.current;
+      pendingScrollY.current = null;
+      window.scrollTo(0, y);
+    }
+  }, [stayModal, stays, persons, flights]);
 
   const modalOpen = !!(personModal || flightModal || stayModal || hotelModal || priceModal || roommateModal || vehicleModal || showMembers || showCurrency || showReportExport);
   useLayoutEffect(() => {
     if (!modalOpen) return;
-    const y = readScrollPosition();
-    pageScrollY.current = y;
-    const prev = {
-      overflow: document.body.style.overflow,
-      position: document.body.style.position,
-      top: document.body.style.top,
-      width: document.body.style.width,
-    };
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${y}px`;
-    document.body.style.width = "100%";
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prev.overflow;
-      document.body.style.position = prev.position;
-      document.body.style.top = prev.top;
-      document.body.style.width = prev.width;
-      scheduleScrollRestore(scrollRestoreRef, y);
-      applyScrollRestore(y);
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
     };
   }, [modalOpen]);
 
@@ -3397,8 +3381,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       if (!isRefresh) {
         setLoading(false);
         firstLoadDone.current = true;
-      } else {
-        scheduleScrollRestore(scrollRestoreRef, scrollY);
+        contentReadyRef.current = true;
+      } else if (scrollY != null) {
+        pendingScrollY.current = scrollY;
       }
     }
   }, [pid, canEdit]);
@@ -3460,14 +3445,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   }, [persons, stays, activeStayPhase, hotels]);
 
   const showStayModal = (payload) => {
-    pageScrollY.current = readScrollPosition();
+    if (payload.stayId != null) stayScrollAnchorId.current = payload.stayId;
+    else pendingScrollY.current = readScrollPosition();
     setStayModal({ defaultPhaseId: activeStayPhase || undefined, ...payload });
   };
   const openStayModal = showStayModal;
-  const closeStayModal = () => {
-    scheduleScrollRestore(scrollRestoreRef, pageScrollY.current);
-    setStayModal(null);
-  };
+  const closeStayModal = () => setStayModal(null);
 
   const saveShootPhases = async (nextPhases) => {
     try {
@@ -3628,14 +3611,13 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   }, [flatStays]);
 
   const saveRoomNumber = async (stayId, hotelId, newRoomNo) => {
-    const scrollY = readScrollPosition();
+    stayScrollAnchorId.current = stayId;
     try {
       const trimmed = newRoomNo.trim();
       await api.update("stays", stayId, { room_number: trimmed || null });
       let nextStays = stays.map((s) => s.id === stayId ? { ...s, room_number: trimmed || null } : s);
       nextStays = await persistStayAmountsFromAllocations(nextStays, pricingRules, hotels, api);
       setStays(nextStays);
-      scheduleScrollRestore(scrollRestoreRef, scrollY);
     } catch (e) { showToast(e.message); }
   };
 
@@ -3810,12 +3792,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         }
       }
       nextStays = await persistStayAmountsFromAllocations(nextStays, pricingRules, hotels, api);
-      const keepY = pageScrollY.current;
-      scheduleScrollRestore(scrollRestoreRef, keepY);
+      if (stayModal.stayId != null) stayScrollAnchorId.current = stayModal.stayId;
       setStays(nextStays);
       showToast(t.saved);
       setStayModal(null);
-      applyScrollRestore(keepY);
     } catch (e) { showToast(e.message); }
   };
 
@@ -4415,7 +4395,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       const isZeroPrice = dispTotal === 0;
                       if (row.isSpecialRoom) {
                         return (
-                          <tr key={row.id} style={{ background: "rgba(74,127,165,.04)" }}>
+                          <tr key={row.id} data-stay-row={row.id} style={{ background: "rgba(74,127,165,.04)" }}>
                             <td className="td-num col-center" style={{ ...tdS({ maxWidth: "none" }), borderLeft: "3px solid var(--asagi)" }}>—</td>
                             <td className="col-text" style={tdEllipsis({ color: "var(--asagi)", fontStyle: "italic" })}>—</td>
                             <td className="col-text" colSpan={2} style={tdEllipsis({ fontWeight: 600, color: "var(--asagi)" })}>
@@ -4446,7 +4426,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                         );
                       }
                       return (
-                        <tr key={row.id} style={{ background: groupColor ? `${groupColor}0d` : "transparent" }}>
+                        <tr key={row.id} data-stay-row={row.id} style={{ background: groupColor ? `${groupColor}0d` : "transparent" }}>
                           <td className="td-num col-center" style={{ ...tdS({ maxWidth: "none" }), borderLeft: groupColor ? `3px solid ${groupColor}` : "3px solid transparent" }}>
                             {personIndex[row.person_id]}
                           </td>
