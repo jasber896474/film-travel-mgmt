@@ -160,16 +160,25 @@ function buildStayPayload(f, personId, projectId) {
 const todayStr = () => localDateStr();
 const todayDT = () => localDateTimeStr();
 
-function captureScrollPosition() {
+function readScrollPosition() {
+  if (document.body.style.position === "fixed" && document.body.style.top) {
+    const n = parseInt(document.body.style.top, 10);
+    if (!Number.isNaN(n)) return Math.abs(n);
+  }
   return window.scrollY || document.documentElement.scrollTop || 0;
 }
 
-function restoreScrollPosition(y) {
-  if (typeof y !== "number") return;
-  const restore = () => window.scrollTo(0, y);
+function scheduleScrollRestore(ref, y) {
+  if (typeof y !== "number" || Number.isNaN(y)) return;
+  ref.current = y;
+}
+
+function applyScrollRestore(y) {
+  if (typeof y !== "number" || Number.isNaN(y)) return;
+  window.scrollTo(0, y);
   requestAnimationFrame(() => {
-    restore();
-    requestAnimationFrame(restore);
+    window.scrollTo(0, y);
+    requestAnimationFrame(() => window.scrollTo(0, y));
   });
 }
 
@@ -3322,10 +3331,44 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [tripRole, setTripRole] = useState("passenger");
   // tripSegment removed — simplified direct add without segment selection
   const firstLoadDone = useRef(false);
+  const scrollRestoreRef = useRef(null);
+  const pageScrollY = useRef(0);
+
+  useLayoutEffect(() => {
+    if (scrollRestoreRef.current == null) return;
+    const y = scrollRestoreRef.current;
+    scrollRestoreRef.current = null;
+    applyScrollRestore(y);
+  });
+
+  const modalOpen = !!(personModal || flightModal || stayModal || hotelModal || priceModal || roommateModal || vehicleModal || showMembers || showCurrency || showReportExport);
+  useLayoutEffect(() => {
+    if (!modalOpen) return;
+    const y = readScrollPosition();
+    pageScrollY.current = y;
+    const prev = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+    };
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${y}px`;
+    document.body.style.width = "100%";
+    return () => {
+      document.body.style.overflow = prev.overflow;
+      document.body.style.position = prev.position;
+      document.body.style.top = prev.top;
+      document.body.style.width = prev.width;
+      scheduleScrollRestore(scrollRestoreRef, y);
+      applyScrollRestore(y);
+    };
+  }, [modalOpen]);
 
   const loadAll = useCallback(async () => {
     const isRefresh = firstLoadDone.current;
-    const scrollY = isRefresh ? captureScrollPosition() : null;
+    const scrollY = isRefresh ? readScrollPosition() : null;
     if (!isRefresh) setLoading(true);
     try {
       const pf = `&project_id=eq.${pid}`;
@@ -3355,7 +3398,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         setLoading(false);
         firstLoadDone.current = true;
       } else {
-        restoreScrollPosition(scrollY);
+        scheduleScrollRestore(scrollRestoreRef, scrollY);
       }
     }
   }, [pid, canEdit]);
@@ -3416,7 +3459,15 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     return visible.filter((p) => !personHasStayInPhase(p.id, activeStayPhase, stays, hotels));
   }, [persons, stays, activeStayPhase, hotels]);
 
-  const openStayModal = (payload) => setStayModal({ defaultPhaseId: activeStayPhase || undefined, ...payload });
+  const showStayModal = (payload) => {
+    pageScrollY.current = readScrollPosition();
+    setStayModal({ defaultPhaseId: activeStayPhase || undefined, ...payload });
+  };
+  const openStayModal = showStayModal;
+  const closeStayModal = () => {
+    scheduleScrollRestore(scrollRestoreRef, pageScrollY.current);
+    setStayModal(null);
+  };
 
   const saveShootPhases = async (nextPhases) => {
     try {
@@ -3577,14 +3628,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   }, [flatStays]);
 
   const saveRoomNumber = async (stayId, hotelId, newRoomNo) => {
-    const scrollY = captureScrollPosition();
+    const scrollY = readScrollPosition();
     try {
       const trimmed = newRoomNo.trim();
       await api.update("stays", stayId, { room_number: trimmed || null });
       let nextStays = stays.map((s) => s.id === stayId ? { ...s, room_number: trimmed || null } : s);
       nextStays = await persistStayAmountsFromAllocations(nextStays, pricingRules, hotels, api);
       setStays(nextStays);
-      restoreScrollPosition(scrollY);
+      scheduleScrollRestore(scrollRestoreRef, scrollY);
     } catch (e) { showToast(e.message); }
   };
 
@@ -3719,7 +3770,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   };
 
   const finishSaveStay = async (data, syncPartners) => {
-    const scrollY = captureScrollPosition();
     const doSave = async (payload) => {
       if (stayModal.stayId) {
         const [r] = await api.update("stays", stayModal.stayId, payload);
@@ -3760,10 +3810,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         }
       }
       nextStays = await persistStayAmountsFromAllocations(nextStays, pricingRules, hotels, api);
+      const keepY = pageScrollY.current;
+      scheduleScrollRestore(scrollRestoreRef, keepY);
       setStays(nextStays);
       showToast(t.saved);
       setStayModal(null);
-      restoreScrollPosition(scrollY);
+      applyScrollRestore(keepY);
     } catch (e) { showToast(e.message); }
   };
 
@@ -4275,7 +4327,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       <button type="button" style={{ ...pBtn(!addStayPerson), width: "100%" }} disabled={!addStayPerson} onClick={() => { openStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
                     )}
                     {canEdit && (
-                      <button type="button" style={{ ...pBtn(false), width: "100%", background: "var(--asagi2)", color: "var(--asagi)", border: "1px solid rgba(74,127,165,.3)" }} onClick={() => setStayModal({ pid: null, stayId: null, data: { special_room_name: "" }, special: true })}>{t.addSpecialRoom}</button>
+                      <button type="button" style={{ ...pBtn(false), width: "100%", background: "var(--asagi2)", color: "var(--asagi)", border: "1px solid rgba(74,127,165,.3)" }} onClick={() => showStayModal({ pid: null, stayId: null, data: { special_room_name: "" }, special: true })}>{t.addSpecialRoom}</button>
                     )}
                     {/* 功能四：顯示篩選飯店的總金額 */}
                     {searchCHotel.trim() && (() => {
@@ -4386,7 +4438,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                             </td>
                             <td className="col-actions" style={tdS({ maxWidth: "none" })}>
                               <div className="tbl-actions">
-                                {canEdit && <button type="button" style={eBtn} onClick={() => setStayModal({ pid: null, stayId: row.id, data: stayFormInit(row), special: true })}>{t.edit}</button>}
+                                {canEdit && <button type="button" style={eBtn} onClick={() => showStayModal({ pid: null, stayId: row.id, data: stayFormInit(row), special: true })}>{t.edit}</button>}
                                 {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>×</button>}
                               </div>
                             </td>
@@ -4432,7 +4484,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           </td>
                           <td className="col-actions" style={tdS({ maxWidth: "none" })}>
                             <div className="tbl-actions">
-                              {canEdit && <button type="button" style={eBtn} onClick={() => setStayModal({ pid: row.person_id, stayId: row.id, data: stayFormInit(row) })}>{t.edit}</button>}
+                              {canEdit && <button type="button" style={eBtn} onClick={() => showStayModal({ pid: row.person_id, stayId: row.id, data: stayFormInit(row) })}>{t.edit}</button>}
                               {canDelete && <button type="button" style={dBtn} onClick={async () => { if (window.confirm(t.deleteConfirm)) { await api.delete("stays", row.id); setStays((s) => s.filter((x) => x.id !== row.id)); showToast(t.deleted); } }}>{t.delete}</button>}
                             </div>
                           </td>
@@ -4911,7 +4963,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
       {flightModal && <Modal title={t.flightMgmt} onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = { ...f, person_id: flightModal.pid, project_id: pid }; if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
-      {stayModal && <Modal title={t.hotelMgmt} onClose={() => setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={() => setStayModal(null)} t={t} project={project} lang={lang} roommateNames={stayModal.pid ? getRoommateNames(stayModal.pid) : null} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} /></Modal>}
+      {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} roommateNames={stayModal.pid ? getRoommateNames(stayModal.pid) : null} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
       {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} /></Modal>}
