@@ -353,11 +353,15 @@ const T = {
     saved: "已儲存", deleted: "已刪除", confirm: "確認",
     tabStaff: "工作人員", tabFlight: "航班", tabAccommodation: "住宿", tabVehicle: "配車",
     subStay: "住宿一覽", subHotels: "飯店設定", subInvoice: "請款對帳",
-    invoiceTitle: "請款對帳表", invoiceSubtitle: "依飯店分類‧批次聚合計算",
+    invoiceTitle: "請款對帳表", invoiceSubtitle: "跟飯店對帳，或逐間查細節",
+    invoiceModeMerged: "飯店合併", invoiceModePerRoom: "逐間明細",
+    invoiceModeMergedHint: "跟飯店帳單一樣：同一段入住時間、同一種房型會合成一行，方便逐項對金額。",
+    invoiceModePerRoomHint: "一間房（或一個人）一行，適合查「這間房／這個人」是怎麼算出來的。",
+    invoiceModeDiffHint: "兩種看法的總額有時會差一點，多半是房號還沒填好，或同房的入住日期對不上。要跟飯店對帳，請用「飯店合併」。",
     invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "計價明細",
     invoiceSubtotal: "房費小計", invoiceRooms: "間", invoiceNights: "晚",
     invoiceDateRange: "至", invoicePrint: "列印對帳表",
-    invoiceNoData: "尚無住宿資料可對帳",
+    invoiceNoData: "尚無住宿資料可對帳", invoiceAvgRate: "均價",
     staffList: "工作人員列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "飯店清單",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配車", progressOf: "{done}/{total}",
     no: "編號", dept: "部門", jobTitle: "職稱", titleTopPh: "上排（自訂）", titleBottomPh: "下排（自訂）", titleTopCol: "職稱（上）", titleBottomCol: "職稱（下）",
@@ -425,7 +429,7 @@ const T = {
     bulkDeleteConfirm: "確定刪除選取的 {n} 人？此操作無法復原。",
     staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "與 {name} 同室",
     roomNo: "房號", roomNoPending: "待分配", unassignedRooms: "未配房人員", unassignedRoomsHint: "以下人員尚未指派房號",
-    unassignedPhaseRoomsHint: "以下人員尚未在本區域安排住宿，請點「新增住宿段」",
+    unassignedPhaseRoomsHint: "以下人員尚未在本區域安排住宿，點人名即可新增",
     unassignedPhaseRooms: "未配房人員（{phase}）",
     unassignedRoomSection: "待分配房號",
     vehicleSimpleHint: "需變更乘車配置時，請直接新增車輛即可。",
@@ -479,11 +483,15 @@ const T = {
     saved: "已保存", deleted: "已删除", confirm: "确认",
     tabStaff: "工作人员", tabFlight: "航班", tabAccommodation: "住宿", tabVehicle: "配车",
     subStay: "住宿一览", subHotels: "饭店设定", subInvoice: "请款对账",
-    invoiceTitle: "请款对账表", invoiceSubtitle: "按饭店分类·批次聚合计算",
+    invoiceTitle: "请款对账表", invoiceSubtitle: "跟饭店对账，或逐间查细节",
+    invoiceModeMerged: "饭店合并", invoiceModePerRoom: "逐间明细",
+    invoiceModeMergedHint: "跟饭店账单一样：同一段入住时间、同一种房型会合成一行，方便逐项对金额。",
+    invoiceModePerRoomHint: "一间房（或一个人）一行，适合查「这间房／这个人」是怎么算出来的。",
+    invoiceModeDiffHint: "两种看法的总额有时会差一点，多半是房号还没填好，或同房的入住日期对不上。要跟饭店对账，请用「饭店合并」。",
     invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "计价明细",
     invoiceSubtotal: "房费小计", invoiceRooms: "间", invoiceNights: "晚",
     invoiceDateRange: "至", invoicePrint: "打印对账表",
-    invoiceNoData: "暂无住宿数据可对账",
+    invoiceNoData: "暂无住宿数据可对账", invoiceAvgRate: "均价",
     staffList: "工作人员列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "饭店列表",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配车", progressOf: "{done}/{total}",
     no: "编号", dept: "部门", jobTitle: "职称", titleTopPh: "上排（自定义）", titleBottomPh: "下排（自定义）", titleTopCol: "职称（上）", titleBottomCol: "职称（下）",
@@ -551,7 +559,7 @@ const T = {
     bulkDeleteConfirm: "确定删除选取的 {n} 人？此操作无法复原。",
     staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "与 {name} 同住",
     roomNo: "房号", roomNoPending: "待分配", unassignedRooms: "未分配房间", unassignedRoomsHint: "以下人员尚未指派房号",
-    unassignedPhaseRoomsHint: "以下人员尚未在本区域安排住宿，请点「新增住宿段」",
+    unassignedPhaseRoomsHint: "以下人员尚未在本区域安排住宿，点人名即可新增",
     unassignedPhaseRooms: "未配房人员（{phase}）",
     unassignedRoomSection: "待分配房号",
     vehicleSimpleHint: "需变更乘车安排时，请直接新增车辆。",
@@ -604,11 +612,15 @@ const T = {
     saved: "Saved", deleted: "Deleted", confirm: "Confirm",
     tabStaff: "Staff", tabFlight: "Flights", tabAccommodation: "Hotels", tabVehicle: "Vehicles",
     subStay: "Stay List", subHotels: "Hotel Settings", subInvoice: "Invoice",
-    invoiceTitle: "Hotel Invoice", invoiceSubtitle: "Grouped by hotel · Batch aggregation",
+    invoiceTitle: "Hotel Invoice", invoiceSubtitle: "Match the hotel bill, or check room by room",
+    invoiceModeMerged: "Hotel summary", invoiceModePerRoom: "Per room",
+    invoiceModeMergedHint: "Like the hotel’s invoice: same stay dates and room type on one line — easy to compare totals.",
+    invoiceModePerRoomHint: "One line per room (or person) — good for checking how a specific room was priced.",
+    invoiceModeDiffHint: "Totals may differ slightly — often missing room numbers or mismatched dates. Use Hotel summary when reconciling with the hotel.",
     invoiceBatch: "Batch", invoiceRoomType: "Room Type", invoiceFormula: "Pricing Detail",
     invoiceSubtotal: "Subtotal", invoiceRooms: "rm", invoiceNights: "nts",
     invoiceDateRange: "to", invoicePrint: "Print Invoice",
-    invoiceNoData: "No stay data available for invoicing",
+    invoiceNoData: "No stay data available for invoicing", invoiceAvgRate: "avg",
     staffList: "Staff List", flightMgmt: "Flight Management", hotelMgmt: "Accommodation", hotelList: "Hotel List",
     progressFlight: "Flights", progressHotel: "Hotels", progressVehicle: "Unassigned", progressOf: "{done}/{total}",
     no: "No.", dept: "Dept", jobTitle: "Title", titleTopPh: "Top line (custom)", titleBottomPh: "Bottom line (custom)", titleTopCol: "Title (top)", titleBottomCol: "Title (bottom)",
@@ -676,7 +688,7 @@ const T = {
     bulkDeleteConfirm: "Delete {n} selected staff? This cannot be undone.",
     staySegment: "Stay Segment", addSegment: "Add Stay", roommateWith: "With {name}",
     roomNo: "Room No.", roomNoPending: "Pending", unassignedRooms: "No Room Assigned", unassignedRoomsHint: "These persons have no room number yet",
-    unassignedPhaseRoomsHint: "These persons have no stay in this phase yet — click Add Stay",
+    unassignedPhaseRoomsHint: "These persons have no stay in this phase yet — click a name to add",
     unassignedPhaseRooms: "Unassigned ({phase})",
     unassignedRoomSection: "Room pending",
     vehicleReportCompactHint: "Full vehicle cards (plate, route, passengers) in compact A4 portrait, 2 columns — about 10+ vehicles per page.",
@@ -727,11 +739,15 @@ const T = {
     saved: "저장됨", deleted: "삭제됨", confirm: "확인",
     tabStaff: "스태프", tabFlight: "항공", tabAccommodation: "숙박", tabVehicle: "차량",
     subStay: "숙박 목록", subHotels: "호텔 설정", subInvoice: "청구서",
-    invoiceTitle: "호텔 청구서", invoiceSubtitle: "호텔별 분류·일괄 집계",
+    invoiceTitle: "호텔 청구서", invoiceSubtitle: "호텔 청구서와 대조하거나 객실별로 확인",
+    invoiceModeMerged: "호텔 합산", invoiceModePerRoom: "객실별",
+    invoiceModeMergedHint: "호텔 청구서와 같습니다. 같은 숙박 기간·같은 객실 유형을 한 줄로 묶어 금액을 대조하기 쉽습니다.",
+    invoiceModePerRoomHint: "객실(또는 1인)당 한 줄 — 특정 객실·특정 인원 요금을 확인할 때 좋습니다.",
+    invoiceModeDiffHint: "두 방식의 합계가 조금 다를 수 있습니다. 객실 번호 미입력·숙박 날짜 불일치가 흔한 원인입니다. 호텔과 대조할 때는 「호텔 합산」을 사용하세요.",
     invoiceBatch: "일괄", invoiceRoomType: "객실 유형", invoiceFormula: "요금 내역",
     invoiceSubtotal: "소계", invoiceRooms: "실", invoiceNights: "박",
     invoiceDateRange: "~", invoicePrint: "청구서 인쇄",
-    invoiceNoData: "청구할 숙박 데이터가 없습니다",
+    invoiceNoData: "청구할 숙박 데이터가 없습니다", invoiceAvgRate: "평균",
     staffList: "스태프 목록", flightMgmt: "항공 관리", hotelMgmt: "숙박 관리", hotelList: "호텔 목록",
     progressFlight: "항공", progressHotel: "숙박", progressVehicle: "미배정", progressOf: "{done}/{total}",
     no: "번호", dept: "부서", jobTitle: "직함", titleTopPh: "상단 (직접 입력)", titleBottomPh: "하단 (직접 입력)", titleTopCol: "직함 (상)", titleBottomCol: "직함 (하)",
@@ -799,7 +815,7 @@ const T = {
     bulkDeleteConfirm: "선택한 {n}명을 삭제하시겠습니까?",
     staySegment: "숙박 구간", addSegment: "구간 추가", roommateWith: "{name}과 동실",
     roomNo: "객실 번호", roomNoPending: "미배정", unassignedRooms: "객실 미배정 인원", unassignedRoomsHint: "아직 객실 번호가 없는 인원",
-    unassignedPhaseRoomsHint: "이 구역에 아직 숙박이 없는 인원 — 「구간 추가」를 클릭하세요",
+    unassignedPhaseRoomsHint: "이 구역에 아직 숙박이 없는 인원 — 이름을 클릭하세요",
     unassignedPhaseRooms: "미배정 ({phase})",
     unassignedRoomSection: "객실 번호 미배정",
     vehicleReportCompactHint: "차량 카드(번호, 경로, 탑승자 등)를 A4 세로 2단으로 압축 출력, 한 페이지에 약 10대 이상.",
@@ -849,11 +865,15 @@ const T = {
     saved: "保存しました", deleted: "削除しました", confirm: "確定",
     tabStaff: "スタッフ", tabFlight: "フライト", tabAccommodation: "宿泊", tabVehicle: "配車",
     subStay: "宿泊一覧", subHotels: "ホテル設定", subInvoice: "請求明細",
-    invoiceTitle: "ホテル請求書", invoiceSubtitle: "ホテル別分類・バッチ集計",
+    invoiceTitle: "ホテル請求書", invoiceSubtitle: "ホテル請求書と照合、または部屋ごとに確認",
+    invoiceModeMerged: "ホテル合算", invoiceModePerRoom: "部屋別",
+    invoiceModeMergedHint: "ホテルの請求書と同じ考え方です。同じ宿泊期間・同じ部屋タイプを1行にまとめ、金額の照合がしやすくなります。",
+    invoiceModePerRoomHint: "1部屋（または1人）1行 — 特定の部屋・人の料金を確認するとき向けです。",
+    invoiceModeDiffHint: "2つの見方で合計が少しずれることがあります。部屋番号未入力・宿泊日の不一致がよくある原因です。ホテルとの照合は「ホテル合算」を使ってください。",
     invoiceBatch: "バッチ", invoiceRoomType: "部屋タイプ", invoiceFormula: "料金内訳",
     invoiceSubtotal: "小計", invoiceRooms: "室", invoiceNights: "泊",
     invoiceDateRange: "〜", invoicePrint: "請求書を印刷",
-    invoiceNoData: "請求できる宿泊データがありません",
+    invoiceNoData: "請求できる宿泊データがありません", invoiceAvgRate: "平均",
     staffList: "スタッフ", flightMgmt: "フライト管理", hotelMgmt: "宿泊管理", hotelList: "ホテル",
     progressFlight: "フライト", progressHotel: "宿泊", progressVehicle: "未配車", progressOf: "{done}/{total}",
     no: "No.", dept: "部署", jobTitle: "職名", titleTopPh: "上段（自由入力）", titleBottomPh: "下段（自由入力）", titleTopCol: "職名（上）", titleBottomCol: "職名（下）",
@@ -921,7 +941,7 @@ const T = {
     bulkDeleteConfirm: "選択した {n} 名を削除しますか？",
     staySegment: "宿泊区間", addSegment: "区間追加", roommateWith: "{name}と同室",
     roomNo: "部屋番号", roomNoPending: "未配室", unassignedRooms: "未配室スタッフ", unassignedRoomsHint: "部屋番号未設定のスタッフ",
-    unassignedPhaseRoomsHint: "このエリアにまだ宿泊がないスタッフ — 「区間追加」をクリック",
+    unassignedPhaseRoomsHint: "このエリアにまだ宿泊がないスタッフ — 名前をクリック",
     unassignedPhaseRooms: "未配室（{phase}）",
     unassignedRoomSection: "部屋番号未配",
     vehicleReportCompactHint: "車両カード（番号・ルート・同乗者など）を A4 縦2列のコンパクト版で出力。1ページ約10台以上。",
@@ -1921,6 +1941,22 @@ async function persistStayAmountsFromAllocations(allStays, pricingRules, hotels,
     nextStays = nextStays.map((x) => x.id === s.id ? r : x);
   }
   return nextStays;
+}
+
+function buildInvoiceBatchKey(stay) {
+  return `${stay.check_in}|${stay.check_out}|${stayRoomLabel(stay)}`;
+}
+
+/** 批次間數：有房號→同房號算一間；專用空間→每筆一間；其餘→每人一間 */
+function countInvoiceRooms(stays) {
+  const keys = new Set();
+  stays.forEach((s) => {
+    if (s.special_room_name) keys.add(`special:${s.id}`);
+    else if ((s.room_number || "").trim()) keys.add(`room:${(s.room_number || "").trim()}`);
+    else if (s.person_id != null) keys.add(`person:${s.person_id}`);
+    else keys.add(`stay:${s.id}`);
+  });
+  return keys.size;
 }
 
 function buildInvoiceUnitKey(stay) {
@@ -3283,9 +3319,80 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
 
 // ─── 請款對帳面板 ─────────────────────────────────────────────
 /**
- * 依飯店 + 房號（或未配房者每人）合併請款；同房不同入住日只算一間、按每晚計費一次
+ * 對齊飯店請款習慣：同飯店內，相同入住日+退房日+房型合併為一批
+ * 公式：單價 × 間數 × 晚數（間數依房號或人數；每晚依 pricing_rules 計價）
  */
-function buildInvoiceBatches(stays, pricingRules, hotels) {
+function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
+  const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
+  const byHotel = {};
+
+  stays.forEach((s) => {
+    if (!s.hotel_id || !s.check_in || !s.check_out) return;
+    const hid = +s.hotel_id;
+    if (!byHotel[hid]) byHotel[hid] = {};
+    const bk = buildInvoiceBatchKey(s);
+    if (!byHotel[hid][bk]) {
+      byHotel[hid][bk] = {
+        stays: [],
+        check_in: s.check_in,
+        check_out: s.check_out,
+        roomLabel: s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "—"),
+      };
+    }
+    byHotel[hid][bk].stays.push(s);
+  });
+
+  const result = [];
+  Object.entries(byHotel).forEach(([hidStr, batchMap]) => {
+    const hid = +hidStr;
+    const hotel = hMap[hid];
+    const batches = [];
+
+    Object.values(batchMap).forEach(({ stays: batchStays, check_in, check_out, roomLabel }) => {
+      const nights = diffDays(check_in, check_out);
+      if (nights <= 0) return;
+
+      const roomCount = countInvoiceRooms(batchStays);
+      const rep = batchStays[0];
+
+      let batchTotal = 0;
+      const nightPrices = [];
+      for (let i = 0; i < nights; i++) {
+        const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
+        const ds = localDateStr(d);
+        const nightPrice = stayNightPriceFromRules(rep, ds, pricingRules, hMap);
+        nightPrices.push(nightPrice);
+        batchTotal += nightPrice * roomCount;
+      }
+
+      const allSame = nightPrices.length > 0 && nightPrices.every((p) => p === nightPrices[0]);
+      const unitPrice = allSame
+        ? (nightPrices[0] || 0)
+        : (roomCount * nights > 0 ? batchTotal / (roomCount * nights) : 0);
+
+      batches.push({
+        check_in,
+        check_out,
+        roomLabel,
+        roomCount,
+        nights,
+        unitPrice,
+        unitPriceVarying: !allSame,
+        batchTotal,
+      });
+    });
+
+    batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.roomLabel.localeCompare(b.roomLabel));
+    const hotelTotal = batches.reduce((s, b) => s + b.batchTotal, 0);
+    result.push({ hotel, hid, batches, hotelTotal });
+  });
+
+  result.sort((a, b) => (a.hotel?.name || "").localeCompare(b.hotel?.name || ""));
+  return result;
+}
+
+/** 逐間明細：依房號／每人／專用空間各算一行 */
+function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
   const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
   const hotelUnitMap = {};
   stays.forEach((s) => {
@@ -3314,14 +3421,15 @@ function buildInvoiceBatches(stays, pricingRules, hotels) {
       const spanNights = diffDays(minIn, maxOut);
       if (spanNights <= 0) return;
 
-      const roomLabel = unitStays[0].room_type === "Custom"
-        ? (unitStays[0].room_custom || "Custom")
-        : (unitStays[0].room_type || "—");
+      const rep = unitStays[0];
+      const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
+      const rn = (rep.room_number || "").trim();
+      const subLabel = rep.special_room_name ? rep.special_room_name : rn;
       const feeMap = Object.fromEntries(unitStays.map((s) => [s.id, calcStayTotalFromRules(s, pricingRules, hotels)]));
 
       let batchTotal = 0;
       let billedNights = 0;
-      let priceSum = 0;
+      const nightPrices = [];
       for (let i = 0; i < spanNights; i++) {
         const d = parseLocalDate(minIn); d.setDate(d.getDate() + i);
         const ds = localDateStr(d);
@@ -3330,22 +3438,29 @@ function buildInvoiceBatches(stays, pricingRules, hotels) {
         const payer = occupants.length === 1 ? occupants[0] : pickSharedRoomPayer(occupants, feeMap);
         const nightPrice = stayNightPriceFromRules(payer, ds, pricingRules, hMap);
         batchTotal += nightPrice;
-        priceSum += nightPrice;
+        nightPrices.push(nightPrice);
         billedNights += 1;
       }
-      const unitPrice = billedNights > 0 ? priceSum / billedNights : stayNightPriceFromRules(unitStays[0], minIn, pricingRules, hMap);
+
+      const allSame = nightPrices.length > 0 && nightPrices.every((p) => p === nightPrices[0]);
+      const unitPrice = allSame
+        ? (nightPrices[0] || 0)
+        : (billedNights > 0 ? batchTotal / billedNights : stayNightPriceFromRules(rep, minIn, pricingRules, hMap));
+
       batches.push({
         check_in: minIn,
         check_out: maxOut,
         roomLabel,
+        subLabel,
         roomCount: 1,
         nights: billedNights,
         unitPrice,
+        unitPriceVarying: !allSame,
         batchTotal,
       });
     });
 
-    batches.sort((a, b) => a.check_in.localeCompare(b.check_in));
+    batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || (a.subLabel || "").localeCompare(b.subLabel || ""));
     const hotelTotal = batches.reduce((s, b) => s + b.batchTotal, 0);
     result.push({ hotel, hid, batches, hotelTotal });
   });
@@ -3355,8 +3470,30 @@ function buildInvoiceBatches(stays, pricingRules, hotels) {
 }
 
 function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t }) {
-  const data = useMemo(() => buildInvoiceBatches(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
+  const [invoiceMode, setInvoiceMode] = useState("merged");
+  const mergedData = useMemo(() => buildInvoiceBatchesMerged(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
+  const perRoomData = useMemo(() => buildInvoiceBatchesPerRoom(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
+  const data = invoiceMode === "merged" ? mergedData : perRoomData;
   const grandTotal = data.reduce((s, h) => s + h.hotelTotal, 0);
+  const mergedTotal = mergedData.reduce((s, h) => s + h.hotelTotal, 0);
+  const perRoomTotal = perRoomData.reduce((s, h) => s + h.hotelTotal, 0);
+  const totalsDiffer = Math.abs(mergedTotal - perRoomTotal) > 0.5;
+  const modeHint = invoiceMode === "merged" ? t.invoiceModeMergedHint : t.invoiceModePerRoomHint;
+  const modeBtn = (mode, label) => (
+    <button
+      type="button"
+      onClick={() => setInvoiceMode(mode)}
+      style={{
+        padding: "7px 16px", border: "none", cursor: "pointer", fontSize: 12,
+        fontWeight: invoiceMode === mode ? 700 : 500,
+        color: invoiceMode === mode ? "var(--sumi)" : "var(--nezumi)",
+        background: invoiceMode === mode ? "var(--shiro)" : "transparent",
+        borderRadius: 6,
+        boxShadow: invoiceMode === mode ? "0 1px 4px rgba(0,0,0,.08)" : "none",
+        fontFamily: "inherit",
+      }}
+    >{label}</button>
+  );
 
   const handlePrint = () => {
     const rows = data.map((hd) => {
@@ -3419,6 +3556,18 @@ ${rows}
 
   return (
     <div>
+      {/* 模式切換 + 白話說明 */}
+      <div style={{ marginBottom: 16, padding: "12px 16px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
+        <div style={{ display: "inline-flex", gap: 4, padding: 3, background: "var(--keisenL)", borderRadius: 8, marginBottom: 10 }}>
+          {modeBtn("merged", t.invoiceModeMerged)}
+          {modeBtn("perRoom", t.invoiceModePerRoom)}
+        </div>
+        <p style={{ margin: 0, fontSize: 12, color: "var(--sumi)", lineHeight: 1.65 }}>{modeHint}</p>
+        {totalsDiffer && (
+          <p style={{ margin: "8px 0 0", fontSize: 11, color: "var(--kincha)", lineHeight: 1.6 }}>{t.invoiceModeDiffHint}</p>
+        )}
+      </div>
+
       {/* 頁首 Banner */}
       <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", marginBottom: 20, borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
         <div>
@@ -3472,9 +3621,13 @@ ${rows}
                       </div>
                     </td>
                     {/* 房型 */}
-                    <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>{b.roomLabel}</td>
+                    <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>
+                      {b.roomLabel}
+                      {b.subLabel && <div style={{ fontSize: 10.5, color: "var(--nezumi)", marginTop: 3 }}>{b.subLabel}</div>}
+                    </td>
                     {/* 計價公式 */}
                     <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
+                      {b.unitPriceVarying && <div style={{ fontSize: 10, color: "var(--kincha)", marginBottom: 3, fontWeight: 600 }}>{t.invoiceAvgRate}</div>}
                       <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
                       <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
                       <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
@@ -5770,12 +5923,19 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                   {g.label} ({g.items.length})
                                 </div>
                                 <div className="unassigned-tags">
-                                  {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => (
-                                    <div key={p.id} className="unassigned-tag">
-                                      <span className="tag-name" title={p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
-                                      {canEdit && <button type="button" style={{ ...aBtn, fontSize: 10, padding: "2px 7px", flexShrink: 0 }} onClick={() => openStayModal({ pid: p.id, stayId: null, data: null })}>{t.addSegment}</button>}
-                                    </div>
-                                  ))}
+                                  {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => {
+                                    const displayName = p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim();
+                                    const openAdd = () => openStayModal({ pid: p.id, stayId: null, data: null });
+                                    return canEdit ? (
+                                      <button key={p.id} type="button" className="unassigned-tag unassigned-tag--clickable" title={displayName} onClick={openAdd}>
+                                        <span className="tag-name">{displayName}</span>
+                                      </button>
+                                    ) : (
+                                      <div key={p.id} className="unassigned-tag">
+                                        <span className="tag-name" title={displayName}>{displayName}</span>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             ))}
@@ -6276,7 +6436,10 @@ function GlobalStyles() {
       }
       .stay-table tr.stay-dept-banner:hover td { background: var(--kincha2) !important; }
       .unassigned-tags { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
-      .unassigned-tag { display: inline-flex; align-items: center; gap: 8px; flex: 0 1 auto; min-width: 0; max-width: 100%; background: var(--shiro); border: 1px solid var(--keisenL); border-radius: 6px; padding: 6px 12px; font-size: 11.5; }
+      .unassigned-tag { display: inline-flex; align-items: center; gap: 8px; flex: 0 1 auto; min-width: 0; max-width: 100%; background: var(--shiro); border: 1px solid var(--keisenL); border-radius: 6px; padding: 6px 12px; font-size: 11.5; font-family: inherit; color: inherit; }
+      .unassigned-tag--clickable { cursor: pointer; transition: border-color .15s, background .15s, box-shadow .15s; }
+      .unassigned-tag--clickable:hover { border-color: var(--asagi); background: rgba(74,127,165,.06); box-shadow: 0 1px 4px rgba(74,127,165,.12); }
+      .unassigned-tag--clickable:active { background: rgba(74,127,165,.1); }
       .unassigned-tag .tag-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; }
       .unassigned-tag .tag-dept { color: var(--nezumi); font-size: 10.5px; flex-shrink: 0; }
       .roman-name-cell { min-width: 0; }
