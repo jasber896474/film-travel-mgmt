@@ -364,6 +364,8 @@ const T = {
     hideFromFlightsHint: "開啟後，此人不顯示於航班管理名單（不需安排機票者適用）",
     flightOutbound: "去程", flightReturn: "回程",
     arrTimePickup: "抵達時間 ↓接機",
+    flightUngrouped: "未分組／資料未完成",
+    flightGroupPeople: "人",
     bagCheckedTotal: "託運合計", bagCabinTotal: "手提合計",
     bagCalcTitle: "行李超重試算", bagCalcByPick: "勾選人員", bagCalcByFlight: "同班機",
     bagCalcAllowance: "託運額度（每人）", bagCalcFeeRate: "超重單價（每公斤，選填）",
@@ -479,6 +481,8 @@ const T = {
     hideFromFlightsHint: "开启后，此人不显示于航班管理名单（不需安排机票者适用）",
     flightOutbound: "去程", flightReturn: "回程",
     arrTimePickup: "抵达时间 ↓接机",
+    flightUngrouped: "未分组／资料未完成",
+    flightGroupPeople: "人",
     bagCheckedTotal: "托运合计", bagCabinTotal: "手提合计",
     bagCalcTitle: "行李超重试算", bagCalcByPick: "勾选人员", bagCalcByFlight: "同班机",
     bagCalcAllowance: "托运额度（每人）", bagCalcFeeRate: "超重单价（每公斤，选填）",
@@ -593,6 +597,8 @@ const T = {
     hideFromFlightsHint: "When on, this person won't appear in the flight list (no ticket needed)",
     flightOutbound: "Outbound", flightReturn: "Return",
     arrTimePickup: "Arrival ↓ pickup",
+    flightUngrouped: "Ungrouped / incomplete",
+    flightGroupPeople: "pax",
     bagCheckedTotal: "Checked total", bagCabinTotal: "Cabin total",
     bagCalcTitle: "Baggage overage", bagCalcByPick: "Select people", bagCalcByFlight: "Same flight",
     bagCalcAllowance: "Checked allowance (per person)", bagCalcFeeRate: "Fee per kg (optional)",
@@ -705,6 +711,8 @@ const T = {
     hideFromFlightsHint: "켜면 항공 관리 목록에서 숨겨집니다 (항공권 불필요)",
     flightOutbound: "출국", flightReturn: "귀국",
     arrTimePickup: "도착 ↓ 픽업",
+    flightUngrouped: "미분류／미완료",
+    flightGroupPeople: "명",
     bagCheckedTotal: "위탁 합계", bagCabinTotal: "기내 합계",
     bagCalcTitle: "수하물 초과 계산", bagCalcByPick: "인원 선택", bagCalcByFlight: "동일 항공편",
     bagCalcAllowance: "위탁 한도 (1인)", bagCalcFeeRate: "초과 kg당 요금 (선택)",
@@ -816,6 +824,8 @@ const T = {
     hideFromFlightsHint: "オンにするとフライト管理リストから非表示（航空券不要の場合）",
     flightOutbound: "往路", flightReturn: "復路",
     arrTimePickup: "到着 ↓送迎",
+    flightUngrouped: "未分類／未入力",
+    flightGroupPeople: "名",
     bagCheckedTotal: "預け合計", bagCabinTotal: "機内合計",
     bagCalcTitle: "超過手荷物試算", bagCalcByPick: "人員選択", bagCalcByFlight: "同一便",
     bagCalcAllowance: "預け許容量（1人）", bagCalcFeeRate: "超過 kg 単価（任意）",
@@ -1172,6 +1182,197 @@ function personLegBaggage(fl, leg) {
     checked: parseBagKg(fl[`${pre}checked_bag`]),
     cabin: parseBagKg(fl[`${pre}cabin_bag`]),
   };
+}
+
+function flightHasLeg(fl, leg) {
+  if (!fl) return false;
+  if (leg === "out") return !!(fl.airline || fl.flight_no || fl.dep_time || fl.dep_airport);
+  return !!(fl.ret_airline || fl.ret_flight_no || fl.ret_dep_time || fl.ret_dep_airport);
+}
+
+function getVisibleFlightLegs(fl, filter) {
+  const hasOut = flightHasLeg(fl, "out");
+  const hasRet = flightHasLeg(fl, "ret");
+  if (filter === "out") {
+    if (hasOut) return ["out"];
+    if (!hasOut && !hasRet) return ["empty"];
+    return [];
+  }
+  if (filter === "ret") return hasRet ? ["ret"] : [];
+  if (!hasOut && !hasRet) return ["empty"];
+  const legs = [];
+  if (hasOut) legs.push("out");
+  if (hasRet) legs.push("ret");
+  return legs;
+}
+
+function flightLegIsComplete(fl, leg) {
+  if (!fl) return false;
+  const pre = leg === "ret" ? "ret_" : "";
+  const airline = leg === "ret" ? fl.ret_airline : fl.airline;
+  const fn = leg === "ret" ? fl.ret_flight_no : fl.flight_no;
+  return !!(
+    airline && fn
+    && fl[`${pre}dep_time`] && fl[`${pre}dep_airport`]
+    && fl[`${pre}arr_airport`] && fl[`${pre}arr_time`]
+  );
+}
+
+function getUngroupedLegsForPerson(fl, personId, legFilter, groupedPersonLegs) {
+  const visible = getVisibleFlightLegs(fl, legFilter);
+  if (visible[0] === "empty") return ["empty"];
+  return visible.filter((leg) => {
+    if (leg === "empty") return false;
+    if (flightLegIsComplete(fl, leg) && groupedPersonLegs.has(`${personId}|${leg}`)) return false;
+    return true;
+  });
+}
+
+function buildFlightTableSections(persons, flights, legFilter, t, lang) {
+  // 「全部」：以人為單位，同一人去程＋回程連續顯示（不分班機區塊）
+  if (legFilter === "all") {
+    return [{
+      type: "personList",
+      key: "all",
+      entries: persons.map((p) => {
+        const fl = flights.find((x) => x.person_id === p.id);
+        return { personId: p.id, legs: getVisibleFlightLegs(fl, "all") };
+      }),
+    }];
+  }
+
+  const sections = [];
+  const groupedPersonLegs = new Set();
+  const legsToGroup = legFilter === "out" ? ["out"] : ["ret"];
+
+  legsToGroup.forEach((leg) => {
+    const map = new Map();
+    persons.forEach((p) => {
+      const fl = flights.find((x) => x.person_id === p.id);
+      if (!flightLegIsComplete(fl, leg)) return;
+      const key = flightBaggageGroupKey(fl, leg);
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, { type: "group", key: `${leg}:${key}`, leg, label: flightBaggageGroupLabel(fl, leg, t, lang), personIds: [] });
+      }
+      const g = map.get(key);
+      if (!g.personIds.includes(p.id)) {
+        g.personIds.push(p.id);
+        groupedPersonLegs.add(`${p.id}|${leg}`);
+      }
+    });
+    Array.from(map.values())
+      .sort((a, b) => a.label.localeCompare(b.label, "zh-TW"))
+      .filter((g) => g.personIds.length > 0)
+      .forEach((g) => sections.push(g));
+  });
+
+  const ungroupedIds = persons.filter((p) => {
+    const fl = flights.find((x) => x.person_id === p.id);
+    return getUngroupedLegsForPerson(fl, p.id, legFilter, groupedPersonLegs).length > 0;
+  }).map((p) => p.id);
+
+  const sortByPersonOrder = (ids) => ids.slice().sort((a, b) => {
+    const ia = persons.findIndex((p) => p.id === a);
+    const ib = persons.findIndex((p) => p.id === b);
+    return ia - ib;
+  });
+
+  if (ungroupedIds.length > 0) {
+    const entries = sortByPersonOrder(ungroupedIds).map((pid) => {
+      const fl = flights.find((x) => x.person_id === pid);
+      return { personId: pid, legs: getUngroupedLegsForPerson(fl, pid, legFilter, groupedPersonLegs) };
+    });
+    sections.push({ type: "ungrouped", key: "ungrouped", leg: null, label: t.flightUngrouped, personIds: entries.map((e) => e.personId), entries });
+  }
+
+  sections.forEach((s) => {
+    if (s.type === "group") s.personIds = sortByPersonOrder(s.personIds);
+  });
+
+  return sections;
+}
+
+const FLIGHT_TABLE_COL_SPAN = FLIGHT_PERSON_COLS.length + 1 + FLIGHT_LEG_TABLE_COLS.length + 2;
+
+function renderFlightPersonRows(p, fl, legs, ctx) {
+  const { personIndex, lang, t, canEdit, setFlightModal, statusBadge } = ctx;
+  const hasF = fl && fl.airline;
+  const dtCell = (dt, pickup) => dt ? (
+    pickup ? (
+      <div className="pickup-wrap">
+        <div className="pickup-date">{dt.date}</div>
+        <div className="pickup-time">{dt.time}</div>
+      </div>
+    ) : (
+      <div>
+        <div className="flight-dt-date">{dt.date}</div>
+        <div className="flight-dt-time">{dt.time}</div>
+      </div>
+    )
+  ) : "—";
+  const aptCell = (code, term) => (
+    <div>
+      <div className="apt-code">{code || "—"}</div>
+      {term && <div className="apt-term">{term}</div>}
+    </div>
+  );
+  const personCells = (rowSpan) => FLIGHT_PERSON_COLS.map((c) => (
+    <td key={c.key} rowSpan={rowSpan > 1 ? rowSpan : undefined} className={`${c.key === "kanji" ? "flight-name col-person" : ""}${c.key === "dept" ? " flight-dept col-person" : ""}${c.key === "roman" ? " col-person" : ""}${c.key === "no" ? " flight-no" : ""}`} style={flightCell(c.key === "roman" ? { whiteSpace: "normal", padding: "8px 4px", textAlign: "left" } : c.key === "kanji" || c.key === "dept" ? { textAlign: "left" } : undefined)}>
+      {c.key === "no" ? personIndex[p.id]
+        : c.key === "dept" ? (p.dept || "—")
+        : c.key === "kanji" ? (p.name_kanji || "—")
+        : <RomanNameCell last={p.last_roman} first={p.first_roman} />}
+    </td>
+  ));
+
+  if (legs[0] === "empty") {
+    return [(
+      <tr key={`${p.id}-empty`} className="flight-person-end">
+        {personCells(1)}
+        <td colSpan={FLIGHT_LEG_TABLE_COLS.length + 1} style={flightCell({ textAlign: "left", color: "var(--nezumi)", fontSize: 12 })}>— {t.flightNone} —</td>
+        <td style={flightCell()}>{statusBadge("none")}</td>
+        <td className="flight-col-act no-print" style={flightCell()}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{t.addFlight}</button>}</td>
+      </tr>
+    )];
+  }
+
+  const multi = legs.length > 1;
+  return legs.map((leg, li) => (
+    <tr key={`${p.id}-${leg}`} className={`flight-row-${leg}${li === legs.length - 1 ? " flight-person-end" : ""}`}>
+      {li === 0 ? personCells(multi ? legs.length : 1) : null}
+      <td style={flightCell()}><span className={`leg-tag ${leg === "out" ? "leg-out" : "leg-ret"}`}>{leg === "out" ? t.flightOutbound : t.flightReturn}</span></td>
+      {FLIGHT_LEG_TABLE_COLS.map((c) => (
+        <td key={c.field} style={flightCell(c.type === "apt" ? { whiteSpace: "normal" } : undefined)}>
+          {flightLegCellContent(fl, c, lang, aptCell, dtCell, leg)}
+        </td>
+      ))}
+      {li === 0 ? (
+        <>
+          <td rowSpan={multi ? legs.length : undefined} style={flightCell()}>{statusBadge(hasF ? "arranged" : "none")}</td>
+          <td rowSpan={multi ? legs.length : undefined} className="flight-col-act no-print" style={flightCell()}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
+        </>
+      ) : null}
+    </tr>
+  ));
+}
+
+function FlightLegFilter({ value, onChange, t }) {
+  const opts = [["all", t.allPhases], ["out", t.flightOutbound], ["ret", t.flightReturn]];
+  return (
+    <div className="no-print flight-leg-filter" style={{ display: "flex", gap: 4, background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 12, width: "fit-content", border: "1px solid var(--keisenL)" }}>
+      {opts.map(([k, lb]) => (
+        <button key={k} type="button" onClick={() => onChange(k)} style={{
+          padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 6,
+          fontFamily: "'Noto Sans JP',sans-serif",
+          fontWeight: value === k ? 600 : 400,
+          color: value === k ? "var(--shiro)" : "var(--nezumi)",
+          background: value === k ? (k === "ret" ? "var(--asagi)" : "var(--moegi)") : "transparent",
+          transition: "all .15s",
+        }}>{lb}</button>
+      ))}
+    </div>
+  );
 }
 
 function flightLegCellContent(fl, col, lang, aptCell, dtCell, leg = "out") {
@@ -3710,6 +3911,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [searchBRoman, setSearchBRoman] = useState("");
   const [searchBAirline, setSearchBAirline] = useState("");
   const [searchBStatus, setSearchBStatus] = useState("");
+  const [flightLegFilter, setFlightLegFilter] = useState("all");
 
   const debSearchA = useDebounced(searchA);
   const debSearchB = useDebounced(searchB);
@@ -4002,6 +4204,16 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     const statusOk = !searchBStatus || (searchBStatus === "arranged" ? st === "arranged" : searchBStatus === "partial" ? st === "partial" : st === "none");
     return nameOk && romanOk && airlineOk && statusOk && (!deptB || p.dept === deptB);
   }), [persons, flights, debSearchB, deptB, searchBRoman, searchBAirline, searchBStatus, getStatus]);
+
+  const displayFlightPersons = useMemo(() => filteredFlightPersons.filter((p) => {
+    const fl = flights.find((x) => x.person_id === p.id);
+    return getVisibleFlightLegs(fl, flightLegFilter).length > 0;
+  }), [filteredFlightPersons, flights, flightLegFilter]);
+
+  const flightTableSections = useMemo(
+    () => buildFlightTableSections(displayFlightPersons, flights, flightLegFilter, t, lang),
+    [displayFlightPersons, flights, flightLegFilter, t, lang],
+  );
 
   const flatStays = useMemo(() => {
     const rows = [];
@@ -4643,91 +4855,70 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
               <div className="no-print">
                 <FilterChips chips={[{ key: "r", label: searchBRoman }, { key: "a", label: searchBAirline }, { key: "s", label: searchBStatus }].filter((c) => c.label)} onClear={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }} t={t} />
               </div>
-              <p className="no-print" style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", filteredFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
-              <div className="flight-print-title print-only">{project.name} — {t.flightMgmt}</div>
+              <FlightLegFilter value={flightLegFilter} onChange={setFlightLegFilter} t={t} />
+              <p className="no-print" style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", displayFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
+              <div className="flight-print-title print-only">{project.name} — {t.flightMgmt}{flightLegFilter !== "all" ? ` · ${flightLegFilter === "out" ? t.flightOutbound : t.flightReturn}` : ""}</div>
               <div className="flight-table-wrap">
-                <table style={tblW} className="flight-table">
+                <table style={tblW} className="flight-table flight-table-rows">
                   <thead>
                     <tr style={thead}>
-                      {FLIGHT_PERSON_COLS.map((c, i) => (
-                        <th key={c.key} rowSpan={2} className={`fl-sticky fl-sticky-${i + 1}`} style={{ ...thS, textAlign: "center", minWidth: c.w, maxWidth: c.w, width: c.w }}>
+                      {FLIGHT_PERSON_COLS.map((c) => (
+                        <th key={c.key} className={c.key === "kanji" || c.key === "roman" ? "col-person" : undefined} style={{ ...thS, textAlign: c.key === "kanji" || c.key === "roman" ? "left" : "center", minWidth: c.w, width: c.w }}>
                           {t[c.labelKey]}
                         </th>
                       ))}
-                      <th colSpan={FLIGHT_LEG_TABLE_COLS.length} className="flight-grp-out" style={{ ...thS, textAlign: "center", letterSpacing: "0.16em", fontSize: 9.5 }}>
-                        {t.flightOutbound}
-                      </th>
-                      <th colSpan={FLIGHT_LEG_TABLE_COLS.length} className="flight-grp-ret leg-divider" style={{ ...thS, textAlign: "center", letterSpacing: "0.16em", fontSize: 9.5 }}>
-                        {t.flightReturn}
-                      </th>
-                      <th rowSpan={2} style={{ ...thS, textAlign: "center", minWidth: 68, width: 68 }}>{t.status}</th>
-                      <th rowSpan={2} className="flight-col-act no-print" style={{ ...thS, textAlign: "center", minWidth: 56, width: 56 }}>{t.action}</th>
-                    </tr>
-                    <tr style={thead}>
+                      <th style={{ ...thS, textAlign: "center", minWidth: 52, width: 52 }}>{t.bagCalcLeg}</th>
                       {FLIGHT_LEG_TABLE_COLS.map((c) => (
-                        <th key={c.field} className="flight-sub-hdr" style={{ ...thS, textAlign: "center", minWidth: c.w, maxWidth: c.w, width: c.w, fontSize: 8.5, opacity: 0.75 }}>
+                        <th key={c.field} style={{ ...thS, textAlign: "center", minWidth: c.w, maxWidth: c.w, width: c.w, fontSize: 8.5, opacity: c.highlight === "pickup" ? 1 : 0.75 }}>
                           {c.highlight === "pickup" ? t.arrTimePickup : t[c.labelKey]}
                         </th>
                       ))}
-                      {FLIGHT_LEG_TABLE_COLS.map((c, i) => (
-                        <th key={`ret_${c.field}`} className={`flight-sub-hdr${i === 0 ? " leg-divider" : ""}`} style={{ ...thS, textAlign: "center", minWidth: c.w, maxWidth: c.w, width: c.w, fontSize: 8.5, opacity: c.highlight === "pickup" ? 0.95 : 0.75, color: c.highlight === "pickup" ? undefined : undefined }}>
-                          {c.highlight === "pickup" ? t.arrTimePickup : t[c.labelKey]}
-                        </th>
-                      ))}
+                      <th style={{ ...thS, textAlign: "center", minWidth: 68, width: 68 }}>{t.status}</th>
+                      <th className="flight-col-act no-print" style={{ ...thS, textAlign: "center", minWidth: 56, width: 56 }}>{t.action}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredFlightPersons.map((p) => {
-                      const fl = flights.find((x) => x.person_id === p.id);
-                      const hasF = fl && fl.airline;
-                      const dtCell = (dt, pickup) => dt ? (
-                        pickup ? (
-                          <div className="pickup-wrap">
-                            <div className="pickup-date">{dt.date}</div>
-                            <div className="pickup-time">{dt.time}</div>
-                          </div>
-                        ) : (
-                          <div>
-                            <div className="flight-dt-date">{dt.date}</div>
-                            <div className="flight-dt-time">{dt.time}</div>
-                          </div>
-                        )
-                      ) : "—";
-                      const aptCell = (code, term) => (
-                        <div>
-                          <div className="apt-code">{code || "—"}</div>
-                          {term && <div className="apt-term">{term}</div>}
-                        </div>
-                      );
-                      return (
-                        <tr key={p.id}>
-                          {FLIGHT_PERSON_COLS.map((c, i) => (
-                            <td key={c.key} className={`fl-sticky fl-sticky-${i + 1}${c.key === "kanji" ? " flight-name" : ""}${c.key === "dept" ? " flight-dept" : ""}`} style={flightCell(c.key === "roman" ? { whiteSpace: "normal", padding: "8px 4px" } : undefined)}>
-                              {c.key === "no" ? personIndex[p.id]
-                                : c.key === "dept" ? (p.dept || "—")
-                                : c.key === "kanji" ? (p.name_kanji || "—")
-                                : <RomanNameCell last={p.last_roman} first={p.first_roman} />}
-                            </td>
-                          ))}
-                          {FLIGHT_LEG_TABLE_COLS.map((c) => (
-                            <td key={c.field} style={flightCell(c.type === "apt" ? { whiteSpace: "normal" } : undefined)}>
-                              {flightLegCellContent(fl, c, lang, aptCell, dtCell, "out")}
-                            </td>
-                          ))}
-                          {FLIGHT_LEG_TABLE_COLS.map((c, i) => (
-                            <td key={`ret_${c.field}`} className={i === 0 ? "leg-divider" : undefined} style={flightCell(c.type === "apt" ? { whiteSpace: "normal" } : undefined)}>
-                              {flightLegCellContent(fl, c, lang, aptCell, dtCell, "ret")}
-                            </td>
-                          ))}
-                          <td style={flightCell({ minWidth: 80 })}>{statusBadge(hasF ? "arranged" : "none")}</td>
-                          <td className="flight-col-act no-print" style={flightCell()}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
-                        </tr>
-                      );
+                    {flightTableSections.flatMap((section) => {
+                      const ctx = { personIndex, lang, t, canEdit, setFlightModal, statusBadge };
+                      const personRows = section.type === "personList"
+                        ? section.entries.flatMap(({ personId, legs }) => {
+                            const p = displayFlightPersons.find((x) => x.id === personId);
+                            if (!p) return [];
+                            const fl = flights.find((x) => x.person_id === personId);
+                            return renderFlightPersonRows(p, fl, legs, ctx);
+                          })
+                        : (() => {
+                            const bannerClass = section.type === "ungrouped"
+                              ? "flight-group-banner flight-group-banner-ungrouped"
+                              : `flight-group-banner flight-group-banner-${section.leg}`;
+                            const banner = (
+                              <tr key={`${section.key}-banner`} className={bannerClass}>
+                                <td colSpan={FLIGHT_TABLE_COL_SPAN}>
+                                  {section.label} · {section.personIds.length} {t.flightGroupPeople}
+                                </td>
+                              </tr>
+                            );
+                            const rows = section.type === "ungrouped"
+                              ? section.entries.flatMap(({ personId, legs }) => {
+                                  const p = displayFlightPersons.find((x) => x.id === personId);
+                                  if (!p) return [];
+                                  const fl = flights.find((x) => x.person_id === personId);
+                                  return renderFlightPersonRows(p, fl, legs, ctx);
+                                })
+                              : section.personIds.flatMap((pid) => {
+                                  const p = displayFlightPersons.find((x) => x.id === pid);
+                                  if (!p) return [];
+                                  const fl = flights.find((x) => x.person_id === pid);
+                                  return renderFlightPersonRows(p, fl, [section.leg], ctx);
+                                });
+                            return [banner, ...rows];
+                          })();
+                      return personRows;
                     })}
                   </tbody>
                 </table>
               </div>
-              <FlightBaggageCalc persons={filteredFlightPersons} flights={flights} personIndex={personIndex} t={t} lang={lang} />
+              <FlightBaggageCalc persons={displayFlightPersons} flights={flights} personIndex={personIndex} t={t} lang={lang} />
             </div>
           )}
 
@@ -5458,17 +5649,11 @@ function GlobalStyles() {
       @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       .flight-table th, .flight-table td { text-align: center; }
       .flight-table-wrap { overflow-x: auto; border-radius: 10px; }
-      .flight-table { min-width: 1350px; }
-      .flight-table th.fl-sticky-3, .flight-table td.fl-sticky-3,
-      .flight-table td.fl-s3, .flight-table th.fl-sticky-4, .flight-table td.fl-sticky-4 { text-align: left; }
-      .flight-table .fl-sticky { position: sticky; z-index: 2; background: var(--shiro); box-shadow: 1px 0 0 var(--keisenL); }
-      .flight-table thead .fl-sticky { z-index: 4; background: var(--sumiMid); box-shadow: 1px 0 0 rgba(255,255,255,.08); }
-      .flight-table .fl-sticky-1 { left: 0; min-width: 36px; }
-      .flight-table .fl-sticky-2 { left: 36px; min-width: 64px; }
-      .flight-table .fl-sticky-3 { left: 100px; min-width: 86px; }
-      .flight-table .fl-sticky-4 { left: 186px; min-width: 72px; }
-      .flight-table tbody tr:hover .fl-sticky { background: var(--rowHover) !important; }
-      .flight-table .leg-divider { border-left: 2px solid var(--keisenM) !important; }
+      .flight-table-rows { min-width: 0; width: 100%; }
+      .flight-table .col-person { text-align: left !important; }
+      .flight-table .flight-no { color: var(--nezumi); font-size: 11.5px; }
+      .flight-table .flight-dept { font-size: 11px; font-weight: 600; color: var(--nezumi); }
+      .flight-table .flight-name { font-weight: 600; }
       .flight-table .flight-grp-out { background: rgba(43,90,76,.45) !important; color: #b4dfca !important; opacity: 1 !important; }
       .flight-table .flight-grp-ret { background: rgba(46,110,136,.42) !important; color: #a6d8ec !important; opacity: 1 !important; }
       .flight-table .flight-sub-hdr { background: rgba(0,0,0,.15) !important; }
@@ -5480,8 +5665,21 @@ function GlobalStyles() {
       .flight-table .pickup-wrap { background: var(--asagi2, rgba(58,120,140,.12)); border-radius: 6px; padding: 4px 8px; display: inline-block; min-width: 58px; line-height: 1.3; }
       .flight-table .pickup-date { font-size: 10px; color: var(--asagi); opacity: .8; }
       .flight-table .pickup-time { font-size: 15px; font-weight: 700; color: var(--asagi); letter-spacing: .01em; }
-      .flight-table .flight-name { font-weight: 600; }
-      .flight-table .flight-dept { font-size: 11px; font-weight: 600; color: var(--nezumi); }
+      .flight-table .leg-tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; white-space: nowrap; }
+      .flight-table .leg-tag.leg-out { background: var(--moegi3, rgba(43,90,76,.12)); color: var(--moegi); }
+      .flight-table .leg-tag.leg-ret { background: var(--asagi2, rgba(58,120,140,.12)); color: var(--asagi); }
+      .flight-table .flight-row-out td { background: var(--shiro); }
+      .flight-table .flight-row-ret td { background: var(--washi, #faf8f4); }
+      .flight-table tr.flight-person-end td { border-bottom: 2px solid var(--keisenM); }
+      .flight-table tr.flight-group-banner td {
+        padding: 8px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-align: left;
+        border-top: 1px solid var(--keisenM);
+      }
+      .flight-table tr.flight-group-banner-out td { color: var(--moegi); background: var(--moegi3, rgba(43,90,76,.1)) !important; }
+      .flight-table tr.flight-group-banner-ret td { color: var(--asagi); background: var(--asagi2, rgba(58,120,140,.1)) !important; }
+      .flight-table tr.flight-group-banner-ungrouped td { color: var(--nezumi); background: var(--washi) !important; }
+      .flight-table tr.flight-group-banner:hover td { filter: brightness(0.98); }
+      .flight-table tr.flight-row-out:hover td, .flight-table tr.flight-row-ret:hover td { background: var(--rowHover) !important; }
       .flight-table .roman-name-cell { font-size: 11px; }
       .print-only { display: none; }
       @media print {
@@ -5494,18 +5692,19 @@ function GlobalStyles() {
         div[style*="maxWidth: 1320"] { max-width: none !important; padding: 8px !important; }
         .flight-table-wrap { overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; }
         .flight-table { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; font-size: 9px; box-shadow: none !important; border: 1px solid #ccc !important; }
-        .flight-table th { font-size: 7px !important; padding: 5px 3px !important; letter-spacing: .06em !important; }
-        .flight-table td { font-size: 9px !important; padding: 5px 3px !important; }
-        .flight-table .fl-sticky { position: static !important; box-shadow: none !important; }
+        .flight-table th { font-size: 7.5px !important; padding: 5px 3px !important; letter-spacing: .06em !important; }
+        .flight-table td { font-size: 9.5px !important; padding: 5px 3px !important; }
+        .flight-table .flight-row-ret td { background: #f5f5f0 !important; }
         .flight-table .apt-code { font-size: 10px !important; }
         .flight-table .apt-term { font-size: 8px !important; }
         .flight-table .flight-dt-date, .flight-table .pickup-date { font-size: 8px !important; }
         .flight-table .flight-dt-time { font-size: 9.5px !important; }
         .flight-table .pickup-wrap { padding: 2px 4px !important; min-width: 0 !important; background: #d8eef5 !important; }
         .flight-table .pickup-time { font-size: 10px !important; }
+        .flight-table .leg-tag { padding: 2px 6px !important; font-size: 8px !important; }
         .flight-table .flight-muted { font-size: 8.5px !important; }
         tbody tr:hover td { background: inherit !important; }
-        @page { size: A4 landscape; margin: 8mm; }
+        @page { size: A4 portrait; margin: 10mm; }
       }
       .td-num { color: var(--usunezumi); font-variant-numeric: tabular-nums; text-align: center; }
       .td-amt { font-weight: 600; color: var(--asagi); font-variant-numeric: tabular-nums; text-align: right; }
