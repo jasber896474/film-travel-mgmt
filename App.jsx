@@ -147,6 +147,12 @@ const diffDays = (a, b) => {
   const db = parseLocalDate(b);
   return Math.max(0, Math.round((db - da) / 86400000));
 };
+const addDaysToDateStr = (dateStr, days) => {
+  const d = parseLocalDate(dateStr);
+  if (!d) return "";
+  d.setDate(d.getDate() + days);
+  return localDateStr(d);
+};
 
 const normalizeStayDate = (val) => {
   if (!val) return "";
@@ -162,7 +168,6 @@ function stayFormInit(raw) {
     room_custom: raw.room_custom || "",
     check_in: normalizeStayDate(raw.check_in),
     check_out: normalizeStayDate(raw.check_out),
-    base_price: raw.base_price ?? "",
     stay_label: raw.stay_label || "",
     room_number: raw.room_number || "",
     special_room_name: raw.special_room_name || "",
@@ -2471,27 +2476,24 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
 function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, roommateNames, isSpecialRoom, defaultPhaseId }) {
   const phaseHotels = defaultPhaseId ? hotels.filter((h) => h.shoot_phase_id === defaultPhaseId) : hotels;
   const defaultHotelId = phaseHotels.length === 1 ? String(phaseHotels[0].id) : "";
-  const blank = { hotel_id: defaultHotelId, room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "", room_number: "", special_room_name: "" };
+  const blank = { hotel_id: defaultHotelId, room_type: "Single", room_custom: "", check_in: todayStr(), check_out: addDaysToDateStr(todayStr(), 1), stay_label: "", room_number: "", special_room_name: "" };
   const [f, setF] = useState(() => (init ? { ...blank, ...stayFormInit(init) } : blank));
   const [syncRoommates, setSyncRoommates] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
-
-  // Auto-fill base_price from hotel master room_type_rates
-  const autoFillPrice = (hotelId, roomType, roomCustom) => {
-    const hotel = hotels.find((h) => +h.id === +hotelId);
-    const roomLabel = roomType === "Custom" ? (roomCustom || "") : roomType;
-    const rtr = findRoomTypeRate(hotel, roomLabel);
-    if (rtr != null) setF((p) => ({ ...p, base_price: String(rtr) }));
+  const handleCheckInChange = (e) => {
+    const checkIn = e.target.value;
+    setF((p) => {
+      if (!checkIn) return { ...p, check_in: "" };
+      return { ...p, check_in: checkIn, check_out: addDaysToDateStr(checkIn, 1) };
+    });
   };
-  const handleHotelChange = (e) => {
-    const hotelId = e.target.value;
-    setF((p) => { const next = { ...p, hotel_id: hotelId }; return next; });
-    autoFillPrice(hotelId, f.room_type, f.room_custom);
-  };
-  const handleRoomTypeChange = (e) => {
-    const rt = e.target.value;
-    setF((p) => { const next = { ...p, room_type: rt }; return next; });
-    autoFillPrice(f.hotel_id, rt, f.room_custom);
+  const handleCheckOutChange = (e) => {
+    const checkOut = e.target.value;
+    setF((p) => {
+      if (!checkOut || !p.check_in) return { ...p, check_out: checkOut };
+      if (diffDays(p.check_in, checkOut) <= 0) return { ...p, check_out: addDaysToDateStr(p.check_in, 1) };
+      return { ...p, check_out: checkOut };
+    });
   };
 
   const nights = diffDays(f.check_in, f.check_out);
@@ -2505,7 +2507,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
       const ds = localDateStr(d);
       const rule = findPricingRule(pricingRules, f.hotel_id, ds, roomLabel);
       const rtr = !rule ? findRoomTypeRate(selectedHotel, roomLabel) : null;
-      const price = rule ? (+rule.final_price || 0) : (rtr != null ? rtr : (+f.base_price || 0));
+      const price = rule ? (+rule.final_price || 0) : (rtr != null ? rtr : 0);
       total += price; bd.push({ date: ds, price, fromRule: !!rule, fromRoomRate: !rule && rtr != null });
     }
     return { totalAmount: total, breakdown: bd };
@@ -2527,15 +2529,11 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
         ) : (
           <Field label={t.staySegment}><input style={inpStyle} value={f.stay_label} onChange={set("stay_label")} /></Field>
         )}
-        <Field label={t.hotel}><select style={inpStyle} value={f.hotel_id} onChange={handleHotelChange}><option value="">--</option>{phaseHotels.map((h) => <option key={h.id} value={String(h.id)}>{h.name}</option>)}</select></Field>
-        <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={handleRoomTypeChange}>{ROOM_TYPES.map((r) => <option key={r}>{r}</option>)}</select></Field>
+        <Field label={t.hotel}><select style={inpStyle} value={f.hotel_id} onChange={set("hotel_id")}><option value="">--</option>{phaseHotels.map((h) => <option key={h.id} value={String(h.id)}>{h.name}</option>)}</select></Field>
+        <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={set("room_type")}>{ROOM_TYPES.map((r) => <option key={r}>{r}</option>)}</select></Field>
         {f.room_type === "Custom" && <Field label={t.customRoomType}><input style={inpStyle} value={f.room_custom} onChange={set("room_custom")} /></Field>}
-        <Field label={t.checkIn}><input type="date" style={inpStyle} value={f.check_in || ""} onChange={set("check_in")} /></Field>
-        <Field label={t.checkOut}><input type="date" style={inpStyle} value={f.check_out || ""} onChange={set("check_out")} /></Field>
-        <Field label={t.basePrice}>
-          <input type="number" min="0" style={inpStyle} value={f.base_price} onChange={set("base_price")} placeholder="0" />
-          <p style={{ fontSize: 10, color: "var(--usunezumi)", margin: "3px 0 0" }}>無日期例外時採用，已設主檔房型預設價則自動帶入</p>
-        </Field>
+        <Field label={t.checkIn}><input type="date" style={inpStyle} value={f.check_in || ""} onChange={handleCheckInChange} /></Field>
+        <Field label={t.checkOut}><input type="date" style={inpStyle} value={f.check_out || ""} onChange={handleCheckOutChange} /></Field>
         <Field label={t.nights}><input style={{ ...inpStyle, background: "var(--washi)", textAlign: "center" }} value={nights || ""} readOnly /></Field>
         <Field label={t.totalAmt}><input style={{ ...inpStyle, background: "var(--washi)", fontWeight: 700, color: "var(--asagi)" }} value={totalAmount ? formatMoney(dispTotal, project, lang) : "—"} readOnly /></Field>
         {!isSpecialRoom && <Field label={t.roomNo}><input style={inpStyle} value={f.room_number} onChange={set("room_number")} placeholder={t.roomNoPending} /></Field>}
@@ -2557,7 +2555,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
       )}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
-        <button type="button" onClick={() => onSave({ ...f, nights, total_amount: totalAmount, base_price: f.base_price === "" ? null : +f.base_price, sync_roommates: syncRoommates })} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
+        <button type="button" onClick={() => onSave({ ...f, nights, total_amount: totalAmount, base_price: null, sync_roommates: syncRoommates })} disabled={!canSave} style={pBtn(!canSave)}>{t.save}</button>
       </div>
     </div>
   );
