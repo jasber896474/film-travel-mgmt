@@ -160,6 +160,19 @@ function buildStayPayload(f, personId, projectId) {
 const todayStr = () => localDateStr();
 const todayDT = () => localDateTimeStr();
 
+function captureScrollPosition() {
+  return window.scrollY || document.documentElement.scrollTop || 0;
+}
+
+function restoreScrollPosition(y) {
+  if (typeof y !== "number") return;
+  const restore = () => window.scrollTo(0, y);
+  requestAnimationFrame(() => {
+    restore();
+    requestAnimationFrame(restore);
+  });
+}
+
 // 航班時間：雙排顯示（無年份 / 12小時制）
 const fmtFlightDateTime = (ts, lang) => {
   if (!ts) return null;
@@ -307,8 +320,6 @@ const T = {
     unassignedPhaseRooms: "未配房人員（{phase}）",
     unassignedRoomSection: "待分配房號",
     vehicleSimpleHint: "需變更乘車配置時，請直接新增車輛即可。",
-    roomPriceLockTitle: "房間費用歸屬", roomPriceLockMsg: "此房號已有其他入住者，由誰負擔房間費用？",
-    roomPriceLockSelf: "由此人負擔（其他人設為 ¥0）", roomPriceLockOther: "由原有人負擔（此人設為 ¥0）",
     soloStayNights: "獨住{n}晚",
     searchHotelName: "搜尋飯店…", searchRoomType: "搜尋房型…", searchRoman: "羅馬拼音", searchStatus: "安排狀態", allStatus: "全部狀態",
     arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除篩選", exportCSV: "匯出 CSV", importCSV: "匯入 CSV",
@@ -415,8 +426,6 @@ const T = {
     unassignedPhaseRooms: "未配房人员（{phase}）",
     unassignedRoomSection: "待分配房号",
     vehicleSimpleHint: "需变更乘车安排时，请直接新增车辆。",
-    roomPriceLockTitle: "房间费用归属", roomPriceLockMsg: "此房号已有其他入住者，由谁承担房间费用？",
-    roomPriceLockSelf: "由此人承担（其他人设为 ¥0）", roomPriceLockOther: "由原有人承担（此人设为 ¥0）",
     soloStayNights: "独住{n}晚",
     searchHotelName: "搜索饭店…", searchRoomType: "搜索房型…", searchRoman: "罗马拼音", searchStatus: "安排状态", allStatus: "全部状态",
     arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除筛选", exportCSV: "导出 CSV", importCSV: "导入 CSV",
@@ -521,8 +530,6 @@ const T = {
     unassignedPhaseRoomsHint: "These persons have no stay in this phase yet — click Add Stay",
     unassignedPhaseRooms: "Unassigned ({phase})",
     unassignedRoomSection: "Room pending",
-    roomPriceLockTitle: "Room Cost", roomPriceLockMsg: "This room already has occupants. Who covers the room cost?",
-    roomPriceLockSelf: "This person pays (others set to ¥0)", roomPriceLockOther: "Original occupant pays (this person set to ¥0)",
     soloStayNights: "Solo {n} nights",
     searchHotelName: "Search hotel…", searchRoomType: "Search room type…", searchRoman: "Romanized", searchStatus: "Status", allStatus: "All",
     arranged_short: "Done", unArranged_short: "Pending", partial_short: "Partial", clearFilter: "Clear filters", exportCSV: "Export CSV", importCSV: "Import CSV",
@@ -626,8 +633,6 @@ const T = {
     unassignedPhaseRoomsHint: "이 구역에 아직 숙박이 없는 인원 — 「구간 추가」를 클릭하세요",
     unassignedPhaseRooms: "미배정 ({phase})",
     unassignedRoomSection: "객실 번호 미배정",
-    roomPriceLockTitle: "객실 비용 귀속", roomPriceLockMsg: "이 객실에 이미 다른 투숙자가 있습니다. 누가 비용을 부담합니까?",
-    roomPriceLockSelf: "이 사람이 부담 (나머지 ¥0)", roomPriceLockOther: "기존 투숙자가 부담 (이 사람 ¥0)",
     soloStayNights: "단독 {n}박",
     searchHotelName: "호텔…", searchRoomType: "객실…", searchRoman: "로마자", searchStatus: "상태", allStatus: "전체",
     arranged_short: "완료", unArranged_short: "미배정", partial_short: "일부", clearFilter: "필터 초기화", exportCSV: "CSV보내기", importCSV: "CSV 가져오기",
@@ -730,8 +735,6 @@ const T = {
     unassignedPhaseRoomsHint: "このエリアにまだ宿泊がないスタッフ — 「区間追加」をクリック",
     unassignedPhaseRooms: "未配室（{phase}）",
     unassignedRoomSection: "部屋番号未配",
-    roomPriceLockTitle: "部屋代帰属", roomPriceLockMsg: "この部屋番号にはすでに入室者がいます。部屋代を誰が負担しますか？",
-    roomPriceLockSelf: "この人が負担（他は ¥0）", roomPriceLockOther: "既入室者が負担（この人は ¥0）",
     soloStayNights: "単独{n}泊",
     searchHotelName: "ホテル…", searchRoomType: "部屋…", searchRoman: "ローマ字", searchStatus: "状況", allStatus: "すべて",
     arranged_short: "済", unArranged_short: "未", partial_short: "一部", clearFilter: "クリア", exportCSV: "CSV出力", importCSV: "CSV取込",
@@ -3318,9 +3321,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [tripPerson, setTripPerson] = useState("");
   const [tripRole, setTripRole] = useState("passenger");
   // tripSegment removed — simplified direct add without segment selection
+  const firstLoadDone = useRef(false);
 
   const loadAll = useCallback(async () => {
-    setLoading(true);
+    const isRefresh = firstLoadDone.current;
+    const scrollY = isRefresh ? captureScrollPosition() : null;
+    if (!isRefresh) setLoading(true);
     try {
       const pf = `&project_id=eq.${pid}`;
       const [p, f, s, h, pr, rm, vh, va, dd] = await Promise.all([
@@ -3344,7 +3350,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       if (va === null) { setUseAssignmentTable(false); setVehicleAssignments([]); }
       else { setUseAssignmentTable(true); setVehicleAssignments(va); }
       setDailyDispatches(Array.isArray(dd) ? dd : []);
-    } catch (e) { showToast(e.message); } finally { setLoading(false); }
+    } catch (e) { showToast(e.message); } finally {
+      if (!isRefresh) {
+        setLoading(false);
+        firstLoadDone.current = true;
+      } else {
+        restoreScrollPosition(scrollY);
+      }
+    }
   }, [pid, canEdit]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
@@ -3564,12 +3577,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   }, [flatStays]);
 
   const saveRoomNumber = async (stayId, hotelId, newRoomNo) => {
+    const scrollY = captureScrollPosition();
     try {
       const trimmed = newRoomNo.trim();
       await api.update("stays", stayId, { room_number: trimmed || null });
       let nextStays = stays.map((s) => s.id === stayId ? { ...s, room_number: trimmed || null } : s);
       nextStays = await persistStayAmountsFromAllocations(nextStays, pricingRules, hotels, api);
       setStays(nextStays);
+      restoreScrollPosition(scrollY);
     } catch (e) { showToast(e.message); }
   };
 
@@ -3704,6 +3719,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   };
 
   const finishSaveStay = async (data, syncPartners) => {
+    const scrollY = captureScrollPosition();
     const doSave = async (payload) => {
       if (stayModal.stayId) {
         const [r] = await api.update("stays", stayModal.stayId, payload);
@@ -3747,6 +3763,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       setStays(nextStays);
       showToast(t.saved);
       setStayModal(null);
+      restoreScrollPosition(scrollY);
     } catch (e) { showToast(e.message); }
   };
 
