@@ -125,6 +125,36 @@ const localDateTimeStr = (d = new Date()) => {
   d.setSeconds(0, 0);
   return `${localDateStr(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 };
+const toDatetimeLocalValue = (val) => {
+  if (!val) return "";
+  const s = String(val);
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s.slice(0, 16))) return s.slice(0, 16);
+  const d = new Date(s);
+  return isNaN(d) ? "" : localDateTimeStr(d);
+};
+const fromDatetimeLocalValue = (val) => {
+  if (!val) return null;
+  const s = String(val).slice(0, 16);
+  const [datePart, timePart] = s.split("T");
+  if (!datePart) return null;
+  const [y, m, d] = datePart.split("-").map(Number);
+  const [hh, mm] = (timePart || "00:00").split(":").map(Number);
+  const dt = new Date(y, m - 1, d, hh || 0, mm || 0, 0, 0);
+  return isNaN(dt) ? null : dt.toISOString();
+};
+const parseLocalDateTime = (val) => {
+  if (!val) return null;
+  const s = String(val);
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s) && !/[Zz]/.test(s) && !/[+-]\d{2}:?\d{2}$/.test(s)) {
+    const [datePart, timePart] = s.slice(0, 16).split("T");
+    const [y, m, d] = datePart.split("-").map(Number);
+    const [hh, mm] = (timePart || "00:00").split(":").map(Number);
+    const dt = new Date(y, m - 1, d, hh || 0, mm || 0, 0, 0);
+    return isNaN(dt) ? null : dt;
+  }
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+};
 const parseLocalDate = (s) => {
   if (!s) return null;
   const [y, m, d] = s.slice(0, 10).split("-").map(Number);
@@ -181,6 +211,59 @@ function buildStayPayload(f, personId, projectId) {
     project_id: projectId,
   };
 }
+
+const FLIGHT_BLANK = {
+  airline: "", flight_no: "", cabin: "Economy", pnr: "",
+  dep_airport: "", dep_terminal: "", dep_time: "", arr_airport: "", arr_terminal: "", arr_time: "",
+  checked_bag: "", cabin_bag: "",
+  ret_airline: "", ret_flight_no: "", ret_cabin: "Economy", ret_pnr: "",
+  ret_dep_airport: "", ret_dep_terminal: "", ret_dep_time: "", ret_arr_airport: "", ret_arr_terminal: "", ret_arr_time: "",
+  ret_checked_bag: "", ret_cabin_bag: "",
+};
+
+function flightFormInit(raw) {
+  if (!raw) return null;
+  return {
+    ...raw,
+    dep_time: toDatetimeLocalValue(raw.dep_time),
+    arr_time: toDatetimeLocalValue(raw.arr_time),
+    ret_dep_time: toDatetimeLocalValue(raw.ret_dep_time),
+    ret_arr_time: toDatetimeLocalValue(raw.ret_arr_time),
+  };
+}
+
+function buildFlightPayload(f, personId, projectId) {
+  const trim = (v) => (v || "").trim() || null;
+  return {
+    person_id: personId,
+    project_id: projectId,
+    airline: trim(f.airline),
+    flight_no: trim(f.flight_no),
+    cabin: f.cabin || null,
+    pnr: trim(f.pnr),
+    dep_airport: trim(f.dep_airport),
+    dep_terminal: trim(f.dep_terminal),
+    dep_time: fromDatetimeLocalValue(f.dep_time),
+    arr_airport: trim(f.arr_airport),
+    arr_terminal: trim(f.arr_terminal),
+    arr_time: fromDatetimeLocalValue(f.arr_time),
+    checked_bag: trim(f.checked_bag),
+    cabin_bag: trim(f.cabin_bag),
+    ret_airline: trim(f.ret_airline),
+    ret_flight_no: trim(f.ret_flight_no),
+    ret_cabin: f.ret_cabin || null,
+    ret_pnr: trim(f.ret_pnr),
+    ret_dep_airport: trim(f.ret_dep_airport),
+    ret_dep_terminal: trim(f.ret_dep_terminal),
+    ret_dep_time: fromDatetimeLocalValue(f.ret_dep_time),
+    ret_arr_airport: trim(f.ret_arr_airport),
+    ret_arr_terminal: trim(f.ret_arr_terminal),
+    ret_arr_time: fromDatetimeLocalValue(f.ret_arr_time),
+    ret_checked_bag: trim(f.ret_checked_bag),
+    ret_cabin_bag: trim(f.ret_cabin_bag),
+  };
+}
+
 const todayStr = () => localDateStr();
 const todayDT = () => localDateTimeStr();
 
@@ -190,9 +273,8 @@ function readScrollPosition() {
 
 // 航班時間：雙排顯示（無年份 / 12小時制）
 const fmtFlightDateTime = (ts, lang) => {
-  if (!ts) return null;
-  const d = new Date(ts);
-  if (isNaN(d)) return null;
+  const d = parseLocalDateTime(ts);
+  if (!d) return null;
   const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
   const datePart = d.toLocaleDateString(loc, { month: "numeric", day: "numeric" });
   const timePart = d.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit", hour12: true });
@@ -300,9 +382,11 @@ const T = {
     guestNights: "人次", roomNights: "客室泊數",
     specialRoom: "專用空間", specialRoomName: "空間名稱（器材間・梳化間等）", addSpecialRoom: "新增專用空間",
     onSite: "參與現場", offSiteHint: "關閉後將從排車與住宿名單中隱藏",
-    hideFromStays: "隱藏於住宿名單", hideFromVehicles: "隱藏於派車名單",
+    hideFromStays: "隱藏於住宿名單", hideFromVehicles: "隱藏於派車名單", hideFromFlights: "隱藏於航班名單",
     hideFromStaysHint: "開啟後，此人不顯示於住宿一覽與住宿篩選名單",
     hideFromVehiclesHint: "開啟後，此人不顯示於派車配置與每日配車單",
+    hideFromFlightsHint: "開啟後，此人不顯示於航班管理名單（不需安排機票者適用）",
+    flightOutbound: "去程", flightReturn: "回程",
     locationTag: "拍攝地點", locationTagPh: "例：花蓮 Phase 1、高雄 Phase 2",
     allLocations: "全部地點", allHotels: "全部飯店", filterByHotel: "依飯店篩選",
     stayGuestCount: "人", stayRoomCount: "間",
@@ -406,9 +490,11 @@ const T = {
     guestNights: "人次", roomNights: "客房泊数",
     specialRoom: "专用空间", specialRoomName: "空间名称（器材间・化妆间等）", addSpecialRoom: "新增专用空间",
     onSite: "参与现场", offSiteHint: "关闭后将从排车与住宿名单中隐藏",
-    hideFromStays: "隐藏于住宿名单", hideFromVehicles: "隐藏于派车名单",
+    hideFromStays: "隐藏于住宿名单", hideFromVehicles: "隐藏于派车名单", hideFromFlights: "隐藏于航班名单",
     hideFromStaysHint: "开启后，此人不显示于住宿一览与住宿筛选名单",
     hideFromVehiclesHint: "开启后，此人不显示于派车配置与每日配车单",
+    hideFromFlightsHint: "开启后，此人不显示于航班管理名单（不需安排机票者适用）",
+    flightOutbound: "去程", flightReturn: "回程",
     locationTag: "拍摄地点", locationTagPh: "例：花莲 Phase 1、高雄 Phase 2",
     allLocations: "全部地点", allHotels: "全部饭店", filterByHotel: "按饭店筛选",
     stayGuestCount: "人", stayRoomCount: "间",
@@ -511,9 +597,11 @@ const T = {
     guestNights: "guest-nights", roomNights: "room-nights",
     specialRoom: "Special Space", specialRoomName: "Space name (equipment room, makeup room…)", addSpecialRoom: "Add special space",
     onSite: "On-site", offSiteHint: "When off, hidden from vehicle & stay lists",
-    hideFromStays: "Hide from stays", hideFromVehicles: "Hide from vehicles",
+    hideFromStays: "Hide from stays", hideFromVehicles: "Hide from vehicles", hideFromFlights: "Hide from flights",
     hideFromStaysHint: "When on, this person won't appear in the accommodation list",
     hideFromVehiclesHint: "When on, this person won't appear in vehicle assignments",
+    hideFromFlightsHint: "When on, this person won't appear in the flight list (no ticket needed)",
+    flightOutbound: "Outbound", flightReturn: "Return",
     locationTag: "Location", locationTagPh: "e.g. Hualien Phase 1, Kaohsiung Phase 2",
     allLocations: "All Locations", allHotels: "All Hotels", filterByHotel: "Filter by hotel",
     stayGuestCount: "pax", stayRoomCount: "rm",
@@ -614,9 +702,11 @@ const T = {
     guestNights: "인원박", roomNights: "객실박",
     specialRoom: "전용 공간", specialRoomName: "공간 이름(장비실·분장실 등)", addSpecialRoom: "전용 공간 추가",
     onSite: "현장 참여", offSiteHint: "끄면 차량·숙박 목록에서 숨겨집니다",
-    hideFromStays: "숙박 목록에서 숨김", hideFromVehicles: "차량 목록에서 숨김",
+    hideFromStays: "숙박 목록에서 숨김", hideFromVehicles: "차량 목록에서 숨김", hideFromFlights: "항공 목록에서 숨김",
     hideFromStaysHint: "켜면 숙박 목록에서 표시되지 않습니다",
     hideFromVehiclesHint: "켜면 차량 배정 목록에서 표시되지 않습니다",
+    hideFromFlightsHint: "켜면 항공 관리 목록에서 숨겨집니다 (항공권 불필요)",
+    flightOutbound: "출국", flightReturn: "귀국",
     locationTag: "촬영 장소", locationTagPh: "예: 화련 Phase 1, 가오슝 Phase 2",
     allLocations: "전체 장소", allHotels: "전체 호텔", filterByHotel: "호텔별 필터",
     stayGuestCount: "명", stayRoomCount: "실",
@@ -716,9 +806,11 @@ const T = {
     guestNights: "人泊", roomNights: "室泊",
     specialRoom: "専用スペース", specialRoomName: "スペース名（機材室・メイク室など）", addSpecialRoom: "専用スペースを追加",
     onSite: "現場参加", offSiteHint: "オフにすると車両・宿泊リストから非表示になります",
-    hideFromStays: "宿泊リストから非表示", hideFromVehicles: "配車リストから非表示",
+    hideFromStays: "宿泊リストから非表示", hideFromVehicles: "配車リストから非表示", hideFromFlights: "フライトリストから非表示",
     hideFromStaysHint: "オンにすると宿泊一覧から非表示になります",
     hideFromVehiclesHint: "オンにすると配車リストから非表示になります",
+    hideFromFlightsHint: "オンにするとフライト管理リストから非表示（航空券不要の場合）",
+    flightOutbound: "往路", flightReturn: "復路",
     locationTag: "撮影地", locationTagPh: "例：花蓮 Phase 1、高雄 Phase 2",
     allLocations: "全ての撮影地", allHotels: "全ホテル", filterByHotel: "ホテルで絞込",
     stayGuestCount: "名", stayRoomCount: "室",
@@ -1644,9 +1736,9 @@ function FilterChips({ chips, onClear, t }) {
 
 function ProgressBar({ t, stats }) {
   const items = [
-    { label: t.progressFlight, done: stats.flightDone, total: stats.total, color: "var(--asagi)" },
-    { label: t.progressHotel, done: stats.hotelDone, total: stats.total, color: "var(--kincha)" },
-    { label: t.progressVehicle, done: stats.vehicleAssigned, total: stats.total, color: "var(--moegi)", inverse: true },
+    { label: t.progressFlight, done: stats.flightDone, total: stats.flightTotal ?? stats.total, color: "var(--asagi)" },
+    { label: t.progressHotel, done: stats.hotelDone, total: stats.hotelTotal ?? stats.total, color: "var(--kincha)" },
+    { label: t.progressVehicle, done: stats.vehicleAssigned, total: stats.vehicleTotal ?? stats.total, color: "var(--moegi)", inverse: true },
   ];
   return (
     <div style={{ display: "flex", gap: 20, flexWrap: "wrap", padding: "10px 0 4px", fontSize: 11, color: "var(--nezumi)" }}>
@@ -1792,8 +1884,8 @@ function VehicleForm({ init, onSave, onClose, t }) {
 }
 
 function PersonForm({ init, onSave, onClose, t, lang }) {
-  const blank = { dept: "", title_kanji: "", title_other: "", name_kanji: "", last_roman: "", first_roman: "", importance: 0, passport: "", dob: "", passport_exp: "", diet: "", hide_from_stays: false, hide_from_vehicles: false };
-  const [f, setF] = useState(init ? { ...blank, ...init, title_kanji: init.title_kanji || "", title_other: init.title_other || "", hide_from_stays: !!init.hide_from_stays, hide_from_vehicles: !!init.hide_from_vehicles } : blank);
+  const blank = { dept: "", title_kanji: "", title_other: "", name_kanji: "", last_roman: "", first_roman: "", importance: 0, passport: "", dob: "", passport_exp: "", diet: "", hide_from_stays: false, hide_from_vehicles: false, hide_from_flights: false };
+  const [f, setF] = useState(init ? { ...blank, ...init, title_kanji: init.title_kanji || "", title_other: init.title_other || "", hide_from_stays: !!init.hide_from_stays, hide_from_vehicles: !!init.hide_from_vehicles, hide_from_flights: !!init.hide_from_flights } : blank);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const canSave = [f.dept, f.title_kanji, f.title_other, f.name_kanji, f.last_roman, f.first_roman].some((v) => (v || "").trim() !== "");
   const toggleRow = (key, label, hint) => (
@@ -1826,9 +1918,10 @@ function PersonForm({ init, onSave, onClose, t, lang }) {
         </Field>
         <Field label={`${t.dietNotes} (${t.optional})`}><input style={inpStyle} value={f.diet || ""} onChange={set("diet")} /></Field>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 16 }}>
         {toggleRow("hide_from_stays", t.hideFromStays, t.hideFromStaysHint)}
         {toggleRow("hide_from_vehicles", t.hideFromVehicles, t.hideFromVehiclesHint)}
+        {toggleRow("hide_from_flights", t.hideFromFlights, t.hideFromFlightsHint)}
       </div>
       {!canSave && <p style={{ fontSize: 11, color: "var(--shu)" }}>{t.minOneField}</p>}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
@@ -1854,23 +1947,34 @@ function AirportTerminalField({ label, airportKey, terminalKey, f, set }) {
   );
 }
 
+function FlightLegFields({ title, prefix, f, set, t }) {
+  const k = (name) => (prefix ? `${prefix}_${name}` : name);
+  const sectionStyle = { gridColumn: "1 / -1", fontSize: 12, fontWeight: 700, color: "var(--moegi)", letterSpacing: "0.08em", margin: "8px 0 4px", paddingBottom: 6, borderBottom: "1px solid var(--keisenL)" };
+  return (
+    <>
+      <div style={sectionStyle}>{title}</div>
+      <Field label={t.airline}><input style={inpStyle} value={f[k("airline")] || ""} onChange={set(k("airline"))} className="wa-input" /></Field>
+      <Field label={t.flightNo}><input style={inpStyle} value={f[k("flight_no")] || ""} onChange={set(k("flight_no"))} className="wa-input" /></Field>
+      <Field label={t.cabin}><select style={inpStyle} value={f[k("cabin")] || "Economy"} onChange={set(k("cabin"))} className="wa-input">{CABIN.map((c) => <option key={c}>{c}</option>)}</select></Field>
+      <Field label={t.pnr}><input style={inpStyle} value={f[k("pnr")] || ""} onChange={set(k("pnr"))} className="wa-input" /></Field>
+      <AirportTerminalField label={t.depAirport} airportKey={k("dep_airport")} terminalKey={k("dep_terminal")} f={f} set={set} />
+      <AirportTerminalField label={t.arrAirport} airportKey={k("arr_airport")} terminalKey={k("arr_terminal")} f={f} set={set} />
+      <Field label={t.depTime}><input type="datetime-local" style={inpStyle} value={f[k("dep_time")] || ""} onChange={set(k("dep_time"))} className="wa-input" /></Field>
+      <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f[k("arr_time")] || ""} onChange={set(k("arr_time"))} className="wa-input" /></Field>
+      <Field label={`${t.checkedBag} (${t.optional})`}><input style={inpStyle} value={f[k("checked_bag")] || ""} onChange={set(k("checked_bag"))} className="wa-input" /></Field>
+      <Field label={`${t.cabinBag} (${t.optional})`}><input style={inpStyle} value={f[k("cabin_bag")] || ""} onChange={set(k("cabin_bag"))} className="wa-input" /></Field>
+    </>
+  );
+}
+
 function FlightForm({ init, onSave, onClose, t }) {
-  const blank = { airline: "", flight_no: "", cabin: "Economy", pnr: "", dep_airport: "", dep_terminal: "", dep_time: todayDT(), arr_airport: "", arr_terminal: "", arr_time: todayDT(), checked_bag: "", cabin_bag: "" };
-  const [f, setF] = useState(init ? { ...blank, ...init } : blank);
+  const [f, setF] = useState(() => (init ? { ...FLIGHT_BLANK, ...flightFormInit(init) } : { ...FLIGHT_BLANK }));
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
-        <Field label={t.airline}><input style={inpStyle} value={f.airline} onChange={set("airline")} className="wa-input" /></Field>
-        <Field label={t.flightNo}><input style={inpStyle} value={f.flight_no} onChange={set("flight_no")} className="wa-input" /></Field>
-        <Field label={t.cabin}><select style={inpStyle} value={f.cabin} onChange={set("cabin")} className="wa-input">{CABIN.map((c) => <option key={c}>{c}</option>)}</select></Field>
-        <Field label={t.pnr}><input style={inpStyle} value={f.pnr} onChange={set("pnr")} className="wa-input" /></Field>
-        <AirportTerminalField label={t.depAirport} airportKey="dep_airport" terminalKey="dep_terminal" f={f} set={set} />
-        <AirportTerminalField label={t.arrAirport} airportKey="arr_airport" terminalKey="arr_terminal" f={f} set={set} />
-        <Field label={t.depTime}><input type="datetime-local" style={inpStyle} value={f.dep_time || ""} onChange={set("dep_time")} className="wa-input" /></Field>
-        <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f.arr_time || ""} onChange={set("arr_time")} className="wa-input" /></Field>
-        <Field label={`${t.checkedBag} (${t.optional})`}><input style={inpStyle} value={f.checked_bag || ""} onChange={set("checked_bag")} className="wa-input" /></Field>
-        <Field label={`${t.cabinBag} (${t.optional})`}><input style={inpStyle} value={f.cabin_bag || ""} onChange={set("cabin_bag")} className="wa-input" /></Field>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px", maxHeight: "70vh", overflowY: "auto", paddingRight: 4 }}>
+        <FlightLegFields title={t.flightOutbound} prefix="" f={f} set={set} t={t} />
+        <FlightLegFields title={t.flightReturn} prefix="ret" f={f} set={set} t={t} />
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
@@ -2081,6 +2185,12 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       { key: "dep_time", label: t.depTime, default: true },
       { key: "arr_airport", label: t.arrAirport, default: true },
       { key: "arr_time", label: t.arrTime, default: true },
+      { key: "ret_airline", label: `${t.flightReturn}${t.airline}`, default: true },
+      { key: "ret_flight_no", label: `${t.flightReturn}${t.flightNo}`, default: true },
+      { key: "ret_dep_airport", label: `${t.flightReturn}${t.depAirport}`, default: false },
+      { key: "ret_dep_time", label: `${t.flightReturn}${t.depTime}`, default: true },
+      { key: "ret_arr_airport", label: `${t.flightReturn}${t.arrAirport}`, default: false },
+      { key: "ret_arr_time", label: `${t.flightReturn}${t.arrTime}`, default: true },
     ],
     staff: [
       { key: "no", label: t.no, default: true },
@@ -2136,8 +2246,9 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       });
     }
     if (reportType === "flight") {
-      return persons.map((p) => {
+      return persons.filter((p) => !p.hide_from_flights).map((p) => {
         const fl = flights.find((x) => x.person_id === p.id);
+        const fmtTs = (ts) => { const v = toDatetimeLocalValue(ts); return v ? v.replace("T", " ") : "—"; };
         return {
           no: personIndex[p.id] || "",
           dept: p.dept || "—",
@@ -2148,9 +2259,15 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
           cabin: fl?.cabin || "—",
           pnr: fl?.pnr || "—",
           dep_airport: fl?.dep_airport || "—",
-          dep_time: fl?.dep_time ? fl.dep_time.slice(0, 16).replace("T", " ") : "—",
+          dep_time: fmtTs(fl?.dep_time),
           arr_airport: fl?.arr_airport || "—",
-          arr_time: fl?.arr_time ? fl.arr_time.slice(0, 16).replace("T", " ") : "—",
+          arr_time: fmtTs(fl?.arr_time),
+          ret_airline: fl?.ret_airline || "—",
+          ret_flight_no: fl?.ret_flight_no || "—",
+          ret_dep_airport: fl?.ret_dep_airport || "—",
+          ret_dep_time: fmtTs(fl?.ret_dep_time),
+          ret_arr_airport: fl?.ret_arr_airport || "—",
+          ret_arr_time: fmtTs(fl?.ret_arr_time),
         };
       });
     }
@@ -3564,10 +3681,22 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
   const progressStats = useMemo(() => {
     const total = persons.length;
-    const flightDone = persons.filter((p) => { const fl = flights.find((x) => x.person_id === p.id); return fl && fl.airline; }).length;
-    const hotelDone = persons.filter((p) => stays.some((s) => s.person_id === p.id && s.hotel_id)).length;
+    const flightEligible = persons.filter((p) => !p.hide_from_flights);
+    const stayEligible = persons.filter((p) => !p.hide_from_stays);
+    const vehicleEligible = persons.filter((p) => !p.hide_from_vehicles);
+    const flightDone = flightEligible.filter((p) => { const fl = flights.find((x) => x.person_id === p.id); return fl && fl.airline && fl.flight_no; }).length;
+    const hotelDone = stayEligible.filter((p) => stays.some((s) => s.person_id === p.id && s.hotel_id)).length;
     const tripPersons = new Set(allAssignments.map((a) => a.person_id));
-    return { total, flightDone, hotelDone, vehicleAssigned: tripPersons.size, unassignedVehicle: persons.filter((p) => !tripPersons.has(p.id)).length };
+    return {
+      total,
+      flightTotal: flightEligible.length,
+      flightDone,
+      hotelTotal: stayEligible.length,
+      hotelDone,
+      vehicleTotal: vehicleEligible.length,
+      vehicleAssigned: [...tripPersons].filter((id) => vehicleEligible.some((p) => p.id === id)).length,
+      unassignedVehicle: vehicleEligible.filter((p) => !tripPersons.has(p.id)).length,
+    };
   }, [persons, flights, stays, allAssignments]);
 
   const getRoommateNames = (id) => roommates.filter((r) => r.person_id === id).map((r) => persons.find((p) => p.id === r.partner_id)?.name_kanji).filter(Boolean).join("、");
@@ -3580,6 +3709,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   });
 
   const filteredFlightPersons = useMemo(() => persons.filter((p) => {
+    if (p.hide_from_flights) return false;
     const fl = flights.find((x) => x.person_id === p.id);
     const kw = debSearchB.toLowerCase();
     const nameOk = !kw || [p.name_kanji, p.last_roman, p.first_roman, p.dept].some((v) => (v || "").toLowerCase().includes(kw));
@@ -3904,18 +4034,22 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   };
 
   const exportFlightCSV = () => {
-    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.airline, t.flightNo, t.cabin, t.pnr, t.depAirport, t.depTime, t.arrAirport, t.arrTime, t.status];
-    const rows = persons.map((p, i) => {
+    const fmtTs = (ts) => { const v = toDatetimeLocalValue(ts); return v ? v.replace("T", " ") : ""; };
+    const headers = [t.no, t.dept, t.nameKanji, t.nameRoman, t.airline, t.flightNo, t.cabin, t.pnr, t.depAirport, t.depTime, t.arrAirport, t.arrTime, `${t.flightReturn}${t.flightNo}`, `${t.flightReturn}${t.depTime}`, `${t.flightReturn}${t.arrTime}`, t.status];
+    const rows = persons.filter((p) => !p.hide_from_flights).map((p) => {
       const fl = flights.find((x) => x.person_id === p.id);
       const depT = fl?.dep_terminal ? `T${fl.dep_terminal.replace(/^T/i,"")}` : "";
       const arrT = fl?.arr_terminal ? `T${fl.arr_terminal.replace(/^T/i,"")}` : "";
       return [personIndex[p.id], p.dept, p.name_kanji, `${p.last_roman} ${p.first_roman}`.trim(),
         fl?.airline || "", fl?.flight_no || "", fl?.cabin || "", fl?.pnr || "",
         fl?.dep_airport ? `${fl.dep_airport}${depT ? " "+depT : ""}` : "",
-        fl?.dep_time ? new Date(fl.dep_time).toLocaleString() : "",
+        fmtTs(fl?.dep_time),
         fl?.arr_airport ? `${fl.arr_airport}${arrT ? " "+arrT : ""}` : "",
-        fl?.arr_time ? new Date(fl.arr_time).toLocaleString() : "",
-        fl?.airline ? t.arranged_short : t.unArranged_short];
+        fmtTs(fl?.arr_time),
+        fl?.ret_flight_no || "",
+        fmtTs(fl?.ret_dep_time),
+        fmtTs(fl?.ret_arr_time),
+        fl?.airline && fl?.flight_no ? t.arranged : t.unArranged];
     });
     downloadCSV([headers, ...rows], `flights_${todayStr()}.csv`);
   };
@@ -4150,6 +4284,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                             <Highlight text={p.dept} query={debSearchA} />
                             {p.hide_from_stays && <span style={{ marginLeft: 4, fontSize: 8, padding: "1px 5px", borderRadius: 3, background: "rgba(173,48,48,.1)", color: "var(--shu)", fontWeight: 700, whiteSpace: "nowrap", verticalAlign: "middle" }}>住宿×</span>}
                             {p.hide_from_vehicles && <span style={{ marginLeft: 4, fontSize: 8, padding: "1px 5px", borderRadius: 3, background: "rgba(120,80,0,.1)", color: "#a06000", fontWeight: 700, whiteSpace: "nowrap", verticalAlign: "middle" }}>派車×</span>}
+                            {p.hide_from_flights && <span style={{ marginLeft: 4, fontSize: 8, padding: "1px 5px", borderRadius: 3, background: "rgba(74,127,165,.12)", color: "var(--asagi)", fontWeight: 700, whiteSpace: "nowrap", verticalAlign: "middle" }}>航班×</span>}
                           </td>
                           <td className="col-title" style={tdS({ verticalAlign: "top" })}><TitleCell top={p.title_kanji} bottom={p.title_other} /></td>
                           <td className="col-kanji" style={tdEllipsis({ fontWeight: 600 })} title={p.name_kanji}><Highlight text={p.name_kanji} query={debSearchA} /></td>
@@ -4202,7 +4337,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                 </div>
               )}
               <FilterChips chips={[{ key: "r", label: searchBRoman }, { key: "a", label: searchBAirline }, { key: "s", label: searchBStatus }].filter((c) => c.label)} onClear={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }} t={t} />
-              <p style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", filteredFlightPersons.length).replace("{total}", persons.length)}</p>
+              <p style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", filteredFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
               <div style={{ overflowX: "auto" }}>
                 <table style={tblW} className="flight-table">
                   <thead><tr style={thead}>
@@ -4219,6 +4354,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       { key: "depT", label: t.depTime, w: 88 },
                       { key: "arrA", label: t.arrAirport, w: 76 },
                       { key: "arrT", label: t.arrTime, w: 88 },
+                      { key: "retFlight", label: `${t.flightReturn}${t.flightNo}`, w: 64 },
+                      { key: "retDepT", label: `${t.flightReturn}${t.depTime}`, w: 88 },
+                      { key: "retArrT", label: `${t.flightReturn}${t.arrTime}`, w: 88 },
                       { key: "status", label: t.status, w: 68 },
                       { key: "act", label: t.action, w: 56 },
                     ].map(({ key, label, w }) => (
@@ -4233,6 +4371,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       const hasF = fl && fl.airline;
                       const depDT = fmtFlightDateTime(fl?.dep_time, lang);
                       const arrDT = fmtFlightDateTime(fl?.arr_time, lang);
+                      const retDepDT = fmtFlightDateTime(fl?.ret_dep_time, lang);
+                      const retArrDT = fmtFlightDateTime(fl?.ret_arr_time, lang);
+                      const hasRet = fl && (fl.ret_airline || fl.ret_flight_no);
                       const dtCell = (dt) => dt ? (
                         <div>
                           <div style={{ fontSize: 12.5, fontWeight: 400, color: "var(--sumi)" }}>{dt.date}</div>
@@ -4261,6 +4402,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           <td style={flightCell()}>{dtCell(depDT)}</td>
                           <td style={flightCell({ whiteSpace: "normal" })}>{aptCell(fl?.arr_airport, arrT)}</td>
                           <td style={flightCell()}>{dtCell(arrDT)}</td>
+                          <td style={flightCell()}>{hasRet ? (fl.ret_flight_no || "—") : "—"}</td>
+                          <td style={flightCell()}>{dtCell(retDepDT)}</td>
+                          <td style={flightCell()}>{dtCell(retArrDT)}</td>
                           <td style={flightCell({ minWidth: 80 })}>{statusBadge(hasF ? "arranged" : "none")}</td>
                           <td style={flightCell()}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
                         </tr>
@@ -4965,7 +5109,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       )}
 
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
-      {flightModal && <Modal title={t.flightMgmt} onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = { ...f, person_id: flightModal.pid, project_id: pid }; if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
+      {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
       {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} roommateNames={stayModal.pid ? getRoommateNames(stayModal.pid) : null} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
