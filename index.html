@@ -160,6 +160,7 @@ function stayFormInit(raw) {
     stay_label: raw.stay_label || "",
     room_number: raw.room_number || "",
     special_room_name: raw.special_room_name || "",
+    location_tag: raw.location_tag || "",
   };
 }
 
@@ -177,6 +178,7 @@ function buildStayPayload(f, personId, projectId) {
     stay_label: (f.stay_label || "").trim() || null,
     room_number: (f.room_number || "").trim() || null,
     special_room_name: (f.special_room_name || "").trim() || null,
+    location_tag: (f.location_tag || "").trim() || null,
     person_id: isSpecial ? null : (personId || null),
     project_id: projectId,
   };
@@ -296,6 +298,15 @@ const T = {
     guestNights: "人次", roomNights: "客室泊數",
     specialRoom: "專用空間", specialRoomName: "空間名稱（器材間・梳化間等）", addSpecialRoom: "新增專用空間",
     onSite: "參與現場", offSiteHint: "關閉後將從排車與住宿名單中隱藏",
+    hideFromStays: "隱藏於住宿名單", hideFromVehicles: "隱藏於派車名單",
+    hideFromStaysHint: "開啟後，此人不顯示於住宿一覽與住宿篩選名單",
+    hideFromVehiclesHint: "開啟後，此人不顯示於派車配置與每日配車單",
+    locationTag: "拍攝地點", locationTagPh: "例：花蓮 Phase 1、高雄 Phase 2",
+    allLocations: "全部地點",
+    dailyDispatch: "每日配車單", dispatchDate: "配車日期", copyPrevDay: "複製前一天",
+    noDispatchData: "此日尚無配車記錄，可手動新增或複製前一天的配車配置",
+    dispatchCopied: "已複製前一天配車配置", dispatchNoYesterday: "找不到前一天的配車記錄",
+    vehicleConfig: "車輛配置",
     exportReport: "匯出報表", reportExport: "報表匯出", selectCols: "選擇輸出欄位", previewReport: "預覽／列印",
     reportTypeStay: "住宿表", reportTypeFlight: "航班表", reportTypeStaff: "工作人員列表", reportTypeVehicle: "配車表",
     statsPickHotel: "選擇飯店", statsPickDate: "選擇日期", statsSelectHotelFirst: "請先選擇飯店",
@@ -388,6 +399,15 @@ const T = {
     guestNights: "人次", roomNights: "客房泊数",
     specialRoom: "专用空间", specialRoomName: "空间名称（器材间・化妆间等）", addSpecialRoom: "新增专用空间",
     onSite: "参与现场", offSiteHint: "关闭后将从排车与住宿名单中隐藏",
+    hideFromStays: "隐藏于住宿名单", hideFromVehicles: "隐藏于派车名单",
+    hideFromStaysHint: "开启后，此人不显示于住宿一览与住宿筛选名单",
+    hideFromVehiclesHint: "开启后，此人不显示于派车配置与每日配车单",
+    locationTag: "拍摄地点", locationTagPh: "例：花莲 Phase 1、高雄 Phase 2",
+    allLocations: "全部地点",
+    dailyDispatch: "每日配车单", dispatchDate: "配车日期", copyPrevDay: "复制前一天",
+    noDispatchData: "此日暂无配车记录，可手动新增或复制前一天的配车配置",
+    dispatchCopied: "已复制前一天配车配置", dispatchNoYesterday: "找不到前一天的配车记录",
+    vehicleConfig: "车辆配置",
     exportReport: "导出报表", reportExport: "报表导出", selectCols: "选择输出列", previewReport: "预览／打印",
     reportTypeStay: "住宿表", reportTypeFlight: "航班表", reportTypeStaff: "工作人员列表", reportTypeVehicle: "用车表",
     statsPickHotel: "选择饭店", statsPickDate: "选择日期", statsSelectHotelFirst: "请先选择饭店",
@@ -479,6 +499,15 @@ const T = {
     guestNights: "guest-nights", roomNights: "room-nights",
     specialRoom: "Special Space", specialRoomName: "Space name (equipment room, makeup room…)", addSpecialRoom: "Add special space",
     onSite: "On-site", offSiteHint: "When off, hidden from vehicle & stay lists",
+    hideFromStays: "Hide from stays", hideFromVehicles: "Hide from vehicles",
+    hideFromStaysHint: "When on, this person won't appear in the accommodation list",
+    hideFromVehiclesHint: "When on, this person won't appear in vehicle assignments",
+    locationTag: "Location", locationTagPh: "e.g. Hualien Phase 1, Kaohsiung Phase 2",
+    allLocations: "All Locations",
+    dailyDispatch: "Daily Dispatch", dispatchDate: "Dispatch Date", copyPrevDay: "Copy Previous Day",
+    noDispatchData: "No dispatch for this day. Add manually or copy previous day.",
+    dispatchCopied: "Copied previous day dispatch", dispatchNoYesterday: "No previous day dispatch found",
+    vehicleConfig: "Vehicle Config",
     exportReport: "Export Report", reportExport: "Report Export", selectCols: "Select columns", previewReport: "Preview / Print",
     reportTypeStay: "Accommodation", reportTypeFlight: "Flights", reportTypeStaff: "Staff List", reportTypeVehicle: "Vehicles",
     statsPickHotel: "Hotel", statsPickDate: "Date", statsSelectHotelFirst: "Select a hotel first",
@@ -568,6 +597,15 @@ const T = {
     guestNights: "인원박", roomNights: "객실박",
     specialRoom: "전용 공간", specialRoomName: "공간 이름(장비실·분장실 등)", addSpecialRoom: "전용 공간 추가",
     onSite: "현장 참여", offSiteHint: "끄면 차량·숙박 목록에서 숨겨집니다",
+    hideFromStays: "숙박 목록에서 숨김", hideFromVehicles: "차량 목록에서 숨김",
+    hideFromStaysHint: "켜면 숙박 목록에서 표시되지 않습니다",
+    hideFromVehiclesHint: "켜면 차량 배정 목록에서 표시되지 않습니다",
+    locationTag: "촬영 장소", locationTagPh: "예: 화련 Phase 1, 가오슝 Phase 2",
+    allLocations: "전체 장소",
+    dailyDispatch: "일일 배차표", dispatchDate: "배차 날짜", copyPrevDay: "전날 복사",
+    noDispatchData: "이날 배차 기록이 없습니다. 수동 추가 또는 전날 복사를 이용하세요.",
+    dispatchCopied: "전날 배차 설정을 복사했습니다", dispatchNoYesterday: "전날 배차 기록을 찾을 수 없습니다",
+    vehicleConfig: "차량 설정",
     exportReport: "보고서 내보내기", reportExport: "보고서 내보내기", selectCols: "출력 열 선택", previewReport: "미리보기 / 인쇄",
     reportTypeStay: "숙박표", reportTypeFlight: "항공표", reportTypeStaff: "스태프 목록", reportTypeVehicle: "배차표",
     statsPickHotel: "호텔 선택", statsPickDate: "날짜 선택", statsSelectHotelFirst: "호텔을 먼저 선택하세요",
@@ -656,6 +694,15 @@ const T = {
     guestNights: "人泊", roomNights: "室泊",
     specialRoom: "専用スペース", specialRoomName: "スペース名（機材室・メイク室など）", addSpecialRoom: "専用スペースを追加",
     onSite: "現場参加", offSiteHint: "オフにすると車両・宿泊リストから非表示になります",
+    hideFromStays: "宿泊リストから非表示", hideFromVehicles: "配車リストから非表示",
+    hideFromStaysHint: "オンにすると宿泊一覧から非表示になります",
+    hideFromVehiclesHint: "オンにすると配車リストから非表示になります",
+    locationTag: "撮影地", locationTagPh: "例：花蓮 Phase 1、高雄 Phase 2",
+    allLocations: "全ての撮影地",
+    dailyDispatch: "日別配車表", dispatchDate: "配車日", copyPrevDay: "前日をコピー",
+    noDispatchData: "この日の配車記録がありません。手動追加または前日コピーをご利用ください。",
+    dispatchCopied: "前日の配車設定をコピーしました", dispatchNoYesterday: "前日の配車記録が見つかりません",
+    vehicleConfig: "車両設定",
     exportReport: "レポート出力", reportExport: "レポート出力", selectCols: "出力列を選択", previewReport: "プレビュー／印刷",
     reportTypeStay: "宿泊表", reportTypeFlight: "航空便表", reportTypeStaff: "スタッフ一覧", reportTypeVehicle: "配車表",
     statsPickHotel: "ホテル選択", statsPickDate: "日付", statsSelectHotelFirst: "ホテルを選択してください",
@@ -1235,11 +1282,6 @@ function vehicleOnboardCount(assignments) {
   return drivers + pax;
 }
 
-function vehicleDeptSummary(assigns, persons) {
-  const depts = [...new Set(assigns.map((a) => persons.find((p) => p.id === a.person_id)?.dept).filter(Boolean))];
-  return depts.length ? depts.join("、") : "";
-}
-
 const parseHmToMinutes = (str) => {
   if (!str) return null;
   const m = String(str).trim().match(/^(\d{1,2}):(\d{2})/);
@@ -1561,10 +1603,19 @@ function VehicleForm({ init, onSave, onClose, t }) {
 }
 
 function PersonForm({ init, onSave, onClose, t, lang }) {
-  const blank = { dept: "", title_kanji: "", title_other: "", name_kanji: "", last_roman: "", first_roman: "", importance: 0, passport: "", dob: "", passport_exp: "", diet: "", on_site: true };
-  const [f, setF] = useState(init ? { ...blank, ...init, title_kanji: init.title_kanji || "", title_other: init.title_other || "", on_site: init.on_site !== false } : blank);
+  const blank = { dept: "", title_kanji: "", title_other: "", name_kanji: "", last_roman: "", first_roman: "", importance: 0, passport: "", dob: "", passport_exp: "", diet: "", hide_from_stays: false, hide_from_vehicles: false };
+  const [f, setF] = useState(init ? { ...blank, ...init, title_kanji: init.title_kanji || "", title_other: init.title_other || "", hide_from_stays: !!init.hide_from_stays, hide_from_vehicles: !!init.hide_from_vehicles } : blank);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const canSave = [f.dept, f.title_kanji, f.title_other, f.name_kanji, f.last_roman, f.first_roman].some((v) => (v || "").trim() !== "");
+  const toggleRow = (key, label, hint) => (
+    <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: f[key] ? "rgba(173,48,48,.06)" : "var(--washi)", borderRadius: 6, border: `1px solid ${f[key] ? "rgba(173,48,48,.25)" : "var(--keisenL)"}`, cursor: "pointer" }}>
+      <input type="checkbox" checked={!!f[key]} onChange={(e) => setF((p) => ({ ...p, [key]: e.target.checked }))} style={{ width: 16, height: 16, accentColor: "var(--shu)", cursor: "pointer" }} />
+      <div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: f[key] ? "var(--shu)" : "var(--moegi)" }}>{label}</div>
+        <div style={{ fontSize: 10, color: "var(--usunezumi)", marginTop: 2 }}>{hint}</div>
+      </div>
+    </label>
+  );
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -1586,14 +1637,10 @@ function PersonForm({ init, onSave, onClose, t, lang }) {
         </Field>
         <Field label={`${t.dietNotes} (${t.optional})`}><input style={inpStyle} value={f.diet || ""} onChange={set("diet")} /></Field>
       </div>
-      {/* on_site toggle */}
-      <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, padding: "10px 14px", background: "var(--washi)", borderRadius: 6, border: "1px solid var(--keisenL)", cursor: "pointer" }}>
-        <input type="checkbox" checked={f.on_site !== false} onChange={(e) => setF((p) => ({ ...p, on_site: e.target.checked }))} style={{ width: 16, height: 16, accentColor: "var(--moegi)", cursor: "pointer" }} />
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: f.on_site !== false ? "var(--moegi)" : "var(--nezumi)" }}>{t.onSite}</div>
-          <div style={{ fontSize: 10, color: "var(--usunezumi)", marginTop: 2 }}>{t.offSiteHint}</div>
-        </div>
-      </label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 16 }}>
+        {toggleRow("hide_from_stays", t.hideFromStays, t.hideFromStaysHint)}
+        {toggleRow("hide_from_vehicles", t.hideFromVehicles, t.hideFromVehiclesHint)}
+      </div>
       {!canSave && <p style={{ fontSize: 11, color: "var(--shu)" }}>{t.minOneField}</p>}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
@@ -1645,7 +1692,7 @@ function FlightForm({ init, onSave, onClose, t }) {
 }
 
 function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, roommateNames, isSpecialRoom }) {
-  const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "", room_number: "", special_room_name: "" };
+  const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "", room_number: "", special_room_name: "", location_tag: "" };
   const [f, setF] = useState(() => (init ? { ...blank, ...stayFormInit(init) } : blank));
   const [syncRoommates, setSyncRoommates] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -1713,6 +1760,11 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
         <Field label={t.nights}><input style={{ ...inpStyle, background: "var(--washi)", textAlign: "center" }} value={nights || ""} readOnly /></Field>
         <Field label={t.totalAmt}><input style={{ ...inpStyle, background: "var(--washi)", fontWeight: 700, color: "var(--asagi)" }} value={totalAmount ? formatMoney(dispTotal, project, lang) : "—"} readOnly /></Field>
         {!isSpecialRoom && <Field label={t.roomNo}><input style={inpStyle} value={f.room_number} onChange={set("room_number")} placeholder={t.roomNoPending} /></Field>}
+        <div style={{ gridColumn: "1 / -1" }}>
+          <Field label={t.locationTag}>
+            <input style={inpStyle} value={f.location_tag || ""} onChange={set("location_tag")} placeholder={t.locationTagPh} />
+          </Field>
+        </div>
       </div>
       {breakdown.length > 0 && (
         <div style={{ marginTop: 10, background: "var(--washi)", padding: 10 }}>
@@ -1741,46 +1793,75 @@ const ROOM_TYPES_FOR_RATES = ROOM_TYPES.filter((r) => r !== "Custom");
 
 // ─── 高質感報表匯出 ────────────────────────────────────────────
 function generateReportHTML({ type, cols, data, project, lang, t }) {
-  const isLandscape = cols.length > 7;
+  const isLandscape = cols.length > 6;
   const pageDir = isLandscape ? "landscape" : "portrait";
   const projectName = project?.name || "";
   const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
   const typeLabel = { stay: t.reportTypeStay, flight: t.reportTypeFlight, staff: t.reportTypeStaff, vehicle: t.reportTypeVehicle }[type] || type;
 
-  const headerGrad = "linear-gradient(135deg, #1a3028 0%, #2d4a36 60%, #1a3028 100%)";
-  const accentColor = "#4a8f6a";
+  const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
 
-  const thStyle = `padding:7px 10px;font-size:8.5pt;font-weight:700;letter-spacing:.08em;text-align:left;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;`;
-  const tdStyle = `padding:6px 10px;font-size:9.5pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #e0ebe4;vertical-align:top;`;
+  // Vehicle report: group by vehicle, inline numbered passengers
+  if (type === "vehicle") {
+    const vehicles = [...new Set(data.map((r) => r.vehicle))].filter(Boolean);
+    const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+    const vehicleBlocks = vehicles.map((vName) => {
+      const passengers = data.filter((r) => r.vehicle === vName);
+      const chips = passengers.map((r, i) => {
+        const isDriver = r.role === (t.driver || "Driver") || r.role === "driver";
+        const num = CIRC[i] || (i + 1);
+        return `<span style="display:inline-flex;align-items:center;gap:3px;padding:4px 9px;margin:2px;border-radius:5px;font-size:9.5pt;background:${isDriver ? "rgba(43,90,76,.12)" : "#f4f9f5"};border:1px solid ${isDriver ? "rgba(43,90,76,.3)" : "#d8eed8"};font-weight:${isDriver ? 700 : 500};">
+          <span style="font-size:9pt;color:${isDriver ? "#2b5a4c" : "#888"};">${num}</span>
+          <span style="color:#1a2820;">${r.name_kanji || "—"}</span>
+          ${isDriver ? `<span style="font-size:7.5pt;color:#2b5a4c;font-weight:700;margin-left:2px;">${t.driver}</span>` : ""}
+        </span>`;
+      }).join("");
+      return `<div style="margin-bottom:14px;break-inside:avoid;">
+        <div style="background:${headerGrad};color:#fff;padding:8px 14px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:'Noto Serif JP',serif;font-size:11.5pt;font-weight:600;letter-spacing:.03em;">${vName}</span>
+          <span style="font-size:8.5pt;opacity:.75;">${passengers.length} ${t.passengers_unit}</span>
+        </div>
+        <div style="padding:8px 12px;border:1px solid #d8eed8;border-top:none;border-radius:0 0 6px 6px;background:#fff;line-height:1.8;">${chips || "<span style='color:#aaa;font-size:9pt;'>—</span>"}</div>
+      </div>`;
+    }).join("");
+    const cols2 = isLandscape ? "columns:2;column-gap:14mm;" : "";
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;padding:2mm;}
+@page{size:A4 ${pageDir};margin:8mm 10mm;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+.doc-header{background:${headerGrad};color:#fff;padding:12px 16px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.footer{margin-top:10px;font-size:7pt;color:#aaa;text-align:right;border-top:1px solid #d8e8dc;padding-top:5px;}</style></head>
+<body>
+<div class="doc-header"><div><div style="font-size:8.5pt;opacity:.7;letter-spacing:.1em;text-transform:uppercase;">${typeLabel}</div><div style="font-family:'Noto Serif JP',serif;font-size:13pt;font-weight:600;margin-top:2px;">${projectName}</div></div>
+<div style="text-align:right;font-size:8pt;opacity:.75;"><div>${now}</div><div>${vehicles.length} vehicles · ${data.length} pax</div></div></div>
+<div style="${cols2}">${vehicleBlocks}</div>
+<div class="footer">${projectName} · ${typeLabel} · ${now}</div>
+</body></html>`;
+  }
+
+  // Generic table report (stay / flight / staff)
+  const thStyle = `padding:6px 9px;font-size:8pt;font-weight:700;letter-spacing:.07em;text-align:left;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;`;
+  const tdStyle = `padding:5px 9px;font-size:8.5pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #e8f0ea;vertical-align:top;line-height:1.5;`;
 
   const thead = `<tr style="background:${headerGrad};color:#fff;">${cols.map((c) => `<th style="${thStyle}">${c.label}</th>`).join("")}</tr>`;
-
   const rows = data.map((row, i) => {
-    const bg = i % 2 === 0 ? "#ffffff" : "#f4f9f5";
-    const cells = cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("");
-    return `<tr>${cells}</tr>`;
+    const bg = i % 2 === 0 ? "#ffffff" : "#f5faf6";
+    return `<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`;
   });
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans JP',sans-serif;font-size:10pt;color:#1a2820;background:#fff;}
-@page{size:A4 ${pageDir};margin:8mm 10mm;}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-.wrap{padding:2mm;}
-.doc-header{background:${headerGrad};color:#fff;padding:14px 18px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-.doc-title{font-family:'Noto Serif JP',serif;font-size:14pt;font-weight:600;letter-spacing:.04em;}
-.doc-meta{font-size:8pt;opacity:.75;text-align:right;line-height:1.7;}
-.doc-type{display:inline-block;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:12px;font-size:8.5pt;font-weight:700;letter-spacing:.08em;margin-bottom:6px;}
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:9pt;color:#1a2820;background:#fff;}
+@page{size:A4 ${pageDir};margin:8mm 10mm;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+.doc-header{background:${headerGrad};color:#fff;padding:12px 16px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 table{width:100%;border-collapse:collapse;border-radius:4px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-thead{background:${headerGrad};color:#fff;}
-.footer{margin-top:12px;font-size:7.5pt;color:#888;text-align:right;border-top:1px solid #d8e8dc;padding-top:6px;}
-</style></head><body><div class="wrap">
-<div class="doc-header"><div><div class="doc-type">${typeLabel}</div><div class="doc-title">${projectName}</div></div><div class="doc-meta"><div>${now}</div><div>${data.length} ${t.resultsCount ? "" : "rows"}</div><div style="font-size:7pt;margin-top:4px;opacity:.6;">${isLandscape ? "A4 Landscape" : "A4 Portrait"}</div></div></div>
+.footer{margin-top:10px;font-size:7pt;color:#aaa;text-align:right;border-top:1px solid #d8e8dc;padding-top:5px;}</style></head>
+<body>
+<div class="doc-header"><div><div style="font-size:8pt;opacity:.7;letter-spacing:.1em;text-transform:uppercase;">${typeLabel}</div><div style="font-family:'Noto Serif JP',serif;font-size:13pt;font-weight:600;margin-top:2px;">${projectName}</div></div>
+<div style="text-align:right;font-size:8pt;opacity:.75;"><div>${now}</div><div>${data.length} rows · ${isLandscape ? "A4 Landscape" : "A4 Portrait"}</div></div></div>
 <table><thead>${thead}</thead><tbody>${rows.join("")}</tbody></table>
 <div class="footer">${projectName} · ${typeLabel} · ${now}</div>
-</div></body></html>`;
+</body></html>`;
 }
 
 function ReportExportModal({ onClose, t, lang, project, persons, flights, stays, hotels, pricingRules, vehicles, vehicleAssignments, personIndex, stayDisplayTotals }) {
@@ -1899,7 +1980,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
         dob: p.dob || "—",
         passport_exp: p.passport_exp || "—",
         diet: p.diet || "—",
-        on_site: p.on_site !== false ? "✓" : "—",
+        on_site: (!p.hide_from_stays && !p.hide_from_vehicles) ? "✓" : [p.hide_from_stays ? "住宿×" : "", p.hide_from_vehicles ? "派車×" : ""].filter(Boolean).join(" "),
       }));
     }
     if (reportType === "vehicle") {
@@ -2162,6 +2243,24 @@ ${rows}
         <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.04em" }}>{t.totalCost}</span>
         <span style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
       </div>
+    </div>
+  );
+}
+
+function DailyDispatchAddRow({ vehicleId, persons, t, onAdd }) {
+  const [person, setPerson] = React.useState("");
+  const [role, setRole] = React.useState("passenger");
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
+      <select style={{ ...inpStyle, flex: "2 1 120px", minWidth: 0 }} value={person} onChange={(e) => setPerson(e.target.value)}>
+        <option value="">{t.selectPassenger}</option>
+        {persons.filter((p) => !p.hide_from_vehicles).map((p) => <option key={p.id} value={p.id}>{p.dept ? `[${p.dept}] ` : ""}{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
+      </select>
+      <select style={{ ...inpStyle, flex: "1 1 80px", minWidth: 0 }} value={role} onChange={(e) => setRole(e.target.value)}>
+        <option value="driver">{t.driver}</option>
+        <option value="passenger">{t.passengers}</option>
+      </select>
+      <button type="button" style={{ ...pBtn(false), flex: "0 0 auto" }} onClick={() => { if (!person) return; onAdd(vehicleId, person, role); setPerson(""); setRole("passenger"); }}>+</button>
     </div>
   );
 }
@@ -2948,6 +3047,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [roommates, setRoommates] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [vehicleAssignments, setVehicleAssignments] = useState([]);
+  const [dailyDispatches, setDailyDispatches] = useState([]);
+  const [vehicleSub, setVehicleSub] = useState("config");
+  const [dispatchDate, setDispatchDate] = useState(() => localDateStr());
   const [useAssignmentTable, setUseAssignmentTable] = useState(true);
 
   const [searchA, setSearchA] = useState("");
@@ -2958,6 +3060,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [deptC, setDeptC] = useState("");
   const [searchCHotel, setSearchCHotel] = useState("");
   const [searchCRoom, setSearchCRoom] = useState("");
+  const [filterLocationTag, setFilterLocationTag] = useState("");
   const [statsDate, setStatsDate] = useState("");
   const [statsHotelId, setStatsHotelId] = useState("");
   const [searchD, setSearchD] = useState("");
@@ -2996,7 +3099,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     setLoading(true);
     try {
       const pf = `&project_id=eq.${pid}`;
-      const [p, f, s, h, pr, rm, vh, va] = await Promise.all([
+      const [p, f, s, h, pr, rm, vh, va, dd] = await Promise.all([
         api.get("persons", pf + "&order=sort_order.asc,id.asc"),
         api.get("flights", pf),
         api.get("stays", pf),
@@ -3005,11 +3108,13 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         api.get("roommates", pf),
         api.get("vehicles", pf + "&order=created_at.asc").catch(() => []),
         api.get("vehicle_assignments", pf + "&order=sort_order.asc,id.asc").catch(() => null),
+        api.get("daily_dispatches", pf + "&order=dispatch_date.asc,sort_order.asc,id.asc").catch(() => []),
       ]);
       setPersons(p);
       setFlights(f); setStays(s); setHotels(h); setPricingRules(pr); setRoommates(rm); setVehicles(vh || []);
       if (va === null) { setUseAssignmentTable(false); setVehicleAssignments([]); }
       else { setUseAssignmentTable(true); setVehicleAssignments(va); }
+      setDailyDispatches(Array.isArray(dd) ? dd : []);
     } catch (e) { showToast(e.message); } finally { setLoading(false); }
   }, [pid]);
 
@@ -3123,7 +3228,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
   const personsWithNoTrips = useMemo(() => {
     const has = new Set(allAssignments.map((a) => a.person_id));
-    return persons.filter((p) => p.on_site !== false && !has.has(p.id));
+    return persons.filter((p) => !p.hide_from_vehicles && !has.has(p.id));
   }, [persons, allAssignments]);
 
   const progressStats = useMemo(() => {
@@ -3167,7 +3272,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       const hotelOk = !searchCHotel || hname.toLowerCase().includes(searchCHotel.toLowerCase());
       const roomOk = !searchCRoom || (rt || "").toLowerCase().includes(searchCRoom.toLowerCase());
       const deptOk = !deptC || (p?.dept === deptC);
-      if (nameOk && hotelOk && roomOk && deptOk) {
+      const locOk = !filterLocationTag || (s.location_tag || "") === filterLocationTag;
+      if (nameOk && hotelOk && roomOk && deptOk && locOk) {
         rows.push({ ...s, person: p || { dept: "", name_kanji: s.special_room_name, last_roman: "", first_roman: "" }, hotelName: hname, roomLabel: rt, isSpecialRoom: !!s.special_room_name });
       }
     });
@@ -3182,7 +3288,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       return (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0);
     });
     return rows;
-  }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, personIndex, hotels]);
+  }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, filterLocationTag, personIndex, hotels]);
 
   // Room group colours (cycle through palette for each unique hotel+room_number key)
   const ROOM_COLORS = ["#2b5a4c", "#6b4c9a", "#8b4513", "#1a5276", "#7b241c", "#117a65", "#6e2f1a", "#1b4f72"];
@@ -3715,7 +3821,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           <td className="td-num" style={tdS({ textAlign: "center" })}>{personIndex[p.id] || i + 1}</td>
                           <td className="col-dept" style={tdEllipsis()} title={p.dept}>
                             <Highlight text={p.dept} query={debSearchA} />
-                            {p.on_site === false && <span style={{ marginLeft: 4, fontSize: 8, padding: "1px 5px", borderRadius: 3, background: "rgba(173,48,48,.1)", color: "var(--shu)", fontWeight: 700, whiteSpace: "nowrap", verticalAlign: "middle" }}>off</span>}
+                            {p.hide_from_stays && <span style={{ marginLeft: 4, fontSize: 8, padding: "1px 5px", borderRadius: 3, background: "rgba(173,48,48,.1)", color: "var(--shu)", fontWeight: 700, whiteSpace: "nowrap", verticalAlign: "middle" }}>住宿×</span>}
+                            {p.hide_from_vehicles && <span style={{ marginLeft: 4, fontSize: 8, padding: "1px 5px", borderRadius: 3, background: "rgba(120,80,0,.1)", color: "#a06000", fontWeight: 700, whiteSpace: "nowrap", verticalAlign: "middle" }}>派車×</span>}
                           </td>
                           <td className="col-title" style={tdS({ verticalAlign: "top" })}><TitleCell top={p.title_kanji} bottom={p.title_other} /></td>
                           <td className="col-kanji" style={tdEllipsis({ fontWeight: 600 })} title={p.name_kanji}><Highlight text={p.name_kanji} query={debSearchA} /></td>
@@ -3878,10 +3985,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <DeptFilter depts={allDepts} value={deptC} onChange={setDeptC} allLabel={t.allDept} />
                     <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchHotelName} value={searchCHotel} onChange={(e) => setSearchCHotel(e.target.value)} />
                     <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchRoomType} value={searchCRoom} onChange={(e) => setSearchCRoom(e.target.value)} />
+                    {/* location_tag filter */}
+                    {(() => {
+                      const tags = [...new Set(stays.map((s) => s.location_tag).filter(Boolean))].sort();
+                      if (!tags.length) return null;
+                      return (
+                        <select style={{ ...inpStyle, width: "100%" }} value={filterLocationTag} onChange={(e) => setFilterLocationTag(e.target.value)}>
+                          <option value="">{t.allLocations}</option>
+                          {tags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+                        </select>
+                      );
+                    })()}
                     {canEdit && (
                       <select style={{ ...inpStyle, width: "100%" }} className="wa-input" value={addStayPerson} onChange={(e) => setAddStayPerson(e.target.value)}>
                         <option value="">{t.addSegment}</option>
-                        {persons.filter((p) => p.on_site !== false).map((p) => <option key={p.id} value={p.id}>{p.name_kanji || p.last_roman}</option>)}
+                        {persons.filter((p) => !p.hide_from_stays).map((p) => <option key={p.id} value={p.id}>{p.name_kanji || p.last_roman}</option>)}
                       </select>
                     )}
                     {canEdit && (
@@ -4247,6 +4365,13 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
               </div>
               <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
                 <div style={{ flex: "1 1 520px", minWidth: 0 }}>
+                  {/* Vehicle sub-tabs */}
+                  <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+                    {[["config", t.vehicleConfig], ["daily", t.dailyDispatch]].map(([k, lb]) => (
+                      <button key={k} type="button" onClick={() => setVehicleSub(k)} style={{ padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 20, fontFamily: "'Noto Sans JP',sans-serif", fontWeight: vehicleSub === k ? 700 : 400, color: vehicleSub === k ? "var(--shiro)" : "var(--sumi)", background: vehicleSub === k ? "var(--moegi)" : "var(--washi)" }}>{lb}</button>
+                    ))}
+                  </div>
+                  {vehicleSub === "config" && (<>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: 3, height: 18, background: "var(--moegi)", borderRadius: 2 }} />
@@ -4304,30 +4429,34 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                               </div>
                             )}
                             <div style={{ padding: "12px 14px" }}>
-                              {assigns.length > 0 && (
-                                <div style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid var(--keisenL)" }}>
-                                  {t.onboardDepts}: <span style={{ fontWeight: 600, color: "var(--sumi)" }}>{vehicleDeptSummary(assigns, persons) || "—"}</span>
-                                </div>
-                              )}
-                              {assigns.map((a) => {
-                                const p = persons.find((x) => x.id === a.person_id);
-                                if (!p) return null;
+                              {assigns.length > 0 && (() => {
+                                const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+                                let seq = 0;
                                 return (
-                                  <div key={a.id || `${a.person_id}-${a.role}-${a.segment_label}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--keisenL)", fontSize: 12 }}>
-                                    <div>
-                                      <span style={{ fontWeight: 600, color: "var(--sumi)" }}>{p.dept || "—"}</span>
-                                      <span style={{ fontSize: 11, color: "var(--nezumi)", marginLeft: 8 }}>{p.name_kanji}</span>
-                                      {a.role === "driver" && <span style={{ fontSize: 9.5, color: "var(--moegi)", fontWeight: 600, marginLeft: 6, padding: "1px 5px", background: "var(--moegi3)", borderRadius: 3 }}>{t.driver}</span>}
-                                    </div>
-                                    {canEdit && <button type="button" style={dBtn} onClick={() => removeAssignment(a)}>×</button>}
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 2px", alignItems: "center", marginBottom: canEdit ? 10 : 0 }}>
+                                    {assigns.map((a) => {
+                                      const p = persons.find((x) => x.id === a.person_id);
+                                      if (!p) return null;
+                                      seq += 1;
+                                      const num = CIRC[seq - 1] || seq;
+                                      const isDriver = a.role === "driver";
+                                      return (
+                                        <span key={a.id || `${a.person_id}-${a.role}`} style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 12.5, color: "var(--sumi)", fontWeight: isDriver ? 700 : 500, padding: "3px 6px", background: isDriver ? "var(--moegi3)" : "transparent", borderRadius: 4 }}>
+                                          <span style={{ fontSize: 11, color: isDriver ? "var(--moegi)" : "var(--nezumi)", minWidth: 14 }}>{num}</span>
+                                          <span>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
+                                          {isDriver && <span style={{ fontSize: 9, color: "var(--moegi)", fontWeight: 700, marginLeft: 2 }}>{t.driver}</span>}
+                                          {canEdit && <button type="button" onClick={() => removeAssignment(a)} style={{ marginLeft: 3, background: "none", border: "none", cursor: "pointer", color: "var(--usunezumi)", fontSize: 11, lineHeight: 1, padding: "0 2px" }}>×</button>}
+                                        </span>
+                                      );
+                                    })}
                                   </div>
                                 );
-                              })}
+                              })()}
                               {canEdit && (
                                 <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                                   <select style={{ ...inpStyle, flex: "2 1 120px", minWidth: 0 }} value={addTripVehicle === v.id ? tripPerson : ""} onChange={(e) => { setAddTripVehicle(v.id); setTripPerson(e.target.value); }}>
                                     <option value="">{t.selectPassenger}</option>
-                                    {persons.filter((p) => p.on_site !== false).map((p) => <option key={p.id} value={p.id}>{p.dept ? `[${p.dept}] ` : ""}{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
+                                    {persons.filter((p) => !p.hide_from_vehicles).map((p) => <option key={p.id} value={p.id}>{p.dept ? `[${p.dept}] ` : ""}{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
                                   </select>
                                   <select style={{ ...inpStyle, flex: "1 1 80px", minWidth: 0 }} value={addTripVehicle === v.id ? tripRole : "passenger"} onChange={(e) => { setAddTripVehicle(v.id); setTripRole(e.target.value); }}>
                                     <option value="driver">{t.driver}</option>
@@ -4338,10 +4467,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                     addAssignment(v.id, +tripPerson, tripRole, "");
                                     setAddTripVehicle(null); setTripPerson(""); setTripRole("passenger");
                                   }}>+</button>
-                                  {addTripVehicle === v.id && tripPerson && (() => {
-                                    const sel = persons.find((x) => x.id === +tripPerson);
-                                    return sel?.dept ? <span style={{ fontSize: 11, fontWeight: 600, color: "var(--moegi)", width: "100%" }}>{t.dept}: {sel.dept}</span> : null;
-                                  })()}
                                 </div>
                               )}
                             </div>
@@ -4350,6 +4475,87 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       })}
                     </div>
                   </>)}
+                  </>)}
+                  {vehicleSub === "daily" && (() => {
+                    const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+                    const todayDispatches = dailyDispatches.filter((d) => d.dispatch_date === dispatchDate);
+                    const addDispatch = async (vehicleId, personId, role) => {
+                      try {
+                        const [row] = await api.insert("daily_dispatches", { project_id: pid, dispatch_date: dispatchDate, vehicle_id: vehicleId, person_id: +personId, role, sort_order: todayDispatches.filter((d) => d.vehicle_id === vehicleId).length });
+                        setDailyDispatches((d) => [...d, row]);
+                      } catch (e) { showToast(e.message); }
+                    };
+                    const removeDispatch = async (rec) => {
+                      try { await api.delete("daily_dispatches", rec.id); setDailyDispatches((d) => d.filter((x) => x.id !== rec.id)); }
+                      catch (e) { showToast(e.message); }
+                    };
+                    const copyPrev = async () => {
+                      const prevDate = (() => { const d = parseLocalDate(dispatchDate); d.setDate(d.getDate() - 1); return localDateStr(d); })();
+                      const prevRecs = dailyDispatches.filter((d) => d.dispatch_date === prevDate);
+                      if (!prevRecs.length) { showToast(t.dispatchNoYesterday); return; }
+                      try {
+                        const inserts = prevRecs.map((r) => ({ project_id: pid, dispatch_date: dispatchDate, vehicle_id: r.vehicle_id, person_id: r.person_id, role: r.role, sort_order: r.sort_order }));
+                        const rows = await Promise.all(inserts.map((ins) => api.insert("daily_dispatches", ins).then(([r]) => r)));
+                        setDailyDispatches((d) => [...d, ...rows]);
+                        showToast(t.dispatchCopied);
+                      } catch (e) { showToast(e.message); }
+                    };
+                    return (
+                      <div>
+                        <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
+                          <input type="date" style={{ ...inpStyle, width: "auto" }} value={dispatchDate} onChange={(e) => setDispatchDate(e.target.value)} />
+                          {canEdit && <button type="button" onClick={copyPrev} style={{ ...pBtn(false), background: "var(--asagi)", border: "none", fontSize: 12 }}>📋 {t.copyPrevDay}</button>}
+                          <span style={{ fontSize: 11, color: "var(--nezumi)", marginLeft: "auto" }}>{todayDispatches.length} {t.totalAssigned}</span>
+                        </div>
+                        {vehicles.length === 0 ? (
+                          <div style={{ padding: "50px 40px", textAlign: "center", background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8, color: "var(--nezumi)", fontSize: 13 }}>{t.noVehicleHint}</div>
+                        ) : (
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 14 }}>
+                            {vehicles.map((v) => {
+                              const dAssigns = todayDispatches.filter((d) => d.vehicle_id === v.id);
+                              const cap = v.capacity || 4;
+                              const isFull = dAssigns.length >= cap;
+                              const pct = Math.min(100, Math.round((dAssigns.length / cap) * 100));
+                              return (
+                                <div key={v.id} style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+                                  <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--theadGrad)", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <div>
+                                      <strong style={{ fontSize: 14, fontFamily: "'Noto Serif JP',serif", color: "var(--washi)" }}>{v.name}</strong>
+                                      <div style={{ fontSize: 10.5, marginTop: 4, opacity: 0.65, color: "var(--washi)", letterSpacing: "0.04em" }}>{v.region} · {v.type} · {dAssigns.length}/{cap} {t.passengers_unit}</div>
+                                    </div>
+                                  </div>
+                                  <div style={{ height: 3, background: "rgba(0,0,0,.08)" }}><div style={{ height: 3, width: pct + "%", background: isFull ? "#ff6b6b" : "var(--moegi2)", transition: "width .4s" }} /></div>
+                                  <div style={{ padding: "10px 14px" }}>
+                                    {dAssigns.length > 0 && (
+                                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 2px", marginBottom: canEdit ? 10 : 0 }}>
+                                        {dAssigns.map((a, idx) => {
+                                          const p = persons.find((x) => x.id === a.person_id);
+                                          if (!p) return null;
+                                          const isDriver = a.role === "driver";
+                                          return (
+                                            <span key={a.id} style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 12.5, color: "var(--sumi)", fontWeight: isDriver ? 700 : 500, padding: "3px 6px", background: isDriver ? "var(--moegi3)" : "transparent", borderRadius: 4 }}>
+                                              <span style={{ fontSize: 11, color: isDriver ? "var(--moegi)" : "var(--nezumi)", minWidth: 14 }}>{CIRC[idx] || idx + 1}</span>
+                                              <span>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
+                                              {isDriver && <span style={{ fontSize: 9, color: "var(--moegi)", fontWeight: 700, marginLeft: 2 }}>{t.driver}</span>}
+                                              {canEdit && <button type="button" onClick={() => removeDispatch(a)} style={{ marginLeft: 3, background: "none", border: "none", cursor: "pointer", color: "var(--usunezumi)", fontSize: 11, lineHeight: 1, padding: "0 2px" }}>×</button>}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                    {dAssigns.length === 0 && <div style={{ fontSize: 11, color: "var(--usunezumi)", padding: "8px 0" }}>{t.noDispatchData}</div>}
+                                    {canEdit && !isFull && (
+                                      <DailyDispatchAddRow vehicleId={v.id} persons={persons} t={t} onAdd={addDispatch} />
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <aside style={{ flex: "0 1 280px", position: "sticky", top: 16 }}>
                   <div style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)" }}>
