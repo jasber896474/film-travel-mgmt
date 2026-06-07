@@ -383,6 +383,7 @@ const T = {
     shootPhases: "拍攝區域", addShootPhase: "新增區域", shootPhaseNamePh: "例：花蓮、高雄",
     allPhases: "全部", assignShootPhase: "所屬拍攝區域", shootPhaseUnset: "未指定區域",
     maxPhasesHint: "最多 4 個區域", manageShootPhases: "管理拍攝區域",
+    deleteShootPhaseTitle: "刪除拍攝區域", deleteShootPhaseConfirm: "確定刪除「{name}」？此區域下的飯店將改為未指定區域。",
     dailyDispatch: "每日配車單", dispatchDate: "配車日期", copyPrevDay: "複製前一天",
     noDispatchData: "此日尚無配車記錄，可手動新增或複製前一天的配車配置",
     dispatchCopied: "已複製前一天配車配置", dispatchNoYesterday: "找不到前一天的配車記錄",
@@ -502,6 +503,7 @@ const T = {
     shootPhases: "拍摄区域", addShootPhase: "新增区域", shootPhaseNamePh: "例：花莲、高雄",
     allPhases: "全部", assignShootPhase: "所属拍摄区域", shootPhaseUnset: "未指定区域",
     maxPhasesHint: "最多 4 个区域", manageShootPhases: "管理拍摄区域",
+    deleteShootPhaseTitle: "删除拍摄区域", deleteShootPhaseConfirm: "确定删除「{name}」？此区域下的饭店将改为未指定区域。",
     dailyDispatch: "每日配车单", dispatchDate: "配车日期", copyPrevDay: "复制前一天",
     noDispatchData: "此日暂无配车记录，可手动新增或复制前一天的配车配置",
     dispatchCopied: "已复制前一天配车配置", dispatchNoYesterday: "找不到前一天的配车记录",
@@ -620,6 +622,7 @@ const T = {
     shootPhases: "Shooting Phase", addShootPhase: "Add Phase", shootPhaseNamePh: "e.g. Hualien, Kaohsiung",
     allPhases: "All", assignShootPhase: "Shooting Phase", shootPhaseUnset: "Unassigned",
     maxPhasesHint: "Max 4 phases", manageShootPhases: "Manage Phases",
+    deleteShootPhaseTitle: "Delete Phase", deleteShootPhaseConfirm: "Delete \"{name}\"? Hotels in this phase will become unassigned.",
     dailyDispatch: "Daily Dispatch", dispatchDate: "Dispatch Date", copyPrevDay: "Copy Previous Day",
     noDispatchData: "No dispatch for this day. Add manually or copy previous day.",
     dispatchCopied: "Copied previous day dispatch", dispatchNoYesterday: "No previous day dispatch found",
@@ -736,6 +739,7 @@ const T = {
     shootPhases: "촬영 구역", addShootPhase: "구역 추가", shootPhaseNamePh: "예: 화련, 가오슝",
     allPhases: "전체", assignShootPhase: "촬영 구역", shootPhaseUnset: "미지정",
     maxPhasesHint: "최대 4개 구역", manageShootPhases: "구역 관리",
+    deleteShootPhaseTitle: "구역 삭제", deleteShootPhaseConfirm: "\"{name}\" 구역을 삭제하시겠습니까? 해당 호텔은 미지정으로 변경됩니다.",
     dailyDispatch: "일일 배차표", dispatchDate: "배차 날짜", copyPrevDay: "전날 복사",
     noDispatchData: "이날 배차 기록이 없습니다. 수동 추가 또는 전날 복사를 이용하세요.",
     dispatchCopied: "전날 배차 설정을 복사했습니다", dispatchNoYesterday: "전날 배차 기록을 찾을 수 없습니다",
@@ -851,6 +855,7 @@ const T = {
     shootPhases: "撮影エリア", addShootPhase: "エリア追加", shootPhaseNamePh: "例：花蓮、高雄",
     allPhases: "すべて", assignShootPhase: "撮影エリア", shootPhaseUnset: "未指定",
     maxPhasesHint: "最大4エリア", manageShootPhases: "エリア管理",
+    deleteShootPhaseTitle: "エリア削除", deleteShootPhaseConfirm: "「{name}」を削除しますか？このエリアのホテルは未指定になります。",
     dailyDispatch: "日別配車表", dispatchDate: "配車日", copyPrevDay: "前日をコピー",
     noDispatchData: "この日の配車記録がありません。手動追加または前日コピーをご利用ください。",
     dispatchCopied: "前日の配車設定をコピーしました", dispatchNoYesterday: "前日の配車記録が見つかりません",
@@ -3138,25 +3143,78 @@ function DailyDispatchAddRow({ vehicleId, persons, t, onAdd }) {
 
 function ShootPhaseBar({ phases, active, onSelect, onAdd, onDelete, t, canEdit }) {
   const [name, setName] = useState("");
+  const [pendingDelete, setPendingDelete] = useState(null);
+
+  const phaseChipStyle = (selected) => ({
+    padding: "8px 14px",
+    border: "none",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: selected ? 700 : 500,
+    color: selected ? "var(--shiro)" : "var(--sumi)",
+    background: selected ? "var(--moegi)" : "var(--washi)",
+    minHeight: 36,
+    lineHeight: 1.3,
+    fontFamily: "inherit",
+  });
+
+  const phaseBoxStyle = (selected) => ({
+    display: "inline-flex",
+    alignItems: "stretch",
+    borderRadius: 4,
+    overflow: "hidden",
+    border: `1px solid ${selected ? "var(--moegi)" : "var(--keisenM)"}`,
+    boxShadow: selected ? "0 0 0 1px var(--moegi)" : "none",
+  });
+
   if (!phases.length && !canEdit) return null;
   return (
-    <div style={{ marginBottom: 14, padding: "12px 14px", background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
+    <div style={{ marginBottom: 14, padding: "12px 14px", background: "var(--shiro)", borderRadius: 4, border: "1px solid var(--keisenL)" }}>
       <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>{t.manageShootPhases}</div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        <button type="button" onClick={() => onSelect("")} style={{ padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 20, fontWeight: !active ? 700 : 400, color: !active ? "var(--shiro)" : "var(--sumi)", background: !active ? "var(--moegi)" : "var(--washi)" }}>{t.allPhases}</button>
-        {phases.map((p) => (
-          <span key={p.id} style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
-            <button type="button" onClick={() => onSelect(p.id)} style={{ padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 20, fontWeight: active === p.id ? 700 : 400, color: active === p.id ? "var(--shiro)" : "var(--sumi)", background: active === p.id ? "var(--moegi)" : "var(--washi)" }}>{p.name}</button>
-            {canEdit && <button type="button" onClick={() => onDelete(p.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--usunezumi)", fontSize: 14, lineHeight: 1, padding: "0 4px" }} title={t.delete}>×</button>}
-          </span>
-        ))}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={phaseBoxStyle(!active)}>
+          <button type="button" onClick={() => onSelect("")} style={phaseChipStyle(!active)}>{t.allPhases}</button>
+        </div>
+        {phases.map((p) => {
+          const selected = active === p.id;
+          return (
+            <div key={p.id} style={phaseBoxStyle(selected)}>
+              <button type="button" onClick={() => onSelect(p.id)} style={phaseChipStyle(selected)}>{p.name}</button>
+              {canEdit && (
+                <button
+                  type="button"
+                  aria-label={t.delete}
+                  title={t.delete}
+                  onClick={(e) => { e.stopPropagation(); setPendingDelete(p); }}
+                  style={{
+                    width: 32, minWidth: 32, border: "none", borderLeft: `1px solid ${selected ? "rgba(255,255,255,.25)" : "var(--keisenM)"}`,
+                    cursor: "pointer", background: selected ? "rgba(0,0,0,.12)" : "var(--washi)",
+                    color: selected ? "rgba(255,255,255,.85)" : "var(--usunezumi)", fontSize: 16, lineHeight: 1,
+                    fontFamily: "inherit", padding: 0,
+                  }}
+                >×</button>
+              )}
+            </div>
+          );
+        })}
       </div>
       {canEdit && phases.length < 4 && (
         <div style={{ display: "flex", gap: 6, marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <input style={{ ...inpStyle, flex: "1 1 140px", minWidth: 0 }} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.shootPhaseNamePh} onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) { onAdd(name.trim()); setName(""); } }} />
-          <button type="button" style={pBtn(!name.trim())} disabled={!name.trim()} onClick={() => { onAdd(name.trim()); setName(""); }}>+ {t.addShootPhase}</button>
+          <input style={{ ...inpStyle, flex: "1 1 140px", minWidth: 0, borderRadius: 4 }} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.shootPhaseNamePh} onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) { onAdd(name.trim()); setName(""); } }} />
+          <button type="button" style={{ ...pBtn(!name.trim()), borderRadius: 4 }} disabled={!name.trim()} onClick={() => { onAdd(name.trim()); setName(""); }}>+ {t.addShootPhase}</button>
           <span style={{ fontSize: 10, color: "var(--usunezumi)" }}>{t.maxPhasesHint}</span>
         </div>
+      )}
+      {pendingDelete && (
+        <Modal title={t.deleteShootPhaseTitle} onClose={() => setPendingDelete(null)}>
+          <p style={{ fontSize: 13, lineHeight: 1.65, color: "var(--sumi)", margin: "0 0 18px" }}>
+            {t.deleteShootPhaseConfirm.replace("{name}", pendingDelete.name)}
+          </p>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <button type="button" onClick={() => setPendingDelete(null)} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer", borderRadius: 4 }}>{t.cancel}</button>
+            <button type="button" onClick={() => { onDelete(pendingDelete.id); setPendingDelete(null); }} style={{ ...dBtn, borderRadius: 4, padding: "8px 16px" }}>{t.delete}</button>
+          </div>
+        </Modal>
       )}
     </div>
   );
@@ -4191,7 +4249,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   };
 
   const deleteShootPhase = async (phaseId) => {
-    if (!window.confirm(t.deleteConfirm)) return;
     await saveShootPhases(shootPhases.filter((p) => p.id !== phaseId));
     const affected = hotels.filter((h) => h.shoot_phase_id === phaseId);
     for (const h of affected) {
