@@ -303,6 +303,8 @@ const T = {
     bulkDeleteConfirm: "確定刪除選取的 {n} 人？此操作無法復原。",
     staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "與 {name} 同室",
     roomNo: "房號", roomNoPending: "待分配", unassignedRooms: "未配房人員", unassignedRoomsHint: "以下人員尚未指派房號",
+    unassignedPhaseRoomsHint: "以下人員尚未在本區域安排住宿，請點「新增住宿段」",
+    unassignedPhaseRooms: "未配房人員（{phase}）",
     unassignedRoomSection: "待分配房號",
     vehicleSimpleHint: "需變更乘車配置時，請直接新增車輛即可。",
     roomPriceLockTitle: "房間費用歸屬", roomPriceLockMsg: "此房號已有其他入住者，由誰負擔房間費用？",
@@ -408,6 +410,8 @@ const T = {
     bulkDeleteConfirm: "确定删除选取的 {n} 人？此操作无法复原。",
     staySegment: "住宿段落", addSegment: "新增住宿段", roommateWith: "与 {name} 同住",
     roomNo: "房号", roomNoPending: "待分配", unassignedRooms: "未分配房间", unassignedRoomsHint: "以下人员尚未指派房号",
+    unassignedPhaseRoomsHint: "以下人员尚未在本区域安排住宿，请点「新增住宿段」",
+    unassignedPhaseRooms: "未配房人员（{phase}）",
     unassignedRoomSection: "待分配房号",
     vehicleSimpleHint: "需变更乘车安排时，请直接新增车辆。",
     roomPriceLockTitle: "房间费用归属", roomPriceLockMsg: "此房号已有其他入住者，由谁承担房间费用？",
@@ -512,6 +516,8 @@ const T = {
     bulkDeleteConfirm: "Delete {n} selected staff? This cannot be undone.",
     staySegment: "Stay Segment", addSegment: "Add Stay", roommateWith: "With {name}",
     roomNo: "Room No.", roomNoPending: "Pending", unassignedRooms: "No Room Assigned", unassignedRoomsHint: "These persons have no room number yet",
+    unassignedPhaseRoomsHint: "These persons have no stay in this phase yet — click Add Stay",
+    unassignedPhaseRooms: "Unassigned ({phase})",
     unassignedRoomSection: "Room pending",
     roomPriceLockTitle: "Room Cost", roomPriceLockMsg: "This room already has occupants. Who covers the room cost?",
     roomPriceLockSelf: "This person pays (others set to ¥0)", roomPriceLockOther: "Original occupant pays (this person set to ¥0)",
@@ -614,6 +620,8 @@ const T = {
     bulkDeleteConfirm: "선택한 {n}명을 삭제하시겠습니까?",
     staySegment: "숙박 구간", addSegment: "구간 추가", roommateWith: "{name}과 동실",
     roomNo: "객실 번호", roomNoPending: "미배정", unassignedRooms: "객실 미배정 인원", unassignedRoomsHint: "아직 객실 번호가 없는 인원",
+    unassignedPhaseRoomsHint: "이 구역에 아직 숙박이 없는 인원 — 「구간 추가」를 클릭하세요",
+    unassignedPhaseRooms: "미배정 ({phase})",
     unassignedRoomSection: "객실 번호 미배정",
     roomPriceLockTitle: "객실 비용 귀속", roomPriceLockMsg: "이 객실에 이미 다른 투숙자가 있습니다. 누가 비용을 부담합니까?",
     roomPriceLockSelf: "이 사람이 부담 (나머지 ¥0)", roomPriceLockOther: "기존 투숙자가 부담 (이 사람 ¥0)",
@@ -715,6 +723,8 @@ const T = {
     bulkDeleteConfirm: "選択した {n} 名を削除しますか？",
     staySegment: "宿泊区間", addSegment: "区間追加", roommateWith: "{name}と同室",
     roomNo: "部屋番号", roomNoPending: "未配室", unassignedRooms: "未配室スタッフ", unassignedRoomsHint: "部屋番号未設定のスタッフ",
+    unassignedPhaseRoomsHint: "このエリアにまだ宿泊がないスタッフ — 「区間追加」をクリック",
+    unassignedPhaseRooms: "未配室（{phase}）",
     unassignedRoomSection: "部屋番号未配",
     roomPriceLockTitle: "部屋代帰属", roomPriceLockMsg: "この部屋番号にはすでに入室者がいます。部屋代を誰が負担しますか？",
     roomPriceLockSelf: "この人が負担（他は ¥0）", roomPriceLockOther: "既入室者が負担（この人は ¥0）",
@@ -1270,6 +1280,12 @@ function getShootPhases(project) {
   return Array.isArray(raw) ? raw.slice(0, 4) : [];
 }
 
+function personHasStayInPhase(personId, phaseId, stays, hotels) {
+  if (!phaseId) return stays.some((s) => s.person_id === personId);
+  const phaseHotelIds = new Set(hotels.filter((h) => h.shoot_phase_id === phaseId).map((h) => +h.id));
+  return stays.some((s) => s.person_id === personId && phaseHotelIds.has(+s.hotel_id));
+}
+
 /** 累計統計：客室泊數 = Σ(各日客室數), 人次 = Σ(各日入住人數), 費用 = Σ(各日費用) */
 function computeHotelStatsCumulative(stays, roommates, pricingRules, hotels) {
   const allDates = collectStayNightDates(stays);
@@ -1708,8 +1724,10 @@ function FlightForm({ init, onSave, onClose, t }) {
   );
 }
 
-function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, roommateNames, isSpecialRoom }) {
-  const blank = { hotel_id: "", room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "", room_number: "", special_room_name: "" };
+function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, roommateNames, isSpecialRoom, defaultPhaseId }) {
+  const phaseHotels = defaultPhaseId ? hotels.filter((h) => h.shoot_phase_id === defaultPhaseId) : hotels;
+  const defaultHotelId = phaseHotels.length === 1 ? String(phaseHotels[0].id) : "";
+  const blank = { hotel_id: defaultHotelId, room_type: "Single", room_custom: "", check_in: todayStr(), check_out: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return localDateStr(d); })(), base_price: "", stay_label: "", room_number: "", special_room_name: "" };
   const [f, setF] = useState(() => (init ? { ...blank, ...stayFormInit(init) } : blank));
   const [syncRoommates, setSyncRoommates] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -1765,7 +1783,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
         ) : (
           <Field label={t.staySegment}><input style={inpStyle} value={f.stay_label} onChange={set("stay_label")} /></Field>
         )}
-        <Field label={t.hotel}><select style={inpStyle} value={f.hotel_id} onChange={handleHotelChange}><option value="">--</option>{hotels.map((h) => <option key={h.id} value={String(h.id)}>{h.name}</option>)}</select></Field>
+        <Field label={t.hotel}><select style={inpStyle} value={f.hotel_id} onChange={handleHotelChange}><option value="">--</option>{phaseHotels.map((h) => <option key={h.id} value={String(h.id)}>{h.name}</option>)}</select></Field>
         <Field label={t.roomType}><select style={inpStyle} value={f.room_type} onChange={handleRoomTypeChange}>{ROOM_TYPES.map((r) => <option key={r}>{r}</option>)}</select></Field>
         {f.room_type === "Custom" && <Field label={t.customRoomType}><input style={inpStyle} value={f.room_custom} onChange={set("room_custom")} /></Field>}
         <Field label={t.checkIn}><input type="date" style={inpStyle} value={f.check_in || ""} onChange={set("check_in")} /></Field>
@@ -3212,6 +3230,17 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
   const shootPhases = useMemo(() => getShootPhases(project), [project]);
   const hotelPhaseMap = useMemo(() => Object.fromEntries(hotels.map((h) => [+h.id, h.shoot_phase_id || ""])), [hotels]);
+  const activePhaseName = useMemo(() => shootPhases.find((p) => p.id === activeStayPhase)?.name || "", [shootPhases, activeStayPhase]);
+
+  const personsMissingPhaseStay = useMemo(() => {
+    const visible = persons.filter((p) => !p.hide_from_stays);
+    if (!activeStayPhase) {
+      return visible.filter((p) => !stays.some((s) => s.person_id === p.id));
+    }
+    return visible.filter((p) => !personHasStayInPhase(p.id, activeStayPhase, stays, hotels));
+  }, [persons, stays, activeStayPhase, hotels]);
+
+  const openStayModal = (payload) => setStayModal({ defaultPhaseId: activeStayPhase || undefined, ...payload });
 
   const saveShootPhases = async (nextPhases) => {
     try {
@@ -4093,7 +4122,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       </select>
                     )}
                     {canEdit && (
-                      <button type="button" style={{ ...pBtn(!addStayPerson), width: "100%" }} disabled={!addStayPerson} onClick={() => { setStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
+                      <button type="button" style={{ ...pBtn(!addStayPerson), width: "100%" }} disabled={!addStayPerson} onClick={() => { openStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
                     )}
                     {canEdit && (
                       <button type="button" style={{ ...pBtn(false), width: "100%", background: "var(--asagi2)", color: "var(--asagi)", border: "1px solid rgba(74,127,165,.3)" }} onClick={() => setStayModal({ pid: null, stayId: null, data: { special_room_name: "" }, special: true })}>{t.addSpecialRoom}</button>
@@ -4147,7 +4176,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       return a.hotelName.localeCompare(b.hotelName, lang === "ja" ? "ja" : "zh-Hant");
                     });
 
-                    const personsNoStay = persons.filter((p) => !stays.some((s) => s.person_id === p.id));
+                    const personsNoStay = personsMissingPhaseStay;
                     const stayHeaderDefs = [
                       { key: "no", label: t.no, align: "center" },
                       { key: "dept", label: t.dept, align: "left" },
@@ -4320,8 +4349,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
                         {personsNoStay.length > 0 && (
                           <div className="pending-banner" style={{ marginTop: 8, padding: "14px 18px", border: "1.5px dashed var(--kincha)", borderRadius: 8 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)", marginBottom: 8 }}>{t.unassignedRooms}</div>
-                            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>{t.unassignedRoomsHint}</p>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)", marginBottom: 8 }}>
+                              {activeStayPhase ? t.unassignedPhaseRooms.replace("{phase}", activePhaseName) : t.unassignedRooms}
+                            </div>
+                            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>
+                              {activeStayPhase ? t.unassignedPhaseRoomsHint : t.unassignedRoomsHint}
+                            </p>
                             {groupByDeptLabel(personsNoStay, (p) => p.dept, lang, t.deptUnset).map((g) => (
                               <div key={g.label} className="unassigned-dept-group" style={{ marginBottom: 14 }}>
                                 <div className="unassigned-dept-label" style={{ fontSize: 11, fontWeight: 700, color: "var(--sumi)", marginBottom: 8, letterSpacing: "0.04em", paddingBottom: 4, borderBottom: "1px solid var(--keisenL)" }}>
@@ -4331,7 +4364,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                   {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => (
                                     <div key={p.id} className="unassigned-tag">
                                       <span className="tag-name" title={p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
-                                      {canEdit && <button type="button" style={{ ...aBtn, fontSize: 10, padding: "2px 7px", flexShrink: 0 }} onClick={() => setStayModal({ pid: p.id, stayId: null, data: null })}>{t.addSegment}</button>}
+                                      {canEdit && <button type="button" style={{ ...aBtn, fontSize: 10, padding: "2px 7px", flexShrink: 0 }} onClick={() => openStayModal({ pid: p.id, stayId: null, data: null })}>{t.addSegment}</button>}
                                     </div>
                                   ))}
                                 </div>
@@ -4715,7 +4748,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
       {flightModal && <Modal title={t.flightMgmt} onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = { ...f, person_id: flightModal.pid, project_id: pid }; if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
-      {stayModal && <Modal title={t.hotelMgmt} onClose={() => setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={() => setStayModal(null)} t={t} project={project} lang={lang} roommateNames={stayModal.pid ? getRoommateNames(stayModal.pid) : null} isSpecialRoom={stayModal.special || stayModal.pid === null} /></Modal>}
+      {stayModal && <Modal title={t.hotelMgmt} onClose={() => setStayModal(null)}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={() => setStayModal(null)} t={t} project={project} lang={lang} roommateNames={stayModal.pid ? getRoommateNames(stayModal.pid) : null} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
       {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} /></Modal>}
