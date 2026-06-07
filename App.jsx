@@ -1816,8 +1816,8 @@ function generateReportHTML({ type, cols, data, project, lang, t }) {
   }
 
   // Generic table report (stay / flight / staff)
-  const thStyle = `padding:6px 9px;font-size:8pt;font-weight:700;letter-spacing:.07em;text-align:left;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;`;
-  const tdStyle = `padding:5px 9px;font-size:8.5pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #e8f0ea;vertical-align:top;line-height:1.5;`;
+  const thStyle = `padding:8px 12px;font-size:8pt;font-weight:700;letter-spacing:.07em;text-align:left;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;`;
+  const tdStyle = `padding:7px 12px;font-size:9pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #eaf0eb;vertical-align:top;line-height:1.7;`;
 
   const thead = `<tr style="background:${headerGrad};color:#fff;">${cols.map((c) => `<th style="${thStyle}">${c.label}</th>`).join("")}</tr>`;
   const rows = data.map((row, i) => {
@@ -1828,12 +1828,12 @@ function generateReportHTML({ type, cols, data, project, lang, t }) {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:9pt;color:#1a2820;background:#fff;}
-@page{size:A4 ${pageDir};margin:8mm 10mm;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-.doc-header{background:${headerGrad};color:#fff;padding:12px 16px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-table{width:100%;border-collapse:collapse;border-radius:4px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-.footer{margin-top:10px;font-size:7pt;color:#aaa;text-align:right;border-top:1px solid #d8e8dc;padding-top:5px;}</style></head>
-<body>
-<div class="doc-header"><div><div style="font-size:8pt;opacity:.7;letter-spacing:.1em;text-transform:uppercase;">${typeLabel}</div><div style="font-family:'Noto Serif JP',serif;font-size:13pt;font-weight:600;margin-top:2px;">${projectName}</div></div>
+@page{size:A4 ${pageDir};margin:12mm 14mm;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+.doc-header{background:${headerGrad};color:#fff;padding:14px 18px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+table{width:100%;border-collapse:collapse;border-radius:4px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.09);}
+.footer{margin-top:14px;font-size:7pt;color:#aaa;text-align:right;border-top:1px solid #d8e8dc;padding-top:6px;}</style></head>
+<body style="padding:2mm;">
+<div class="doc-header"><div><div style="font-size:8pt;opacity:.7;letter-spacing:.1em;text-transform:uppercase;">${typeLabel}</div><div style="font-family:'Noto Serif JP',serif;font-size:13pt;font-weight:600;margin-top:3px;">${projectName}</div></div>
 <div style="text-align:right;font-size:8pt;opacity:.75;"><div>${now}</div><div>${data.length} rows · ${isLandscape ? "A4 Landscape" : "A4 Portrait"}</div></div></div>
 <table><thead>${thead}</thead><tbody>${rows.join("")}</tbody></table>
 <div class="footer">${projectName} · ${typeLabel} · ${now}</div>
@@ -1945,7 +1945,9 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       });
     }
     if (reportType === "staff") {
-      return persons.map((p) => ({
+      return [...persons]
+        .sort((a, b) => (personIndex[a.id] || 9999) - (personIndex[b.id] || 9999))
+        .map((p) => ({
         no: personIndex[p.id] || "",
         dept: p.dept || "—",
         title: [p.title_kanji, p.title_other].filter(Boolean).join(" / ") || "—",
@@ -3442,16 +3444,28 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   };
 
   const finishSaveStay = async (data, syncPartners) => {
+    const doSave = async (payload) => {
+      if (stayModal.stayId) {
+        const [r] = await api.update("stays", stayModal.stayId, payload);
+        setStays((s) => s.map((x) => x.id === stayModal.stayId ? r : x));
+        return r;
+      } else {
+        const [r] = await api.insert("stays", payload);
+        setStays((s) => [...s, r]);
+        return r;
+      }
+    };
     try {
       let saved;
-      if (stayModal.stayId) {
-        const [r] = await api.update("stays", stayModal.stayId, data);
-        setStays((s) => s.map((x) => x.id === stayModal.stayId ? r : x));
-        saved = r;
-      } else {
-        const [r] = await api.insert("stays", data);
-        setStays((s) => [...s, r]);
-        saved = r;
+      try {
+        saved = await doSave(data);
+      } catch (e1) {
+        // DB migration not yet run — retry without optional new columns
+        if (e1.message && (e1.message.includes("location_tag") || e1.message.includes("hide_from"))) {
+          const fallback = { ...data };
+          delete fallback.location_tag;
+          saved = await doSave(fallback);
+        } else throw e1;
       }
       if (syncPartners?.length) {
         const syncData = { hotel_id: data.hotel_id, room_type: data.room_type, room_custom: data.room_custom, check_in: data.check_in, check_out: data.check_out, stay_label: data.stay_label, nights: data.nights, base_price: data.base_price, total_amount: data.total_amount, project_id: pid };
@@ -4281,15 +4295,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                             {canEdit && <button type="button" onClick={() => setPriceModal({ mode: "add", hotelId: h.id, hotelName: h.name })} style={{ ...aBtn, margin: 0 }}>{t.addDateException}</button>}
                           </div>
                           {hRules.length === 0 ? <p style={{ fontSize: 11, color: "var(--usunezumi)", fontStyle: "italic", margin: 0 }}>{t.noDateException}</p> : (
-                            <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
-                              <thead><tr>{[t.date, t.roomType, t.finalPrice, t.action].map((lb) => <th key={lb} style={{ textAlign: "left", padding: 6 }}>{lb}</th>)}</tr></thead>
+                            <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse", tableLayout: "fixed" }}>
+                              <colgroup>
+                                <col style={{ width: "30%" }} />
+                                <col style={{ width: "28%" }} />
+                                <col style={{ width: "25%" }} />
+                                <col style={{ width: "17%" }} />
+                              </colgroup>
+                              <thead><tr style={{ background: "var(--washi)", borderBottom: "2px solid var(--keisenM)" }}>{[t.date, t.roomType, t.finalPrice, t.action].map((lb) => <th key={lb} style={{ textAlign: "left", padding: "6px 8px", fontSize: 10.5, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lb}</th>)}</tr></thead>
                               <tbody>
                                 {hRules.map((r) => (
-                                  <tr key={r.id}>
-                                    <td style={{ padding: 6 }}>{r.date}</td>
-                                    <td style={{ padding: 6 }}>{r.room_type === "Custom" ? r.room_custom : r.room_type}</td>
-                                    <td style={{ padding: 6 }}>{formatMoney(convertMoney(r.final_price, project), project, lang)}</td>
-                                    <td style={{ padding: 6 }}>
+                                  <tr key={r.id} style={{ borderBottom: "1px solid var(--keisenL)" }}>
+                                    <td style={{ padding: "5px 8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.date}</td>
+                                    <td style={{ padding: "5px 8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.room_type === "Custom" ? r.room_custom : r.room_type}</td>
+                                    <td style={{ padding: "5px 8px", fontWeight: 600, color: "var(--asagi)" }}>{formatMoney(convertMoney(r.final_price, project), project, lang)}</td>
+                                    <td style={{ padding: "5px 8px" }}>
                                       {canEdit && <button type="button" style={eBtn} onClick={() => setPriceModal({ mode: "edit", data: r, hotelId: h.id, hotelName: h.name })}>{t.edit}</button>}
                                       {canDelete && <button type="button" style={dBtn} onClick={async () => { await api.delete("pricing_rules", r.id); setPricingRules((pr) => pr.filter((x) => x.id !== r.id)); }}>{t.delete}</button>}
                                     </td>
@@ -4353,7 +4373,23 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       <div style={{ width: 3, height: 18, background: "var(--moegi)", borderRadius: 2 }} />
                       <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.vehicleMgmt}</h2>
                     </div>
-                    {canEdit && <button type="button" onClick={() => setVehicleModal({ mode: "add" })} style={pBtn(false)}>{t.addVehicle}</button>}
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button type="button" onClick={() => {
+                        const data = [];
+                        vehicles.forEach((v) => {
+                          const assigns = getAssignmentsForVehicle(v.id);
+                          assigns.forEach((a) => {
+                            const p = persons.find((x) => x.id === a.person_id);
+                            if (p) data.push({ vehicle: v.name, name_kanji: p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim(), role: a.role === "driver" ? t.driver : t.passengers });
+                          });
+                        });
+                        const cols = [{ key: "vehicle", label: t.vehicleMgmt }, { key: "name_kanji", label: t.nameKanji }, { key: "role", label: t.driver + "/" + t.passengers }];
+                        const html = generateReportHTML({ type: "vehicle", cols, data, project, lang, t });
+                        const w = window.open("", "_blank");
+                        if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800); }
+                      }} style={{ ...pBtn(false), background: "var(--asagi)", border: "none", fontSize: 12 }}>🖨 {t.reportExport}</button>
+                      {canEdit && <button type="button" onClick={() => setVehicleModal({ mode: "add" })} style={pBtn(false)}>{t.addVehicle}</button>}
+                    </div>
                   </div>
                   {vehicles.length === 0 ? (
                     <div style={{ padding: "50px 40px", textAlign: "center", background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8, color: "var(--nezumi)", fontSize: 13 }}>{t.noVehicleHint}</div>
