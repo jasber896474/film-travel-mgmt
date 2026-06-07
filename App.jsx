@@ -96,6 +96,19 @@ const api = {
 const pad2 = (n) => String(n).padStart(2, "0");
 const localDateStr = (d = new Date()) =>
   `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const dispatchDateKey = (rec) => String(rec?.dispatch_date ?? rec ?? "").slice(0, 10);
+
+function templateAssignmentsForDaily(assignments) {
+  const byKey = new Map();
+  assignments.forEach((a, i) => {
+    const k = `${a.vehicle_id}:${a.person_id}`;
+    const prev = byKey.get(k);
+    const role = a.role === "driver" || prev?.role === "driver" ? "driver" : (a.role || "passenger");
+    if (!prev) byKey.set(k, { vehicle_id: a.vehicle_id, person_id: a.person_id, role, sort_order: a.sort_order ?? i });
+    else if (a.role === "driver") byKey.set(k, { ...prev, role: "driver" });
+  });
+  return [...byKey.values()];
+}
 const localDateTimeStr = (d = new Date()) => {
   d = new Date(d);
   d.setSeconds(0, 0);
@@ -385,8 +398,12 @@ const T = {
     maxPhasesHint: "最多 4 個區域", manageShootPhases: "管理拍攝區域",
     deleteShootPhaseTitle: "刪除拍攝區域", deleteShootPhaseConfirm: "確定刪除「{name}」？此區域下的飯店將改為未指定區域。",
     dailyDispatch: "每日配車單", dispatchDate: "配車日期", copyPrevDay: "複製前一天",
-    noDispatchData: "此日尚無配車記錄，可手動新增或複製前一天的配車配置",
+    noDispatchData: "此日尚無配車記錄。可「從車輛配置帶入」範本、複製前一天，或手動新增。",
     dispatchCopied: "已複製前一天配車配置", dispatchNoYesterday: "找不到前一天的配車記錄",
+    importFromConfig: "從車輛配置帶入", dispatchImportedFromConfig: "已從車輛配置帶入 {n} 人",
+    dispatchFallbackFromConfig: "前一日無記錄，已從車輛配置帶入 {n} 人",
+    dispatchNoConfigTemplate: "車輛配置尚無乘車人員，請先在「車輛配置」分頁排班",
+    dispatchNothingToImport: "今日已包含這些人員，無需重複帶入",
     vehicleConfig: "車輛配置",
     exportReport: "匯出報表", reportExport: "報表匯出", selectCols: "選擇輸出欄位", previewReport: "預覽／列印",
     reportTypeStay: "住宿表", reportTypeFlight: "航班表", reportTypeStaff: "工作人員列表", reportTypeVehicle: "配車表",
@@ -507,8 +524,12 @@ const T = {
     maxPhasesHint: "最多 4 个区域", manageShootPhases: "管理拍摄区域",
     deleteShootPhaseTitle: "删除拍摄区域", deleteShootPhaseConfirm: "确定删除「{name}」？此区域下的饭店将改为未指定区域。",
     dailyDispatch: "每日配车单", dispatchDate: "配车日期", copyPrevDay: "复制前一天",
-    noDispatchData: "此日暂无配车记录，可手动新增或复制前一天的配车配置",
+    noDispatchData: "此日暂无配车记录。可「从车辆配置带入」模板、复制前一天，或手动新增。",
     dispatchCopied: "已复制前一天配车配置", dispatchNoYesterday: "找不到前一天的配车记录",
+    importFromConfig: "从车辆配置带入", dispatchImportedFromConfig: "已从车辆配置带入 {n} 人",
+    dispatchFallbackFromConfig: "前一日无记录，已从车辆配置带入 {n} 人",
+    dispatchNoConfigTemplate: "车辆配置尚无乘车人员，请先在「车辆配置」分页排班",
+    dispatchNothingToImport: "今日已包含这些人员，无需重复带入",
     vehicleConfig: "车辆配置",
     exportReport: "导出报表", reportExport: "报表导出", selectCols: "选择输出列", previewReport: "预览／打印",
     reportTypeStay: "住宿表", reportTypeFlight: "航班表", reportTypeStaff: "工作人员列表", reportTypeVehicle: "用车表",
@@ -628,8 +649,12 @@ const T = {
     maxPhasesHint: "Max 4 phases", manageShootPhases: "Manage Phases",
     deleteShootPhaseTitle: "Delete Phase", deleteShootPhaseConfirm: "Delete \"{name}\"? Hotels in this phase will become unassigned.",
     dailyDispatch: "Daily Dispatch", dispatchDate: "Dispatch Date", copyPrevDay: "Copy Previous Day",
-    noDispatchData: "No dispatch for this day. Add manually or copy previous day.",
+    noDispatchData: "No dispatch for this day. Import from vehicle config, copy previous day, or add manually.",
     dispatchCopied: "Copied previous day dispatch", dispatchNoYesterday: "No previous day dispatch found",
+    importFromConfig: "Import from config", dispatchImportedFromConfig: "Imported {n} from vehicle config",
+    dispatchFallbackFromConfig: "No previous day — imported {n} from vehicle config",
+    dispatchNoConfigTemplate: "No passengers in vehicle config yet — set up under Vehicle Config first",
+    dispatchNothingToImport: "Today already includes these passengers",
     vehicleConfig: "Vehicle Config",
     exportReport: "Export Report", reportExport: "Report Export", selectCols: "Select columns", previewReport: "Preview / Print",
     reportTypeStay: "Accommodation", reportTypeFlight: "Flights", reportTypeStaff: "Staff List", reportTypeVehicle: "Vehicles",
@@ -747,8 +772,12 @@ const T = {
     maxPhasesHint: "최대 4개 구역", manageShootPhases: "구역 관리",
     deleteShootPhaseTitle: "구역 삭제", deleteShootPhaseConfirm: "\"{name}\" 구역을 삭제하시겠습니까? 해당 호텔은 미지정으로 변경됩니다.",
     dailyDispatch: "일일 배차표", dispatchDate: "배차 날짜", copyPrevDay: "전날 복사",
-    noDispatchData: "이날 배차 기록이 없습니다. 수동 추가 또는 전날 복사를 이용하세요.",
+    noDispatchData: "이날 배차 기록이 없습니다. 차량 설정에서 가져오기, 전날 복사, 또는 수동 추가하세요.",
     dispatchCopied: "전날 배차 설정을 복사했습니다", dispatchNoYesterday: "전날 배차 기록을 찾을 수 없습니다",
+    importFromConfig: "차량 설정에서 가져오기", dispatchImportedFromConfig: "차량 설정에서 {n}명 가져옴",
+    dispatchFallbackFromConfig: "전날 기록 없음 — 차량 설정에서 {n}명 가져옴",
+    dispatchNoConfigTemplate: "차량 설정에 탑승자가 없습니다. 먼저 「차량 설정」에서 배정하세요",
+    dispatchNothingToImport: "오늘 이미 포함된 인원입니다",
     vehicleConfig: "차량 설정",
     exportReport: "보고서 내보내기", reportExport: "보고서 내보내기", selectCols: "출력 열 선택", previewReport: "미리보기 / 인쇄",
     reportTypeStay: "숙박표", reportTypeFlight: "항공표", reportTypeStaff: "스태프 목록", reportTypeVehicle: "배차표",
@@ -865,8 +894,12 @@ const T = {
     maxPhasesHint: "最大4エリア", manageShootPhases: "エリア管理",
     deleteShootPhaseTitle: "エリア削除", deleteShootPhaseConfirm: "「{name}」を削除しますか？このエリアのホテルは未指定になります。",
     dailyDispatch: "日別配車表", dispatchDate: "配車日", copyPrevDay: "前日をコピー",
-    noDispatchData: "この日の配車記録がありません。手動追加または前日コピーをご利用ください。",
+    noDispatchData: "この日の配車記録がありません。車両設定から取込、前日コピー、または手動追加。",
     dispatchCopied: "前日の配車設定をコピーしました", dispatchNoYesterday: "前日の配車記録が見つかりません",
+    importFromConfig: "車両設定から取込", dispatchImportedFromConfig: "車両設定から{n}名取込",
+    dispatchFallbackFromConfig: "前日なし — 車両設定から{n}名取込",
+    dispatchNoConfigTemplate: "車両設定に同乗者がいません。先に「車両設定」で配車してください",
+    dispatchNothingToImport: "本日は既に同じ人員が含まれています",
     vehicleConfig: "車両設定",
     exportReport: "レポート出力", reportExport: "レポート出力", selectCols: "出力列を選択", previewReport: "プレビュー／印刷",
     reportTypeStay: "宿泊表", reportTypeFlight: "航空便表", reportTypeStaff: "スタッフ一覧", reportTypeVehicle: "配車表",
@@ -5992,7 +6025,33 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   </>)}
                   {vehicleSub === "daily" && (() => {
                     const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
-                    const todayDispatches = dailyDispatches.filter((d) => d.dispatch_date === dispatchDate);
+                    const todayDispatches = dailyDispatches.filter((d) => dispatchDateKey(d) === dispatchDate);
+                    const dailyPersonKey = (vehicleId, personId) => `${vehicleId}:${personId}`;
+                    const insertDailyRows = async (records, date) => {
+                      const existing = dailyDispatches.filter((d) => dispatchDateKey(d) === date);
+                      const existingKeys = new Set(existing.map((d) => dailyPersonKey(d.vehicle_id, d.person_id)));
+                      const toInsert = records.filter((r) => !existingKeys.has(dailyPersonKey(r.vehicle_id, r.person_id)));
+                      if (!toInsert.length) return 0;
+                      const rows = await Promise.all(toInsert.map((r, i) => {
+                        const sort = r.sort_order ?? existing.filter((d) => d.vehicle_id === r.vehicle_id).length + i;
+                        return api.insert("daily_dispatches", { project_id: pid, dispatch_date: date, vehicle_id: r.vehicle_id, person_id: r.person_id, role: r.role || "passenger", sort_order: sort }).then(([row]) => row);
+                      }));
+                      setDailyDispatches((d) => [...d, ...rows]);
+                      return rows.length;
+                    };
+                    const importFromConfig = async (silent) => {
+                      const template = templateAssignmentsForDaily(allAssignments);
+                      if (!template.length) {
+                        if (!silent) showToast(t.dispatchNoConfigTemplate);
+                        return 0;
+                      }
+                      const n = await insertDailyRows(template, dispatchDate);
+                      if (!silent) {
+                        if (n > 0) showToast(t.dispatchImportedFromConfig.replace("{n}", n));
+                        else showToast(t.dispatchNothingToImport);
+                      }
+                      return n;
+                    };
                     const addDispatch = async (vehicleId, personId, role) => {
                       try {
                         const [row] = await api.insert("daily_dispatches", { project_id: pid, dispatch_date: dispatchDate, vehicle_id: vehicleId, person_id: +personId, role, sort_order: todayDispatches.filter((d) => d.vehicle_id === vehicleId).length });
@@ -6005,20 +6064,30 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     };
                     const copyPrev = async () => {
                       const prevDate = (() => { const d = parseLocalDate(dispatchDate); d.setDate(d.getDate() - 1); return localDateStr(d); })();
-                      const prevRecs = dailyDispatches.filter((d) => d.dispatch_date === prevDate);
-                      if (!prevRecs.length) { showToast(t.dispatchNoYesterday); return; }
-                      try {
-                        const inserts = prevRecs.map((r) => ({ project_id: pid, dispatch_date: dispatchDate, vehicle_id: r.vehicle_id, person_id: r.person_id, role: r.role, sort_order: r.sort_order }));
-                        const rows = await Promise.all(inserts.map((ins) => api.insert("daily_dispatches", ins).then(([r]) => r)));
-                        setDailyDispatches((d) => [...d, ...rows]);
-                        showToast(t.dispatchCopied);
-                      } catch (e) { showToast(e.message); }
+                      const prevRecs = dailyDispatches.filter((d) => dispatchDateKey(d) === prevDate);
+                      if (prevRecs.length) {
+                        try {
+                          const n = await insertDailyRows(prevRecs.map((r) => ({ vehicle_id: r.vehicle_id, person_id: r.person_id, role: r.role, sort_order: r.sort_order })), dispatchDate);
+                          if (n > 0) showToast(t.dispatchCopied);
+                          else showToast(t.dispatchNothingToImport);
+                        } catch (e) { showToast(e.message); }
+                        return;
+                      }
+                      const n = await importFromConfig(true);
+                      if (n > 0) showToast(t.dispatchFallbackFromConfig.replace("{n}", n));
+                      else if (!allAssignments.length) showToast(t.dispatchNoConfigTemplate);
+                      else showToast(t.dispatchNoYesterday);
                     };
                     return (
                       <div>
                         <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
                           <input type="date" style={{ ...inpStyle, width: "auto" }} value={dispatchDate} onChange={(e) => setDispatchDate(e.target.value)} />
-                          {canEdit && <button type="button" onClick={copyPrev} style={{ ...pBtn(false), background: "var(--asagi)", border: "none", fontSize: 12 }}>📋 {t.copyPrevDay}</button>}
+                          {canEdit && (
+                            <>
+                              <button type="button" onClick={copyPrev} style={{ ...pBtn(false), background: "var(--asagi)", border: "none", fontSize: 12 }}>📋 {t.copyPrevDay}</button>
+                              <button type="button" onClick={() => importFromConfig(false)} style={{ ...pBtn(false), background: "var(--moegi)", border: "none", fontSize: 12, color: "var(--shiro)" }}>📥 {t.importFromConfig}</button>
+                            </>
+                          )}
                           <span style={{ fontSize: 11, color: "var(--nezumi)", marginLeft: "auto" }}>{todayDispatches.length} {t.totalAssigned}</span>
                         </div>
                         {vehicles.length === 0 ? (
