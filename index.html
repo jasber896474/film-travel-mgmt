@@ -2778,33 +2778,32 @@ function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }
   </>);
 
   return (
-    <div className="no-print" style={{ marginTop:24, background:"var(--shiro)", border:`1px solid ${hasAny ? "var(--kincha)" : "var(--keisenL)"}`, borderRadius:10, overflow:"hidden", boxShadow: hasAny ? "0 2px 8px rgba(143,99,24,.14)" : "0 1px 4px rgba(0,0,0,.04)" }}>
+    <div className="no-print" style={{ marginTop:24, background:"var(--shiro)", border:`1px solid ${hasAny ? "var(--kincha)" : "var(--keisenL)"}`, borderRadius:8, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
 
-      {/* ── 標題列 ── */}
-      {/* ── 標題列 ── */}
-      <div style={{ padding:"12px 18px", background: hasAny ? "var(--kincha2)" : "var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", gap:10 }}>
-        <span style={{ fontSize:18 }}>{hasAny ? "⚠️" : "✅"}</span>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:13, fontWeight:700, color: hasAny ? "var(--kincha)" : "var(--moegi)", fontFamily:"'Noto Serif JP',serif" }}>
-            {hasAny ? `${t.flightConflictTitle || "入住時間衝突提示"}（${totalConflict} 人）` : (t.flightConflictNone || "無入住衝突")}
-          </div>
-          {hasAny && <div style={{ fontSize:10.5, color:"var(--nezumi)", marginTop:2 }}>飯店有設定入住時間者以飯店設定為準；未設定預設 15:00 / 11:00</div>}
+      {/* ── 標題列（與行李試算同結構） ── */}
+      <div onClick={() => setOpen((v) => !v)} style={{ padding:"11px 16px", background: hasAny ? "var(--kincha2)" : "var(--washi)", borderBottom: open ? "1px solid var(--keisenL)" : "none", display:"flex", alignItems:"center", gap:12, cursor:"pointer", userSelect:"none" }}>
+        <span style={{ fontSize:15, flexShrink:0 }}>{hasAny ? "⚠️" : "✅"}</span>
+        <span style={{ fontSize:13, fontWeight:700, color: hasAny ? "var(--kincha)" : "var(--moegi)", fontFamily:"'Noto Serif JP',serif", flex:1 }}>
+          {hasAny ? `${t.flightConflictTitle || "入住時間衝突提示"}（${totalConflict} 人）` : (t.flightConflictNone || "無入住衝突")}
+        </span>
+        <span style={{ fontSize:11, color:"var(--usunezumi)", whiteSpace:"nowrap", marginRight:8 }}>點擊展開／收起</span>
+        <span style={{ fontSize:11, color:"var(--usunezumi)", flexShrink:0, lineHeight:1 }}>{open ? "▲" : "▼"}</span>
+      </div>
+
+      {open && (
+        <div style={{ padding:"10px 16px", background:"var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", gap:8 }} onClick={(e) => e.stopPropagation()}>
+          <span style={{ fontSize:11, fontWeight:600, color:"var(--nezumi)", whiteSpace:"nowrap" }}>{t.flightConflictCutoffLabel || "前一晚切點"}</span>
+          <input
+            type="time"
+            value={cutoff}
+            onChange={(e) => saveCutoff(e.target.value)}
+            style={{ border:"1px solid var(--keisenM)", borderRadius:4, padding:"3px 7px", fontSize:12, fontWeight:700, color:"var(--shu)", background:"var(--shiro)", fontFamily:"'Noto Sans JP',sans-serif", width:86 }}
+          />
+          <span style={{ fontSize:10, color:"var(--usunezumi)", whiteSpace:"nowrap" }}>早於此時間 🔴 加訂前一晚 · 之後至入住前 🟡 安排等候</span>
         </div>
-        <button type="button" onClick={() => setOpen((v) => !v)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--nezumi)", lineHeight:1, padding:"2px 4px", flexShrink:0 }} title={open ? "收起" : "展開"}>{open ? "▲" : "▼"}</button>
-      </div>
-      {/* ── 切點設定列（永遠顯示，不隨折疊） ── */}
-      <div style={{ padding:"8px 18px", background:"var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
-        <span style={{ fontSize:10.5, fontWeight:700, color:"var(--nezumi)", whiteSpace:"nowrap" }}>{t.flightConflictCutoffLabel || "需加訂前一晚切點"}</span>
-        <input
-          type="time"
-          value={cutoff}
-          onChange={(e) => saveCutoff(e.target.value)}
-          style={{ border:"1px solid var(--keisenM)", borderRadius:4, padding:"4px 8px", fontSize:13, fontWeight:700, color:"var(--shu)", background:"var(--shiro)", fontFamily:"'Noto Sans JP',sans-serif", minWidth:90 }}
-        />
-        <span style={{ fontSize:10, color:"var(--usunezumi)", whiteSpace:"nowrap" }}>早於此時間 → 🔴 加訂前一晚 ／ 此時間之後 → 🟡 安排等候</span>
-      </div>
+      )}
 
-      {open && !hasAny && <div style={{ padding:"18px 18px", fontSize:12, color:"var(--nezumi)" }}>所有人員的班機時間與飯店入住/退房時間無衝突。</div>}
+      {open && !hasAny && <div style={{ padding:"16px 18px", fontSize:12, color:"var(--nezumi)" }}>所有人員的班機時間與飯店入住/退房時間無衝突。</div>}
 
       {open && (<>
       {/* ── 🔴 建議加訂前一晚 ── */}
@@ -2968,11 +2967,12 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
   );
 
   return (
-    <div className="flight-bag-calc no-print" style={{ marginTop: 24, background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
-      <div onClick={() => setBagOpen((v) => !v)} style={{ padding: "12px 18px", background: "var(--washi)", borderBottom: bagOpen ? "1px solid var(--keisenL)" : "none", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif" }}>{t.bagCalcTitle}</span>
-        <span style={{ fontSize: 11, color: "var(--nezumi)", flex: 1 }}>— 點此展開行李超重試算工具</span>
-        <span style={{ fontSize: 14, color: "var(--nezumi)", lineHeight: 1 }}>{bagOpen ? "▲" : "▼"}</span>
+    <div className="flight-bag-calc no-print" style={{ marginTop: 24, background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+      <div onClick={() => setBagOpen((v) => !v)} style={{ padding: "11px 16px", background: "var(--washi)", borderBottom: bagOpen ? "1px solid var(--keisenL)" : "none", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", userSelect: "none" }}>
+        <span style={{ fontSize: 15, flexShrink: 0 }}>🧳</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif", flex: 1 }}>{t.bagCalcTitle}</span>
+        <span style={{ fontSize: 11, color: "var(--usunezumi)", whiteSpace: "nowrap", marginRight: 8 }}>點擊展開／收起試算工具</span>
+        <span style={{ fontSize: 11, color: "var(--usunezumi)", flexShrink: 0, lineHeight: 1 }}>{bagOpen ? "▲" : "▼"}</span>
       </div>
       {bagOpen && <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
