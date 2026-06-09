@@ -413,7 +413,7 @@ const T = {
     dispatchNoConfigTemplate: "車輛配置尚無乘車人員，請先在「車輛配置」分頁排班",
     dispatchNothingToImport: "今日已包含這些人員，無需重複帶入",
     vehicleConfig: "車輛配置",
-    exportReport: "匯出報表", reportExport: "報表匯出", selectCols: "選擇輸出欄位", previewReport: "預覽／列印",
+    exportReport: "匯出報表", reportExport: "報表匯出", selectCols: "選擇輸出欄位", previewReport: "預覽",
     reportTypeStay: "住宿表", reportTypeFlight: "航班表", reportTypeStaff: "工作人員列表", reportTypeVehicle: "配車表",
     statsPickHotel: "選擇飯店", statsPickDate: "選擇日期", statsSelectHotelFirst: "請先選擇飯店",
     statsDaySummaryOne: "{date} · {hotel}：{guests} 人 · {rooms} 間房 · {cost}",
@@ -543,7 +543,7 @@ const T = {
     dispatchNoConfigTemplate: "车辆配置尚无乘车人员，请先在「车辆配置」分页排班",
     dispatchNothingToImport: "今日已包含这些人员，无需重复带入",
     vehicleConfig: "车辆配置",
-    exportReport: "导出报表", reportExport: "报表导出", selectCols: "选择输出列", previewReport: "预览／打印",
+    exportReport: "导出报表", reportExport: "报表导出", selectCols: "选择输出列", previewReport: "预览",
     reportTypeStay: "住宿表", reportTypeFlight: "航班表", reportTypeStaff: "工作人员列表", reportTypeVehicle: "用车表",
     statsPickHotel: "选择饭店", statsPickDate: "选择日期", statsSelectHotelFirst: "请先选择饭店",
     statsDaySummaryOne: "{date} · {hotel}：{guests} 人 · {rooms} 间房 · {cost}",
@@ -672,7 +672,7 @@ const T = {
     dispatchNoConfigTemplate: "No passengers in vehicle config yet — set up under Vehicle Config first",
     dispatchNothingToImport: "Today already includes these passengers",
     vehicleConfig: "Vehicle Config",
-    exportReport: "Export Report", reportExport: "Report Export", selectCols: "Select columns", previewReport: "Preview / Print",
+    exportReport: "Export Report", reportExport: "Report Export", selectCols: "Select columns", previewReport: "Preview",
     reportTypeStay: "Accommodation", reportTypeFlight: "Flights", reportTypeStaff: "Staff List", reportTypeVehicle: "Vehicles",
     statsPickHotel: "Hotel", statsPickDate: "Date", statsSelectHotelFirst: "Select a hotel first",
     statsDaySummaryOne: "{date} · {hotel}: {guests} guests · {rooms} rooms · {cost}",
@@ -799,7 +799,7 @@ const T = {
     dispatchNoConfigTemplate: "차량 설정에 탑승자가 없습니다. 먼저 「차량 설정」에서 배정하세요",
     dispatchNothingToImport: "오늘 이미 포함된 인원입니다",
     vehicleConfig: "차량 설정",
-    exportReport: "보고서 내보내기", reportExport: "보고서 내보내기", selectCols: "출력 열 선택", previewReport: "미리보기 / 인쇄",
+    exportReport: "보고서 내보내기", reportExport: "보고서 내보내기", selectCols: "출력 열 선택", previewReport: "미리보기",
     reportTypeStay: "숙박표", reportTypeFlight: "항공표", reportTypeStaff: "스태프 목록", reportTypeVehicle: "배차표",
     statsPickHotel: "호텔 선택", statsPickDate: "날짜 선택", statsSelectHotelFirst: "호텔을 먼저 선택하세요",
     statsDaySummaryOne: "{date} · {hotel}: {guests}명 · {rooms}실 · {cost}",
@@ -925,7 +925,7 @@ const T = {
     dispatchNoConfigTemplate: "車両設定に同乗者がいません。先に「車両設定」で配車してください",
     dispatchNothingToImport: "本日は既に同じ人員が含まれています",
     vehicleConfig: "車両設定",
-    exportReport: "レポート出力", reportExport: "レポート出力", selectCols: "出力列を選択", previewReport: "プレビュー／印刷",
+    exportReport: "レポート出力", reportExport: "レポート出力", selectCols: "出力列を選択", previewReport: "プレビュー",
     reportTypeStay: "宿泊表", reportTypeFlight: "航空便表", reportTypeStaff: "スタッフ一覧", reportTypeVehicle: "配車表",
     statsPickHotel: "ホテル選択", statsPickDate: "日付", statsSelectHotelFirst: "ホテルを選択してください",
     statsDaySummaryOne: "{date} · {hotel}：{guests}名・{rooms}室・{cost}",
@@ -2874,6 +2874,23 @@ function escReportHtml(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function injectReportPreviewToolbar(html, printLabel, closeLabel) {
+  const bar = `<div id="report-preview-bar" style="position:sticky;top:0;z-index:9999;display:flex;justify-content:center;align-items:center;gap:10px;padding:10px 16px;background:#1a3028;color:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);font-family:'Noto Sans JP',sans-serif;">
+<button type="button" onclick="window.print()" style="padding:8px 22px;border:none;border-radius:6px;background:#3e8470;color:#fff;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.04em;">🖨 ${escReportHtml(printLabel)}</button>
+<button type="button" onclick="window.close()" style="padding:8px 16px;border:1px solid rgba(255,255,255,.28);border-radius:6px;background:transparent;color:#fff;font-size:13px;cursor:pointer;">${escReportHtml(closeLabel)}</button>
+</div>`;
+  const printHide = "@media print{#report-preview-bar{display:none!important;}}";
+  let out = html.includes("</head>") ? html.replace("</head>", `<style>${printHide}</style></head>`) : html;
+  if (/<body[^>]*>/i.test(out)) return out.replace(/<body([^>]*)>/i, `<body$1>${bar}`);
+  return bar + out;
+}
+
+function openReportPreviewWindow(html, { printLabel = "列印", closeLabel = "關閉" } = {}) {
+  const doc = injectReportPreviewToolbar(html, printLabel, closeLabel);
+  const w = window.open("", "_blank");
+  if (w) { w.document.write(doc); w.document.close(); }
+}
+
 function VehicleRoutePreviewLine({ seg, lang, compact }) {
   const dur = formatVehicleTravelDuration(seg.pickup_time, seg.arrival_time, lang);
   const pickup = [seg.pickup_time, seg.pickup_location].filter(Boolean);
@@ -3039,8 +3056,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-si
 
 function openVehicleReportPrint(vehicles, assignments, persons, project, lang, t) {
   const html = generateVehicleReportHTML(buildVehicleReportCards(vehicles, assignments, persons, lang, t), project, lang, t);
-  const w = window.open("", "_blank");
-  if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800); }
+  openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
 }
 
 function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }) {
@@ -3278,8 +3294,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       return out;
     });
     const html = generateReportHTML({ type: reportType, cols: sel, data, project, lang, t });
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800); }
+    openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
   };
 
   const typeKeys = ["stay", "flight", "staff", "vehicle"];
@@ -3543,8 +3558,7 @@ ${rows}
   <span style="font-size:18pt;font-family:'Noto Serif JP',serif;font-weight:600;">${formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
 </div>
 </body></html>`;
-    const w = window.open("", "_blank");
-    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800); }
+    openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
   };
 
   if (!data.length) {
@@ -6112,7 +6126,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       <h2 style={{ fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.vehicleMgmt}</h2>
                     </div>
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button type="button" onClick={() => openVehicleReportPrint(vehicles, allAssignments, persons, project, lang, t)} style={{ ...pBtn(false), background: "var(--asagi)", border: "none", fontSize: 12 }}>🖨 {t.reportExport}</button>
+                      <button type="button" onClick={() => openVehicleReportPrint(vehicles, allAssignments, persons, project, lang, t)} style={{ ...pBtn(false), background: "var(--asagi)", border: "none", fontSize: 12 }}>{t.previewReport}</button>
                       {canEdit && <button type="button" onClick={() => setVehicleModal({ mode: "add" })} style={pBtn(false)}>{t.addVehicle}</button>}
                     </div>
                   </div>
