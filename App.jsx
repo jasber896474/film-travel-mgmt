@@ -4255,6 +4255,7 @@ function LoginScreen({ onLogin }) {
         message: message.trim() || null,
         status: "pending",
       };
+      // 未登入 session（需信箱驗證）時 auth.uid() 為空，RLS 只允許 user_id 為 null
       if (hasSession && userId) reqBody.user_id = userId;
       const reqToken = res.access_token || SUPABASE_KEY;
       const reqRes = await fetch(`${SUPABASE_URL}/rest/v1/user_requests`, {
