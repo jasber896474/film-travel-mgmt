@@ -505,9 +505,15 @@ const T = {
     flightConflictArrLabel: "班機抵達",
     flightConflictNone: "無入住衝突",
     flightConflictCheckout: "退房時間衝突提示",
-    flightConflictCheckoutHint: "以下人員回程出發時間早於飯店退房時間，請確認是否需要安排晚退房或行李寄放。",
+    flightConflictCheckoutHint: "以下人員回程出發時間晚於飯店退房時間，退房後仍需等候，請確認是否安排等候地點或行李寄放。",
     flightConflictDepLabel: "班機出發",
     flightConflictCheckoutLabel: "飯店退房",
+    flightConflictEarlyCheckin: "🔴 建議多預訂前一晚",
+    flightConflictWait: "🟡 建議安排等候地點",
+    flightConflictEarlyCheckinHint: "抵達時間過早，距飯店入住尚有很長時間，建議為該人員加訂前一晚。",
+    flightConflictWaitHint: "抵達時間早於飯店入住，但尚可等候，建議安排咖啡廳、大廳或行程緩衝。",
+    flightConflictCutoffLabel: "需加訂前一晚切點",
+    flightConflictSettingsHint: "早於切點時間抵達 → 建議加訂前一晚；切點至入住時間之間 → 建議安排等候",
   },
   "zh-CN": {
     appName: "剧组交通住宿管理系统", logout: "登出", print: "打印", members: "成员管理", back: "返回", settings: "项目设定",
@@ -645,9 +651,15 @@ const T = {
     flightConflictArrLabel: "航班抵达",
     flightConflictNone: "无入住冲突",
     flightConflictCheckout: "退房时间冲突提示",
-    flightConflictCheckoutHint: "以下人员回程出发时间早于酒店退房时间，请确认是否需要安排晚退房或行李寄放。",
+    flightConflictCheckoutHint: "以下人员回程出发时间晚于酒店退房时间，退房后仍需等候，请确认是否安排等候地点或行李寄放。",
     flightConflictDepLabel: "航班出发",
     flightConflictCheckoutLabel: "酒店退房",
+    flightConflictEarlyCheckin: "🔴 建议加订前一晚",
+    flightConflictWait: "🟡 建议安排等候地点",
+    flightConflictEarlyCheckinHint: "抵达时间过早，建议为该人员加订前一晚。",
+    flightConflictWaitHint: "抵达时间早于酒店入住，但尚可等候，建议安排等候地点。",
+    flightConflictCutoffLabel: "需加订前一晚切点",
+    flightConflictSettingsHint: "早于切点时间抵达 → 建议加订前一晚；切点至入住时间之间 → 建议安排等候",
   },
   en: {
     appName: "Production Travel & Accommodation", logout: "Logout", print: "Print", members: "Members", back: "Back", settings: "Settings",
@@ -782,9 +794,15 @@ const T = {
     flightConflictArrLabel: "Flight arrives",
     flightConflictNone: "No conflicts",
     flightConflictCheckout: "Late departure conflict",
-    flightConflictCheckoutHint: "These people depart before hotel check-out time. Consider late check-out or luggage storage.",
+    flightConflictCheckoutHint: "These people depart after hotel check-out time. They will need to wait after checkout — consider arranging a waiting area or luggage storage.",
     flightConflictDepLabel: "Flight departs",
     flightConflictCheckoutLabel: "Hotel check-out",
+    flightConflictEarlyCheckin: "🔴 Book extra night",
+    flightConflictWait: "🟡 Arrange waiting area",
+    flightConflictEarlyCheckinHint: "Arrival is very early — recommend booking the previous night.",
+    flightConflictWaitHint: "Arrival is before check-in but manageable — suggest a café, lobby, or buffer activity.",
+    flightConflictCutoffLabel: "Extra night cutoff",
+    flightConflictSettingsHint: "Before cutoff → book extra night; between cutoff and check-in → arrange waiting",
   },
   ko: {
     appName: "제작진 교통·숙박 관리", logout: "로그아웃", print: "인쇄", members: "멤버", back: "뒤로", settings: "설정",
@@ -918,9 +936,15 @@ const T = {
     flightConflictArrLabel: "항공 도착",
     flightConflictNone: "충돌 없음",
     flightConflictCheckout: "체크아웃 시간 충돌",
-    flightConflictCheckoutHint: "아래 인원은 호텔 체크아웃 시간보다 일찍 출발합니다. 레이트 체크아웃을 확인하세요.",
+    flightConflictCheckoutHint: "아래 인원은 체크아웃 후에도 대기가 필요합니다. 대기 장소나 짐 보관을 확인하세요.",
     flightConflictDepLabel: "항공 출발",
     flightConflictCheckoutLabel: "호텔 체크아웃",
+    flightConflictEarlyCheckin: "🔴 전날 추가 예약 권장",
+    flightConflictWait: "🟡 대기 장소 안내 필요",
+    flightConflictEarlyCheckinHint: "도착 시간이 너무 이르므로 전날 예약을 권장합니다.",
+    flightConflictWaitHint: "체크인 전 도착이지만 대기 가능 — 카페·로비 등을 안내하세요.",
+    flightConflictCutoffLabel: "전날 예약 기준 시간",
+    flightConflictSettingsHint: "기준 시간 이전 도착 → 전날 예약; 기준~체크인 사이 → 대기 안내",
   },
   ja: {
     appName: "制作 交通・宿泊管理", logout: "ログアウト", print: "印刷", members: "メンバー", back: "戻る", settings: "設定",
@@ -1055,9 +1079,15 @@ const T = {
     flightConflictArrLabel: "フライト到着",
     flightConflictNone: "問題なし",
     flightConflictCheckout: "チェックアウト時間の注意",
-    flightConflictCheckoutHint: "以下のスタッフはホテルのチェックアウト時間より早く出発します。レイトチェックアウトをご確認ください。",
+    flightConflictCheckoutHint: "以下のスタッフはホテルのチェックアウト後も待機が必要です。待機場所や荷物預けをご確認ください。",
     flightConflictDepLabel: "フライト出発",
     flightConflictCheckoutLabel: "チェックアウト",
+    flightConflictEarlyCheckin: "🔴 前泊の追加予約を推奨",
+    flightConflictWait: "🟡 待機場所の手配を推奨",
+    flightConflictEarlyCheckinHint: "到着が非常に早いため、前泊の追加予約をお勧めします。",
+    flightConflictWaitHint: "チェックイン前の到着ですが待機可能です。カフェやロビーなどをご案内ください。",
+    flightConflictCutoffLabel: "前泊推奨の切替時間",
+    flightConflictSettingsHint: "切替時間より早い到着 → 前泊推奨；切替時間〜チェックイン → 待機手配",
   },
 };
 
@@ -2640,6 +2670,16 @@ function FlightForm({ init, onSave, onClose, t }) {
 function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }) {
   const DEFAULT_CHECKIN = "15:00";
   const DEFAULT_CHECKOUT = "11:00";
+  const DEFAULT_CUTOFF = "09:00";
+
+  const [cutoff, setCutoff] = React.useState(() => {
+    try { return localStorage.getItem("flight_conflict_cutoff") || DEFAULT_CUTOFF; } catch { return DEFAULT_CUTOFF; }
+  });
+
+  const saveCutoff = (v) => {
+    setCutoff(v);
+    try { localStorage.setItem("flight_conflict_cutoff", v); } catch {}
+  };
 
   const toMin = (hm) => {
     if (!hm) return null;
@@ -2666,34 +2706,46 @@ function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }
     return hotels.find((h) => +h.id === +sorted[0].hotel_id) || null;
   };
 
-  const checkinRows = [], checkoutRows = [];
+  // 去程分兩級：🔴 需加訂前一晚 / 🟡 安排等候
+  const earlyCheckinRows = [], waitRows = [], checkoutRows = [];
+
   persons.filter((p) => !p.hide_from_flights).forEach((p) => {
     const fl = flights.find((x) => x.person_id === p.id);
     if (!fl) return;
     const checkinHotel = getCheckinHotel(p.id);
     const checkoutHotel = getCheckoutHotel(p.id);
-    // 無住宿安排者跳過，避免誤報
     if (!checkinHotel && !checkoutHotel) return;
     const ciTime = checkinHotel?.check_in_time || DEFAULT_CHECKIN;
     const coTime = checkoutHotel?.check_out_time || DEFAULT_CHECKOUT;
-    const hotel = checkinHotel || checkoutHotel;
     const name = p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim() || "—";
 
+    // ── 去程抵達判斷 ──
     if (fl.arr_time) {
       const d = parseLocalDateTime(fl.arr_time);
       if (d) {
         const hm = `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-        if ((toMin(hm) ?? 9999) < (toMin(ciTime) ?? 0)) {
-          const dt = fmtFlightDateTime(fl.arr_time, lang);
-          checkinRows.push({ id: p.id, name, dept: p.dept || "", hm, fullTime: dt ? `${dt.date} ${dt.time}` : hm, ciTime, hotelName: checkinHotel?.name || "—", airline: fl.airline || "", flightNo: fl.flight_no || "", arrAirport: fl.arr_airport || "" });
+        const arrMin = toMin(hm) ?? 9999;
+        const ciMin = toMin(ciTime) ?? 0;
+        const cutoffMin = toMin(cutoff) ?? toMin(DEFAULT_CUTOFF);
+        const dt = fmtFlightDateTime(fl.arr_time, lang);
+        const row = { id: p.id, name, dept: p.dept || "", hm, fullTime: dt ? `${dt.date} ${dt.time}` : hm, ciTime, hotelName: checkinHotel?.name || "—", airline: fl.airline || "", flightNo: fl.flight_no || "", arrAirport: fl.arr_airport || "" };
+        if (arrMin < ciMin) {
+          // 抵達早於入住時間 → 再看是否早於切點
+          if (arrMin < cutoffMin) {
+            earlyCheckinRows.push(row); // 🔴 建議加訂前一晚
+          } else {
+            waitRows.push(row); // 🟡 建議安排等候
+          }
         }
       }
     }
+
+    // ── 回程出發判斷（出發晚於退房 → 需等候）──
     if (fl.ret_dep_time) {
       const d = parseLocalDateTime(fl.ret_dep_time);
       if (d) {
         const hm = `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-        if ((toMin(hm) ?? 9999) < (toMin(coTime) ?? 0)) {
+        if ((toMin(hm) ?? 0) > (toMin(coTime) ?? 9999)) {
           const dt = fmtFlightDateTime(fl.ret_dep_time, lang);
           checkoutRows.push({ id: p.id, name, dept: p.dept || "", hm, fullTime: dt ? `${dt.date} ${dt.time}` : hm, coTime, hotelName: checkoutHotel?.name || "—", retAirline: fl.ret_airline || "", retFlightNo: fl.ret_flight_no || "", retDepAirport: fl.ret_dep_airport || "" });
         }
@@ -2701,74 +2753,138 @@ function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }
     }
   });
 
-  const hasAny = checkinRows.length + checkoutRows.length > 0;
+  const totalConflict = earlyCheckinRows.length + waitRows.length + checkoutRows.length;
+  const hasAny = totalConflict > 0;
 
   const hdBadge = (c, bg, fg) => (
     <span style={{ display:"inline-block", padding:"2px 9px", borderRadius:20, fontSize:10.5, fontWeight:700, background:bg, color:fg, whiteSpace:"nowrap" }}>{c}</span>
   );
 
-  const gridHdr = { display:"grid", gridTemplateColumns:"1.4fr 1fr 1fr 1.2fr", gap:"6px 14px", padding:"7px 0", borderBottom:"2px solid var(--keisenM)", fontSize:10, fontWeight:700, color:"var(--nezumi)", letterSpacing:"0.06em" };
-  const gridRow = { display:"grid", gridTemplateColumns:"1.4fr 1fr 1fr 1.2fr", gap:"6px 14px", padding:"9px 0", borderBottom:"1px solid var(--keisenL)", fontSize:12.5, alignItems:"center" };
+  const gridHdr = { display:"grid", gridTemplateColumns:"1.5fr 1fr 1fr 1.3fr 1fr", gap:"6px 12px", padding:"7px 0", borderBottom:"2px solid var(--keisenM)", fontSize:10, fontWeight:700, color:"var(--nezumi)", letterSpacing:"0.06em" };
+  const gridRow = { display:"grid", gridTemplateColumns:"1.5fr 1fr 1fr 1.3fr 1fr", gap:"6px 12px", padding:"9px 0", borderBottom:"1px solid var(--keisenL)", fontSize:12.5, alignItems:"center" };
+  const gridHdrCo = { display:"grid", gridTemplateColumns:"1.5fr 1fr 1fr 1.3fr", gap:"6px 12px", padding:"7px 0", borderBottom:"2px solid var(--keisenM)", fontSize:10, fontWeight:700, color:"var(--nezumi)", letterSpacing:"0.06em" };
+  const gridRowCo = { display:"grid", gridTemplateColumns:"1.5fr 1fr 1fr 1.3fr", gap:"6px 12px", padding:"9px 0", borderBottom:"1px solid var(--keisenL)", fontSize:12.5, alignItems:"center" };
+
+  const personCells = (r, isArr) => (<>
+    <div>
+      <div style={{ fontWeight:600 }}>{r.name}</div>
+      {r.dept && <div style={{ fontSize:10.5, color:"var(--nezumi)" }}>{r.dept}</div>}
+      {isArr
+        ? (r.airline || r.flightNo) && <div style={{ fontSize:10, color:"var(--nezumi)", marginTop:1 }}>{[r.airline, r.flightNo, r.arrAirport ? `→ ${r.arrAirport}` : ""].filter(Boolean).join(" ")}</div>
+        : (r.retAirline || r.retFlightNo) && <div style={{ fontSize:10, color:"var(--nezumi)", marginTop:1 }}>{[r.retAirline, r.retFlightNo, r.retDepAirport].filter(Boolean).join(" ")}</div>
+      }
+    </div>
+  </>);
 
   return (
     <div className="no-print" style={{ marginTop:24, background:"var(--shiro)", border:`1px solid ${hasAny ? "var(--kincha)" : "var(--keisenL)"}`, borderRadius:10, overflow:"hidden", boxShadow: hasAny ? "0 2px 8px rgba(143,99,24,.14)" : "0 1px 4px rgba(0,0,0,.04)" }}>
-      <div style={{ padding:"12px 18px", background: hasAny ? "var(--kincha2)" : "var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", gap:10 }}>
-        <span style={{ fontSize:18 }}>{hasAny ? "⚠️" : "✅"}</span>
-        <div>
-          <div style={{ fontSize:13, fontWeight:700, color: hasAny ? "var(--kincha)" : "var(--moegi)", fontFamily:"'Noto Serif JP',serif" }}>
-            {hasAny ? `${t.flightConflictTitle || "入住時間衝突提示"}（${checkinRows.length + checkoutRows.length} 人）` : (t.flightConflictNone || "無入住衝突")}
+
+      {/* ── 標題列 ── */}
+      <div style={{ padding:"12px 18px", background: hasAny ? "var(--kincha2)" : "var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:18 }}>{hasAny ? "⚠️" : "✅"}</span>
+          <div>
+            <div style={{ fontSize:13, fontWeight:700, color: hasAny ? "var(--kincha)" : "var(--moegi)", fontFamily:"'Noto Serif JP',serif" }}>
+              {hasAny ? `${t.flightConflictTitle || "入住時間衝突提示"}（${totalConflict} 人）` : (t.flightConflictNone || "無入住衝突")}
+            </div>
+            {hasAny && <div style={{ fontSize:10.5, color:"var(--nezumi)", marginTop:2 }}>飯店有設定入住時間者以飯店設定為準；未設定預設 15:00 / 11:00</div>}
           </div>
-          {hasAny && <div style={{ fontSize:10.5, color:"var(--nezumi)", marginTop:2 }}>飯店有設定入住時間者以飯店設定為準；未設定者預設 15:00 入住 / 11:00 退房</div>}
+        </div>
+        {/* ── 設定列：入住切點 ── */}
+        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--shiro)", border:"1px solid var(--keisenM)", borderRadius:6, padding:"6px 12px" }}>
+          <span style={{ fontSize:10.5, fontWeight:700, color:"var(--nezumi)", whiteSpace:"nowrap" }}>{t.flightConflictCutoffLabel || "需加訂前一晚切點"}</span>
+          <input
+            type="time"
+            value={cutoff}
+            onChange={(e) => saveCutoff(e.target.value)}
+            style={{ border:"1px solid var(--keisenM)", borderRadius:4, padding:"3px 6px", fontSize:12, fontWeight:700, color:"var(--shu)", background:"var(--shiro)", fontFamily:"'Noto Sans JP',sans-serif", width:80 }}
+          />
+          <span style={{ fontSize:10, color:"var(--usunezumi)", whiteSpace:"nowrap" }}>← 🔴 / 🟡 →</span>
         </div>
       </div>
 
       {!hasAny && <div style={{ padding:"18px 18px", fontSize:12, color:"var(--nezumi)" }}>所有人員的班機時間與飯店入住/退房時間無衝突。</div>}
 
-      {checkinRows.length > 0 && (
-        <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--kincha)", background:"rgba(143,99,24,.04)" }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--kincha)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:6 }}>{t.flightConflictTitle || "去程入住衝突"} — {checkinRows.length} 人</div>
-          <p style={{ fontSize:11.5, color:"var(--nezumi)", margin:"0 0 10px", lineHeight:1.6 }}>{t.flightConflictHint || "以下人員去程抵達時間早於飯店可入住時間。"}</p>
+      {/* ── 🔴 建議加訂前一晚 ── */}
+      {earlyCheckinRows.length > 0 && (
+        <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--shu)", background:"rgba(173,48,48,.04)" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+            <span style={{ fontSize:14 }}>🔴</span>
+            <div style={{ fontSize:11, fontWeight:700, color:"var(--shu)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
+              {t.flightConflictEarlyCheckin || "建議多預訂前一晚"} — {earlyCheckinRows.length} 人
+            </div>
+          </div>
+          <p style={{ fontSize:11.5, color:"var(--nezumi)", margin:"0 0 10px", lineHeight:1.6 }}>{t.flightConflictEarlyCheckinHint || "抵達時間過早，距飯店入住尚有很長時間，建議為該人員加訂前一晚。"}</p>
           <div style={gridHdr}>
             <span>姓名 / 部門</span>
             <span>{t.flightConflictArrLabel || "班機抵達"}</span>
-            <span>{t.flightConflictCheckinLabel || "飯店可入住"}</span>
+            <span>{t.flightConflictCutoffLabel || "切點"}</span>
+            <span>{t.flightConflictCheckinLabel || "飯店入住"}</span>
             <span>飯店</span>
           </div>
-          {checkinRows.map((r) => (
+          {earlyCheckinRows.map((r) => (
             <div key={r.id} style={gridRow}>
-              <div>
-                <div style={{ fontWeight:600 }}>{r.name}</div>
-                {r.dept && <div style={{ fontSize:10.5, color:"var(--nezumi)" }}>{r.dept}</div>}
-                {(r.airline || r.flightNo) && <div style={{ fontSize:10, color:"var(--nezumi)", marginTop:1 }}>{[r.airline, r.flightNo, r.arrAirport ? `→ ${r.arrAirport}` : ""].filter(Boolean).join(" ")}</div>}
-              </div>
-              <div>{hdBadge(r.hm, "rgba(173,48,48,.1)", "var(--shu)")}<div style={{ fontSize:10, color:"var(--nezumi)", marginTop:2 }}>{r.fullTime}</div></div>
+              {personCells(r, true)}
+              <div>{hdBadge(r.hm, "rgba(173,48,48,.12)", "var(--shu)")}<div style={{ fontSize:10, color:"var(--nezumi)", marginTop:2 }}>{r.fullTime}</div></div>
+              <div>{hdBadge(fmtHM(cutoff), "rgba(173,48,48,.08)", "var(--shu)")}</div>
               <div>{hdBadge(fmtHM(r.ciTime), "var(--kincha2)", "var(--kincha)")}</div>
-              <div style={{ fontWeight:500 }}>{r.hotelName}</div>
+              <div style={{ fontWeight:500, fontSize:12 }}>{r.hotelName}</div>
             </div>
           ))}
         </div>
       )}
 
-      {checkoutRows.length > 0 && (
-        <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--asagi)", background:"var(--asagi2)", borderTop: checkinRows.length > 0 ? "1px solid var(--keisenL)" : "none" }}>
-          <div style={{ fontSize:11, fontWeight:700, color:"var(--asagi)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:6 }}>{t.flightConflictCheckout || "回程退房衝突"} — {checkoutRows.length} 人</div>
-          <p style={{ fontSize:11.5, color:"var(--nezumi)", margin:"0 0 10px", lineHeight:1.6 }}>{t.flightConflictCheckoutHint || "以下人員回程出發時間早於飯店退房時間。"}</p>
+      {/* ── 🟡 建議安排等候地點 ── */}
+      {waitRows.length > 0 && (
+        <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--kincha)", background:"rgba(143,99,24,.04)", borderTop: earlyCheckinRows.length > 0 ? "1px solid var(--keisenL)" : "none" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+            <span style={{ fontSize:14 }}>🟡</span>
+            <div style={{ fontSize:11, fontWeight:700, color:"var(--kincha)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
+              {t.flightConflictWait || "建議安排等候地點"} — {waitRows.length} 人
+            </div>
+          </div>
+          <p style={{ fontSize:11.5, color:"var(--nezumi)", margin:"0 0 10px", lineHeight:1.6 }}>{t.flightConflictWaitHint || "抵達時間早於飯店入住，但尚可等候，建議安排咖啡廳、大廳或行程緩衝。"}</p>
           <div style={gridHdr}>
+            <span>姓名 / 部門</span>
+            <span>{t.flightConflictArrLabel || "班機抵達"}</span>
+            <span>{t.flightConflictCutoffLabel || "切點"}</span>
+            <span>{t.flightConflictCheckinLabel || "飯店入住"}</span>
+            <span>飯店</span>
+          </div>
+          {waitRows.map((r) => (
+            <div key={r.id} style={gridRow}>
+              {personCells(r, true)}
+              <div>{hdBadge(r.hm, "var(--kincha2)", "var(--kincha)")}<div style={{ fontSize:10, color:"var(--nezumi)", marginTop:2 }}>{r.fullTime}</div></div>
+              <div>{hdBadge(fmtHM(cutoff), "rgba(143,99,24,.08)", "var(--kincha)")}</div>
+              <div>{hdBadge(fmtHM(r.ciTime), "var(--kincha2)", "var(--kincha)")}</div>
+              <div style={{ fontWeight:500, fontSize:12 }}>{r.hotelName}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── 回程退房等候 ── */}
+      {checkoutRows.length > 0 && (
+        <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--asagi)", background:"var(--asagi2)", borderTop: (earlyCheckinRows.length + waitRows.length) > 0 ? "1px solid var(--keisenL)" : "none" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+            <span style={{ fontSize:14 }}>🔵</span>
+            <div style={{ fontSize:11, fontWeight:700, color:"var(--asagi)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
+              {t.flightConflictCheckout || "回程退房後需等候"} — {checkoutRows.length} 人
+            </div>
+          </div>
+          <p style={{ fontSize:11.5, color:"var(--nezumi)", margin:"0 0 10px", lineHeight:1.6 }}>{t.flightConflictCheckoutHint || "以下人員回程出發時間晚於飯店退房時間，退房後仍需等候，請確認是否安排等候地點或行李寄放。"}</p>
+          <div style={gridHdrCo}>
             <span>姓名 / 部門</span>
             <span>{t.flightConflictDepLabel || "班機出發"}</span>
             <span>{t.flightConflictCheckoutLabel || "飯店退房"}</span>
             <span>飯店</span>
           </div>
           {checkoutRows.map((r) => (
-            <div key={r.id} style={gridRow}>
-              <div>
-                <div style={{ fontWeight:600 }}>{r.name}</div>
-                {r.dept && <div style={{ fontSize:10.5, color:"var(--nezumi)" }}>{r.dept}</div>}
-                {(r.retAirline || r.retFlightNo) && <div style={{ fontSize:10, color:"var(--nezumi)", marginTop:1 }}>{[r.retAirline, r.retFlightNo, r.retDepAirport].filter(Boolean).join(" ")}</div>}
-              </div>
+            <div key={r.id} style={gridRowCo}>
+              {personCells(r, false)}
               <div>{hdBadge(r.hm, "rgba(173,48,48,.1)", "var(--shu)")}<div style={{ fontSize:10, color:"var(--nezumi)", marginTop:2 }}>{r.fullTime}</div></div>
               <div>{hdBadge(fmtHM(r.coTime), "var(--asagi2)", "var(--asagi)")}</div>
-              <div style={{ fontWeight:500 }}>{r.hotelName}</div>
+              <div style={{ fontWeight:500, fontSize:12 }}>{r.hotelName}</div>
             </div>
           ))}
         </div>
