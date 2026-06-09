@@ -508,8 +508,8 @@ const T = {
     flightConflictCheckoutHint: "以下人員回程出發時間晚於飯店退房時間，退房後仍需等候，請確認是否安排等候地點或行李寄放。",
     flightConflictDepLabel: "班機出發",
     flightConflictCheckoutLabel: "飯店退房",
-    flightConflictEarlyCheckin: "🔴 建議多預訂前一晚",
-    flightConflictWait: "🟡 建議安排等候地點",
+    flightConflictEarlyCheckin: "建議多預訂前一晚",
+    flightConflictWait: "建議安排等候地點",
     flightConflictEarlyCheckinHint: "抵達時間過早，距飯店入住尚有很長時間，建議為該人員加訂前一晚。",
     flightConflictWaitHint: "抵達時間早於飯店入住，但尚可等候，建議安排咖啡廳、大廳或行程緩衝。",
     flightConflictCutoffLabel: "需加訂前一晚切點",
@@ -654,8 +654,8 @@ const T = {
     flightConflictCheckoutHint: "以下人员回程出发时间晚于酒店退房时间，退房后仍需等候，请确认是否安排等候地点或行李寄放。",
     flightConflictDepLabel: "航班出发",
     flightConflictCheckoutLabel: "酒店退房",
-    flightConflictEarlyCheckin: "🔴 建议加订前一晚",
-    flightConflictWait: "🟡 建议安排等候地点",
+    flightConflictEarlyCheckin: "建议加订前一晚",
+    flightConflictWait: "建议安排等候地点",
     flightConflictEarlyCheckinHint: "抵达时间过早，建议为该人员加订前一晚。",
     flightConflictWaitHint: "抵达时间早于酒店入住，但尚可等候，建议安排等候地点。",
     flightConflictCutoffLabel: "需加订前一晚切点",
@@ -797,8 +797,8 @@ const T = {
     flightConflictCheckoutHint: "These people depart after hotel check-out time. They will need to wait after checkout — consider arranging a waiting area or luggage storage.",
     flightConflictDepLabel: "Flight departs",
     flightConflictCheckoutLabel: "Hotel check-out",
-    flightConflictEarlyCheckin: "🔴 Book extra night",
-    flightConflictWait: "🟡 Arrange waiting area",
+    flightConflictEarlyCheckin: "Book extra night",
+    flightConflictWait: "Arrange waiting area",
     flightConflictEarlyCheckinHint: "Arrival is very early — recommend booking the previous night.",
     flightConflictWaitHint: "Arrival is before check-in but manageable — suggest a café, lobby, or buffer activity.",
     flightConflictCutoffLabel: "Extra night cutoff",
@@ -939,8 +939,8 @@ const T = {
     flightConflictCheckoutHint: "아래 인원은 체크아웃 후에도 대기가 필요합니다. 대기 장소나 짐 보관을 확인하세요.",
     flightConflictDepLabel: "항공 출발",
     flightConflictCheckoutLabel: "호텔 체크아웃",
-    flightConflictEarlyCheckin: "🔴 전날 추가 예약 권장",
-    flightConflictWait: "🟡 대기 장소 안내 필요",
+    flightConflictEarlyCheckin: "전날 추가 예약 권장",
+    flightConflictWait: "대기 장소 안내 필요",
     flightConflictEarlyCheckinHint: "도착 시간이 너무 이르므로 전날 예약을 권장합니다.",
     flightConflictWaitHint: "체크인 전 도착이지만 대기 가능 — 카페·로비 등을 안내하세요.",
     flightConflictCutoffLabel: "전날 예약 기준 시간",
@@ -1082,8 +1082,8 @@ const T = {
     flightConflictCheckoutHint: "以下のスタッフはホテルのチェックアウト後も待機が必要です。待機場所や荷物預けをご確認ください。",
     flightConflictDepLabel: "フライト出発",
     flightConflictCheckoutLabel: "チェックアウト",
-    flightConflictEarlyCheckin: "🔴 前泊の追加予約を推奨",
-    flightConflictWait: "🟡 待機場所の手配を推奨",
+    flightConflictEarlyCheckin: "前泊の追加予約を推奨",
+    flightConflictWait: "待機場所の手配を推奨",
     flightConflictEarlyCheckinHint: "到着が非常に早いため、前泊の追加予約をお勧めします。",
     flightConflictWaitHint: "チェックイン前の到着ですが待機可能です。カフェやロビーなどをご案内ください。",
     flightConflictCutoffLabel: "前泊推奨の切替時間",
@@ -2675,6 +2675,7 @@ function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }
   const [cutoff, setCutoff] = React.useState(() => {
     try { return localStorage.getItem("flight_conflict_cutoff") || DEFAULT_CUTOFF; } catch { return DEFAULT_CUTOFF; }
   });
+  const [open, setOpen] = React.useState(true);
 
   const saveCutoff = (v) => {
     setCutoff(v);
@@ -2780,31 +2781,32 @@ function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }
     <div className="no-print" style={{ marginTop:24, background:"var(--shiro)", border:`1px solid ${hasAny ? "var(--kincha)" : "var(--keisenL)"}`, borderRadius:10, overflow:"hidden", boxShadow: hasAny ? "0 2px 8px rgba(143,99,24,.14)" : "0 1px 4px rgba(0,0,0,.04)" }}>
 
       {/* ── 標題列 ── */}
-      <div style={{ padding:"12px 18px", background: hasAny ? "var(--kincha2)" : "var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:10 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <span style={{ fontSize:18 }}>{hasAny ? "⚠️" : "✅"}</span>
-          <div>
-            <div style={{ fontSize:13, fontWeight:700, color: hasAny ? "var(--kincha)" : "var(--moegi)", fontFamily:"'Noto Serif JP',serif" }}>
-              {hasAny ? `${t.flightConflictTitle || "入住時間衝突提示"}（${totalConflict} 人）` : (t.flightConflictNone || "無入住衝突")}
-            </div>
-            {hasAny && <div style={{ fontSize:10.5, color:"var(--nezumi)", marginTop:2 }}>飯店有設定入住時間者以飯店設定為準；未設定預設 15:00 / 11:00</div>}
+      {/* ── 標題列 ── */}
+      <div style={{ padding:"12px 18px", background: hasAny ? "var(--kincha2)" : "var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", gap:10 }}>
+        <span style={{ fontSize:18 }}>{hasAny ? "⚠️" : "✅"}</span>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:13, fontWeight:700, color: hasAny ? "var(--kincha)" : "var(--moegi)", fontFamily:"'Noto Serif JP',serif" }}>
+            {hasAny ? `${t.flightConflictTitle || "入住時間衝突提示"}（${totalConflict} 人）` : (t.flightConflictNone || "無入住衝突")}
           </div>
+          {hasAny && <div style={{ fontSize:10.5, color:"var(--nezumi)", marginTop:2 }}>飯店有設定入住時間者以飯店設定為準；未設定預設 15:00 / 11:00</div>}
         </div>
-        {/* ── 設定列：入住切點 ── */}
-        <div style={{ display:"flex", alignItems:"center", gap:8, background:"var(--shiro)", border:"1px solid var(--keisenM)", borderRadius:6, padding:"6px 12px" }}>
-          <span style={{ fontSize:10.5, fontWeight:700, color:"var(--nezumi)", whiteSpace:"nowrap" }}>{t.flightConflictCutoffLabel || "需加訂前一晚切點"}</span>
-          <input
-            type="time"
-            value={cutoff}
-            onChange={(e) => saveCutoff(e.target.value)}
-            style={{ border:"1px solid var(--keisenM)", borderRadius:4, padding:"3px 6px", fontSize:12, fontWeight:700, color:"var(--shu)", background:"var(--shiro)", fontFamily:"'Noto Sans JP',sans-serif", width:80 }}
-          />
-          <span style={{ fontSize:10, color:"var(--usunezumi)", whiteSpace:"nowrap" }}>← 🔴 / 🟡 →</span>
-        </div>
+        <button type="button" onClick={() => setOpen((v) => !v)} style={{ background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--nezumi)", lineHeight:1, padding:"2px 4px", flexShrink:0 }} title={open ? "收起" : "展開"}>{open ? "▲" : "▼"}</button>
+      </div>
+      {/* ── 切點設定列（永遠顯示，不隨折疊） ── */}
+      <div style={{ padding:"8px 18px", background:"var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+        <span style={{ fontSize:10.5, fontWeight:700, color:"var(--nezumi)", whiteSpace:"nowrap" }}>{t.flightConflictCutoffLabel || "需加訂前一晚切點"}</span>
+        <input
+          type="time"
+          value={cutoff}
+          onChange={(e) => saveCutoff(e.target.value)}
+          style={{ border:"1px solid var(--keisenM)", borderRadius:4, padding:"4px 8px", fontSize:13, fontWeight:700, color:"var(--shu)", background:"var(--shiro)", fontFamily:"'Noto Sans JP',sans-serif", minWidth:90 }}
+        />
+        <span style={{ fontSize:10, color:"var(--usunezumi)", whiteSpace:"nowrap" }}>早於此時間 → 🔴 加訂前一晚 ／ 此時間之後 → 🟡 安排等候</span>
       </div>
 
-      {!hasAny && <div style={{ padding:"18px 18px", fontSize:12, color:"var(--nezumi)" }}>所有人員的班機時間與飯店入住/退房時間無衝突。</div>}
+      {open && !hasAny && <div style={{ padding:"18px 18px", fontSize:12, color:"var(--nezumi)" }}>所有人員的班機時間與飯店入住/退房時間無衝突。</div>}
 
+      {open && (<>
       {/* ── 🔴 建議加訂前一晚 ── */}
       {earlyCheckinRows.length > 0 && (
         <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--shu)", background:"rgba(173,48,48,.04)" }}>
@@ -2889,11 +2891,13 @@ function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }
           ))}
         </div>
       )}
+      </>)}
     </div>
   );
 }
 
 function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
+  const [bagOpen, setBagOpen] = useState(false);
   const groups = useMemo(() => buildFlightBaggageGroups(persons, flights, t, lang), [persons, flights, t, lang]);
   const [mode, setMode] = useState("flight");
   const [leg, setLeg] = useState("out");
@@ -2965,11 +2969,12 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
 
   return (
     <div className="flight-bag-calc no-print" style={{ marginTop: 24, background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
-      <div style={{ padding: "12px 18px", background: "var(--washi)", borderBottom: "1px solid var(--keisenL)", display: "flex", alignItems: "center", gap: 10 }}>
+      <div onClick={() => setBagOpen((v) => !v)} style={{ padding: "12px 18px", background: "var(--washi)", borderBottom: bagOpen ? "1px solid var(--keisenL)" : "none", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif" }}>{t.bagCalcTitle}</span>
-        <span style={{ fontSize: 11, color: "var(--nezumi)" }}>— {t.bagCalcPickHint}</span>
+        <span style={{ fontSize: 11, color: "var(--nezumi)", flex: 1 }}>— 點此展開行李超重試算工具</span>
+        <span style={{ fontSize: 14, color: "var(--nezumi)", lineHeight: 1 }}>{bagOpen ? "▲" : "▼"}</span>
       </div>
-      <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
+      {bagOpen && <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
           {modeBtn("flight", t.bagCalcByFlight)}
           {modeBtn("pick", t.bagCalcByPick)}
@@ -3061,7 +3066,7 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
         ) : (
           <p style={{ fontSize: 12, color: "var(--nezumi)", padding: "8px 0" }}>{t.bagCalcNoData}</p>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
