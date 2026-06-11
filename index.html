@@ -1808,7 +1808,7 @@ function collectStayNightDates(stays) {
   stays.forEach((s) => {
     if (!s.check_in || !s.check_out || !s.hotel_id) return;
     const n = diffDays(s.check_in, s.check_out);
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i <= n; i++) {
       const d = parseLocalDate(s.check_in);
       d.setDate(d.getDate() + i);
       set.add(localDateStr(d));
@@ -5107,6 +5107,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [deptC, setDeptC] = useState("");
   const [searchCHotel, setSearchCHotel] = useState("");
   const [searchCRoom, setSearchCRoom] = useState("");
+  const [searchCCheckIn, setSearchCCheckIn] = useState("");
+  const [searchCCheckOut, setSearchCCheckOut] = useState("");
   const [activeStayPhase, setActiveStayPhase] = useState("");
   const [statsDate, setStatsDate] = useState("");
   const [statsHotelId, setStatsHotelId] = useState("");
@@ -5464,7 +5466,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       const roomOk = !searchCRoom || (rt || "").toLowerCase().includes(searchCRoom.toLowerCase());
       const deptOk = !deptC || (p?.dept === deptC);
       const phaseOk = !activeStayPhase || hotelPhaseMap[+s.hotel_id] === activeStayPhase;
-      if (nameOk && hotelOk && roomOk && deptOk && phaseOk) {
+      const checkInOk = !searchCCheckIn || (s.check_in || "") === searchCCheckIn;
+      const checkOutOk = !searchCCheckOut || (s.check_out || "") === searchCCheckOut;
+      if (nameOk && hotelOk && roomOk && deptOk && phaseOk && checkInOk && checkOutOk) {
         rows.push({ ...s, person: p || { dept: "", name_kanji: s.special_room_name, last_roman: "", first_roman: "" }, hotelName: hname, roomLabel: rt, isSpecialRoom: !!s.special_room_name });
       }
     });
@@ -5479,7 +5483,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       return (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0);
     });
     return rows;
-  }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, activeStayPhase, hotelPhaseMap, personIndex, hotels]);
+  }, [stays, persons, debSearchC, searchCHotel, searchCRoom, searchCCheckIn, searchCCheckOut, deptC, activeStayPhase, hotelPhaseMap, personIndex, hotels]);
 
   // Room group colours (cycle through palette for each unique hotel+room_number key)
   const ROOM_COLORS = ["#2b5a4c", "#6b4c9a", "#8b4513", "#1a5276", "#7b241c", "#117a65", "#6e2f1a", "#1b4f72"];
@@ -6275,6 +6279,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <DeptFilter depts={allDepts} value={deptC} onChange={setDeptC} allLabel={t.allDept} />
                     <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchHotelName} value={searchCHotel} onChange={(e) => setSearchCHotel(e.target.value)} />
                     <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchRoomType} value={searchCRoom} onChange={(e) => setSearchCRoom(e.target.value)} />
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.04em" }}>{t.checkIn}</span>
+                      <input type="date" style={{ ...inpStyle, width: "100%" }} className="wa-input" value={searchCCheckIn} onChange={(e) => setSearchCCheckIn(e.target.value)} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.04em" }}>{t.checkOut}</span>
+                      <input type="date" style={{ ...inpStyle, width: "100%" }} className="wa-input" value={searchCCheckOut} onChange={(e) => setSearchCCheckOut(e.target.value)} />
+                    </div>
                     {canEdit && (
                       <select style={{ ...inpStyle, width: "100%" }} className="wa-input" value={addStayPerson} onChange={(e) => setAddStayPerson(e.target.value)}>
                         <option value="">{t.addSegment}</option>
@@ -6306,7 +6318,17 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                         </div>
                       );
                     })()}
-                    <span style={{ fontSize: 11, color: "var(--nezumi)", gridColumn: "1 / -1" }}>{t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}</span>
+                    <span style={{ fontSize: 11, color: "var(--nezumi)", gridColumn: "1 / -1" }}>
+                      {t.resultsCount.replace("{n}", flatStays.length).replace("{total}", stays.length)}
+                      {searchCCheckOut && (() => {
+                        const cnt = flatStays.filter((r) => (r.check_out || "") === searchCCheckOut).length;
+                        return <span style={{ marginLeft: 12, color: "var(--asagi)", fontWeight: 600 }}>· {searchCCheckOut} {t.checkOut}：<strong>{cnt}</strong> 人</span>;
+                      })()}
+                      {searchCCheckIn && (() => {
+                        const cnt = flatStays.filter((r) => (r.check_in || "") === searchCCheckIn).length;
+                        return <span style={{ marginLeft: 12, color: "var(--moegi)", fontWeight: 600 }}>· {searchCCheckIn} {t.checkIn}：<strong>{cnt}</strong> 人</span>;
+                      })()}
+                    </span>
                   </div>
                   {(() => {
                     const sortStayRows = (rows) => [...rows].sort((a, b) => {
