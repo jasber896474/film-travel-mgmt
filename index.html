@@ -3986,15 +3986,15 @@ function buildInvoicePriceSegmentRows({ checkIn, totalNights, roomLabel, roomCou
 }
 
 /**
- * 飯店合併對帳：以房號（或人）為單位聚合，同房號取 minIn/maxOut，
- * 再以 check_in + 房型 分批，金額逐晚加總，不按單價切行。
- * 同房不同退房日（如室友）→ 合併到最晚退房日那一行。
+ * 飯店合併對帳：以房號為單位聚合取 minIn/maxOut，
+ * 再以 入住日+房型 分批，金額逐晚加總一行顯示。
+ * 室友不同退房日 → 合併到最晚退房日，rep 選住最久那筆。
  */
 function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
   const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
 
-  // Step 1: 以房號為單位聚合，取 minIn / maxOut / 最久住宿作為代表
-  const byHotelRoom = {};
+  // Step 1: 以房號為單位聚合，取 minIn / maxOut
+  const byUnit = {};
   stays.forEach((s) => {
     if (!s.hotel_id || !s.check_in || !s.check_out) return;
     const hid = +s.hotel_id;
@@ -4002,43 +4002,49 @@ function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
     const unitKey = s.special_room_name
       ? `special:${s.id}`
       : rn ? `room:${hid}:${rn}` : `person:${s.person_id}`;
-    if (!byHotelRoom[unitKey]) byHotelRoom[unitKey] = { hid, stays: [], minIn: null, maxOut: null };
-    const u = byHotelRoom[unitKey];
+    if (!byUnit[unitKey]) byUnit[unitKey] = { hid, stays: [], minIn: null, maxOut: null };
+    const u = byUnit[unitKey];
     u.stays.push(s);
     if (!u.minIn || s.check_in < u.minIn) u.minIn = s.check_in;
     if (!u.maxOut || s.check_out > u.maxOut) u.maxOut = s.check_out;
   });
 
-  // Step 2: 以 hid + minIn + 房型 為 key 再分批（同飯店、同入住日、同房型合一行）
-  const byHotelBatch = {};
-  Object.values(byHotelRoom).forEach(({ hid, stays: unitStays, minIn, maxOut }) => {
+  // Step 2: 以 hid + minIn + 房型 再分批
+  const byBatch = {};
+  Object.values(byUnit).forEach(({ hid, stays: unitStays, minIn, maxOut }) => {
     if (!minIn || !maxOut) return;
-    const rep = unitStays.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
+    const rep = unitStays.reduce((best, s) =>
+      diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
     const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
     const bk = `${hid}|${minIn}|${roomLabel}`;
-    if (!byHotelBatch[bk]) byHotelBatch[bk] = { hid, check_in: minIn, check_out: maxOut, roomLabel, units: [] };
-    const batch = byHotelBatch[bk];
+    if (!byBatch[bk]) byBatch[bk] = { hid, check_in: minIn, check_out: maxOut, roomLabel, units: [] };
+    const batch = byBatch[bk];
     if (maxOut > batch.check_out) batch.check_out = maxOut;
     batch.units.push({ rep, unitStays });
   });
 
-  // Step 3: 計算每批金額
+  // Step 3: 逐晚加總，輸出一行
   const byHotelResult = {};
-  Object.values(byHotelBatch).forEach(({ hid, check_in, check_out, roomLabel, units }) => {
+  Object.values(byBatch).forEach(({ hid, check_in, check_out, roomLabel, units }) => {
     const nights = diffDays(check_in, check_out);
     if (nights <= 0) return;
     const roomCount = units.length;
-    // 取住最久的 rep 計算每晚單價
-    const rep = units.reduce((best, u) => diffDays(u.rep.check_in, u.rep.check_out) >= diffDays(best.rep.check_in, best.rep.check_out) ? u : best, units[0]).rep;
+    const rep = units.reduce((best, u) =>
+      diffDays(u.rep.check_in, u.rep.check_out) >= diffDays(best.rep.check_in, best.rep.check_out) ? u : best, units[0]).rep;
     let perRoomTotal = 0;
     for (let i = 0; i < nights; i++) {
       const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
-      const p = stayNightPriceFromRules(rep, localDateStr(d), pricingRules, hMap);
+      const ds = localDateStr(d);
+      // 找當晚實際有入住的任一筆（優先住最久）作為定價依據
+      const allUnitStays = units.flatMap((u) => u.unitStays);
+      const active = allUnitStays.filter((s) => stayActiveOnDate(s, ds));
+      const priceRep = active.length
+        ? active.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, active[0])
+        : rep;
+      const p = stayNightPriceFromRules(priceRep, ds, pricingRules, hMap);
       if (p != null) perRoomTotal += p;
     }
-    // 建立展開用的 roomGroups
-    const allStaysInBatch = units.flatMap((u) => u.unitStays);
-    const roomGroups = buildBatchRoomGroups(allStaysInBatch);
+    const roomGroups = buildBatchRoomGroups(units.flatMap((u) => u.unitStays));
     if (!byHotelResult[hid]) byHotelResult[hid] = { hotel: hMap[hid], hid, batches: [] };
     byHotelResult[hid].batches.push({
       check_in, check_out, roomLabel, roomCount, nights,
@@ -4095,7 +4101,8 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
       const spanNights = diffDays(minIn, maxOut);
       if (spanNights <= 0) return;
 
-      const rep = unitStays[0];
+      // rep 選住最久的那筆，確保 pricing_rules 查詢範圍最完整
+      const rep = unitStays.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
       const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
       const rn = (rep.room_number || "").trim();
       const subLabel = rep.special_room_name ? rep.special_room_name : rn;
