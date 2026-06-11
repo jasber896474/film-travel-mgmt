@@ -1918,6 +1918,55 @@ function computeHotelStatsForDate(stays, roommates, dateStr, pricingRules, hotel
   return out;
 }
 
+function UnassignedRoomsPanel({ personsNoStay, activeStayPhase, activePhaseName, t, lang, personIndex, canEdit, openStayModal }) {
+  const [open, setOpen] = React.useState(true);
+  if (!personsNoStay.length) return null;
+  return (
+    <div className="pending-banner" style={{ marginTop: 8, border: "1.5px dashed var(--kincha)", borderRadius: 8, overflow: "hidden" }}>
+      <div onClick={() => setOpen((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 18px", cursor: "pointer" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)" }}>
+            {activeStayPhase ? t.unassignedPhaseRooms.replace("{phase}", activePhaseName) : t.unassignedRooms}
+          </span>
+          <span style={{ fontSize: 11, color: "var(--kincha)", opacity: 0.8 }}>({personsNoStay.length})</span>
+        </div>
+        <div style={{ width: 22, height: 22, border: "1px solid var(--kincha)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "var(--kincha)", lineHeight: 1, flexShrink: 0 }}>
+          {open ? "−" : "+"}
+        </div>
+      </div>
+      {open && (
+        <div style={{ padding: "0 18px 14px" }}>
+          <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>
+            {activeStayPhase ? t.unassignedPhaseRoomsHint : t.unassignedRoomsHint}
+          </p>
+          {groupByDeptLabel(personsNoStay, (p) => p.dept, lang, t.deptUnset).map((g) => (
+            <div key={g.label} className="unassigned-dept-group" style={{ marginBottom: 14 }}>
+              <div className="unassigned-dept-label" style={{ fontSize: 11, fontWeight: 700, color: "var(--sumi)", marginBottom: 8, letterSpacing: "0.04em", paddingBottom: 4, borderBottom: "1px solid var(--keisenL)" }}>
+                {g.label} ({g.items.length})
+              </div>
+              <div className="unassigned-tags">
+                {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => {
+                  const displayName = p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim();
+                  const openAdd = () => openStayModal({ pid: p.id, stayId: null, data: null });
+                  return canEdit ? (
+                    <button key={p.id} type="button" className="unassigned-tag unassigned-tag--clickable" title={displayName} onClick={openAdd}>
+                      <span className="tag-name">{displayName}</span>
+                    </button>
+                  ) : (
+                    <div key={p.id} className="unassigned-tag">
+                      <span className="tag-name" title={displayName}>{displayName}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HotelStatsByDatePanel({
   t, lang, project, statsDate, setStatsDate, statsHotelId, setStatsHotelId,
   stayNightDates, hotels, selectedHotelDayStats, hotelStatsDayCostFmt,
@@ -3592,8 +3641,7 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
   const thead = `<tr style="background:${headerGrad};color:#fff;">${cols.map((c) => `<th style="${thStyle}">${c.label}</th>`).join("")}</tr>`;
   const unassignedBannerIdx = type === "stay" ? data.findIndex((r) => r._unassigned) : -1;
   const rows = data.map((row, i) => {
-    const isUnassigned = row._unassigned;
-    const bg = isUnassigned ? "#fffbf0" : (i % 2 === 0 ? "#ffffff" : "#f5faf6");
+    const bg = row._unassigned ? "#fffbf0" : (i % 2 === 0 ? "#ffffff" : "#f5faf6");
     const banner = (unassignedBannerIdx >= 0 && i === unassignedBannerIdx)
       ? `<tr><td colspan="${cols.length}" style="padding:5px 12px;font-size:7.5pt;font-weight:700;color:#854F0B;border-top:2px dashed #EF9F27;letter-spacing:.06em;background:#fffbf0;">待分配房號 (${data.filter((r) => r._unassigned).length})</td></tr>`
       : "";
@@ -3704,7 +3752,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
           total_amt: amt ? formatMoney(convertMoney(amt, project), project, lang) : "—",
           stay_label: s.stay_label || "—",
           special_room: s.special_room_name || "—",
-          _hasRoom: !!(s.room_number),
+          _unassigned: !s.room_number && !s.special_room_name,
         };
       };
       const sorted = [...staySource].sort((a, b) => {
@@ -3714,16 +3762,13 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
         const dA = ((a.person?.dept) || (persons.find((x) => x.id === a.person_id)?.dept) || "").toLowerCase();
         const dB = ((b.person?.dept) || (persons.find((x) => x.id === b.person_id)?.dept) || "").toLowerCase();
         if (dA !== dB) return dA.localeCompare(dB, undefined, { sensitivity: "base" });
-        const ciA = a.check_in || "";
-        const ciB = b.check_in || "";
+        const ciA = a.check_in || ""; const ciB = b.check_in || "";
         if (ciA !== ciB) return ciA.localeCompare(ciB);
         return (a.check_out || "").localeCompare(b.check_out || "");
       });
-      const assigned = sorted.filter((s) => s.room_number);
-      const unassigned = sorted.filter((s) => !s.room_number);
-      const assignedRows = assigned.map(toRow);
-      const unassignedRows = unassigned.map((s) => ({ ...toRow(s), _unassigned: true }));
-      return [...assignedRows, ...unassignedRows];
+      const assigned = sorted.filter((s) => s.room_number || s.special_room_name);
+      const unassigned = sorted.filter((s) => !s.room_number && !s.special_room_name);
+      return [...assigned.map(toRow), ...unassigned.map(toRow)];
     }
     if (reportType === "flight") {
       return persons.filter((p) => !p.hide_from_flights).map((p) => {
@@ -6559,53 +6604,16 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           );
                         })}
 
-                        {personsNoStay.length > 0 && (() => {
-                          const [noStayOpen, setNoStayOpen] = React.useState(true);
-                          return (
-                            <div className="pending-banner" style={{ marginTop: 8, border: "1.5px dashed var(--kincha)", borderRadius: 8, overflow: "hidden" }}>
-                              <div onClick={() => setNoStayOpen((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 18px", cursor: "pointer", background: noStayOpen ? "transparent" : "var(--washi)" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)" }}>
-                                    {activeStayPhase ? t.unassignedPhaseRooms.replace("{phase}", activePhaseName) : t.unassignedRooms}
-                                  </span>
-                                  <span style={{ fontSize: 11, color: "var(--kincha)", opacity: 0.8 }}>({personsNoStay.length})</span>
-                                </div>
-                                <div style={{ width: 22, height: 22, border: "1px solid var(--kincha)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "var(--kincha)", lineHeight: 1, flexShrink: 0 }}>
-                                  {noStayOpen ? "−" : "+"}
-                                </div>
-                              </div>
-                              {noStayOpen && (
-                                <div style={{ padding: "0 18px 14px" }}>
-                                  <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>
-                                    {activeStayPhase ? t.unassignedPhaseRoomsHint : t.unassignedRoomsHint}
-                                  </p>
-                                  {groupByDeptLabel(personsNoStay, (p) => p.dept, lang, t.deptUnset).map((g) => (
-                                    <div key={g.label} className="unassigned-dept-group" style={{ marginBottom: 14 }}>
-                                      <div className="unassigned-dept-label" style={{ fontSize: 11, fontWeight: 700, color: "var(--sumi)", marginBottom: 8, letterSpacing: "0.04em", paddingBottom: 4, borderBottom: "1px solid var(--keisenL)" }}>
-                                        {g.label} ({g.items.length})
-                                      </div>
-                                      <div className="unassigned-tags">
-                                        {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => {
-                                          const displayName = p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim();
-                                          const openAdd = () => openStayModal({ pid: p.id, stayId: null, data: null });
-                                          return canEdit ? (
-                                            <button key={p.id} type="button" className="unassigned-tag unassigned-tag--clickable" title={displayName} onClick={openAdd}>
-                                              <span className="tag-name">{displayName}</span>
-                                            </button>
-                                          ) : (
-                                            <div key={p.id} className="unassigned-tag">
-                                              <span className="tag-name" title={displayName}>{displayName}</span>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
+                        <UnassignedRoomsPanel
+                          personsNoStay={personsNoStay}
+                          activeStayPhase={activeStayPhase}
+                          activePhaseName={activePhaseName}
+                          t={t}
+                          lang={lang}
+                          personIndex={personIndex}
+                          canEdit={canEdit}
+                          openStayModal={openStayModal}
+                        />
                       </div>
                     );
                   })()}
