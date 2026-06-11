@@ -5121,6 +5121,17 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [flightWarnFilters, setFlightWarnFilters] = useState([]);
   const warnDropdownRef = useRef(null);
 
+  useEffect(() => {
+    if (!showWarnDropdown) return;
+    const handler = (e) => {
+      if (warnDropdownRef.current && !warnDropdownRef.current.contains(e.target)) {
+        setShowWarnDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showWarnDropdown]);
+
   const debSearchA = useDebounced(searchA);
   const debSearchB = useDebounced(searchB);
   const debSearchC = useDebounced(searchC);
@@ -7103,17 +7114,6 @@ function App() {
     window.__onSessionExpired = () => setSessionExpired(true);
     return () => { window.__onSessionExpired = null; };
   }, []);
-
-  useEffect(() => {
-    if (!showWarnDropdown) return;
-    const handler = (e) => {
-      if (warnDropdownRef.current && !warnDropdownRef.current.contains(e.target)) {
-        setShowWarnDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showWarnDropdown]);
 
   const applyAuth = async (tk, u, loginLang) => {
     _token = tk;
