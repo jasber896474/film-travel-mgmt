@@ -3637,24 +3637,22 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
   const tdStyle = `padding:7px 12px;font-size:9pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #eaf0eb;vertical-align:top;line-height:1.7;`;
 
   const thead = `<tr style="background:${headerGrad};color:#fff;">${cols.map((c) => `<th style="${thStyle}">${c.label}</th>`).join("")}</tr>`;
-  const bannerStyle = (bg, color, borderColor) => `padding:5px 12px;font-size:7.5pt;font-weight:700;color:${color};border-top:2px dashed ${borderColor};letter-spacing:.06em;background:${bg};`;
-  const rows = [];
-  let prevTier = -1;
-  let tierRowIdx = 0;
+  const bannerS = (bg, color, bc) => `padding:5px 12px;font-size:7.5pt;font-weight:700;color:${color};border-top:2px dashed ${bc};letter-spacing:.06em;background:${bg};`;
+  const rows = []; let prevTier = -1; let tIdx = 0;
   data.forEach((row) => {
     const tier = row._tier ?? 0;
     if (type === "stay" && tier !== prevTier) {
-      if (tier === 1) rows.push(`<tr><td colspan="${cols.length}" style="${bannerStyle("#E6F1FB","#185FA5","#378ADD")}">專用空間（有房號）</td></tr>`);
-      if (tier === 2) rows.push(`<tr><td colspan="${cols.length}" style="${bannerStyle("#FAEEDA","#854F0B","#EF9F27")}">待配房號 (${data.filter(r=>(r._tier??0)===2).length})</td></tr>`);
-      if (tier === 4) rows.push(`<tr><td colspan="${cols.length}" style="${bannerStyle("#FAEEDA","#854F0B","#EF9F27")}">未安排住宿 (${data.filter(r=>(r._tier??0)===4).length})</td></tr>`);
-      if (tier === 5) rows.push(`<tr><td colspan="${cols.length}" style="${bannerStyle("#E6F1FB","#185FA5","#378ADD")}">專用空間（未配房）</td></tr>`);
-      prevTier = tier; tierRowIdx = 0;
+      if (tier === 1) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#E6F1FB","#185FA5","#378ADD")}">專用空間（有房號）</td></tr>`);
+      if (tier === 2) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#FAEEDA","#854F0B","#EF9F27")}">待配房號 (${data.filter(r=>(r._tier??0)===2).length})</td></tr>`);
+      if (tier === 3) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#FAEEDA","#854F0B","#EF9F27")}">未安排住宿 (${data.filter(r=>(r._tier??0)===3).length})</td></tr>`);
+      if (tier === 4) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#E6F1FB","#185FA5","#378ADD")}">專用空間（未配房）</td></tr>`);
+      prevTier = tier; tIdx = 0;
     }
-    const isAmber = tier === 2 || tier === 4;
-    const isBlue = tier === 1 || tier === 5;
-    const bg = isAmber ? (tierRowIdx%2===0?"#fffbf0":"#fff8e8") : isBlue ? (tierRowIdx%2===0?"#f0f6ff":"#e8f0fb") : (tierRowIdx%2===0?"#ffffff":"#f5faf6");
+    const isAmber = tier === 2 || tier === 3;
+    const isBlue  = tier === 1 || tier === 4;
+    const bg = isAmber ? (tIdx%2===0?"#fffbf0":"#fff8e8") : isBlue ? (tIdx%2===0?"#f0f6ff":"#e8f0fb") : (tIdx%2===0?"#ffffff":"#f5faf6");
     rows.push(`<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`);
-    tierRowIdx++;
+    tIdx++;
   });
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
@@ -3768,30 +3766,31 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
         const noA = personIndex[a.person_id] || 9999;
         const noB = personIndex[b.person_id] || 9999;
         if (noA !== noB) return noA - noB;
-        const dA = ((a.person?.dept) || (persons.find((x)=>x.id===a.person_id)?.dept) || "").toLowerCase();
-        const dB = ((b.person?.dept) || (persons.find((x)=>x.id===b.person_id)?.dept) || "").toLowerCase();
+        const dA = ((a.person?.dept)||(persons.find((x)=>x.id===a.person_id)?.dept)||"").toLowerCase();
+        const dB = ((b.person?.dept)||(persons.find((x)=>x.id===b.person_id)?.dept)||"").toLowerCase();
         if (dA !== dB) return dA.localeCompare(dB, undefined, { sensitivity: "base" });
         if ((a.check_in||"") !== (b.check_in||"")) return (a.check_in||"").localeCompare(b.check_in||"");
         return (a.check_out||"").localeCompare(b.check_out||"");
       };
-      const normalAssigned = src.filter((s) => !s.special_room_name && s.room_number).sort(sortFn);
-      const specialAssigned = src.filter((s) => s.special_room_name && s.room_number).sort(sortFn);
+      const normalAssigned   = src.filter((s) => !s.special_room_name &&  s.room_number).sort(sortFn);
+      const specialAssigned  = src.filter((s) =>  s.special_room_name &&  s.room_number).sort(sortFn);
       const normalUnassigned = src.filter((s) => !s.special_room_name && !s.room_number).sort(sortFn);
-      const specialUnassigned = src.filter((s) => s.special_room_name && !s.room_number).sort(sortFn);
-      const noStaySrc = (personsNoStay || []).sort((a,b)=>(personIndex[a.id]||9999)-(personIndex[b.id]||9999));
-      const noStayRows = noStaySrc.map((p) => ({
-        no: personIndex[p.id] || "—", dept: p.dept || "—",
-        name_kanji: p.name_kanji || "—",
-        name_roman: `${p.last_roman||""} ${p.first_roman||""}`.trim() || "—",
-        hotel: "—", room_no: "—", room_type: "—", check_in: "—", check_out: "—",
-        nights: "—", total_amt: "—", stay_label: "—", special_room: "—", _tier: 4,
-      }));
+      const specialUnassigned= src.filter((s) =>  s.special_room_name && !s.room_number).sort(sortFn);
+      const noStayRows = (personsNoStay || [])
+        .sort((a,b) => (personIndex[a.id]||9999)-(personIndex[b.id]||9999))
+        .map((p) => ({
+          no: personIndex[p.id] || "—", dept: p.dept || "—",
+          name_kanji: p.name_kanji || "—",
+          name_roman: `${p.last_roman||""} ${p.first_roman||""}`.trim() || "—",
+          hotel:"—", room_no:"—", room_type:"—", check_in:"—", check_out:"—",
+          nights:"—", total_amt:"—", stay_label:"—", special_room:"—", _tier: 3,
+        }));
       return [
         ...normalAssigned.map((s) => toRow(s, 0)),
         ...specialAssigned.map((s) => toRow(s, 1)),
         ...normalUnassigned.map((s) => toRow(s, 2)),
         ...noStayRows,
-        ...specialUnassigned.map((s) => toRow(s, 5)),
+        ...specialUnassigned.map((s) => toRow(s, 4)),
       ];
     }
     if (reportType === "flight") {
@@ -5571,11 +5570,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         rows.push({ ...s, person: p || { dept: "", name_kanji: s.special_room_name, last_roman: "", first_roman: "" }, hotelName: hname, roomLabel: rt, isSpecialRoom: !!s.special_room_name });
       }
     });
-    // Sort: (1) normal+assigned, (2) normal+unassigned, (3) special+assigned, (4) special+unassigned
-    // Within each tier: personIndex → dept → check_in → check_out
+    // Sort tier: 0=normal+room, 1=special+room, 2=normal+noroom, 3=noStay, 4=special+noroom
     rows.sort((a, b) => {
-      const tierA = a.isSpecialRoom ? (a.room_number ? 2 : 3) : (a.room_number ? 0 : 1);
-      const tierB = b.isSpecialRoom ? (b.room_number ? 2 : 3) : (b.room_number ? 0 : 1);
+      const tierA = a.isSpecialRoom ? (a.room_number ? 1 : 4) : (a.room_number ? 0 : 2);
+      const tierB = b.isSpecialRoom ? (b.room_number ? 1 : 4) : (b.room_number ? 0 : 2);
       if (tierA !== tierB) return tierA - tierB;
       const noA = personIndex[a.person_id] || 9999;
       const noB = personIndex[b.person_id] || 9999;
@@ -6633,8 +6631,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           personsNoStay={personsNoStay}
                           activeStayPhase={activeStayPhase}
                           activePhaseName={activePhaseName}
-                          t={t}
-                          lang={lang}
+                          t={t} lang={lang}
                           personIndex={personIndex}
                           canEdit={canEdit}
                           openStayModal={openStayModal}
