@@ -1880,20 +1880,16 @@ function getHotelRoomTypeOptions(hotel, pricingRules) {
     });
   }
   if (labels.size === 0) ROOM_TYPES_FOR_RATES.forEach((t) => labels.add(t));
-  // 取得每個房型的代表金額（room_type_rates 優先，無則 0）
   const getRate = (label) => {
     if (uniformPrice) return +rates.All || 0;
     if (rates[label] != null && rates[label] !== "") return +rates[label];
     return 0;
   };
-  const allLabels = [...labels];
-  // 依金額高→低排序；同金額則名稱排序
-  allLabels.sort((a, b) => {
+  return [...labels].sort((a, b) => {
     const ra = getRate(a), rb = getRate(b);
     if (ra !== rb) return rb - ra;
     return a.localeCompare(b, "zh-TW");
   });
-  return allLabels;
 }
 
 /** 該入住夜房費：日期例外規則 → 房型預設價 → fallback 該筆住宿的基本房價 */
@@ -3990,41 +3986,70 @@ function buildInvoicePriceSegmentRows({ checkIn, totalNights, roomLabel, roomCou
 }
 
 /**
- * 飯店合併對帳：同飯店內，相同入住日+退房日+房型合併為一行
- * 金額 = 逐晚加總（不按單價切行），格式：每間總金額 × 間數 = 小計
+ * 飯店合併對帳：以房號（或人）為單位聚合，同房號取 minIn/maxOut，
+ * 再以 check_in + 房型 分批，金額逐晚加總，不按單價切行。
+ * 同房不同退房日（如室友）→ 合併到最晚退房日那一行。
  */
 function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
   const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
-  const byHotel = {};
+
+  // Step 1: 以房號為單位聚合，取 minIn / maxOut / 最久住宿作為代表
+  const byHotelRoom = {};
   stays.forEach((s) => {
     if (!s.hotel_id || !s.check_in || !s.check_out) return;
     const hid = +s.hotel_id;
-    if (!byHotel[hid]) byHotel[hid] = {};
-    const bk = buildInvoiceBatchKey(s);
-    if (!byHotel[hid][bk]) byHotel[hid][bk] = { stays: [], check_in: s.check_in, check_out: s.check_out, roomLabel: s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "—") };
-    byHotel[hid][bk].stays.push(s);
+    const rn = (s.room_number || "").trim();
+    const unitKey = s.special_room_name
+      ? `special:${s.id}`
+      : rn ? `room:${hid}:${rn}` : `person:${s.person_id}`;
+    if (!byHotelRoom[unitKey]) byHotelRoom[unitKey] = { hid, stays: [], minIn: null, maxOut: null };
+    const u = byHotelRoom[unitKey];
+    u.stays.push(s);
+    if (!u.minIn || s.check_in < u.minIn) u.minIn = s.check_in;
+    if (!u.maxOut || s.check_out > u.maxOut) u.maxOut = s.check_out;
   });
-  const result = [];
-  Object.entries(byHotel).forEach(([hidStr, batchMap]) => {
-    const hid = +hidStr;
-    const hotel = hMap[hid];
-    const batches = [];
-    Object.values(batchMap).forEach(({ stays: batchStays, check_in, check_out, roomLabel }) => {
-      const nights = diffDays(check_in, check_out);
-      if (nights <= 0) return;
-      const roomCount = countInvoiceRooms(batchStays);
-      const rep = batchStays[0];
-      let perRoomTotal = 0;
-      for (let i = 0; i < nights; i++) {
-        const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
-        const p = stayNightPriceFromRules(rep, localDateStr(d), pricingRules, hMap);
-        if (p != null) perRoomTotal += p;
-      }
-      const roomGroups = buildBatchRoomGroups(batchStays);
-      batches.push({ check_in, check_out, roomLabel, roomCount, nights, unitPrice: perRoomTotal, batchTotal: perRoomTotal * roomCount, roomGroups });
+
+  // Step 2: 以 hid + minIn + 房型 為 key 再分批（同飯店、同入住日、同房型合一行）
+  const byHotelBatch = {};
+  Object.values(byHotelRoom).forEach(({ hid, stays: unitStays, minIn, maxOut }) => {
+    if (!minIn || !maxOut) return;
+    const rep = unitStays.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
+    const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
+    const bk = `${hid}|${minIn}|${roomLabel}`;
+    if (!byHotelBatch[bk]) byHotelBatch[bk] = { hid, check_in: minIn, check_out: maxOut, roomLabel, units: [] };
+    const batch = byHotelBatch[bk];
+    if (maxOut > batch.check_out) batch.check_out = maxOut;
+    batch.units.push({ rep, unitStays });
+  });
+
+  // Step 3: 計算每批金額
+  const byHotelResult = {};
+  Object.values(byHotelBatch).forEach(({ hid, check_in, check_out, roomLabel, units }) => {
+    const nights = diffDays(check_in, check_out);
+    if (nights <= 0) return;
+    const roomCount = units.length;
+    // 取住最久的 rep 計算每晚單價
+    const rep = units.reduce((best, u) => diffDays(u.rep.check_in, u.rep.check_out) >= diffDays(best.rep.check_in, best.rep.check_out) ? u : best, units[0]).rep;
+    let perRoomTotal = 0;
+    for (let i = 0; i < nights; i++) {
+      const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
+      const p = stayNightPriceFromRules(rep, localDateStr(d), pricingRules, hMap);
+      if (p != null) perRoomTotal += p;
+    }
+    // 建立展開用的 roomGroups
+    const allStaysInBatch = units.flatMap((u) => u.unitStays);
+    const roomGroups = buildBatchRoomGroups(allStaysInBatch);
+    if (!byHotelResult[hid]) byHotelResult[hid] = { hotel: hMap[hid], hid, batches: [] };
+    byHotelResult[hid].batches.push({
+      check_in, check_out, roomLabel, roomCount, nights,
+      unitPrice: perRoomTotal, batchTotal: perRoomTotal * roomCount, roomGroups,
     });
-    batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.roomLabel.localeCompare(b.roomLabel));
-    result.push({ hotel, hid, batches, hotelTotal: batches.reduce((s, b) => s + b.batchTotal, 0) });
+  });
+
+  const result = Object.values(byHotelResult).map((h) => {
+    h.batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.roomLabel.localeCompare(b.roomLabel));
+    h.hotelTotal = h.batches.reduce((s, b) => s + b.batchTotal, 0);
+    return h;
   });
   result.sort((a, b) => (a.hotel?.name || "").localeCompare(b.hotel?.name || ""));
   return result;
@@ -4305,6 +4330,7 @@ ${rows}
                                       {si > 0 && <span style={{ color: "var(--keisenM)", fontSize: 13 }}>·</span>}
                                       <span style={{ fontSize: 12, color: "var(--sumi)" }}>
                                         {s.special_room_name ? `🏷 ${s.special_room_name}` : (s._personName || "—")}
+                                        {s.check_out && <span style={{ fontSize: 10, color: "var(--usunezumi)", marginLeft: 4 }}>～{fmtDate(s.check_out, lang)}</span>}
                                       </span>
                                     </React.Fragment>
                                   ))}
