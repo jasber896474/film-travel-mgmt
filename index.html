@@ -1865,7 +1865,8 @@ function applyRoomLabelToForm(label) {
 function getHotelRoomTypeOptions(hotel, pricingRules) {
   const labels = new Set();
   const rates = hotel?.room_type_rates || {};
-  if (hotel && rates.All != null && rates.All !== "") {
+  const uniformPrice = rates.All != null && rates.All !== "";
+  if (hotel && uniformPrice) {
     ROOM_TYPES_FOR_RATES.forEach((t) => labels.add(t));
   } else if (hotel) {
     Object.entries(rates).forEach(([k, v]) => {
@@ -1879,9 +1880,20 @@ function getHotelRoomTypeOptions(hotel, pricingRules) {
     });
   }
   if (labels.size === 0) ROOM_TYPES_FOR_RATES.forEach((t) => labels.add(t));
-  const standard = ROOM_TYPES_FOR_RATES.filter((t) => labels.has(t));
-  const custom = [...labels].filter((l) => !ROOM_TYPES_FOR_RATES.includes(l)).sort((a, b) => a.localeCompare(b, "zh-TW"));
-  return [...standard, ...custom];
+  // 取得每個房型的代表金額（room_type_rates 優先，無則 0）
+  const getRate = (label) => {
+    if (uniformPrice) return +rates.All || 0;
+    if (rates[label] != null && rates[label] !== "") return +rates[label];
+    return 0;
+  };
+  const allLabels = [...labels];
+  // 依金額高→低排序；同金額則名稱排序
+  allLabels.sort((a, b) => {
+    const ra = getRate(a), rb = getRate(b);
+    if (ra !== rb) return rb - ra;
+    return a.localeCompare(b, "zh-TW");
+  });
+  return allLabels;
 }
 
 /** 該入住夜房費：日期例外規則 → 房型預設價 → fallback 該筆住宿的基本房價 */
@@ -3241,12 +3253,21 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
   );
 }
 
-function getHotelRoomInventory(hotel, roomLabel, allStays) {
+function getHotelRoomInventory(hotel, roomLabel, allStays, roommates) {
   if (!hotel?.inventory_enabled || !hotel?.room_type_inventory) return null;
   const inv = hotel.room_type_inventory;
   const key = inv["All"] !== undefined ? "All" : roomLabel;
   const total = inv[key];
   if (total == null || total === "") return null;
+  const rmGroups = roommates && roommates.length ? buildRoommateGroups(roommates) : null;
+  const getRoommateRoot = (pid) => {
+    if (!rmGroups) return `person:${pid}`;
+    let root = `person:${pid}`;
+    Object.entries(rmGroups).forEach(([, members]) => {
+      if (members.has(+pid)) root = `rmgroup:${[...members].sort((a,b)=>a-b).join(",")}`;
+    });
+    return root;
+  };
   const used = new Set();
   (allStays || []).forEach((s) => {
     if (+s.hotel_id !== +hotel.id) return;
@@ -3255,12 +3276,12 @@ function getHotelRoomInventory(hotel, roomLabel, allStays) {
     if (!matchKey) return;
     if (s.special_room_name) used.add(`special:${s.id}`);
     else if ((s.room_number || "").trim()) used.add(`room:${(s.room_number||"").trim()}`);
-    else if (s.person_id != null) used.add(`person:${s.person_id}`);
+    else if (s.person_id != null) used.add(getRoommateRoot(s.person_id));
   });
   return { total: +total, used: used.size, remaining: +total - used.size };
 }
 
-function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, isSpecialRoom, defaultPhaseId, allStays }) {
+function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, isSpecialRoom, defaultPhaseId, allStays, roommates }) {
   const phaseHotels = defaultPhaseId ? hotels.filter((h) => h.shoot_phase_id === defaultPhaseId) : hotels;
   const defaultHotelId = phaseHotels.length === 1 ? String(phaseHotels[0].id) : "";
   const blank = { hotel_id: defaultHotelId, room_type: "Single", room_custom: "", check_in: todayStr(), check_out: addDaysToDateStr(todayStr(), 1), stay_label: "", room_number: "", special_room_name: "" };
@@ -3344,14 +3365,14 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
           <select style={inpStyle} value={roomSelectValue} onChange={handleRoomTypeChange} disabled={!f.hotel_id}>
             {!f.hotel_id && <option value="">--</option>}
             {roomTypeOptions.map((rt) => {
-              const inv = getHotelRoomInventory(selectedHotel, rt, allStays);
+              const inv = getHotelRoomInventory(selectedHotel, rt, allStays, roommates);
               const isFull = inv && inv.remaining <= 0;
               const label = inv ? (isFull ? `${rt} ⛔ 已滿 ${inv.used}/${inv.total}` : inv.remaining <= 2 ? `${rt} ⚠ 剩 ${inv.remaining} 間` : `${rt} (${inv.remaining} 間)`) : rt;
               return <option key={rt} value={rt} disabled={isFull}>{label}</option>;
             })}
           </select>
           {(() => {
-            const inv = getHotelRoomInventory(selectedHotel, roomSelectValue, allStays);
+            const inv = getHotelRoomInventory(selectedHotel, roomSelectValue, allStays, roommates);
             if (!inv) return null;
             const isFull = inv.remaining <= 0;
             const isWarn = !isFull && inv.remaining <= 2;
@@ -3970,75 +3991,48 @@ function buildInvoicePriceSegmentRows({ checkIn, totalNights, roomLabel, roomCou
 
 /**
  * 飯店合併對帳：同飯店內，相同入住日+退房日+房型合併為一行
- * 金額 = 逐晚加總（不按單價切行），顯示「每間總金額 × 間數 = 小計」
+ * 金額 = 逐晚加總（不按單價切行），格式：每間總金額 × 間數 = 小計
  */
 function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
   const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
   const byHotel = {};
-
   stays.forEach((s) => {
     if (!s.hotel_id || !s.check_in || !s.check_out) return;
     const hid = +s.hotel_id;
     if (!byHotel[hid]) byHotel[hid] = {};
     const bk = buildInvoiceBatchKey(s);
-    if (!byHotel[hid][bk]) {
-      byHotel[hid][bk] = {
-        stays: [],
-        check_in: s.check_in,
-        check_out: s.check_out,
-        roomLabel: s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "—"),
-      };
-    }
+    if (!byHotel[hid][bk]) byHotel[hid][bk] = { stays: [], check_in: s.check_in, check_out: s.check_out, roomLabel: s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "—") };
     byHotel[hid][bk].stays.push(s);
   });
-
   const result = [];
   Object.entries(byHotel).forEach(([hidStr, batchMap]) => {
     const hid = +hidStr;
     const hotel = hMap[hid];
     const batches = [];
-
     Object.values(batchMap).forEach(({ stays: batchStays, check_in, check_out, roomLabel }) => {
       const nights = diffDays(check_in, check_out);
       if (nights <= 0) return;
-
       const roomCount = countInvoiceRooms(batchStays);
       const rep = batchStays[0];
-
-      // 逐晚加總一間的金額，不按單價切行
       let perRoomTotal = 0;
       for (let i = 0; i < nights; i++) {
         const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
         const p = stayNightPriceFromRules(rep, localDateStr(d), pricingRules, hMap);
         if (p != null) perRoomTotal += p;
       }
-      const batchTotal = perRoomTotal * roomCount;
-
-      // 建立房號→人員群組供展開使用
       const roomGroups = buildBatchRoomGroups(batchStays);
-
-      batches.push({
-        check_in, check_out, roomLabel, roomCount, nights,
-        unitPrice: perRoomTotal,   // 這裡是「每間總金額」（整段住宿加總）
-        batchTotal,
-        roomGroups,
-      });
+      batches.push({ check_in, check_out, roomLabel, roomCount, nights, unitPrice: perRoomTotal, batchTotal: perRoomTotal * roomCount, roomGroups });
     });
-
     batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.roomLabel.localeCompare(b.roomLabel));
-    const hotelTotal = batches.reduce((s, b) => s + b.batchTotal, 0);
-    result.push({ hotel, hid, batches, hotelTotal });
+    result.push({ hotel, hid, batches, hotelTotal: batches.reduce((s, b) => s + b.batchTotal, 0) });
   });
-
   result.sort((a, b) => (a.hotel?.name || "").localeCompare(b.hotel?.name || ""));
   return result;
 }
 
-/** 將一批住宿依房號分組，供展開顯示 */
 function buildBatchRoomGroups(batchStays) {
   const grouped = {};
   batchStays.forEach((s) => {
-    const key = s.special_room_name ? `special:${s.id}` : (s.room_number || "").trim() ? `room:${(s.room_number||"").trim()}` : `person:${s.person_id}`;
     const label = s.special_room_name || (s.room_number || "").trim() || "—";
     if (!grouped[label]) grouped[label] = { label, stays: [] };
     grouped[label].stays.push(s);
@@ -4111,7 +4105,6 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
 function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, persons, personIndex }) {
   const [invoiceMode, setInvoiceMode] = useState("merged");
   const [expandedBatch, setExpandedBatch] = useState(null);
-  const personIndexForInvoice = personIndex || null;
   const staysWithName = useMemo(() => stays.map((s) => {
     if (!s.person_id || !persons) return s;
     const p = persons.find((x) => x.id === s.person_id);
@@ -4263,21 +4256,16 @@ ${rows}
                         style={{ background: i % 2 === 0 ? "var(--shiro)" : "var(--washi)", borderBottom: "1px solid var(--keisenL)", cursor: isMerged && b.roomGroups ? "pointer" : "default" }}
                         onClick={isMerged && b.roomGroups ? () => setExpandedBatch((prev) => prev === rowKey ? null : rowKey) : undefined}
                       >
-                        {/* 日期 */}
                         <td style={{ padding: "11px 14px", verticalAlign: "top" }}>
                           <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
                             {fmtDate(b.check_in, lang)} {t.invoiceDateRange} {fmtDate(b.check_out, lang)}
                           </div>
-                          <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 3, fontWeight: 600 }}>
-                            {b.nights} {t.invoiceNights}
-                          </div>
+                          <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 3, fontWeight: 600 }}>{b.nights} {t.invoiceNights}</div>
                         </td>
-                        {/* 房型 */}
                         <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>
                           {b.roomLabel}
                           {b.subLabel && <div style={{ fontSize: 10.5, color: "var(--nezumi)", marginTop: 3 }}>{b.subLabel}</div>}
                         </td>
-                        {/* 計價公式 */}
                         <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
                           {isMerged ? (
                             <>
@@ -4295,7 +4283,6 @@ ${rows}
                             </>
                           )}
                         </td>
-                        {/* 金額 + 展開箭頭 */}
                         <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, fontSize: 13, color: "var(--asagi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
                             {formatMoney(convertMoney(b.batchTotal, project), project, lang)}
@@ -4305,13 +4292,10 @@ ${rows}
                           </div>
                         </td>
                       </tr>
-                      {/* 展開列：房號 + 人員 */}
                       {isMerged && b.roomGroups && expandedBatch === rowKey && (
                         <tr style={{ background: "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
                           <td colSpan={4} style={{ padding: "10px 18px 12px 24px" }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>
-                              {b.roomCount} {t.invoiceRooms}
-                            </div>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{b.roomCount} {t.invoiceRooms}</div>
                             {b.roomGroups.map((g) => (
                               <div key={g.label} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "4px 0", borderBottom: "1px solid var(--keisenL)" }}>
                                 <span style={{ fontSize: 11, padding: "2px 7px", border: "1px solid var(--keisenM)", borderRadius: 3, color: "var(--nezumi)", fontWeight: 600, minWidth: 36, textAlign: "center", flexShrink: 0, marginTop: 1 }}>{g.label}</span>
@@ -4320,8 +4304,7 @@ ${rows}
                                     <React.Fragment key={s.id}>
                                       {si > 0 && <span style={{ color: "var(--keisenM)", fontSize: 13 }}>·</span>}
                                       <span style={{ fontSize: 12, color: "var(--sumi)" }}>
-                                        <span style={{ fontSize: 10, color: "var(--usunezumi)", marginRight: 4 }}>{personIndexForInvoice ? personIndexForInvoice[s.person_id] : ""}</span>
-                                        {s.special_room_name ? `🏷 ${s.special_room_name}` : (s._personName || s.person_id || "—")}
+                                        {s.special_room_name ? `🏷 ${s.special_room_name}` : (s._personName || "—")}
                                       </span>
                                     </React.Fragment>
                                   ))}
@@ -7162,7 +7145,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
       {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} flatStays={flatStays} personsNoStay={personsMissingPhaseStay} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
-      {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} allStays={stays} /></Modal>}
+      {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} allStays={stays} roommates={roommates} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
       {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} lang={lang} /></Modal>}
