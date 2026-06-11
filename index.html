@@ -1922,72 +1922,82 @@ function HotelStatsByDatePanel({
   t, lang, project, statsDate, setStatsDate, statsHotelId, setStatsHotelId,
   stayNightDates, hotels, selectedHotelDayStats, hotelStatsDayCostFmt,
 }) {
+  const [open, setOpen] = React.useState(false);
   const hasSelection = statsDate && statsHotelId && selectedHotelDayStats;
   return (
-    <div style={{ marginTop: 24, marginBottom: 20, padding: "16px 18px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
-        <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStatsByDate}</h3>
-      </div>
-      <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginBottom: 12 }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickHotel}</label>
-          <select
-            style={{ ...inpStyle, minWidth: 180, maxWidth: "100%" }}
-            value={statsHotelId}
-            disabled={!hotels.length}
-            onChange={(e) => setStatsHotelId(e.target.value)}
-          >
-            {!hotels.length && <option value="">{t.noData}</option>}
-            {hotels.length > 0 && !statsHotelId && <option value="">{t.statsSelectHotelFirst}</option>}
-            {[...hotels].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((h) => (
-              <option key={h.id} value={String(h.id)}>{h.name}</option>
-            ))}
-          </select>
+    <div style={{ marginTop: 24, marginBottom: 20, background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)", overflow: "hidden" }}>
+      <div onClick={() => setOpen((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 18px", cursor: "pointer" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
+          <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStatsByDate}</h3>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickDate}</label>
-          <select
-            style={{ ...inpStyle, minWidth: 168, maxWidth: "100%" }}
-            value={statsDate}
-            disabled={!stayNightDates.length}
-            onChange={(e) => setStatsDate(e.target.value)}
-          >
-            {!stayNightDates.length && <option value="">{t.noStayDates}</option>}
-            {stayNightDates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)} ({d})</option>)}
-          </select>
+        <div style={{ width: 22, height: 22, border: "1px solid var(--keisenM)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "var(--nezumi)", lineHeight: 1, flexShrink: 0 }}>
+          {open ? "−" : "+"}
         </div>
       </div>
-      {!statsHotelId && hotels.length > 0 && (
-        <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.statsSelectHotelFirst}</p>
-      )}
-      {statsDate && statsHotelId && !selectedHotelDayStats && (
-        <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.noData}</p>
-      )}
-      {hasSelection && (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
-            {[
-              { label: t.guestCountDay, value: selectedHotelDayStats.st.guests },
-              { label: t.roomCountDay, value: selectedHotelDayStats.st.rooms },
-              { label: t.totalSpendDay, value: hotelStatsDayCostFmt, isMoney: true },
-            ].map(({ label, value, isMoney }) => (
-              <div key={label} style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 6, padding: "12px 14px", textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
-                <div style={{ fontSize: isMoney ? 15 : 22, fontWeight: 700, color: "var(--sumi)", fontVariantNumeric: "tabular-nums", fontFamily: isMoney ? "'Noto Serif JP',serif" : "inherit" }}>{value}</div>
-              </div>
-            ))}
+      {open && (
+        <div style={{ padding: "0 18px 16px" }}>
+          <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginBottom: 12 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickHotel}</label>
+              <select
+                style={{ ...inpStyle, minWidth: 180, maxWidth: "100%" }}
+                value={statsHotelId}
+                disabled={!hotels.length}
+                onChange={(e) => setStatsHotelId(e.target.value)}
+              >
+                {!hotels.length && <option value="">{t.noData}</option>}
+                {hotels.length > 0 && !statsHotelId && <option value="">{t.statsSelectHotelFirst}</option>}
+                {[...hotels].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((h) => (
+                  <option key={h.id} value={String(h.id)}>{h.name}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickDate}</label>
+              <select
+                style={{ ...inpStyle, minWidth: 168, maxWidth: "100%" }}
+                value={statsDate}
+                disabled={!stayNightDates.length}
+                onChange={(e) => setStatsDate(e.target.value)}
+              >
+                {!stayNightDates.length && <option value="">{t.noStayDates}</option>}
+                {stayNightDates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)} ({d})</option>)}
+              </select>
+            </div>
           </div>
-          <p style={{ fontSize: 12, fontWeight: 600, color: "var(--moegi)", margin: 0 }}>
-            {t.statsDaySummaryOne
-              .replace("{date}", fmtDate(statsDate, lang))
-              .replace("{hotel}", selectedHotelDayStats.hotel.name || "—")
-              .replace("{guests}", String(selectedHotelDayStats.st.guests))
-              .replace("{rooms}", String(selectedHotelDayStats.st.rooms))
-              .replace("{cost}", hotelStatsDayCostFmt)}
-          </p>
-        </>
+          {!statsHotelId && hotels.length > 0 && (
+            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.statsSelectHotelFirst}</p>
+          )}
+          {statsDate && statsHotelId && !selectedHotelDayStats && (
+            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.noData}</p>
+          )}
+          {hasSelection && (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
+                {[
+                  { label: t.guestCountDay, value: selectedHotelDayStats.st.guests },
+                  { label: t.roomCountDay, value: selectedHotelDayStats.st.rooms },
+                  { label: t.totalSpendDay, value: hotelStatsDayCostFmt, isMoney: true },
+                ].map(({ label, value, isMoney }) => (
+                  <div key={label} style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 6, padding: "12px 14px", textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
+                    <div style={{ fontSize: isMoney ? 15 : 22, fontWeight: 700, color: "var(--sumi)", fontVariantNumeric: "tabular-nums", fontFamily: isMoney ? "'Noto Serif JP',serif" : "inherit" }}>{value}</div>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "var(--moegi)", margin: 0 }}>
+                {t.statsDaySummaryOne
+                  .replace("{date}", fmtDate(statsDate, lang))
+                  .replace("{hotel}", selectedHotelDayStats.hotel.name || "—")
+                  .replace("{guests}", String(selectedHotelDayStats.st.guests))
+                  .replace("{rooms}", String(selectedHotelDayStats.st.rooms))
+                  .replace("{cost}", hotelStatsDayCostFmt)}
+              </p>
+            </>
+          )}
+        </div>
       )}
     </div>
   );
@@ -3580,9 +3590,14 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
   const tdStyle = `padding:7px 12px;font-size:9pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #eaf0eb;vertical-align:top;line-height:1.7;`;
 
   const thead = `<tr style="background:${headerGrad};color:#fff;">${cols.map((c) => `<th style="${thStyle}">${c.label}</th>`).join("")}</tr>`;
+  const unassignedBannerIdx = type === "stay" ? data.findIndex((r) => r._unassigned) : -1;
   const rows = data.map((row, i) => {
-    const bg = i % 2 === 0 ? "#ffffff" : "#f5faf6";
-    return `<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`;
+    const isUnassigned = row._unassigned;
+    const bg = isUnassigned ? "#fffbf0" : (i % 2 === 0 ? "#ffffff" : "#f5faf6");
+    const banner = (unassignedBannerIdx >= 0 && i === unassignedBannerIdx)
+      ? `<tr><td colspan="${cols.length}" style="padding:5px 12px;font-size:7.5pt;font-weight:700;color:#854F0B;border-top:2px dashed #EF9F27;letter-spacing:.06em;background:#fffbf0;">待分配房號 (${data.filter((r) => r._unassigned).length})</td></tr>`
+      : "";
+    return banner + `<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`;
   });
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
@@ -3670,7 +3685,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
     const sel = cols.filter((c) => selCols[c.key]);
     if (reportType === "stay") {
       const staySource = flatStays && flatStays.length >= 0 ? flatStays : stays;
-      return staySource.map((s) => {
+      const toRow = (s) => {
         const p = s.person_id ? persons.find((x) => x.id === s.person_id) : null;
         const h = hotels.find((x) => x.id == s.hotel_id);
         const nights = diffDays(s.check_in, s.check_out);
@@ -3689,8 +3704,26 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
           total_amt: amt ? formatMoney(convertMoney(amt, project), project, lang) : "—",
           stay_label: s.stay_label || "—",
           special_room: s.special_room_name || "—",
+          _hasRoom: !!(s.room_number),
         };
+      };
+      const sorted = [...staySource].sort((a, b) => {
+        const noA = personIndex[a.person_id] || 9999;
+        const noB = personIndex[b.person_id] || 9999;
+        if (noA !== noB) return noA - noB;
+        const dA = ((a.person?.dept) || (persons.find((x) => x.id === a.person_id)?.dept) || "").toLowerCase();
+        const dB = ((b.person?.dept) || (persons.find((x) => x.id === b.person_id)?.dept) || "").toLowerCase();
+        if (dA !== dB) return dA.localeCompare(dB, undefined, { sensitivity: "base" });
+        const ciA = a.check_in || "";
+        const ciB = b.check_in || "";
+        if (ciA !== ciB) return ciA.localeCompare(ciB);
+        return (a.check_out || "").localeCompare(b.check_out || "");
       });
+      const assigned = sorted.filter((s) => s.room_number);
+      const unassigned = sorted.filter((s) => !s.room_number);
+      const assignedRows = assigned.map(toRow);
+      const unassignedRows = unassigned.map((s) => ({ ...toRow(s), _unassigned: true }));
+      return [...assignedRows, ...unassignedRows];
     }
     if (reportType === "flight") {
       return persons.filter((p) => !p.hide_from_flights).map((p) => {
@@ -5469,19 +5502,20 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         rows.push({ ...s, person: p || { dept: "", name_kanji: s.special_room_name, last_roman: "", first_roman: "" }, hotelName: hname, roomLabel: rt, isSpecialRoom: !!s.special_room_name });
       }
     });
-    // Sort: dept → hotel → check_in → check_out
+    // Sort: personIndex(no) → dept → check_in → check_out
     rows.sort((a, b) => {
+      const noA = personIndex[a.person_id] || 9999;
+      const noB = personIndex[b.person_id] || 9999;
+      if (noA !== noB) return noA - noB;
       const deptA = (a.person?.dept || "").toLowerCase();
       const deptB = (b.person?.dept || "").toLowerCase();
       if (deptA !== deptB) return deptA.localeCompare(deptB, undefined, { sensitivity: "base" });
-      if (a.hotel_id !== b.hotel_id) return (a.hotel_id || 0) - (b.hotel_id || 0);
       const ciA = a.check_in || "";
       const ciB = b.check_in || "";
       if (ciA !== ciB) return ciA.localeCompare(ciB);
       const coA = a.check_out || "";
       const coB = b.check_out || "";
-      if (coA !== coB) return coA.localeCompare(coB);
-      return (personIndex[a.person_id] || 0) - (personIndex[b.person_id] || 0);
+      return coA.localeCompare(coB);
     });
     return rows;
   }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, activeStayPhase, hotelPhaseMap, personIndex, hotels]);
@@ -6525,38 +6559,53 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           );
                         })}
 
-                        {personsNoStay.length > 0 && (
-                          <div className="pending-banner" style={{ marginTop: 8, padding: "14px 18px", border: "1.5px dashed var(--kincha)", borderRadius: 8 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)", marginBottom: 8 }}>
-                              {activeStayPhase ? t.unassignedPhaseRooms.replace("{phase}", activePhaseName) : t.unassignedRooms}
-                            </div>
-                            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>
-                              {activeStayPhase ? t.unassignedPhaseRoomsHint : t.unassignedRoomsHint}
-                            </p>
-                            {groupByDeptLabel(personsNoStay, (p) => p.dept, lang, t.deptUnset).map((g) => (
-                              <div key={g.label} className="unassigned-dept-group" style={{ marginBottom: 14 }}>
-                                <div className="unassigned-dept-label" style={{ fontSize: 11, fontWeight: 700, color: "var(--sumi)", marginBottom: 8, letterSpacing: "0.04em", paddingBottom: 4, borderBottom: "1px solid var(--keisenL)" }}>
-                                  {g.label} ({g.items.length})
+                        {personsNoStay.length > 0 && (() => {
+                          const [noStayOpen, setNoStayOpen] = React.useState(true);
+                          return (
+                            <div className="pending-banner" style={{ marginTop: 8, border: "1.5px dashed var(--kincha)", borderRadius: 8, overflow: "hidden" }}>
+                              <div onClick={() => setNoStayOpen((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 18px", cursor: "pointer", background: noStayOpen ? "transparent" : "var(--washi)" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)" }}>
+                                    {activeStayPhase ? t.unassignedPhaseRooms.replace("{phase}", activePhaseName) : t.unassignedRooms}
+                                  </span>
+                                  <span style={{ fontSize: 11, color: "var(--kincha)", opacity: 0.8 }}>({personsNoStay.length})</span>
                                 </div>
-                                <div className="unassigned-tags">
-                                  {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => {
-                                    const displayName = p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim();
-                                    const openAdd = () => openStayModal({ pid: p.id, stayId: null, data: null });
-                                    return canEdit ? (
-                                      <button key={p.id} type="button" className="unassigned-tag unassigned-tag--clickable" title={displayName} onClick={openAdd}>
-                                        <span className="tag-name">{displayName}</span>
-                                      </button>
-                                    ) : (
-                                      <div key={p.id} className="unassigned-tag">
-                                        <span className="tag-name" title={displayName}>{displayName}</span>
-                                      </div>
-                                    );
-                                  })}
+                                <div style={{ width: 22, height: 22, border: "1px solid var(--kincha)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "var(--kincha)", lineHeight: 1, flexShrink: 0 }}>
+                                  {noStayOpen ? "−" : "+"}
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        )}
+                              {noStayOpen && (
+                                <div style={{ padding: "0 18px 14px" }}>
+                                  <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>
+                                    {activeStayPhase ? t.unassignedPhaseRoomsHint : t.unassignedRoomsHint}
+                                  </p>
+                                  {groupByDeptLabel(personsNoStay, (p) => p.dept, lang, t.deptUnset).map((g) => (
+                                    <div key={g.label} className="unassigned-dept-group" style={{ marginBottom: 14 }}>
+                                      <div className="unassigned-dept-label" style={{ fontSize: 11, fontWeight: 700, color: "var(--sumi)", marginBottom: 8, letterSpacing: "0.04em", paddingBottom: 4, borderBottom: "1px solid var(--keisenL)" }}>
+                                        {g.label} ({g.items.length})
+                                      </div>
+                                      <div className="unassigned-tags">
+                                        {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => {
+                                          const displayName = p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim();
+                                          const openAdd = () => openStayModal({ pid: p.id, stayId: null, data: null });
+                                          return canEdit ? (
+                                            <button key={p.id} type="button" className="unassigned-tag unassigned-tag--clickable" title={displayName} onClick={openAdd}>
+                                              <span className="tag-name">{displayName}</span>
+                                            </button>
+                                          ) : (
+                                            <div key={p.id} className="unassigned-tag">
+                                              <span className="tag-name" title={displayName}>{displayName}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}
