@@ -1984,71 +1984,69 @@ function HotelStatsByDatePanel({
           {open ? "−" : "+"}
         </div>
       </div>
-      {open && (
-        <div style={{ padding: "0 18px 16px" }}>
-          <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginBottom: 12 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickHotel}</label>
-              <select
-                style={{ ...inpStyle, minWidth: 180, maxWidth: "100%" }}
-                value={statsHotelId}
-                disabled={!hotels.length}
-                onChange={(e) => setStatsHotelId(e.target.value)}
-              >
-                {!hotels.length && <option value="">{t.noData}</option>}
-                {hotels.length > 0 && !statsHotelId && <option value="">{t.statsSelectHotelFirst}</option>}
-                {[...hotels].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((h) => (
-                  <option key={h.id} value={String(h.id)}>{h.name}</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickDate}</label>
-              <select
-                style={{ ...inpStyle, minWidth: 168, maxWidth: "100%" }}
-                value={statsDate}
-                disabled={!stayNightDates.length}
-                onChange={(e) => setStatsDate(e.target.value)}
-              >
-                {!stayNightDates.length && <option value="">{t.noStayDates}</option>}
-                {stayNightDates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)} ({d})</option>)}
-              </select>
-            </div>
-          </div>
-          {!statsHotelId && hotels.length > 0 && (
-            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.statsSelectHotelFirst}</p>
-          )}
-          {statsDate && statsHotelId && !selectedHotelDayStats && (
-            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.noData}</p>
-          )}
-          {hasSelection && (
-            <>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
-                {[
-                  { label: t.guestCountDay, value: selectedHotelDayStats.st.guests },
-                  { label: t.roomCountDay, value: selectedHotelDayStats.st.rooms },
-                  { label: t.totalSpendDay, value: hotelStatsDayCostFmt, isMoney: true },
-                ].map(({ label, value, isMoney }) => (
-                  <div key={label} style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 6, padding: "12px 14px", textAlign: "center" }}>
-                    <div style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
-                    <div style={{ fontSize: isMoney ? 15 : 22, fontWeight: 700, color: "var(--sumi)", fontVariantNumeric: "tabular-nums", fontFamily: isMoney ? "'Noto Serif JP',serif" : "inherit" }}>{value}</div>
-                  </div>
-                ))}
-              </div>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "var(--moegi)", margin: 0 }}>
-                {t.statsDaySummaryOne
-                  .replace("{date}", fmtDate(statsDate, lang))
-                  .replace("{hotel}", selectedHotelDayStats.hotel.name || "—")
-                  .replace("{guests}", String(selectedHotelDayStats.st.guests))
-                  .replace("{rooms}", String(selectedHotelDayStats.st.rooms))
-                  .replace("{cost}", hotelStatsDayCostFmt)}
-              </p>
-            </>
-          )}
+      {open && <div style={{ padding: "0 18px 16px" }}>
+      <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickHotel}</label>
+          <select
+            style={{ ...inpStyle, minWidth: 180, maxWidth: "100%" }}
+            value={statsHotelId}
+            disabled={!hotels.length}
+            onChange={(e) => setStatsHotelId(e.target.value)}
+          >
+            {!hotels.length && <option value="">{t.noData}</option>}
+            {hotels.length > 0 && !statsHotelId && <option value="">{t.statsSelectHotelFirst}</option>}
+            {[...hotels].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((h) => (
+              <option key={h.id} value={String(h.id)}>{h.name}</option>
+            ))}
+          </select>
         </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--sumi)", letterSpacing: "0.04em" }}>{t.statsPickDate}</label>
+          <select
+            style={{ ...inpStyle, minWidth: 168, maxWidth: "100%" }}
+            value={statsDate}
+            disabled={!stayNightDates.length}
+            onChange={(e) => setStatsDate(e.target.value)}
+          >
+            {!stayNightDates.length && <option value="">{t.noStayDates}</option>}
+            {stayNightDates.map((d) => <option key={d} value={d}>{fmtDate(d, lang)} ({d})</option>)}
+          </select>
+        </div>
+      </div>
+      {!statsHotelId && hotels.length > 0 && (
+        <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.statsSelectHotelFirst}</p>
       )}
-    </div>
+      {statsDate && statsHotelId && !selectedHotelDayStats && (
+        <p style={{ fontSize: 11, color: "var(--nezumi)", margin: 0 }}>{t.noData}</p>
+      )}
+      {hasSelection && (
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
+            {[
+              { label: t.guestCountDay, value: selectedHotelDayStats.st.guests },
+              { label: t.roomCountDay, value: selectedHotelDayStats.st.rooms },
+              { label: t.totalSpendDay, value: hotelStatsDayCostFmt, isMoney: true },
+            ].map(({ label, value, isMoney }) => (
+              <div key={label} style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 6, padding: "12px 14px", textAlign: "center" }}>
+                <div style={{ fontSize: 10, color: "var(--nezumi)", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
+                <div style={{ fontSize: isMoney ? 15 : 22, fontWeight: 700, color: "var(--sumi)", fontVariantNumeric: "tabular-nums", fontFamily: isMoney ? "'Noto Serif JP',serif" : "inherit" }}>{value}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "var(--moegi)", margin: 0 }}>
+            {t.statsDaySummaryOne
+              .replace("{date}", fmtDate(statsDate, lang))
+              .replace("{hotel}", selectedHotelDayStats.hotel.name || "—")
+              .replace("{guests}", String(selectedHotelDayStats.st.guests))
+              .replace("{rooms}", String(selectedHotelDayStats.st.rooms))
+              .replace("{cost}", hotelStatsDayCostFmt)}
+          </p>
+        </>
+      )}
+    </div>}
+  </div>
   );
 }
 
@@ -3639,13 +3637,24 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
   const tdStyle = `padding:7px 12px;font-size:9pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #eaf0eb;vertical-align:top;line-height:1.7;`;
 
   const thead = `<tr style="background:${headerGrad};color:#fff;">${cols.map((c) => `<th style="${thStyle}">${c.label}</th>`).join("")}</tr>`;
-  const unassignedBannerIdx = type === "stay" ? data.findIndex((r) => r._unassigned) : -1;
-  const rows = data.map((row, i) => {
-    const bg = row._unassigned ? "#fffbf0" : (i % 2 === 0 ? "#ffffff" : "#f5faf6");
-    const banner = (unassignedBannerIdx >= 0 && i === unassignedBannerIdx)
-      ? `<tr><td colspan="${cols.length}" style="padding:5px 12px;font-size:7.5pt;font-weight:700;color:#854F0B;border-top:2px dashed #EF9F27;letter-spacing:.06em;background:#fffbf0;">待分配房號 (${data.filter((r) => r._unassigned).length})</td></tr>`
-      : "";
-    return banner + `<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`;
+  const bannerStyle = (bg, color, borderColor) => `padding:5px 12px;font-size:7.5pt;font-weight:700;color:${color};border-top:2px dashed ${borderColor};letter-spacing:.06em;background:${bg};`;
+  const rows = [];
+  let prevTier = -1;
+  let tierRowIdx = 0;
+  data.forEach((row) => {
+    const tier = row._tier ?? 0;
+    if (type === "stay" && tier !== prevTier) {
+      if (tier === 1) rows.push(`<tr><td colspan="${cols.length}" style="${bannerStyle("#E6F1FB","#185FA5","#378ADD")}">專用空間（有房號）</td></tr>`);
+      if (tier === 2) rows.push(`<tr><td colspan="${cols.length}" style="${bannerStyle("#FAEEDA","#854F0B","#EF9F27")}">待配房號 (${data.filter(r=>(r._tier??0)===2).length})</td></tr>`);
+      if (tier === 4) rows.push(`<tr><td colspan="${cols.length}" style="${bannerStyle("#FAEEDA","#854F0B","#EF9F27")}">未安排住宿 (${data.filter(r=>(r._tier??0)===4).length})</td></tr>`);
+      if (tier === 5) rows.push(`<tr><td colspan="${cols.length}" style="${bannerStyle("#E6F1FB","#185FA5","#378ADD")}">專用空間（未配房）</td></tr>`);
+      prevTier = tier; tierRowIdx = 0;
+    }
+    const isAmber = tier === 2 || tier === 4;
+    const isBlue = tier === 1 || tier === 5;
+    const bg = isAmber ? (tierRowIdx%2===0?"#fffbf0":"#fff8e8") : isBlue ? (tierRowIdx%2===0?"#f0f6ff":"#e8f0fb") : (tierRowIdx%2===0?"#ffffff":"#f5faf6");
+    rows.push(`<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`);
+    tierRowIdx++;
   });
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
@@ -3663,7 +3672,7 @@ table{width:100%;border-collapse:collapse;border-radius:4px;overflow:hidden;box-
 </body></html>`;
 }
 
-function ReportExportModal({ onClose, t, lang, project, persons, flights, stays, flatStays, hotels, pricingRules, vehicles, vehicleAssignments, personIndex, stayDisplayTotals }) {
+function ReportExportModal({ onClose, t, lang, project, persons, flights, stays, flatStays, personsNoStay, hotels, pricingRules, vehicles, vehicleAssignments, personIndex, stayDisplayTotals }) {
   const [reportType, setReportType] = useState("stay");
   const ALL_COLS = {
     stay: [
@@ -3732,14 +3741,14 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
   const buildData = () => {
     const sel = cols.filter((c) => selCols[c.key]);
     if (reportType === "stay") {
-      const staySource = flatStays && flatStays.length >= 0 ? flatStays : stays;
-      const toRow = (s) => {
+      const src = flatStays && flatStays.length >= 0 ? flatStays : stays;
+      const toRow = (s, _tier) => {
         const p = s.person_id ? persons.find((x) => x.id === s.person_id) : null;
         const h = hotels.find((x) => x.id == s.hotel_id);
         const nights = diffDays(s.check_in, s.check_out);
         const amt = stayDisplayTotals ? stayDisplayTotals[s.id] : (s.total_amount || 0);
         return {
-          no: personIndex[s.person_id] || "—",
+          no: s.special_room_name ? "—" : (personIndex[s.person_id] || "—"),
           dept: p?.dept || "—",
           name_kanji: s.special_room_name ? `[${s.special_room_name}]` : (p?.name_kanji || "—"),
           name_roman: p ? `${p.last_roman || ""} ${p.first_roman || ""}`.trim() : "—",
@@ -3752,23 +3761,38 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
           total_amt: amt ? formatMoney(convertMoney(amt, project), project, lang) : "—",
           stay_label: s.stay_label || "—",
           special_room: s.special_room_name || "—",
-          _unassigned: !s.room_number && !s.special_room_name,
+          _tier: _tier,
         };
       };
-      const sorted = [...staySource].sort((a, b) => {
+      const sortFn = (a, b) => {
         const noA = personIndex[a.person_id] || 9999;
         const noB = personIndex[b.person_id] || 9999;
         if (noA !== noB) return noA - noB;
-        const dA = ((a.person?.dept) || (persons.find((x) => x.id === a.person_id)?.dept) || "").toLowerCase();
-        const dB = ((b.person?.dept) || (persons.find((x) => x.id === b.person_id)?.dept) || "").toLowerCase();
+        const dA = ((a.person?.dept) || (persons.find((x)=>x.id===a.person_id)?.dept) || "").toLowerCase();
+        const dB = ((b.person?.dept) || (persons.find((x)=>x.id===b.person_id)?.dept) || "").toLowerCase();
         if (dA !== dB) return dA.localeCompare(dB, undefined, { sensitivity: "base" });
-        const ciA = a.check_in || ""; const ciB = b.check_in || "";
-        if (ciA !== ciB) return ciA.localeCompare(ciB);
-        return (a.check_out || "").localeCompare(b.check_out || "");
-      });
-      const assigned = sorted.filter((s) => s.room_number || s.special_room_name);
-      const unassigned = sorted.filter((s) => !s.room_number && !s.special_room_name);
-      return [...assigned.map(toRow), ...unassigned.map(toRow)];
+        if ((a.check_in||"") !== (b.check_in||"")) return (a.check_in||"").localeCompare(b.check_in||"");
+        return (a.check_out||"").localeCompare(b.check_out||"");
+      };
+      const normalAssigned = src.filter((s) => !s.special_room_name && s.room_number).sort(sortFn);
+      const specialAssigned = src.filter((s) => s.special_room_name && s.room_number).sort(sortFn);
+      const normalUnassigned = src.filter((s) => !s.special_room_name && !s.room_number).sort(sortFn);
+      const specialUnassigned = src.filter((s) => s.special_room_name && !s.room_number).sort(sortFn);
+      const noStaySrc = (personsNoStay || []).sort((a,b)=>(personIndex[a.id]||9999)-(personIndex[b.id]||9999));
+      const noStayRows = noStaySrc.map((p) => ({
+        no: personIndex[p.id] || "—", dept: p.dept || "—",
+        name_kanji: p.name_kanji || "—",
+        name_roman: `${p.last_roman||""} ${p.first_roman||""}`.trim() || "—",
+        hotel: "—", room_no: "—", room_type: "—", check_in: "—", check_out: "—",
+        nights: "—", total_amt: "—", stay_label: "—", special_room: "—", _tier: 4,
+      }));
+      return [
+        ...normalAssigned.map((s) => toRow(s, 0)),
+        ...specialAssigned.map((s) => toRow(s, 1)),
+        ...normalUnassigned.map((s) => toRow(s, 2)),
+        ...noStayRows,
+        ...specialUnassigned.map((s) => toRow(s, 5)),
+      ];
     }
     if (reportType === "flight") {
       return persons.filter((p) => !p.hide_from_flights).map((p) => {
@@ -5547,20 +5571,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         rows.push({ ...s, person: p || { dept: "", name_kanji: s.special_room_name, last_roman: "", first_roman: "" }, hotelName: hname, roomLabel: rt, isSpecialRoom: !!s.special_room_name });
       }
     });
-    // Sort: personIndex(no) → dept → check_in → check_out
+    // Sort: (1) normal+assigned, (2) normal+unassigned, (3) special+assigned, (4) special+unassigned
+    // Within each tier: personIndex → dept → check_in → check_out
     rows.sort((a, b) => {
+      const tierA = a.isSpecialRoom ? (a.room_number ? 2 : 3) : (a.room_number ? 0 : 1);
+      const tierB = b.isSpecialRoom ? (b.room_number ? 2 : 3) : (b.room_number ? 0 : 1);
+      if (tierA !== tierB) return tierA - tierB;
       const noA = personIndex[a.person_id] || 9999;
       const noB = personIndex[b.person_id] || 9999;
       if (noA !== noB) return noA - noB;
-      const deptA = (a.person?.dept || "").toLowerCase();
-      const deptB = (b.person?.dept || "").toLowerCase();
-      if (deptA !== deptB) return deptA.localeCompare(deptB, undefined, { sensitivity: "base" });
-      const ciA = a.check_in || "";
-      const ciB = b.check_in || "";
+      const dA = (a.person?.dept || "").toLowerCase();
+      const dB = (b.person?.dept || "").toLowerCase();
+      if (dA !== dB) return dA.localeCompare(dB, undefined, { sensitivity: "base" });
+      const ciA = a.check_in || ""; const ciB = b.check_in || "";
       if (ciA !== ciB) return ciA.localeCompare(ciB);
-      const coA = a.check_out || "";
-      const coB = b.check_out || "";
-      return coA.localeCompare(coB);
+      return (a.check_out || "").localeCompare(b.check_out || "");
     });
     return rows;
   }, [stays, persons, debSearchC, searchCHotel, searchCRoom, deptC, activeStayPhase, hotelPhaseMap, personIndex, hotels]);
@@ -7000,7 +7025,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
       {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
-      {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} flatStays={flatStays} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
+      {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} flatStays={flatStays} personsNoStay={personsMissingPhaseStay} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
       {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
