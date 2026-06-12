@@ -3986,9 +3986,10 @@ function buildInvoicePriceSegmentRows({ checkIn, totalNights, roomLabel, roomCou
 }
 
 /**
- * 飯店合併對帳：以房號為單位聚合取 minIn/maxOut，
- * 再以 入住日+房型 分批，金額逐晚加總一行顯示。
- * 室友不同退房日 → 合併到最晚退房日，rep 選住最久那筆。
+ * 飯店合併對帳：
+ * Step1 以房號為單位聚合，取 minIn/maxOut（解決室友退房日不同的合併）
+ * Step2 以 飯店+入住日+退房日+房型 分批（不同房號若天數不同則分開列示，避免互相套錯天數的價格）
+ * 金額：逐晚加總，每晚依「當晚實際入住者中住最久者」查價，一行顯示「每間總額 × 間數」
  */
 function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
   const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
@@ -4009,18 +4010,16 @@ function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
     if (!u.maxOut || s.check_out > u.maxOut) u.maxOut = s.check_out;
   });
 
-  // Step 2: 以 hid + minIn + 房型 再分批
+  // Step 2: 以 hid + minIn + maxOut + 房型 分批（保留退房日差異，避免不同天數的房間互相套錯價格）
   const byBatch = {};
   Object.values(byUnit).forEach(({ hid, stays: unitStays, minIn, maxOut }) => {
     if (!minIn || !maxOut) return;
     const rep = unitStays.reduce((best, s) =>
       diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
     const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
-    const bk = `${hid}|${minIn}|${roomLabel}`;
+    const bk = `${hid}|${minIn}|${maxOut}|${roomLabel}`;
     if (!byBatch[bk]) byBatch[bk] = { hid, check_in: minIn, check_out: maxOut, roomLabel, units: [] };
-    const batch = byBatch[bk];
-    if (maxOut > batch.check_out) batch.check_out = maxOut;
-    batch.units.push({ rep, unitStays });
+    byBatch[bk].units.push({ rep, unitStays });
   });
 
   // Step 3: 逐晚加總，輸出一行
@@ -4029,22 +4028,21 @@ function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
     const nights = diffDays(check_in, check_out);
     if (nights <= 0) return;
     const roomCount = units.length;
-    const rep = units.reduce((best, u) =>
+    const allUnitStays = units.flatMap((u) => u.unitStays);
+    const fallbackRep = units.reduce((best, u) =>
       diffDays(u.rep.check_in, u.rep.check_out) >= diffDays(best.rep.check_in, best.rep.check_out) ? u : best, units[0]).rep;
     let perRoomTotal = 0;
     for (let i = 0; i < nights; i++) {
       const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
       const ds = localDateStr(d);
-      // 找當晚實際有入住的任一筆（優先住最久）作為定價依據
-      const allUnitStays = units.flatMap((u) => u.unitStays);
       const active = allUnitStays.filter((s) => stayActiveOnDate(s, ds));
       const priceRep = active.length
         ? active.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, active[0])
-        : rep;
+        : fallbackRep;
       const p = stayNightPriceFromRules(priceRep, ds, pricingRules, hMap);
       if (p != null) perRoomTotal += p;
     }
-    const roomGroups = buildBatchRoomGroups(units.flatMap((u) => u.unitStays));
+    const roomGroups = buildBatchRoomGroups(allUnitStays);
     if (!byHotelResult[hid]) byHotelResult[hid] = { hotel: hMap[hid], hid, batches: [] };
     byHotelResult[hid].batches.push({
       check_in, check_out, roomLabel, roomCount, nights,
@@ -4053,7 +4051,7 @@ function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
   });
 
   const result = Object.values(byHotelResult).map((h) => {
-    h.batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.roomLabel.localeCompare(b.roomLabel));
+    h.batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.check_out.localeCompare(b.check_out) || a.roomLabel.localeCompare(b.roomLabel));
     h.hotelTotal = h.batches.reduce((s, b) => s + b.batchTotal, 0);
     return h;
   });
@@ -4101,7 +4099,6 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
       const spanNights = diffDays(minIn, maxOut);
       if (spanNights <= 0) return;
 
-      // rep 選住最久的那筆，確保 pricing_rules 查詢範圍最完整
       const rep = unitStays.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
       const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
       const rn = (rep.room_number || "").trim();
