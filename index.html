@@ -415,7 +415,7 @@ const T = {
     hideFromStaysHint: "開啟後，此人不顯示於住宿一覽與住宿篩選名單",
     hideFromVehiclesHint: "開啟後，此人不顯示於派車配置與每日配車單",
     hideFromFlightsHint: "開啟後，此人不顯示於航班管理名單（不需安排機票者適用）",
-    flightOutbound: "去程", flightReturn: "回程",
+    flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班機", flightDiffFlight: "分批搭機",
     groupByDept: "依部門", warnFilter: "警示", warnFilterTitle: "顯示警示種類", selectAll: "全選",
     arrTimePickup: "抵達時間 ↓接機",
     flightUngrouped: "未分組／資料未完成",
@@ -563,7 +563,7 @@ const T = {
     hideFromStaysHint: "开启后，此人不显示于住宿一览与住宿筛选名单",
     hideFromVehiclesHint: "开启后，此人不显示于派车配置与每日配车单",
     hideFromFlightsHint: "开启后，此人不显示于航班管理名单（不需安排机票者适用）",
-    flightOutbound: "去程", flightReturn: "回程",
+    flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班机", flightDiffFlight: "分批搭机",
     groupByDept: "依部门", warnFilter: "警示", warnFilterTitle: "显示警示种类", selectAll: "全选",
     arrTimePickup: "抵达时间 ↓接机",
     flightUngrouped: "未分组／资料未完成",
@@ -710,7 +710,7 @@ const T = {
     hideFromStaysHint: "When on, this person won't appear in the accommodation list",
     hideFromVehiclesHint: "When on, this person won't appear in vehicle assignments",
     hideFromFlightsHint: "When on, this person won't appear in the flight list (no ticket needed)",
-    flightOutbound: "Outbound", flightReturn: "Return",
+    flightOutbound: "Outbound", flightReturn: "Return", flightSameFlight: "Same flight", flightDiffFlight: "Split flights",
     groupByDept: "By Dept", warnFilter: "Warnings", warnFilterTitle: "Show warning types", selectAll: "Select all",
     arrTimePickup: "Arrival ↓ pickup",
     flightUngrouped: "Ungrouped / incomplete",
@@ -855,7 +855,7 @@ const T = {
     hideFromStaysHint: "켜면 숙박 목록에서 표시되지 않습니다",
     hideFromVehiclesHint: "켜면 차량 배정 목록에서 표시되지 않습니다",
     hideFromFlightsHint: "켜면 항공 관리 목록에서 숨겨집니다 (항공권 불필요)",
-    flightOutbound: "출국", flightReturn: "귀국",
+    flightOutbound: "출국", flightReturn: "귀국", flightSameFlight: "동일 항공편", flightDiffFlight: "분산 탑승",
     groupByDept: "부서별", warnFilter: "경고", warnFilterTitle: "경고 표시 유형", selectAll: "전체 선택",
     arrTimePickup: "도착 ↓ 픽업",
     flightUngrouped: "미분류／미완료",
@@ -999,7 +999,7 @@ const T = {
     hideFromStaysHint: "オンにすると宿泊一覧から非表示になります",
     hideFromVehiclesHint: "オンにすると配車リストから非表示になります",
     hideFromFlightsHint: "オンにするとフライト管理リストから非表示（航空券不要の場合）",
-    flightOutbound: "往路", flightReturn: "復路",
+    flightOutbound: "往路", flightReturn: "復路", flightSameFlight: "同フライト", flightDiffFlight: "別フライト",
     groupByDept: "部署別", warnFilter: "警告", warnFilterTitle: "警告種類", selectAll: "全選択",
     arrTimePickup: "到着 ↓送迎",
     flightUngrouped: "未分類／未入力",
@@ -1394,6 +1394,41 @@ function flightHasLeg(fl, leg) {
   return !!(fl.ret_airline || fl.ret_flight_no || fl.ret_dep_time || fl.ret_dep_airport);
 }
 
+/**
+ * 判斷「同班機 / 分批搭機」：
+ * 依 (leg, 日期) 分組，組內航班編號(airline+flight_no)只有一種 → 同班機；
+ * 出現兩種以上 → 分批搭機；只有一人也算同班機（沒有分歧）。
+ * 回傳 Map<personId, { out: "same"|"diff"|null, ret: "same"|"diff"|null }>
+ */
+function buildFlightSameDiffMap(persons, flights) {
+  const result = new Map();
+  ["out", "ret"].forEach((leg) => {
+    const groups = new Map();
+    persons.forEach((p) => {
+      const fl = flights.find((x) => x.person_id === p.id);
+      if (!fl || !flightHasLeg(fl, leg)) return;
+      const ts = leg === "out" ? fl.dep_time : fl.ret_dep_time;
+      const dateStr = ts ? String(ts).slice(0, 10) : "";
+      if (!dateStr) return;
+      const fn = `${(leg === "out" ? fl.airline : fl.ret_airline) || ""}|${(leg === "out" ? fl.flight_no : fl.ret_flight_no) || ""}`.trim();
+      if (!groups.has(dateStr)) groups.set(dateStr, new Map());
+      const dateGroup = groups.get(dateStr);
+      if (!dateGroup.has(fn)) dateGroup.set(fn, []);
+      dateGroup.get(fn).push(p.id);
+    });
+    groups.forEach((dateGroup) => {
+      const status = dateGroup.size > 1 ? "diff" : "same";
+      dateGroup.forEach((personIds) => {
+        personIds.forEach((pid) => {
+          if (!result.has(pid)) result.set(pid, { out: null, ret: null });
+          result.get(pid)[leg] = status;
+        });
+      });
+    });
+  });
+  return result;
+}
+
 function getVisibleFlightLegs(fl, filter) {
   const hasOut = flightHasLeg(fl, "out");
   const hasRet = flightHasLeg(fl, "ret");
@@ -1621,7 +1656,7 @@ function renderFlightPersonRows(p, fl, legs, ctx) {
   ));
 }
 
-function FlightLegFilter({ value, onChange, groupByDept, onGroupByDept, warnFilters, onWarnFilters, showWarnDropdown, onToggleWarnDropdown, warnDropdownRef, t }) {
+function FlightLegFilter({ value, onChange, groupByDept, onGroupByDept, sameDiffFilter, onSameDiffFilter, warnFilters, onWarnFilters, showWarnDropdown, onToggleWarnDropdown, warnDropdownRef, t }) {
   const legOpts = [["all", t.allPhases], ["out", t.flightOutbound], ["ret", t.flightReturn]];
   const WARN_OPTS = [
     { key: "arrBeforeCI", label: t.warnArrBeforeCI, color: "#a03030", bg: "rgba(160,48,48,.1)", border: "rgba(160,48,48,.2)" },
@@ -1647,6 +1682,13 @@ function FlightLegFilter({ value, onChange, groupByDept, onGroupByDept, warnFilt
         {legOpts.map(([k, lb]) => (
           <button key={k} type="button" onClick={() => onChange(k)} style={value === k ? activePill(k === "ret" ? "var(--asagi)" : "var(--moegi)") : inactivePill}>{lb}</button>
         ))}
+        <div style={vdiv} />
+        <button type="button" onClick={() => onSameDiffFilter(sameDiffFilter === "same" ? null : "same")} style={sameDiffFilter === "same" ? activePill("var(--asagi)") : inactivePill}>
+          {t.flightSameFlight || "同班機"}
+        </button>
+        <button type="button" onClick={() => onSameDiffFilter(sameDiffFilter === "diff" ? null : "diff")} style={sameDiffFilter === "diff" ? activePill("var(--kincha)") : inactivePill}>
+          {t.flightDiffFlight || "分批搭機"}
+        </button>
         <div style={vdiv} />
         <button type="button" onClick={onGroupByDept} style={groupByDept ? activePill("var(--kincha)") : inactivePill}>
           {t.groupByDept || "依部門"}
@@ -5315,6 +5357,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [searchBStatus, setSearchBStatus] = useState("");
   const [flightLegFilter, setFlightLegFilter] = useState("all");
   const [flightGroupByDept, setFlightGroupByDept] = useState(false);
+  const [flightSameDiffFilter, setFlightSameDiffFilter] = useState(null);
   const [showWarnDropdown, setShowWarnDropdown] = useState(false);
   const [flightWarnFilters, setFlightWarnFilters] = useState([]);
   const warnDropdownRef = useRef(null);
@@ -5621,10 +5664,19 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     return nameOk && romanOk && airlineOk && statusOk && (!deptB || p.dept === deptB);
   }), [persons, flights, debSearchB, deptB, searchBRoman, searchBAirline, searchBStatus, getStatus]);
 
+  const flightSameDiffMap = useMemo(() => buildFlightSameDiffMap(persons, flights), [persons, flights]);
+
   const displayFlightPersons = useMemo(() => filteredFlightPersons.filter((p) => {
     const fl = flights.find((x) => x.person_id === p.id);
-    return getVisibleFlightLegs(fl, flightLegFilter).length > 0;
-  }), [filteredFlightPersons, flights, flightLegFilter]);
+    if (getVisibleFlightLegs(fl, flightLegFilter).length === 0) return false;
+    if (flightSameDiffFilter) {
+      const sd = flightSameDiffMap.get(p.id);
+      const legsToCheck = flightLegFilter === "out" ? ["out"] : flightLegFilter === "ret" ? ["ret"] : ["out", "ret"];
+      const matches = legsToCheck.some((leg) => sd && sd[leg] === flightSameDiffFilter);
+      if (!matches) return false;
+    }
+    return true;
+  }), [filteredFlightPersons, flights, flightLegFilter, flightSameDiffFilter, flightSameDiffMap]);
 
   const flightTableSections = useMemo(
     () => buildFlightTableSections(displayFlightPersons, flights, flightLegFilter, t, lang),
@@ -6299,6 +6351,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
               <FlightLegFilter
                 value={flightLegFilter} onChange={setFlightLegFilter}
                 groupByDept={flightGroupByDept} onGroupByDept={() => setFlightGroupByDept((v) => !v)}
+                sameDiffFilter={flightSameDiffFilter} onSameDiffFilter={setFlightSameDiffFilter}
                 warnFilters={flightWarnFilters} onWarnFilters={setFlightWarnFilters}
                 showWarnDropdown={showWarnDropdown} onToggleWarnDropdown={() => setShowWarnDropdown((v) => !v)}
                 warnDropdownRef={warnDropdownRef}
