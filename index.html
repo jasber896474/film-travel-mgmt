@@ -290,15 +290,13 @@ function readScrollPosition() {
   return window.scrollY || document.documentElement.scrollTop || 0;
 }
 
-// 航班時間：雙排顯示（無年份 / 24小時制）
+// 航班時間：雙排顯示（無年份 / 12小時制）
 const fmtFlightDateTime = (ts, lang) => {
   const d = parseLocalDateTime(ts);
   if (!d) return null;
   const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
   const datePart = d.toLocaleDateString(loc, { month: "numeric", day: "numeric" });
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  const timePart = `${h}:${m}`;
+  const timePart = d.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit", hour12: true });
   return { date: datePart, time: timePart };
 };
 const passportWarning = (exp) => {
@@ -1865,8 +1863,7 @@ function applyRoomLabelToForm(label) {
 function getHotelRoomTypeOptions(hotel, pricingRules) {
   const labels = new Set();
   const rates = hotel?.room_type_rates || {};
-  const uniformPrice = rates.All != null && rates.All !== "";
-  if (hotel && uniformPrice) {
+  if (hotel && rates.All != null && rates.All !== "") {
     ROOM_TYPES_FOR_RATES.forEach((t) => labels.add(t));
   } else if (hotel) {
     Object.entries(rates).forEach(([k, v]) => {
@@ -1880,16 +1877,9 @@ function getHotelRoomTypeOptions(hotel, pricingRules) {
     });
   }
   if (labels.size === 0) ROOM_TYPES_FOR_RATES.forEach((t) => labels.add(t));
-  const getRate = (label) => {
-    if (uniformPrice) return +rates.All || 0;
-    if (rates[label] != null && rates[label] !== "") return +rates[label];
-    return 0;
-  };
-  return [...labels].sort((a, b) => {
-    const ra = getRate(a), rb = getRate(b);
-    if (ra !== rb) return rb - ra;
-    return a.localeCompare(b, "zh-TW");
-  });
+  const standard = ROOM_TYPES_FOR_RATES.filter((t) => labels.has(t));
+  const custom = [...labels].filter((l) => !ROOM_TYPES_FOR_RATES.includes(l)).sort((a, b) => a.localeCompare(b, "zh-TW"));
+  return [...standard, ...custom];
 }
 
 /** 該入住夜房費：日期例外規則 → 房型預設價 → fallback 該筆住宿的基本房價 */
@@ -3249,35 +3239,7 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
   );
 }
 
-function getHotelRoomInventory(hotel, roomLabel, allStays, roommates) {
-  if (!hotel?.inventory_enabled || !hotel?.room_type_inventory) return null;
-  const inv = hotel.room_type_inventory;
-  const key = inv["All"] !== undefined ? "All" : roomLabel;
-  const total = inv[key];
-  if (total == null || total === "") return null;
-  const rmGroups = roommates && roommates.length ? buildRoommateGroups(roommates) : null;
-  const getRoommateRoot = (pid) => {
-    if (!rmGroups) return `person:${pid}`;
-    let root = `person:${pid}`;
-    Object.entries(rmGroups).forEach(([, members]) => {
-      if (members.has(+pid)) root = `rmgroup:${[...members].sort((a,b)=>a-b).join(",")}`;
-    });
-    return root;
-  };
-  const used = new Set();
-  (allStays || []).forEach((s) => {
-    if (+s.hotel_id !== +hotel.id) return;
-    const sl = s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "");
-    const matchKey = inv["All"] !== undefined ? true : sl === roomLabel;
-    if (!matchKey) return;
-    if (s.special_room_name) used.add(`special:${s.id}`);
-    else if ((s.room_number || "").trim()) used.add(`room:${(s.room_number||"").trim()}`);
-    else if (s.person_id != null) used.add(getRoommateRoot(s.person_id));
-  });
-  return { total: +total, used: used.size, remaining: +total - used.size };
-}
-
-function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, isSpecialRoom, defaultPhaseId, allStays, roommates }) {
+function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project, lang, isSpecialRoom, defaultPhaseId }) {
   const phaseHotels = defaultPhaseId ? hotels.filter((h) => h.shoot_phase_id === defaultPhaseId) : hotels;
   const defaultHotelId = phaseHotels.length === 1 ? String(phaseHotels[0].id) : "";
   const blank = { hotel_id: defaultHotelId, room_type: "Single", room_custom: "", check_in: todayStr(), check_out: addDaysToDateStr(todayStr(), 1), stay_label: "", room_number: "", special_room_name: "" };
@@ -3360,24 +3322,8 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
         <Field label={t.roomType}>
           <select style={inpStyle} value={roomSelectValue} onChange={handleRoomTypeChange} disabled={!f.hotel_id}>
             {!f.hotel_id && <option value="">--</option>}
-            {roomTypeOptions.map((rt) => {
-              const inv = getHotelRoomInventory(selectedHotel, rt, allStays, roommates);
-              const isFull = inv && inv.remaining <= 0;
-              const label = inv ? (isFull ? `${rt} ⛔ 已滿 ${inv.used}/${inv.total}` : inv.remaining <= 2 ? `${rt} ⚠ 剩 ${inv.remaining} 間` : `${rt} (${inv.remaining} 間)`) : rt;
-              return <option key={rt} value={rt} disabled={isFull}>{label}</option>;
-            })}
+            {roomTypeOptions.map((rt) => <option key={rt} value={rt}>{rt}</option>)}
           </select>
-          {(() => {
-            const inv = getHotelRoomInventory(selectedHotel, roomSelectValue, allStays, roommates);
-            if (!inv) return null;
-            const isFull = inv.remaining <= 0;
-            const isWarn = !isFull && inv.remaining <= 2;
-            return (
-              <p style={{ fontSize: 10, margin: "4px 0 0", color: isFull ? "var(--kincha)" : isWarn ? "#8B6914" : "var(--moegi)", fontWeight: 600 }}>
-                {isFull ? `⛔ 已滿（${inv.used}/${inv.total} 間）` : isWarn ? `⚠ 剩餘 ${inv.remaining} 間（已用 ${inv.used}/${inv.total}）` : `✓ 剩餘 ${inv.remaining} 間（已用 ${inv.used}/${inv.total}）`}
-              </p>
-            );
-          })()}
         </Field>
         {!isSpecialRoom && <Field label={t.roomNo}><input style={inpStyle} value={f.room_number} onChange={set("room_number")} placeholder={t.roomNoPending} /></Field>}
         {isSpecialRoom && <div />}
@@ -3404,28 +3350,54 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
 }
 
 // ─── 高質感報表匯出 ────────────────────────────────────────────
-const VEHICLE_REPORT_CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
+const VEHICLE_REPORT_CIRC = [
+  '①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳',
+  '㉑','㉒','㉓','㉔','㉕','㉖','㉗','㉘','㉙','㉚','㉛','㉜','㉝','㉞','㉟',
+  '㊱','㊲','㊳','㊴','㊵','㊶','㊷','㊸','㊹','㊺','㊻','㊼','㊽','㊾','㊿'
+];
+
+/** 1-100：1-50 用 Unicode 圈圈字，51-100 回傳數字字串，由呼叫端套用 CSS 圓形徽章 */
+function vehicleCircLabel(n) {
+  if (n >= 1 && n <= VEHICLE_REPORT_CIRC.length) return { text: VEHICLE_REPORT_CIRC[n - 1], css: false };
+  if (n > VEHICLE_REPORT_CIRC.length && n <= 100) return { text: String(n), css: true };
+  return { text: String(n), css: true };
+}
 
 function vehicleNoCirc(vehicleNo, index) {
   const raw = String(vehicleNo ?? "").trim();
   if (raw) {
     const n = parseInt(raw.replace(/^#/, ""), 10);
-    if (!Number.isNaN(n) && n >= 1 && n <= VEHICLE_REPORT_CIRC.length) return VEHICLE_REPORT_CIRC[n - 1];
+    if (!Number.isNaN(n) && n >= 1) return vehicleCircLabel(n);
     const m = raw.match(/\d+/);
     if (m) {
       const d = parseInt(m[0], 10);
-      if (d >= 1 && d <= VEHICLE_REPORT_CIRC.length) return VEHICLE_REPORT_CIRC[d - 1];
+      if (d >= 1) return vehicleCircLabel(d);
     }
   }
-  if (index != null && index >= 0 && index < VEHICLE_REPORT_CIRC.length) return VEHICLE_REPORT_CIRC[index];
-  return "";
+  if (index != null && index >= 0) return vehicleCircLabel(index + 1);
+  return { text: "", css: false };
+}
+
+/** 渲染 vehicleCircLabel 結果：Unicode 直接顯示，51-100 用圓形徽章 */
+function CircBadge({ label, isDriver }) {
+  if (!label || !label.text) return null;
+  if (!label.css) return <span>{label.text}</span>;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      width: 20, height: 20, borderRadius: "50%", fontSize: 11, fontWeight: 600,
+      border: `1px solid ${isDriver ? "var(--moegi)" : "var(--keisenM)"}`,
+      color: isDriver ? "var(--moegi)" : "var(--nezumi)", flexShrink: 0, lineHeight: 1,
+    }}>{label.text}</span>
+  );
 }
 
 function vehicleDisplayTitle(v, index) {
   const name = (typeof v === "string" ? v : v?.name) || "—";
   const no = typeof v === "object" ? v?.vehicle_no : "";
   const circ = vehicleNoCirc(no, index);
-  return `${circ}${name}`;
+  const prefix = circ.text ? (circ.css ? `(${circ.text})` : circ.text) : "";
+  return `${prefix}${name}`;
 }
 
 function escReportHtml(s) {
@@ -3534,7 +3506,7 @@ function buildVehicleReportCards(vehicles, assignments, persons, lang, t) {
       const p = persons.find((x) => x.id === a.person_id);
       if (!p) return null;
       return {
-        num: VEHICLE_REPORT_CIRC[i] || String(i + 1),
+        num: vehicleCircLabel(i + 1).css ? `(${i + 1})` : VEHICLE_REPORT_CIRC[i],
         name: p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim() || "—",
         dept: (p.dept || "").trim(),
         isDriver: a.role === "driver",
@@ -3651,12 +3623,12 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
   // Legacy vehicle table (fallback)
   if (type === "vehicle") {
     const vehicles = [...new Set(data.map((r) => r.vehicle))].filter(Boolean);
-    const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
     const vehicleBlocks = vehicles.map((vName) => {
       const passengers = data.filter((r) => r.vehicle === vName);
       const chips = passengers.map((r, i) => {
         const isDriver = r.role === (t.driver || "Driver") || r.role === "driver";
-        const num = CIRC[i] || (i + 1);
+        const lbl = vehicleCircLabel(i + 1);
+        const num = lbl.css ? `(${lbl.text})` : lbl.text;
         return `<span style="display:inline-flex;align-items:center;gap:3px;padding:4px 9px;margin:2px;border-radius:5px;font-size:9.5pt;background:${isDriver ? "rgba(43,90,76,.12)" : "#f4f9f5"};border:1px solid ${isDriver ? "rgba(43,90,76,.3)" : "#d8eed8"};font-weight:${isDriver ? 700 : 500};">
           <span style="font-size:9pt;color:${isDriver ? "#2b5a4c" : "#888"};">${num}</span>
           <span style="color:#1a2820;">${r.name_kanji || "—"}</span>
@@ -3986,87 +3958,62 @@ function buildInvoicePriceSegmentRows({ checkIn, totalNights, roomLabel, roomCou
 }
 
 /**
- * 飯店合併對帳：
- * Step1 以房號為單位聚合，取 minIn/maxOut（解決室友退房日不同的合併）
- * Step2 以 飯店+入住日+退房日+房型 分批（不同房號若天數不同則分開列示，避免互相套錯天數的價格）
- * 金額：逐晚加總，每晚依「當晚實際入住者中住最久者」查價，一行顯示「每間總額 × 間數」
+ * 對齊飯店請款習慣：同飯店內，相同入住日+退房日+房型合併為一批
+ * 公式：單價 × 間數 × 晚數（間數依房號或人數；每晚依 pricing_rules 計價）
  */
 function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
   const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
+  const byHotel = {};
 
-  // Step 1: 以房號為單位聚合，取 minIn / maxOut
-  const byUnit = {};
   stays.forEach((s) => {
     if (!s.hotel_id || !s.check_in || !s.check_out) return;
     const hid = +s.hotel_id;
-    const rn = (s.room_number || "").trim();
-    const unitKey = s.special_room_name
-      ? `special:${s.id}`
-      : rn ? `room:${hid}:${rn}` : `person:${s.person_id}`;
-    if (!byUnit[unitKey]) byUnit[unitKey] = { hid, stays: [], minIn: null, maxOut: null };
-    const u = byUnit[unitKey];
-    u.stays.push(s);
-    if (!u.minIn || s.check_in < u.minIn) u.minIn = s.check_in;
-    if (!u.maxOut || s.check_out > u.maxOut) u.maxOut = s.check_out;
-  });
-
-  // Step 2: 以 hid + minIn + maxOut + 房型 分批（保留退房日差異，避免不同天數的房間互相套錯價格）
-  const byBatch = {};
-  Object.values(byUnit).forEach(({ hid, stays: unitStays, minIn, maxOut }) => {
-    if (!minIn || !maxOut) return;
-    const rep = unitStays.reduce((best, s) =>
-      diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
-    const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
-    const bk = `${hid}|${minIn}|${maxOut}|${roomLabel}`;
-    if (!byBatch[bk]) byBatch[bk] = { hid, check_in: minIn, check_out: maxOut, roomLabel, units: [] };
-    byBatch[bk].units.push({ rep, unitStays });
-  });
-
-  // Step 3: 逐晚加總，輸出一行
-  const byHotelResult = {};
-  Object.values(byBatch).forEach(({ hid, check_in, check_out, roomLabel, units }) => {
-    const nights = diffDays(check_in, check_out);
-    if (nights <= 0) return;
-    const roomCount = units.length;
-    const allUnitStays = units.flatMap((u) => u.unitStays);
-    const fallbackRep = units.reduce((best, u) =>
-      diffDays(u.rep.check_in, u.rep.check_out) >= diffDays(best.rep.check_in, best.rep.check_out) ? u : best, units[0]).rep;
-    let perRoomTotal = 0;
-    for (let i = 0; i < nights; i++) {
-      const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
-      const ds = localDateStr(d);
-      const active = allUnitStays.filter((s) => stayActiveOnDate(s, ds));
-      const priceRep = active.length
-        ? active.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, active[0])
-        : fallbackRep;
-      const p = stayNightPriceFromRules(priceRep, ds, pricingRules, hMap);
-      if (p != null) perRoomTotal += p;
+    if (!byHotel[hid]) byHotel[hid] = {};
+    const bk = buildInvoiceBatchKey(s);
+    if (!byHotel[hid][bk]) {
+      byHotel[hid][bk] = {
+        stays: [],
+        check_in: s.check_in,
+        check_out: s.check_out,
+        roomLabel: s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "—"),
+      };
     }
-    const roomGroups = buildBatchRoomGroups(allUnitStays);
-    if (!byHotelResult[hid]) byHotelResult[hid] = { hotel: hMap[hid], hid, batches: [] };
-    byHotelResult[hid].batches.push({
-      check_in, check_out, roomLabel, roomCount, nights,
-      unitPrice: perRoomTotal, batchTotal: perRoomTotal * roomCount, roomGroups,
-    });
+    byHotel[hid][bk].stays.push(s);
   });
 
-  const result = Object.values(byHotelResult).map((h) => {
-    h.batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.check_out.localeCompare(b.check_out) || a.roomLabel.localeCompare(b.roomLabel));
-    h.hotelTotal = h.batches.reduce((s, b) => s + b.batchTotal, 0);
-    return h;
+  const result = [];
+  Object.entries(byHotel).forEach(([hidStr, batchMap]) => {
+    const hid = +hidStr;
+    const hotel = hMap[hid];
+    const batches = [];
+
+    Object.values(batchMap).forEach(({ stays: batchStays, check_in, check_out, roomLabel }) => {
+      const nights = diffDays(check_in, check_out);
+      if (nights <= 0) return;
+
+      const roomCount = countInvoiceRooms(batchStays);
+      const rep = batchStays[0];
+
+      buildInvoicePriceSegmentRows({
+        checkIn: check_in,
+        totalNights: nights,
+        roomLabel,
+        roomCount,
+        subLabel: null,
+        nightUnitPrice: (i) => {
+          const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
+          return stayNightPriceFromRules(rep, localDateStr(d), pricingRules, hMap);
+        },
+      }).forEach((row) => batches.push(row));
+    });
+
+    batches.sort((a, b) => a.check_in.localeCompare(b.check_in) || a.roomLabel.localeCompare(b.roomLabel));
+    const hotelTotal = batches.reduce((s, b) => s + b.batchTotal, 0);
+    result.push({ hotel, hid, batches, hotelTotal });
   });
+
   result.sort((a, b) => (a.hotel?.name || "").localeCompare(b.hotel?.name || ""));
   return result;
-}
-
-function buildBatchRoomGroups(batchStays) {
-  const grouped = {};
-  batchStays.forEach((s) => {
-    const label = s.special_room_name || (s.room_number || "").trim() || "—";
-    if (!grouped[label]) grouped[label] = { label, stays: [] };
-    grouped[label].stays.push(s);
-  });
-  return Object.values(grouped).sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
 }
 
 /** 逐間明細：依房號／每人／專用空間各算一行 */
@@ -4099,7 +4046,7 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
       const spanNights = diffDays(minIn, maxOut);
       if (spanNights <= 0) return;
 
-      const rep = unitStays.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
+      const rep = unitStays[0];
       const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
       const rn = (rep.room_number || "").trim();
       const subLabel = rep.special_room_name ? rep.special_room_name : rn;
@@ -4131,16 +4078,10 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
   return result;
 }
 
-function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, persons, personIndex }) {
+function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t }) {
   const [invoiceMode, setInvoiceMode] = useState("merged");
-  const [expandedBatch, setExpandedBatch] = useState(null);
-  const staysWithName = useMemo(() => stays.map((s) => {
-    if (!s.person_id || !persons) return s;
-    const p = persons.find((x) => x.id === s.person_id);
-    return { ...s, _personName: p ? (p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim()) : "—" };
-  }), [stays, persons]);
-  const mergedData = useMemo(() => buildInvoiceBatchesMerged(staysWithName, pricingRules, hotels), [staysWithName, pricingRules, hotels]);
-  const perRoomData = useMemo(() => buildInvoiceBatchesPerRoom(staysWithName, pricingRules, hotels), [staysWithName, pricingRules, hotels]);
+  const mergedData = useMemo(() => buildInvoiceBatchesMerged(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
+  const perRoomData = useMemo(() => buildInvoiceBatchesPerRoom(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
   const data = invoiceMode === "merged" ? mergedData : perRoomData;
   const grandTotal = data.reduce((s, h) => s + h.hotelTotal, 0);
   const mergedTotal = mergedData.reduce((s, h) => s + h.hotelTotal, 0);
@@ -4276,77 +4217,36 @@ ${rows}
                 </tr>
               </thead>
               <tbody>
-                {hd.batches.map((b, i) => {
-                  const rowKey = `${hd.hid}-${i}`;
-                  const isMerged = invoiceMode === "merged";
-                  return (
-                    <React.Fragment key={rowKey}>
-                      <tr
-                        style={{ background: i % 2 === 0 ? "var(--shiro)" : "var(--washi)", borderBottom: "1px solid var(--keisenL)", cursor: isMerged && b.roomGroups ? "pointer" : "default" }}
-                        onClick={isMerged && b.roomGroups ? () => setExpandedBatch((prev) => prev === rowKey ? null : rowKey) : undefined}
-                      >
-                        <td style={{ padding: "11px 14px", verticalAlign: "top" }}>
-                          <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
-                            {fmtDate(b.check_in, lang)} {t.invoiceDateRange} {fmtDate(b.check_out, lang)}
-                          </div>
-                          <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 3, fontWeight: 600 }}>{b.nights} {t.invoiceNights}</div>
-                        </td>
-                        <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>
-                          {b.roomLabel}
-                          {b.subLabel && <div style={{ fontSize: 10.5, color: "var(--nezumi)", marginTop: 3 }}>{b.subLabel}</div>}
-                        </td>
-                        <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
-                          {isMerged ? (
-                            <>
-                              <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
-                              <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
-                              <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
-                            </>
-                          ) : (
-                            <>
-                              <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
-                              <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
-                              <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
-                              <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
-                              <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.nights} {t.invoiceNights}</span>
-                            </>
-                          )}
-                        </td>
-                        <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, fontSize: 13, color: "var(--asagi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-                            {formatMoney(convertMoney(b.batchTotal, project), project, lang)}
-                            {isMerged && b.roomGroups && (
-                              <span style={{ fontSize: 12, color: "var(--nezumi)", transition: "transform .2s", display: "inline-block", transform: expandedBatch === rowKey ? "rotate(90deg)" : "none" }}>›</span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                      {isMerged && b.roomGroups && expandedBatch === rowKey && (
-                        <tr style={{ background: "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
-                          <td colSpan={4} style={{ padding: "10px 18px 12px 24px" }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{b.roomCount} {t.invoiceRooms}</div>
-                            {b.roomGroups.map((g) => (
-                              <div key={g.label} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "4px 0", borderBottom: "1px solid var(--keisenL)" }}>
-                                <span style={{ fontSize: 11, padding: "2px 7px", border: "1px solid var(--keisenM)", borderRadius: 3, color: "var(--nezumi)", fontWeight: 600, minWidth: 36, textAlign: "center", flexShrink: 0, marginTop: 1 }}>{g.label}</span>
-                                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px", alignItems: "center" }}>
-                                  {g.stays.map((s, si) => (
-                                    <React.Fragment key={s.id}>
-                                      {si > 0 && <span style={{ color: "var(--keisenM)", fontSize: 13 }}>·</span>}
-                                      <span style={{ fontSize: 12, color: "var(--sumi)" }}>
-                                        {s.special_room_name ? `🏷 ${s.special_room_name}` : (s._personName || "—")}
-                                        {s.check_out && <span style={{ fontSize: 10, color: "var(--usunezumi)", marginLeft: 4 }}>～{fmtDate(s.check_out, lang)}</span>}
-                                      </span>
-                                    </React.Fragment>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
+                {hd.batches.map((b, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "var(--shiro)" : "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
+                    {/* 日期 */}
+                    <td style={{ padding: "11px 14px", verticalAlign: "top" }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
+                        {fmtDate(b.check_in, lang)} {t.invoiceDateRange} {fmtDate(b.check_out, lang)}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 3, fontWeight: 600 }}>
+                        {t.nights ? "" : "共"} {b.nights} {t.invoiceNights}
+                      </div>
+                    </td>
+                    {/* 房型 */}
+                    <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>
+                      {b.roomLabel}
+                      {b.subLabel && <div style={{ fontSize: 10.5, color: "var(--nezumi)", marginTop: 3 }}>{b.subLabel}</div>}
+                    </td>
+                    {/* 計價公式 */}
+                    <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
+                      <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
+                      <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
+                      <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
+                      <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
+                      <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.nights} {t.invoiceNights}</span>
+                    </td>
+                    {/* 金額 */}
+                    <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, fontSize: 13, color: "var(--asagi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
+                      {formatMoney(convertMoney(b.batchTotal, project), project, lang)}
+                    </td>
+                  </tr>
+                ))}
                 {/* 小計列 */}
                 <tr style={{ background: "var(--moegi3)", borderTop: "2px solid var(--moegi)" }}>
                   <td colSpan={3} style={{ padding: "11px 14px", fontWeight: 700, fontSize: 12.5, color: "var(--moegi)" }}>{t.invoiceSubtotal}</td>
@@ -4372,17 +4272,85 @@ ${rows}
 function DailyDispatchAddRow({ vehicleId, persons, t, onAdd }) {
   const [person, setPerson] = React.useState("");
   const [role, setRole] = React.useState("passenger");
+  const [query, setQuery] = React.useState("");
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const [activeIdx, setActiveIdx] = React.useState(-1);
+  const wrapRef = React.useRef(null);
+
+  const eligible = persons.filter((p) => !p.hide_from_vehicles);
+  const personLabel = (p) => `${p.dept ? `[${p.dept}] ` : ""}${p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}`;
+  const selectedPerson = eligible.find((p) => String(p.id) === String(person));
+
+  const filtered = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return eligible.slice(0, 50);
+    return eligible.filter((p) => {
+      const name = (p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()).toLowerCase();
+      const roman = `${p.last_roman || ""} ${p.first_roman || ""}`.trim().toLowerCase();
+      const dept = (p.dept || "").toLowerCase();
+      return name.includes(q) || roman.includes(q) || dept.includes(q);
+    }).slice(0, 50);
+  }, [query, eligible]);
+
+  React.useEffect(() => {
+    const onDocClick = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setShowDropdown(false); };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const choosePerson = (p) => {
+    setPerson(String(p.id));
+    setQuery(personLabel(p));
+    setShowDropdown(false);
+    setActiveIdx(-1);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showDropdown) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx((i) => Math.min(i + 1, filtered.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx((i) => Math.max(i - 1, 0)); }
+    else if (e.key === "Enter") { e.preventDefault(); if (activeIdx >= 0 && filtered[activeIdx]) choosePerson(filtered[activeIdx]); }
+    else if (e.key === "Escape") { setShowDropdown(false); }
+  };
+
   return (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
-      <select style={{ ...inpStyle, flex: "2 1 120px", minWidth: 0 }} value={person} onChange={(e) => setPerson(e.target.value)}>
-        <option value="">{t.selectPassenger}</option>
-        {persons.filter((p) => !p.hide_from_vehicles).map((p) => <option key={p.id} value={p.id}>{p.dept ? `[${p.dept}] ` : ""}{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</option>)}
-      </select>
+      <div ref={wrapRef} style={{ position: "relative", flex: "2 1 160px", minWidth: 0 }}>
+        <input
+          type="text"
+          style={{ ...inpStyle, width: "100%", paddingLeft: 28, boxSizing: "border-box" }}
+          placeholder={t.selectPassenger}
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPerson(""); setShowDropdown(true); setActiveIdx(-1); }}
+          onFocus={() => setShowDropdown(true)}
+          onKeyDown={handleKeyDown}
+        />
+        <i className="ti ti-search" aria-hidden="true" style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--nezumi)", pointerEvents: "none" }} />
+        {showDropdown && filtered.length > 0 && (
+          <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "var(--shiro)", border: "1px solid var(--keisenM)", borderRadius: 6, maxHeight: 200, overflowY: "auto", zIndex: 20, boxShadow: "0 4px 16px rgba(0,0,0,.08)" }}>
+            {filtered.map((p, i) => (
+              <div
+                key={p.id}
+                onMouseDown={() => choosePerson(p)}
+                style={{ padding: "7px 10px", fontSize: 12.5, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, background: i === activeIdx ? "var(--washi)" : "transparent" }}
+                onMouseEnter={() => setActiveIdx(i)}
+              >
+                {p.dept && <span style={{ fontSize: 10, color: "var(--nezumi)", padding: "1px 5px", border: "1px solid var(--keisenL)", borderRadius: 3, flexShrink: 0 }}>{p.dept}</span>}
+                <span>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       <select style={{ ...inpStyle, flex: "1 1 80px", minWidth: 0 }} value={role} onChange={(e) => setRole(e.target.value)}>
         <option value="driver">{t.driver}</option>
         <option value="passenger">{t.passengers}</option>
       </select>
-      <button type="button" style={{ ...pBtn(false), flex: "0 0 auto" }} onClick={() => { if (!person) return; onAdd(vehicleId, person, role); setPerson(""); setRole("passenger"); }}>+</button>
+      <button type="button" style={{ ...pBtn(false), flex: "0 0 auto" }} onClick={() => {
+        if (!person) return;
+        onAdd(vehicleId, person, role);
+        setPerson(""); setQuery(""); setRole("passenger");
+      }}>+</button>
     </div>
   );
 }
@@ -4467,8 +4435,8 @@ function ShootPhaseBar({ phases, active, onSelect, onAdd, onDelete, t, canEdit }
 }
 
 function HotelMasterForm({ init, onSave, onClose, t, shootPhases }) {
-  const blank = { name: "", address: "", tel: "", shoot_phase_id: "", check_in_time: "15:00", check_out_time: "11:00", inventory_enabled: false, room_type_inventory: {} };
-  const [f, setF] = useState(init ? { ...blank, ...init, shoot_phase_id: init.shoot_phase_id || "", check_in_time: init.check_in_time || "15:00", check_out_time: init.check_out_time || "11:00", inventory_enabled: init.inventory_enabled || false, room_type_inventory: init.room_type_inventory || {} } : blank);
+  const blank = { name: "", address: "", tel: "", shoot_phase_id: "", check_in_time: "15:00", check_out_time: "11:00" };
+  const [f, setF] = useState(init ? { ...blank, ...init, shoot_phase_id: init.shoot_phase_id || "", check_in_time: init.check_in_time || "15:00", check_out_time: init.check_out_time || "11:00" } : blank);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   const initRates = init?.room_type_rates || {};
@@ -4574,33 +4542,9 @@ function HotelMasterForm({ init, onSave, onClose, t, shootPhases }) {
         <p style={{ fontSize: 10, color: "var(--usunezumi)", margin: "8px 0 0", lineHeight: 1.5 }}>{t.dateExceptionHint}</p>
       </div>
 
-      <div style={{ marginTop: 18, borderTop: "1px solid var(--keisenL)", paddingTop: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
-          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.06em", color: "var(--sumi)" }}>庫存管理</span>
-          <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--nezumi)", cursor: "pointer", marginLeft: "auto" }}>
-            <input type="checkbox" checked={!!f.inventory_enabled} onChange={(e) => setF((p) => ({ ...p, inventory_enabled: e.target.checked }))} />
-            啟用庫存管控
-          </label>
-        </div>
-        {f.inventory_enabled && (
-          <div>
-            <p style={{ fontSize: 10, color: "var(--usunezumi)", margin: "0 0 10px", lineHeight: 1.5 }}>為每個房型填入可用間數。留空表示不限制。</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {(uniformPrice ? ["All"] : [...ROOM_TYPES_FOR_RATES, ...customTypes.map((c) => c.name).filter(Boolean)]).map((rt) => (
-                <Field key={rt} label={rt === "All" ? "所有房型" : rt}>
-                  <input type="number" min="0" style={inpStyle} placeholder="不限"
-                    value={f.room_type_inventory?.[rt] ?? ""}
-                    onChange={(e) => setF((p) => ({ ...p, room_type_inventory: { ...p.room_type_inventory, [rt]: e.target.value === "" ? undefined : +e.target.value } }))} />
-                </Field>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
-        <button type="button" onClick={() => onSave({ ...f, room_type_rates: buildRates(), shoot_phase_id: f.shoot_phase_id || null, check_in_time: f.check_in_time || "15:00", check_out_time: f.check_out_time || "11:00", inventory_enabled: f.inventory_enabled || false, room_type_inventory: f.room_type_inventory || {} })} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
+        <button type="button" onClick={() => onSave({ ...f, room_type_rates: buildRates(), shoot_phase_id: f.shoot_phase_id || null, check_in_time: f.check_in_time || "15:00", check_out_time: f.check_out_time || "11:00" })} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
       </div>
     </div>
   );
@@ -6898,8 +6842,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   project={project}
                   lang={lang}
                   t={t}
-                  persons={persons}
-                  personIndex={personIndex}
                 />
               )}
             </div>
@@ -6984,7 +6926,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                             <VehicleCardDetails v={v} t={t} lang={lang} />
                             <div style={{ padding: "12px 14px" }}>
                               {assigns.length > 0 && (() => {
-                                const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
                                 let seq = 0;
                                 return (
                                   <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 2px", alignItems: "center", marginBottom: canEdit ? 10 : 0 }}>
@@ -6992,11 +6933,11 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                       const p = persons.find((x) => x.id === a.person_id);
                                       if (!p) return null;
                                       seq += 1;
-                                      const num = CIRC[seq - 1] || seq;
+                                      const numLbl = vehicleCircLabel(seq);
                                       const isDriver = a.role === "driver";
                                       return (
                                         <span key={a.id || `${a.person_id}-${a.role}`} style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 12.5, color: "var(--sumi)", fontWeight: isDriver ? 700 : 500, padding: "3px 6px", background: isDriver ? "var(--moegi3)" : "transparent", borderRadius: 4 }}>
-                                          <span style={{ fontSize: 11, color: isDriver ? "var(--moegi)" : "var(--nezumi)", minWidth: 14 }}>{num}</span>
+                                          <span style={{ fontSize: 11, color: isDriver ? "var(--moegi)" : "var(--nezumi)", minWidth: 14, display: "inline-flex" }}>{numLbl.css ? <CircBadge label={numLbl} isDriver={isDriver} /> : numLbl.text}</span>
                                           <span>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
                                           {isDriver && <span style={{ fontSize: 9, color: "var(--moegi)", fontWeight: 700, marginLeft: 2 }}>{t.driver}</span>}
                                           {canEdit && <button type="button" onClick={() => removeAssignment(a)} style={{ marginLeft: 3, background: "none", border: "none", cursor: "pointer", color: "var(--usunezumi)", fontSize: 11, lineHeight: 1, padding: "0 2px" }}>×</button>}
@@ -7031,7 +6972,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   </>)}
                   </>)}
                   {vehicleSub === "daily" && (() => {
-                    const CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
                     const todayDispatches = dailyDispatches.filter((d) => dispatchDateKey(d) === dispatchDate);
                     const dailyPersonKey = (vehicleId, personId) => `${vehicleId}:${personId}`;
                     const insertDailyRows = async (records, date) => {
@@ -7124,7 +7064,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                           const isDriver = a.role === "driver";
                                           return (
                                             <span key={a.id} style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 12.5, color: "var(--sumi)", fontWeight: isDriver ? 700 : 500, padding: "3px 6px", background: isDriver ? "var(--moegi3)" : "transparent", borderRadius: 4 }}>
-                                              <span style={{ fontSize: 11, color: isDriver ? "var(--moegi)" : "var(--nezumi)", minWidth: 14 }}>{CIRC[idx] || idx + 1}</span>
+                                              <span style={{ fontSize: 11, color: isDriver ? "var(--moegi)" : "var(--nezumi)", minWidth: 14, display: "inline-flex" }}>{(() => { const l = vehicleCircLabel(idx + 1); return l.css ? <CircBadge label={l} isDriver={isDriver} /> : l.text; })()}</span>
                                               <span>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
                                               {isDriver && <span style={{ fontSize: 9, color: "var(--moegi)", fontWeight: 700, marginLeft: 2 }}>{t.driver}</span>}
                                               {canEdit && <button type="button" onClick={() => removeDispatch(a)} style={{ marginLeft: 3, background: "none", border: "none", cursor: "pointer", color: "var(--usunezumi)", fontSize: 11, lineHeight: 1, padding: "0 2px" }}>×</button>}
@@ -7175,7 +7115,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
       {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} flatStays={flatStays} personsNoStay={personsMissingPhaseStay} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
-      {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} allStays={stays} roommates={roommates} /></Modal>}
+      {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
       {vehicleModal && <Modal title={vehicleModal.mode === "add" ? t.addVehicle : t.editVehicle} onClose={() => setVehicleModal(null)}><VehicleForm init={vehicleModal.data} onSave={saveVehicle} onClose={() => setVehicleModal(null)} t={t} lang={lang} /></Modal>}
