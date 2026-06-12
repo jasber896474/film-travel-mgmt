@@ -4080,6 +4080,21 @@ function buildInvoicePriceSegmentRows({ checkIn, totalNights, roomLabel, roomCou
  * 對齊飯店請款習慣：同飯店內，相同入住日+退房日+房型合併為一批
  * 公式：單價 × 間數 × 晚數（間數依房號或人數；每晚依 pricing_rules 計價）
  */
+/** 從同一群住宿記錄中挑「代表」：優先天數較長者；天數相同時優先選有實際計費(total_amount>0)的那筆 */
+function pickRepStay(candidates, getStay) {
+  return candidates.reduce((best, cur) => {
+    const sCur = getStay(cur);
+    const sBest = getStay(best);
+    const dCur = diffDays(sCur.check_in, sCur.check_out);
+    const dBest = diffDays(sBest.check_in, sBest.check_out);
+    if (dCur !== dBest) return dCur > dBest ? cur : best;
+    const curHasFee = Number(sCur.total_amount) > 0;
+    const bestHasFee = Number(sBest.total_amount) > 0;
+    if (curHasFee && !bestHasFee) return cur;
+    return best;
+  }, candidates[0]);
+}
+
 function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
   const hMap = Object.fromEntries(hotels.map((h) => [+h.id, h]));
 
@@ -4101,8 +4116,7 @@ function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
   const byBatch = {};
   Object.values(byUnit).forEach(({ hid, stays: unitStays, minIn, maxOut }) => {
     if (!minIn || !maxOut) return;
-    const rep = unitStays.reduce((best, s) =>
-      diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, unitStays[0]);
+    const rep = pickRepStay(unitStays, (s) => s);
     const roomLabel = rep.room_type === "Custom" ? (rep.room_custom || "Custom") : (rep.room_type || "—");
     const bk = `${hid}|${minIn}|${maxOut}|${roomLabel}`;
     if (!byBatch[bk]) byBatch[bk] = { hid, check_in: minIn, check_out: maxOut, roomLabel, units: [] };
@@ -4115,16 +4129,13 @@ function buildInvoiceBatchesMerged(stays, pricingRules, hotels) {
     if (nights <= 0) return;
     const roomCount = units.length;
     const allUnitStays = units.flatMap((u) => u.unitStays);
-    const fallbackRep = units.reduce((best, u) =>
-      diffDays(u.rep.check_in, u.rep.check_out) >= diffDays(best.rep.check_in, best.rep.check_out) ? u : best, units[0]).rep;
+    const fallbackRep = pickRepStay(units, (u) => u.rep).rep;
     let perRoomTotal = 0;
     for (let i = 0; i < nights; i++) {
       const d = parseLocalDate(check_in); d.setDate(d.getDate() + i);
       const ds = localDateStr(d);
       const active = allUnitStays.filter((s) => stayActiveOnDate(s, ds));
-      const priceRep = active.length
-        ? active.reduce((best, s) => diffDays(s.check_in, s.check_out) >= diffDays(best.check_in, best.check_out) ? s : best, active[0])
-        : fallbackRep;
+      const priceRep = active.length ? pickRepStay(active, (s) => s) : fallbackRep;
       const p = stayNightPriceFromRules(priceRep, ds, pricingRules, hMap);
       if (p != null) perRoomTotal += p;
     }
