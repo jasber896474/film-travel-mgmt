@@ -290,13 +290,15 @@ function readScrollPosition() {
   return window.scrollY || document.documentElement.scrollTop || 0;
 }
 
-// 航班時間：雙排顯示（無年份 / 12小時制）
+// 航班時間：雙排顯示（無年份 / 24小時制，例如 10:20、22:10）
 const fmtFlightDateTime = (ts, lang) => {
   const d = parseLocalDateTime(ts);
   if (!d) return null;
   const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
   const datePart = d.toLocaleDateString(loc, { month: "numeric", day: "numeric" });
-  const timePart = d.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit", hour12: true });
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const timePart = `${h}:${m}`;
   return { date: datePart, time: timePart };
 };
 const passportWarning = (exp) => {
