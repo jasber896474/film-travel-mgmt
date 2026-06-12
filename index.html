@@ -142,7 +142,9 @@ const localDateTimeStr = (d = new Date()) => {
 const toDatetimeLocalValue = (val) => {
   if (!val) return "";
   const s = String(val);
-  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s.slice(0, 16))) return s.slice(0, 16);
+  // 僅當字串本身就是「無時區」的 naive datetime（無 Z / 無 +HH:MM）才直接截取，
+  // 否則（資料庫回傳的 UTC ISO 字串如 ...Z 或 +00:00）一律轉換成本地時間顯示
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(s)) return s.slice(0, 16);
   const d = new Date(s);
   return isNaN(d) ? "" : localDateTimeStr(d);
 };
@@ -2841,6 +2843,35 @@ function AirportTerminalField({ label, airportKey, terminalKey, f, set }) {
   );
 }
 
+/** 日期 + 24小時制時間（HH:MM 下拉），避免 datetime-local 受系統上午/下午設定影響 */
+function DateTime24Field({ value, onChange }) {
+  const datePart = value ? value.slice(0, 10) : "";
+  const timePart = value && value.length >= 16 ? value.slice(11, 16) : "";
+  const [hh, mm] = timePart ? timePart.split(":") : ["", ""];
+
+  const combine = (d, h, m) => {
+    if (!d) { onChange(""); return; }
+    const hStr = (h || "00").padStart(2, "0");
+    const mStr = (m || "00").padStart(2, "0");
+    onChange(`${d}T${hStr}:${mStr}`);
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+      <input type="date" style={{ ...inpStyle, flex: "1 1 auto", minWidth: 0 }} value={datePart} onChange={(e) => combine(e.target.value, hh, mm)} className="wa-input" />
+      <select style={{ ...inpStyle, flex: "0 0 60px", width: 60, padding: "8px 4px", textAlign: "center" }} value={hh} onChange={(e) => combine(datePart, e.target.value, mm)} className="wa-input">
+        <option value="">--</option>
+        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((h) => <option key={h} value={h}>{h}</option>)}
+      </select>
+      <span style={{ color: "var(--nezumi)" }}>:</span>
+      <select style={{ ...inpStyle, flex: "0 0 60px", width: 60, padding: "8px 4px", textAlign: "center" }} value={mm} onChange={(e) => combine(datePart, hh, e.target.value)} className="wa-input">
+        <option value="">--</option>
+        {Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")).map((m) => <option key={m} value={m}>{m}</option>)}
+      </select>
+    </div>
+  );
+}
+
 function FlightLegFields({ title, prefix, f, set, t }) {
   const k = (name) => (prefix ? `${prefix}_${name}` : name);
   const sectionStyle = { fontSize: 12, fontWeight: 700, color: "var(--moegi)", letterSpacing: "0.08em", margin: "8px 0 4px", paddingBottom: 6, borderBottom: "1px solid var(--keisenL)" };
@@ -2853,8 +2884,8 @@ function FlightLegFields({ title, prefix, f, set, t }) {
       <Field label={t.pnr}><input style={inpStyle} value={f[k("pnr")] || ""} onChange={set(k("pnr"))} className="wa-input" /></Field>
       <AirportTerminalField label={t.depAirport} airportKey={k("dep_airport")} terminalKey={k("dep_terminal")} f={f} set={set} />
       <AirportTerminalField label={t.arrAirport} airportKey={k("arr_airport")} terminalKey={k("arr_terminal")} f={f} set={set} />
-      <Field label={t.depTime}><input type="datetime-local" style={inpStyle} value={f[k("dep_time")] || ""} onChange={set(k("dep_time"))} className="wa-input" /></Field>
-      <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f[k("arr_time")] || ""} onChange={set(k("arr_time"))} className="wa-input" /></Field>
+      <Field label={t.depTime}><DateTime24Field value={f[k("dep_time")] || ""} onChange={(v) => set(k("dep_time"))({ target: { value: v } })} /></Field>
+      <Field label={t.arrTime}><DateTime24Field value={f[k("arr_time")] || ""} onChange={(v) => set(k("arr_time"))({ target: { value: v } })} /></Field>
       <Field label={`${t.checkedBag} (${t.optional})`}><input style={inpStyle} value={f[k("checked_bag")] || ""} onChange={set(k("checked_bag"))} className="wa-input" /></Field>
       <Field label={`${t.cabinBag} (${t.optional})`}><input style={inpStyle} value={f[k("cabin_bag")] || ""} onChange={set(k("cabin_bag"))} className="wa-input" /></Field>
     </div>
