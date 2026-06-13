@@ -1964,6 +1964,43 @@ function computeHotelStatsForDate(stays, roommates, dateStr, pricingRules, hotel
   return out;
 }
 
+/** 可摺疊的飯店標題列：點擊整列展開/收起 */
+function HotelSectionHeader({ collapsed, onToggle, hotelName, dateRange, meta, displayCost, project, lang, t, extra }) {
+  return (
+    <div
+      onClick={onToggle}
+      style={{
+        display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8,
+        marginBottom: collapsed ? 0 : 12, paddingBottom: 10, borderBottom: "2px solid var(--moegi)",
+        cursor: "pointer", userSelect: "none",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+        <span style={{ width: 20, height: 20, border: "1px solid var(--keisenM)", borderRadius: 4, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--nezumi)", lineHeight: 1, flexShrink: 0 }}>
+          {collapsed ? "+" : "−"}
+        </span>
+        <div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--sumi)", margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
+            {hotelName}
+          </h3>
+          {dateRange && (
+            <div style={{ fontSize: 12, color: "var(--moegi)", marginTop: 4, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+              {dateRange}
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+        {meta?.guestCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.guestCount}</strong> {t.stayGuestCount}</span>}
+        {meta?.roomCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.roomCount}</strong> {t.stayRoomCount}</span>}
+        {meta?.roomNights > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.roomNights}: <strong style={{ color: "var(--sumi)" }}>{meta.roomNights}</strong></span>}
+        {displayCost != null && <span style={{ fontSize: 11, fontWeight: 600, color: "var(--asagi)" }}>{formatMoney(convertMoney(displayCost, project), project, lang)}</span>}
+        {extra}
+      </div>
+    </div>
+  );
+}
+
 function UnassignedRoomsPanel({ personsNoStay, activeStayPhase, activePhaseName, t, lang, personIndex, canEdit, openStayModal }) {
   const [open, setOpen] = React.useState(true);
   if (!personsNoStay.length) return null;
@@ -3726,7 +3763,7 @@ function openVehicleReportPrint(vehicles, assignments, persons, project, lang, t
   openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
 }
 
-function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }) {
+function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards, hotelSummary }) {
   const isLandscape = cols.length > 6;
   const pageDir = isLandscape ? "landscape" : "portrait";
   const projectName = project?.name || "";
@@ -3783,13 +3820,41 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
 
   const thead = `<tr style="background:${headerGrad};color:#fff;">${cols.map((c) => `<th style="${thStyle}">${c.label}</th>`).join("")}</tr>`;
   const bannerS = (bg, color, bc) => `padding:5px 12px;font-size:7.5pt;font-weight:700;color:${color};border-top:2px dashed ${bc};letter-spacing:.06em;background:${bg};`;
-  const rows = []; let prevTier = -1; let tIdx = 0;
-  data.forEach((row) => {
+  const amtColIdx = cols.findIndex((c) => c.key === "total_amt");
+  const subtotalRowHtml = (label, amt, isGrand) => {
+    const labelSpan = amtColIdx >= 0 ? amtColIdx : Math.max(cols.length - 1, 1);
+    const trailing = amtColIdx >= 0 ? cols.length - amtColIdx - 1 : 0;
+    const bg = isGrand ? headerGrad : "#eaf2ec";
+    const color = isGrand ? "#fff" : "#1a3028";
+    const cells = [];
+    cells.push(`<td colspan="${labelSpan}" style="padding:9px 12px;font-weight:700;font-size:${isGrand?"10pt":"9pt"};background:${bg};color:${color};border-right:1px solid rgba(0,0,0,.06);">${label}</td>`);
+    if (amtColIdx >= 0) {
+      cells.push(`<td style="padding:9px 12px;text-align:right;font-weight:800;font-size:${isGrand?"12pt":"11pt"};background:${bg};color:${color};">${formatMoney(convertMoney(amt, project), project, lang)}</td>`);
+      for (let i = 0; i < trailing; i++) cells.push(`<td style="background:${bg};border-right:1px solid rgba(0,0,0,.06);"></td>`);
+    }
+    return `<tr>${cells.join("")}</tr>`;
+  };
+  const hotelBannerHtml = (name) => `<tr><td colspan="${cols.length}" style="padding:8px 12px;font-size:10pt;font-weight:700;font-family:'Noto Serif JP',serif;letter-spacing:.04em;background:${headerGrad};color:#fff;">${name}</td></tr>`;
+
+  const rows = []; let prevTier = -1; let tIdx = 0; let prevHotelKey = undefined; let groupSum = 0;
+  data.forEach((row, idx) => {
     const tier = row._tier ?? 0;
+    if (type === "stay" && row._hotelKey !== prevHotelKey) {
+      if (prevHotelKey !== undefined && prevHotelKey !== "none") {
+        rows.push(subtotalRowHtml(t.invoiceSubtotal || "小計", groupSum, false));
+      }
+      groupSum = 0;
+      if (row._hotelKey === "none") {
+        rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#FAEEDA","#854F0B","#EF9F27")}">${t.unassignedRoomSection || "未安排住宿"} (${data.filter(r=>r._hotelKey==="none").length})</td></tr>`);
+      } else {
+        rows.push(hotelBannerHtml(row._hotelName || "—"));
+      }
+      prevHotelKey = row._hotelKey;
+      prevTier = -1; tIdx = 0;
+    }
     if (type === "stay" && tier !== prevTier) {
       if (tier === 1) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#E6F1FB","#185FA5","#378ADD")}">專用空間（有房號）</td></tr>`);
-      if (tier === 2) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#FAEEDA","#854F0B","#EF9F27")}">待配房號 (${data.filter(r=>(r._tier??0)===2).length})</td></tr>`);
-      if (tier === 3) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#FAEEDA","#854F0B","#EF9F27")}">未安排住宿 (${data.filter(r=>(r._tier??0)===3).length})</td></tr>`);
+      if (tier === 2) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#FAEEDA","#854F0B","#EF9F27")}">待配房號</td></tr>`);
       if (tier === 4) rows.push(`<tr><td colspan="${cols.length}" style="${bannerS("#E6F1FB","#185FA5","#378ADD")}">專用空間（未配房）</td></tr>`);
       prevTier = tier; tIdx = 0;
     }
@@ -3798,7 +3863,55 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
     const bg = isAmber ? (tIdx%2===0?"#fffbf0":"#fff8e8") : isBlue ? (tIdx%2===0?"#f0f6ff":"#e8f0fb") : (tIdx%2===0?"#ffffff":"#f5faf6");
     rows.push(`<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`);
     tIdx++;
+    groupSum += row._amt || 0;
+    if (type === "stay" && idx === data.length - 1 && prevHotelKey !== "none" && prevHotelKey !== undefined) {
+      rows.push(subtotalRowHtml(t.invoiceSubtotal || "小計", groupSum, false));
+    }
   });
+  if (type === "stay" && hotelSummary && hotelSummary.length) {
+    const grandTotal = hotelSummary.reduce((s, h) => s + (h.cost || 0), 0);
+    rows.push(subtotalRowHtml(t.totalCost || "總計", grandTotal, true));
+  }
+
+  let summaryHtml = "";
+  if (type === "stay" && hotelSummary && hotelSummary.length) {
+    const sumGuests = hotelSummary.reduce((s, h) => s + (h.guestCount || 0), 0);
+    const sumRooms = hotelSummary.reduce((s, h) => s + (h.roomCount || 0), 0);
+    const sumNights = hotelSummary.reduce((s, h) => s + (h.roomNights || 0), 0);
+    const sumCost = hotelSummary.reduce((s, h) => s + (h.cost || 0), 0);
+    const sumRows = hotelSummary.map((h) => `
+      <tr>
+        <td style="padding:6px 12px;font-size:8.5pt;font-weight:600;border-bottom:1px solid #e0ebe4;">${h.hotelName}</td>
+        <td style="padding:6px 12px;font-size:8pt;color:#789;border-bottom:1px solid #e0ebe4;white-space:nowrap;">${h.dateRange}</td>
+        <td style="padding:6px 12px;font-size:8.5pt;text-align:right;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${h.guestCount}</td>
+        <td style="padding:6px 12px;font-size:8.5pt;text-align:right;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${h.roomCount}</td>
+        <td style="padding:6px 12px;font-size:8.5pt;text-align:right;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${h.roomNights}</td>
+        <td style="padding:6px 12px;font-size:9pt;font-weight:700;text-align:right;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;color:#185FA5;">${formatMoney(convertMoney(h.cost, project), project, lang)}</td>
+      </tr>`).join("");
+    summaryHtml = `
+<div style="margin-bottom:14px;border:1px solid #d8eed8;border-radius:6px;overflow:hidden;break-inside:avoid;">
+  <div style="background:#eaf2ec;padding:7px 12px;font-size:8.5pt;font-weight:700;letter-spacing:.08em;color:#3B6D11;">${t.hotelStatsByDate || "飯店統計"}</div>
+  <table style="box-shadow:none;border-radius:0;">
+    <thead><tr style="background:#f5faf6;">
+      <th style="padding:6px 12px;font-size:8pt;text-align:left;font-weight:700;color:#5f5e5a;">${t.hotelName || "飯店"}</th>
+      <th style="padding:6px 12px;font-size:8pt;text-align:left;font-weight:700;color:#5f5e5a;">${t.checkIn || "日期"}</th>
+      <th style="padding:6px 12px;font-size:8pt;text-align:right;font-weight:700;color:#5f5e5a;">${t.stayGuestCount || "人數"}</th>
+      <th style="padding:6px 12px;font-size:8pt;text-align:right;font-weight:700;color:#5f5e5a;">${t.stayRoomCount || "間數"}</th>
+      <th style="padding:6px 12px;font-size:8pt;text-align:right;font-weight:700;color:#5f5e5a;">${t.roomNights || "客室泊數"}</th>
+      <th style="padding:6px 12px;font-size:8pt;text-align:right;font-weight:700;color:#5f5e5a;">${t.totalSpend || "金額"}</th>
+    </tr></thead>
+    <tbody>${sumRows}
+      <tr style="background:${headerGrad};color:#fff;">
+        <td colspan="2" style="padding:7px 12px;font-size:8.5pt;font-weight:700;">${t.totalCost || "總計"}</td>
+        <td style="padding:7px 12px;font-size:8.5pt;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${sumGuests}</td>
+        <td style="padding:7px 12px;font-size:8.5pt;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${sumRooms}</td>
+        <td style="padding:7px 12px;font-size:8.5pt;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${sumNights}</td>
+        <td style="padding:7px 12px;font-size:10pt;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(sumCost, project), project, lang)}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>`;
+  }
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
@@ -3810,12 +3923,13 @@ table{width:100%;border-collapse:collapse;border-radius:4px;overflow:hidden;box-
 <body style="padding:2mm;">
 <div class="doc-header"><div><div style="font-size:8pt;opacity:.7;letter-spacing:.1em;text-transform:uppercase;">${typeLabel}</div><div style="font-family:'Noto Serif JP',serif;font-size:13pt;font-weight:600;margin-top:3px;">${projectName}</div></div>
 <div style="text-align:right;font-size:8pt;opacity:.75;"><div>${now}</div><div>${data.length} rows · ${isLandscape ? "A4 Landscape" : "A4 Portrait"}</div></div></div>
+${summaryHtml}
 <table><thead>${thead}</thead><tbody>${rows.join("")}</tbody></table>
 <div class="footer">${projectName} · ${typeLabel} · ${now}</div>
 </body></html>`;
 }
 
-function ReportExportModal({ onClose, t, lang, project, persons, flights, stays, flatStays, personsNoStay, hotels, pricingRules, vehicles, vehicleAssignments, personIndex, stayDisplayTotals }) {
+function ReportExportModal({ onClose, t, lang, project, persons, flights, stays, flatStays, personsNoStay, hotels, pricingRules, vehicles, vehicleAssignments, personIndex, stayDisplayTotals, hotelCumulativeStats }) {
   const [reportType, setReportType] = useState("stay");
   const ALL_COLS = {
     stay: [
@@ -3881,6 +3995,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
     setSelCols(Object.fromEntries((ALL_COLS[reportType] || []).map((c) => [c.key, c.default])));
   }, [reportType]);
 
+  let lastHotelSummary = null;
   const buildData = () => {
     const sel = cols.filter((c) => selCols[c.key]);
     if (reportType === "stay") {
@@ -3905,6 +4020,9 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
           stay_label: s.stay_label || "—",
           special_room: s.special_room_name || "—",
           _tier: _tier,
+          _hotelId: s.hotel_id != null ? String(s.hotel_id) : null,
+          _hotelName: h?.name || null,
+          _amt: amt || 0,
         };
       };
       const sortFn = (a, b) => {
@@ -3929,13 +4047,61 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
           name_roman: `${p.last_roman||""} ${p.first_roman||""}`.trim() || "—",
           hotel:"—", room_no:"—", room_type:"—", check_in:"—", check_out:"—",
           nights:"—", total_amt:"—", stay_label:"—", special_room:"—", _tier: 3,
+          _hotelId: null, _hotelName: null, _amt: 0,
         }));
-      return [
+
+      // 依飯店分組：每間飯店內維持原本的 tier 排序（已配房 → 專用空間 → 待配房號 → 專用空間未配房）
+      const allRows = [
         ...normalAssigned.map((s) => toRow(s, 0)),
         ...specialAssigned.map((s) => toRow(s, 1)),
         ...normalUnassigned.map((s) => toRow(s, 2)),
-        ...noStayRows,
         ...specialUnassigned.map((s) => toRow(s, 4)),
+      ];
+      const byHotel = new Map();
+      allRows.forEach((r) => {
+        const key = r._hotelId ?? "none";
+        if (!byHotel.has(key)) byHotel.set(key, { hotelId: r._hotelId, hotelName: r._hotelName, rows: [] });
+        byHotel.get(key).rows.push(r);
+      });
+      const hotelGroups = [...byHotel.values()];
+      hotelGroups.sort((a, b) => {
+        const minA = a.rows.map((r) => r.check_in).filter((x) => x !== "—").sort()[0] || "";
+        const minB = b.rows.map((r) => r.check_in).filter((x) => x !== "—").sort()[0] || "";
+        if (minA !== minB) return minA.localeCompare(minB);
+        return (a.hotelName || "").localeCompare(b.hotelName || "", lang === "ja" ? "ja" : "zh-Hant");
+      });
+      hotelGroups.forEach((g) => {
+        g.rows = [...g.rows].sort((a, b) => (a._tier ?? 0) - (b._tier ?? 0));
+        g.rows.forEach((r) => { r._hotelKey = String(g.hotelId); });
+      });
+      noStayRows.forEach((r) => { r._hotelKey = "none"; });
+
+      // 所有飯店統計（供報表頂部摘要表使用）
+      lastHotelSummary = hotelGroups.map((g) => {
+        const meta = computeHotelGroupMeta(g.rows.map((r) => ({
+          check_in: r.check_in !== "—" ? r.check_in : null,
+          check_out: r.check_out !== "—" ? r.check_out : null,
+          person_id: r.no !== "—" ? 1 : null,
+          special_room_name: r.special_room || null,
+          room_number: r.room_no !== "—" ? r.room_no : null,
+          hotel_id: g.hotelId,
+          id: r.no + "-" + r.room_no,
+        })));
+        const cs = (hotelCumulativeStats && (hotelCumulativeStats[g.hotelId] || hotelCumulativeStats[+g.hotelId])) || {};
+        const cost = cs.cost != null ? cs.cost : g.rows.reduce((s, r) => s + (r._amt || 0), 0);
+        return {
+          hotelName: g.hotelName || "—",
+          guestCount: meta.guestCount,
+          roomCount: meta.roomCount,
+          roomNights: cs.roomNights || 0,
+          cost,
+          dateRange: meta.minIn && meta.maxOut ? `${fmtDate(meta.minIn, lang)} ～ ${fmtDate(meta.maxOut, lang)}` : "—",
+        };
+      });
+
+      return [
+        ...hotelGroups.flatMap((g) => g.rows),
+        ...noStayRows,
       ];
     }
     if (reportType === "flight") {
@@ -4000,12 +4166,17 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       return;
     }
     const sel = cols.filter((c) => selCols[c.key]);
-    const data = buildData().map((row) => {
+    const rawRows = buildData();
+    const data = rawRows.map((row) => {
       const out = {};
       sel.forEach((c) => { out[c.key] = row[c.key]; });
+      out._tier = row._tier;
+      out._hotelKey = row._hotelKey;
+      out._hotelName = row._hotelName;
+      out._amt = row._amt;
       return out;
     });
-    const html = generateReportHTML({ type: reportType, cols: sel, data, project, lang, t });
+    const html = generateReportHTML({ type: reportType, cols: sel, data, project, lang, t, hotelSummary: lastHotelSummary });
     openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
   };
 
@@ -4228,7 +4399,7 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
   return result;
 }
 
-function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, persons, personIndex }) {
+function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, persons, personIndex, collapsedHotels, toggleHotelCollapsed }) {
   const [invoiceMode, setInvoiceMode] = useState("merged");
   const [expandedBatch, setExpandedBatch] = useState(null);
   const staysWithName = useMemo(() => stays.map((s) => {
@@ -4348,15 +4519,30 @@ ${rows}
       </div>
 
       {/* 各飯店表格 */}
-      {data.map((hd) => (
+      {data.map((hd) => {
+        const sectionKey = `invoice:${hd.hid}`;
+        const isCollapsed = collapsedHotels.has(sectionKey);
+        return (
         <section key={hd.hid} style={{ marginBottom: 32, background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
           {/* 飯店標題列 */}
-          <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--theadGrad)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{hd.hotel?.name || "—"}</h3>
-            <span style={{ fontSize: 11, color: "var(--washi)", opacity: 0.75 }}>{hd.batches.length} {t.invoiceBatch}</span>
+          <div
+            onClick={() => toggleHotelCollapsed(sectionKey)}
+            style={{ background: "var(--sumiMid)", backgroundImage: "var(--theadGrad)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", userSelect: "none" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ width: 20, height: 20, border: "1px solid rgba(255,255,255,.3)", borderRadius: 4, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--washi)", lineHeight: 1, flexShrink: 0 }}>
+                {isCollapsed ? "+" : "−"}
+              </span>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{hd.hotel?.name || "—"}</h3>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ fontSize: 11, color: "var(--washi)", opacity: 0.75 }}>{hd.batches.length} {t.invoiceBatch}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}</span>
+            </div>
           </div>
 
           {/* 批次表格 */}
+          {!isCollapsed && (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <colgroup>
@@ -4454,8 +4640,10 @@ ${rows}
               </tbody>
             </table>
           </div>
+          )}
         </section>
-      ))}
+        );
+      })}
 
       {/* 全域總計 */}
       <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
@@ -5532,6 +5720,20 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [searchBRoman, setSearchBRoman] = useState("");
   const [searchBAirline, setSearchBAirline] = useState("");
   const [searchBStatus, setSearchBStatus] = useState("");
+  const [collapsedHotels, setCollapsedHotels] = useState(() => {
+    try {
+      const raw = localStorage.getItem("collapsedHotelSections");
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch { return new Set(); }
+  });
+  const toggleHotelCollapsed = (key) => {
+    setCollapsedHotels((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem("collapsedHotelSections", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
   const [flightLegFilter, setFlightLegFilter] = useState("all");
   const [flightGroupByDept, setFlightGroupByDept] = useState(false);
   const [flightSameDiffFilter, setFlightSameDiffFilter] = useState(null);
@@ -6896,29 +7098,20 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           const cs = hotelCumulativeStats[group.hotelId] || hotelCumulativeStats[+group.hotelId] || {};
                           const meta = computeHotelGroupMeta(rows);
                           const displayCost = cs.cost != null ? cs.cost : rows.reduce((s, r) => s + (stayDisplayTotals[r.id] || 0), 0);
+                          const sectionKey = `stay:${group.hotelId}`;
+                          const isCollapsed = collapsedHotels.has(sectionKey);
                           return (
                             <section key={String(group.hotelId)} style={{ marginBottom: 32 }}>
-                              <div style={{
-                                display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8,
-                                marginBottom: 12, paddingBottom: 10, borderBottom: `2px solid ${"var(--moegi)"}`,
-                              }}>
-                                <div>
-                                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--sumi)", margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
-                                    {group.hotelName}
-                                  </h3>
-                                  {meta.minIn && meta.maxOut && (
-                                    <div style={{ fontSize: 12, color: "var(--moegi)", marginTop: 4, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
-                                      {fmtDate(meta.minIn, lang)} ～ {fmtDate(meta.maxOut, lang)}
-                                    </div>
-                                  )}
-                                </div>
-                                <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-                                  {meta.guestCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.guestCount}</strong> {t.stayGuestCount}</span>}
-                                  {meta.roomCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.roomCount}</strong> {t.stayRoomCount}</span>}
-                                  {cs.roomNights > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.roomNights}: <strong style={{ color: "var(--sumi)" }}>{cs.roomNights}</strong></span>}
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--asagi)" }}>{formatMoney(convertMoney(displayCost, project), project, lang)}</span>
-                                </div>
-                              </div>
+                              <HotelSectionHeader
+                                collapsed={isCollapsed}
+                                onToggle={() => toggleHotelCollapsed(sectionKey)}
+                                hotelName={group.hotelName}
+                                dateRange={meta.minIn && meta.maxOut ? `${fmtDate(meta.minIn, lang)} ～ ${fmtDate(meta.maxOut, lang)}` : null}
+                                meta={{ guestCount: meta.guestCount, roomCount: meta.roomCount, roomNights: cs.roomNights }}
+                                displayCost={displayCost}
+                                project={project} lang={lang} t={t}
+                              />
+                              {!isCollapsed && (
                               <div style={{ overflowX: "auto" }}>
                                 <table style={tblW} className="data-table stay-table">
                                   <colgroup>
@@ -6949,6 +7142,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                   </tbody>
                                 </table>
                               </div>
+                              )}
                             </section>
                           );
                         })}
@@ -7076,6 +7270,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   t={t}
                   persons={persons}
                   personIndex={personIndex}
+                  collapsedHotels={collapsedHotels}
+                  toggleHotelCollapsed={toggleHotelCollapsed}
                 />
               )}
             </div>
@@ -7348,7 +7544,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
       {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
-      {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} flatStays={flatStays} personsNoStay={personsMissingPhaseStay} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
+      {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} flatStays={flatStays} personsNoStay={personsMissingPhaseStay} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} hotelCumulativeStats={hotelCumulativeStats} />}
       {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} allStays={stays} roommates={roommates} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
