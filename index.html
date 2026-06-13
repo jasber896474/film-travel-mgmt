@@ -181,6 +181,16 @@ const fmtDate = (d, lang) => {
   const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
   return parseLocalDate(String(d).slice(0, 10)).toLocaleDateString(loc);
 };
+const fmtMonthDay = (d, lang) => {
+  if (!d) return "—";
+  const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
+  return parseLocalDate(String(d).slice(0, 10)).toLocaleDateString(loc, { month: "numeric", day: "numeric" });
+};
+const fmtWeekday = (d, lang) => {
+  if (!d) return "";
+  const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
+  return parseLocalDate(String(d).slice(0, 10)).toLocaleDateString(loc, { weekday: "short" });
+};
 const diffDays = (a, b) => {
   if (!a || !b) return 0;
   const da = parseLocalDate(a);
@@ -1249,6 +1259,38 @@ function rowToStaffPerson(row, format = "v2") {
   };
 }
 const CABIN = ["Economy", "Premium Economy", "Business", "First"];
+
+/** IATA 2字代碼 → 航空公司名稱（輸入班機號時自動帶出，僅在航空公司欄位空白時生效） */
+const IATA_AIRLINES = {
+  CI: "中華航空", BR: "長榮航空", AE: "華信航空", B7: "立榮航空", JX: "星宇航空", IT: "台灣虎航",
+  NH: "全日空 ANA", JL: "日本航空 JAL", MM: "樂桃航空 Peach", GK: "捷星日本 Jetstar Japan",
+  BC: "天馬航空 Skymark", "7G": "星悅航空 Star Flyer", NU: "日本越洋航空 JTA", MX: "MandarinAir",
+  KE: "大韓航空 Korean Air", OZ: "韓亞航空 Asiana", LJ: "真航空 Jin Air", TW: "德威航空 T'way",
+  ZE: "易斯達航空 Eastar Jet", "7C": "濟州航空 Jeju Air", RS: "釜山航空 Air Busan", BX: "易安航空 Air Seoul",
+  CX: "國泰航空 Cathay Pacific", KA: "國泰港龍 Cathay Dragon", UO: "香港快運 HK Express",
+  TG: "泰國航空 Thai Airways", SQ: "新加坡航空 Singapore Airlines", TR: "酷航 Scoot", "3K": "捷星亞洲 Jetstar Asia",
+  MH: "馬來西亞航空 Malaysia Airlines", AK: "亞洲航空 AirAsia", FD: "泰國亞洲航空 Thai AirAsia",
+  VN: "越南航空 Vietnam Airlines", VJ: "越捷航空 VietJet Air",
+  PR: "菲律賓航空 Philippine Airlines", "5J": "宿霧太平洋 Cebu Pacific",
+  GA: "嘉魯達印尼航空 Garuda Indonesia", QZ: "印尼亞航 AirAsia Indonesia",
+  MU: "中國東方航空 China Eastern", CA: "中國國際航空 Air China", CZ: "中國南方航空 China Southern",
+  HU: "海南航空 Hainan Airlines", FM: "上海航空 Shanghai Airlines", "3U": "四川航空 Sichuan Airlines",
+  MF: "廈門航空 Xiamen Airlines", SC: "山東航空 Shandong Airlines",
+  AA: "美國航空 American Airlines", UA: "聯合航空 United Airlines", DL: "達美航空 Delta Air Lines",
+  AS: "阿拉斯加航空 Alaska Airlines", WN: "西南航空 Southwest Airlines",
+  AC: "加拿大航空 Air Canada", BA: "英國航空 British Airways", AF: "法國航空 Air France",
+  LH: "德國漢莎航空 Lufthansa", KL: "荷蘭皇家航空 KLM", LX: "瑞士航空 Swiss",
+  EK: "阿聯酋航空 Emirates", QR: "卡達航空 Qatar Airways", EY: "阿提哈德航空 Etihad Airways",
+  TK: "土耳其航空 Turkish Airlines", QF: "澳洲航空 Qantas", NZ: "紐西蘭航空 Air New Zealand",
+  FJ: "斐濟航空 Fiji Airways", PG: "曼谷航空 Bangkok Airways",
+};
+
+/** 從班機號（如 "CI 0701" / "BR701" / "5J123"）擷取前2碼 IATA 代碼並查詢航空公司名稱 */
+function lookupAirlineFromFlightNo(flightNo) {
+  const code = String(flightNo || "").trim().toUpperCase().match(/^[A-Z0-9]{2}/);
+  if (!code) return null;
+  return IATA_AIRLINES[code[0]] || null;
+}
 const ROOM_TYPES = ["Single", "Twin", "Double", "Suite", "Deluxe", "Custom"];
 const ROOM_TYPES_FOR_RATES = ROOM_TYPES.filter((r) => r !== "Custom");
 const VEHICLE_REGION_KEYS = ["TW", "JP", "KR", "US"];
@@ -1297,6 +1339,11 @@ const inpStyle = {
   padding: "9px 13px", fontSize: 13, outline: "none", boxSizing: "border-box",
   background: "var(--shiro)", color: "var(--sumi)", fontFamily: "'Noto Sans JP',sans-serif",
   transition: "border-color .18s, box-shadow .18s",
+};
+const miniInp = {
+  width: "100%", border: "1px solid var(--keisenM)", borderRadius: 7,
+  padding: "7px 10px", fontSize: 12.5, outline: "none", boxSizing: "border-box",
+  background: "var(--washi)", color: "var(--sumi)", fontFamily: "'Noto Sans JP',sans-serif",
 };
 const thS = {
   padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap",
@@ -2888,78 +2935,136 @@ function PersonForm({ init, onSave, onClose, t, lang }) {
   );
 }
 
-function AirportTerminalField({ label, airportKey, terminalKey, f, set }) {
-  const terminal = (f[terminalKey] || "").trim();
-  const tLabel = terminal ? `T${terminal.replace(/^T/i, "")}` : "";
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: "block", fontSize: 9.5, fontWeight: 700, color: "var(--nezumi)", marginBottom: 6, letterSpacing: "0.18em", textTransform: "uppercase" }}>{label}</label>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <input style={{ ...inpStyle, flex: 1 }} value={f[airportKey] || ""} onChange={set(airportKey)} className="wa-input" placeholder="NRT / TPE…" />
-        <input style={{ ...inpStyle, width: 60, textAlign: "center" }} value={f[terminalKey] || ""} onChange={set(terminalKey)} className="wa-input" placeholder="T#" />
-      </div>
-      {tLabel && <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 4, fontWeight: 600, letterSpacing: "0.05em" }}>{tLabel}</div>}
-    </div>
-  );
-}
-
-/** 日期 + 24小時制時間（HH:MM 下拉），避免 datetime-local 受系統上午/下午設定影響 */
-function DateTime24Field({ value, onChange }) {
+/** 路線端點：機場代碼（大字）＋航廈（小字）＋24小時制時間＋日期，垂直排列 */
+function RouteEndField({ airportKey, terminalKey, timeKey, f, set }) {
+  const value = f[timeKey] || "";
   const datePart = value ? value.slice(0, 10) : "";
   const timePart = value && value.length >= 16 ? value.slice(11, 16) : "";
   const [hh, mm] = timePart ? timePart.split(":") : ["", ""];
-
   const combine = (d, h, m) => {
-    if (!d) { onChange(""); return; }
+    if (!d) { set(timeKey)({ target: { value: "" } }); return; }
     const hStr = (h || "00").padStart(2, "0");
     const mStr = (m || "00").padStart(2, "0");
-    onChange(`${d}T${hStr}:${mStr}`);
+    set(timeKey)({ target: { value: `${d}T${hStr}:${mStr}` } });
   };
-
+  const miniSelect = { border: "1px solid var(--keisenM)", borderRadius: 5, padding: "3px 2px", fontSize: 12, textAlign: "center", background: "var(--washi)", color: "var(--sumi)", outline: "none", width: 38, fontFamily: "inherit" };
   return (
-    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-      <input type="date" style={{ ...inpStyle, flex: "1 1 auto", minWidth: 0 }} value={datePart} onChange={(e) => combine(e.target.value, hh, mm)} className="wa-input" />
-      <select style={{ ...inpStyle, flex: "0 0 60px", width: 60, padding: "8px 4px", textAlign: "center" }} value={hh} onChange={(e) => combine(datePart, e.target.value, mm)} className="wa-input">
-        <option value="">--</option>
-        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((h) => <option key={h} value={h}>{h}</option>)}
-      </select>
-      <span style={{ color: "var(--nezumi)" }}>:</span>
-      <select style={{ ...inpStyle, flex: "0 0 60px", width: 60, padding: "8px 4px", textAlign: "center" }} value={mm} onChange={(e) => combine(datePart, hh, e.target.value)} className="wa-input">
-        <option value="">--</option>
-        {Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")).map((m) => <option key={m} value={m}>{m}</option>)}
-      </select>
+    <div style={{ flex: 1, textAlign: "center", minWidth: 0 }}>
+      <input
+        value={f[airportKey] || ""}
+        onChange={(e) => set(airportKey)({ target: { value: e.target.value.toUpperCase() } })}
+        placeholder="TPE" maxLength={4}
+        style={{ width: "100%", border: "none", borderBottom: "2px solid var(--keisenM)", background: "transparent", textAlign: "center", fontSize: 22, fontWeight: 700, fontFamily: "'Noto Serif JP',serif", color: "var(--sumi)", padding: "2px 0", textTransform: "uppercase", outline: "none" }}
+        className="wa-input"
+      />
+      <input
+        value={f[terminalKey] || ""} onChange={set(terminalKey)} placeholder="T#"
+        style={{ width: 44, border: "none", background: "transparent", textAlign: "center", fontSize: 10.5, fontWeight: 700, color: "var(--kincha)", marginTop: 3, outline: "none" }}
+        className="wa-input"
+      />
+      <div style={{ display: "flex", justifyContent: "center", gap: 3, marginTop: 8, alignItems: "center" }}>
+        <select value={hh} onChange={(e) => combine(datePart, e.target.value, mm)} style={miniSelect} className="wa-input">
+          <option value="">--</option>
+          {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((h) => <option key={h} value={h}>{h}</option>)}
+        </select>
+        <span style={{ color: "var(--nezumi)", fontSize: 13, fontWeight: 700 }}>:</span>
+        <select value={mm} onChange={(e) => combine(datePart, hh, e.target.value)} style={miniSelect} className="wa-input">
+          <option value="">--</option>
+          {Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")).map((m) => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </div>
+      <input
+        type="date" value={datePart} onChange={(e) => combine(e.target.value, hh, mm)}
+        style={{ width: "100%", border: "1px solid var(--keisenM)", borderRadius: 5, padding: "3px 4px", fontSize: 10.5, marginTop: 6, textAlign: "center", background: "var(--washi)", color: "var(--nezumi)", outline: "none", boxSizing: "border-box" }}
+        className="wa-input"
+      />
     </div>
   );
 }
 
-function FlightLegFields({ title, prefix, f, set, t }) {
+/** 路線連接線：出發 ──✈──> 抵達 */
+function RouteConnector() {
+  return (
+    <div style={{ flex: "0 0 auto", width: 40, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 8 }}>
+      <span style={{ fontSize: 14, color: "var(--usunezumi)", lineHeight: 1 }}>✈</span>
+      <div style={{ width: "100%", height: 1, background: "var(--keisenM)", marginTop: 6, position: "relative" }}>
+        <span style={{ position: "absolute", right: -1, top: -3, width: 6, height: 6, borderTop: "1.5px solid var(--usunezumi)", borderRight: "1.5px solid var(--usunezumi)", transform: "rotate(45deg)", display: "block" }} />
+      </div>
+    </div>
+  );
+}
+
+/** 緊湊欄位：小標籤 + 輸入框，用於航班資訊一排 */
+function MiniField({ label, children, flex }) {
+  return (
+    <div style={{ flex: flex || "1 1 110px", minWidth: 0 }}>
+      <label style={{ display: "block", fontSize: 9, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+/** 行李藥丸標籤：圖示文字 + 內嵌輸入框 */
+function BaggageChip({ label, value, onChange }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, border: "1px solid var(--keisenM)", borderRadius: 20, padding: "5px 14px", fontSize: 11, color: "var(--nezumi)", flex: "1 1 auto", background: "var(--washi)" }}>
+      <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{label}</span>
+      <input value={value} onChange={onChange} style={{ border: "none", background: "transparent", width: "100%", fontSize: 11.5, color: "var(--sumi)", outline: "none", fontFamily: "inherit", minWidth: 0 }} className="wa-input" />
+    </div>
+  );
+}
+
+/** 單程航班卡片：彩色標題列（含日期）＋路線視覺化＋航班資訊＋行李 */
+function FlightLegFields({ title, prefix, f, set, t, lang, isReturn }) {
   const k = (name) => (prefix ? `${prefix}_${name}` : name);
-  const sectionStyle = { fontSize: 12, fontWeight: 700, color: "var(--moegi)", letterSpacing: "0.08em", margin: "8px 0 4px", paddingBottom: 6, borderBottom: "1px solid var(--keisenL)" };
+  const depDate = (f[k("dep_time")] || "").slice(0, 10);
+  const accent = isReturn ? "var(--asagi)" : "var(--moegi)";
+  const handleFlightNoChange = (e) => {
+    set(k("flight_no"))(e);
+    const airline = lookupAirlineFromFlightNo(e.target.value);
+    if (airline && !f[k("airline")]) set(k("airline"))({ target: { value: airline } });
+  };
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
-      <div style={{ ...sectionStyle, gridColumn: "1 / -1" }}>{title}</div>
-      <Field label={t.airline}><input style={inpStyle} value={f[k("airline")] || ""} onChange={set(k("airline"))} className="wa-input" /></Field>
-      <Field label={t.flightNo}><input style={inpStyle} value={f[k("flight_no")] || ""} onChange={set(k("flight_no"))} className="wa-input" /></Field>
-      <Field label={t.cabin}><select style={inpStyle} value={f[k("cabin")] || "Economy"} onChange={set(k("cabin"))} className="wa-input">{CABIN.map((c) => <option key={c}>{c}</option>)}</select></Field>
-      <Field label={t.pnr}><input style={inpStyle} value={f[k("pnr")] || ""} onChange={set(k("pnr"))} className="wa-input" /></Field>
-      <AirportTerminalField label={t.depAirport} airportKey={k("dep_airport")} terminalKey={k("dep_terminal")} f={f} set={set} />
-      <AirportTerminalField label={t.arrAirport} airportKey={k("arr_airport")} terminalKey={k("arr_terminal")} f={f} set={set} />
-      <Field label={t.depTime}><DateTime24Field value={f[k("dep_time")] || ""} onChange={(v) => set(k("dep_time"))({ target: { value: v } })} /></Field>
-      <Field label={t.arrTime}><DateTime24Field value={f[k("arr_time")] || ""} onChange={(v) => set(k("arr_time"))({ target: { value: v } })} /></Field>
-      <Field label={`${t.checkedBag} (${t.optional})`}><input style={inpStyle} value={f[k("checked_bag")] || ""} onChange={set(k("checked_bag"))} className="wa-input" /></Field>
-      <Field label={`${t.cabinBag} (${t.optional})`}><input style={inpStyle} value={f[k("cabin_bag")] || ""} onChange={set(k("cabin_bag"))} className="wa-input" /></Field>
+    <div style={{ border: "1px solid var(--keisenL)", borderRadius: 10, overflow: "hidden", background: "var(--shiro)" }}>
+      <div style={{ background: accent, color: "var(--washi)", padding: "9px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.06em" }}>{title}</span>
+        {depDate && <span style={{ fontSize: 11, opacity: 0.85, fontVariantNumeric: "tabular-nums" }}>{fmtMonthDay(depDate, lang)} ({fmtWeekday(depDate, lang)})</span>}
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-start", padding: "16px 14px 12px", gap: 8 }}>
+        <RouteEndField airportKey={k("dep_airport")} terminalKey={k("dep_terminal")} timeKey={k("dep_time")} f={f} set={set} />
+        <RouteConnector />
+        <RouteEndField airportKey={k("arr_airport")} terminalKey={k("arr_terminal")} timeKey={k("arr_time")} f={f} set={set} />
+      </div>
+      <div style={{ display: "flex", gap: 8, padding: "0 14px 12px", flexWrap: "wrap" }}>
+        <MiniField label={t.airline} flex="2 1 140px">
+          <input style={miniInp} value={f[k("airline")] || ""} onChange={set(k("airline"))} className="wa-input" />
+        </MiniField>
+        <MiniField label={t.flightNo} flex="1 1 90px">
+          <input style={miniInp} value={f[k("flight_no")] || ""} onChange={handleFlightNoChange} className="wa-input" placeholder="CI701" />
+        </MiniField>
+        <MiniField label={t.cabin} flex="1 1 100px">
+          <select style={miniInp} value={f[k("cabin")] || "Economy"} onChange={set(k("cabin"))} className="wa-input">{CABIN.map((c) => <option key={c}>{c}</option>)}</select>
+        </MiniField>
+        <MiniField label={t.pnr} flex="1 1 90px">
+          <input style={miniInp} value={f[k("pnr")] || ""} onChange={set(k("pnr"))} className="wa-input" />
+        </MiniField>
+      </div>
+      <div style={{ display: "flex", gap: 8, padding: "0 14px 14px" }}>
+        <BaggageChip label={t.checkedBag} value={f[k("checked_bag")] || ""} onChange={set(k("checked_bag"))} />
+        <BaggageChip label={t.cabinBag} value={f[k("cabin_bag")] || ""} onChange={set(k("cabin_bag"))} />
+      </div>
     </div>
   );
 }
 
-function FlightForm({ init, onSave, onClose, t }) {
+function FlightForm({ init, onSave, onClose, t, lang }) {
   const [f, setF] = useState(() => (init ? { ...FLIGHT_BLANK, ...flightFormInit(init) } : { ...FLIGHT_BLANK }));
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   return (
     <div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, maxHeight: "70vh", overflowY: "auto", paddingRight: 4 }}>
-        <FlightLegFields title={t.flightOutbound} prefix="" f={f} set={set} t={t} />
-        <FlightLegFields title={t.flightReturn} prefix="ret" f={f} set={set} t={t} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, maxHeight: "70vh", overflowY: "auto", padding: "2px 4px 2px 2px" }}>
+        <FlightLegFields title={t.flightOutbound} prefix="" f={f} set={set} t={t} lang={lang} isReturn={false} />
+        <FlightLegFields title={t.flightReturn} prefix="ret" f={f} set={set} t={t} lang={lang} isReturn={true} />
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
@@ -7613,7 +7718,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       )}
 
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
-      {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
+      {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} lang={lang} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} flatStays={flatStays} personsNoStay={personsMissingPhaseStay} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} hotelCumulativeStats={hotelCumulativeStats} />}
       {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} allStays={stays} roommates={roommates} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
