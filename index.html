@@ -417,7 +417,7 @@ const T = {
     hideFromStaysHint: "開啟後，此人不顯示於住宿一覽與住宿篩選名單",
     hideFromVehiclesHint: "開啟後，此人不顯示於派車配置與每日配車單",
     hideFromFlightsHint: "開啟後，此人不顯示於航班管理名單（不需安排機票者適用）",
-    flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班機", flightDiffFlight: "分批搭機",
+    flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班機", flightDiffFlight: "分批搭機", collapseAll: "全部摺疊", expandAll: "全部展開",
     groupByDept: "依部門", warnFilter: "警示", warnFilterTitle: "顯示警示種類", selectAll: "全選",
     arrTimePickup: "抵達時間 ↓接機",
     flightUngrouped: "未分組／資料未完成",
@@ -565,7 +565,7 @@ const T = {
     hideFromStaysHint: "开启后，此人不显示于住宿一览与住宿筛选名单",
     hideFromVehiclesHint: "开启后，此人不显示于派车配置与每日配车单",
     hideFromFlightsHint: "开启后，此人不显示于航班管理名单（不需安排机票者适用）",
-    flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班机", flightDiffFlight: "分批搭机",
+    flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班机", flightDiffFlight: "分批搭机", collapseAll: "全部折叠", expandAll: "全部展开",
     groupByDept: "依部门", warnFilter: "警示", warnFilterTitle: "显示警示种类", selectAll: "全选",
     arrTimePickup: "抵达时间 ↓接机",
     flightUngrouped: "未分组／资料未完成",
@@ -712,7 +712,7 @@ const T = {
     hideFromStaysHint: "When on, this person won't appear in the accommodation list",
     hideFromVehiclesHint: "When on, this person won't appear in vehicle assignments",
     hideFromFlightsHint: "When on, this person won't appear in the flight list (no ticket needed)",
-    flightOutbound: "Outbound", flightReturn: "Return", flightSameFlight: "Same flight", flightDiffFlight: "Split flights",
+    flightOutbound: "Outbound", flightReturn: "Return", flightSameFlight: "Same flight", flightDiffFlight: "Split flights", collapseAll: "Collapse All", expandAll: "Expand All",
     groupByDept: "By Dept", warnFilter: "Warnings", warnFilterTitle: "Show warning types", selectAll: "Select all",
     arrTimePickup: "Arrival ↓ pickup",
     flightUngrouped: "Ungrouped / incomplete",
@@ -857,7 +857,7 @@ const T = {
     hideFromStaysHint: "켜면 숙박 목록에서 표시되지 않습니다",
     hideFromVehiclesHint: "켜면 차량 배정 목록에서 표시되지 않습니다",
     hideFromFlightsHint: "켜면 항공 관리 목록에서 숨겨집니다 (항공권 불필요)",
-    flightOutbound: "출국", flightReturn: "귀국", flightSameFlight: "동일 항공편", flightDiffFlight: "분산 탑승",
+    flightOutbound: "출국", flightReturn: "귀국", flightSameFlight: "동일 항공편", flightDiffFlight: "분산 탑승", collapseAll: "전체 접기", expandAll: "전체 펼치기",
     groupByDept: "부서별", warnFilter: "경고", warnFilterTitle: "경고 표시 유형", selectAll: "전체 선택",
     arrTimePickup: "도착 ↓ 픽업",
     flightUngrouped: "미분류／미완료",
@@ -1001,7 +1001,7 @@ const T = {
     hideFromStaysHint: "オンにすると宿泊一覧から非表示になります",
     hideFromVehiclesHint: "オンにすると配車リストから非表示になります",
     hideFromFlightsHint: "オンにするとフライト管理リストから非表示（航空券不要の場合）",
-    flightOutbound: "往路", flightReturn: "復路", flightSameFlight: "同フライト", flightDiffFlight: "別フライト",
+    flightOutbound: "往路", flightReturn: "復路", flightSameFlight: "同フライト", flightDiffFlight: "別フライト", collapseAll: "すべて折りたたむ", expandAll: "すべて展開",
     groupByDept: "部署別", warnFilter: "警告", warnFilterTitle: "警告種類", selectAll: "全選択",
     arrTimePickup: "到着 ↓送迎",
     flightUngrouped: "未分類／未入力",
@@ -1998,6 +1998,29 @@ function HotelSectionHeader({ collapsed, onToggle, hotelName, dateRange, meta, d
         {extra}
       </div>
     </div>
+  );
+}
+
+/** 全部摺疊/展開按鈕：依目前是否已全部收起決定圖示與文字 */
+function CollapseAllButton({ sectionKeys, collapsedHotels, onToggle, t, dark }) {
+  if (!sectionKeys || sectionKeys.length === 0) return null;
+  const allCollapsed = sectionKeys.every((k) => collapsedHotels.has(k));
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(sectionKeys)}
+      className="no-print"
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600,
+        padding: "5px 12px", borderRadius: 6, cursor: "pointer",
+        border: dark ? "1px solid rgba(255,255,255,.25)" : "1px solid var(--keisenM)",
+        background: dark ? "rgba(255,255,255,.08)" : "var(--shiro)",
+        color: dark ? "var(--washi)" : "var(--nezumi)",
+      }}
+    >
+      <span style={{ fontSize: 13, lineHeight: 1 }}>{allCollapsed ? "▣" : "▢"}</span>
+      {allCollapsed ? (t.expandAll || "全部展開") : (t.collapseAll || "全部摺疊")}
+    </button>
   );
 }
 
@@ -4399,7 +4422,7 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
   return result;
 }
 
-function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, persons, personIndex, collapsedHotels, toggleHotelCollapsed }) {
+function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, persons, personIndex, collapsedHotels, toggleHotelCollapsed, setManyCollapsed }) {
   const [invoiceMode, setInvoiceMode] = useState("merged");
   const [expandedBatch, setExpandedBatch] = useState(null);
   const staysWithName = useMemo(() => stays.map((s) => {
@@ -4519,6 +4542,11 @@ ${rows}
       </div>
 
       {/* 各飯店表格 */}
+      {data.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+          <CollapseAllButton sectionKeys={data.map((hd) => `invoice:${hd.hid}`)} collapsedHotels={collapsedHotels} onToggle={setManyCollapsed} t={t} />
+        </div>
+      )}
       {data.map((hd) => {
         const sectionKey = `invoice:${hd.hid}`;
         const isCollapsed = collapsedHotels.has(sectionKey);
@@ -5734,6 +5762,16 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       return next;
     });
   };
+  // 批次摺疊/展開一組 key：若全部已收起則展開全部，否則收起全部
+  const setManyCollapsed = (keys) => {
+    setCollapsedHotels((prev) => {
+      const next = new Set(prev);
+      const allCollapsed = keys.length > 0 && keys.every((k) => next.has(k));
+      keys.forEach((k) => { if (allCollapsed) next.delete(k); else next.add(k); });
+      try { localStorage.setItem("collapsedHotelSections", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
   const [flightLegFilter, setFlightLegFilter] = useState("all");
   const [flightGroupByDept, setFlightGroupByDept] = useState(false);
   const [flightSameDiffFilter, setFlightSameDiffFilter] = useState(null);
@@ -6078,6 +6116,12 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     });
     return sorted.map((d) => ({ dept: d, persons: deptMap[d] }));
   }, [flightGroupByDept, displayFlightPersons]);
+
+  // 目前畫面上實際存在的可摺疊區塊 key（依部門時=各部門；否則=各航班分組區塊）
+  const currentFlightSectionKeys = useMemo(() => {
+    if (flightDeptGroups) return flightDeptGroups.map(({ dept }) => `flight:dept:${dept}`);
+    return flightTableSections.map((s) => `flight:section:${s.key}`);
+  }, [flightDeptGroups, flightTableSections]);
 
   const flatStays = useMemo(() => {
     const rows = [];
@@ -6736,7 +6780,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                 warnDropdownRef={warnDropdownRef}
                 t={t}
               />
-              <p className="no-print" style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", displayFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
+              <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 10, flexWrap: "wrap" }}>
+                <p style={{ fontSize: 11, color: "var(--nezumi)", letterSpacing: "0.03em", margin: 0 }}>{t.resultsCount.replace("{n}", displayFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
+                <CollapseAllButton sectionKeys={currentFlightSectionKeys} collapsedHotels={collapsedHotels} onToggle={setManyCollapsed} t={t} />
+              </div>
               <div className="flight-print-title print-only">{project.name} — {t.flightMgmt}{flightLegFilter !== "all" ? ` · ${flightLegFilter === "out" ? t.flightOutbound : t.flightReturn}` : ""}</div>
               <div className="flight-table-wrap">
                 <table style={tblW} className="flight-table flight-table-rows">
@@ -6784,11 +6831,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           const warnLabelsMap = { arrBeforeCI: t.warnArrBeforeCI, arrAfterCI: t.warnArrAfterCI, depBeforeCO: t.warnDepBeforeCO, noDep: t.warnNoDep, missingOut: t.missingOut, missingRet: t.missingRet };
                           const warnColors = { arrBeforeCI: "#a03030", arrAfterCI: "#854f0b", depBeforeCO: "#a03030", noDep: "#3a788c", missingOut: "var(--kincha)", missingRet: "var(--asagi)" };
                           const warnBgs = { arrBeforeCI: "rgba(160,48,48,.1)", arrAfterCI: "rgba(143,99,24,.1)", depBeforeCO: "rgba(160,48,48,.1)", noDep: "rgba(58,120,140,.1)", missingOut: "var(--kincha2)", missingRet: "rgba(58,120,140,.08)" };
+                          const sectionKey = `flight:dept:${dept}`;
+                          const isCollapsed = collapsedHotels.has(sectionKey);
                           const deptBanner = (
-                            <tr key={`dept-${dept}-banner`}>
+                            <tr key={`dept-${dept}-banner`} onClick={() => toggleHotelCollapsed(sectionKey)} style={{ cursor: "pointer" }}>
                               <td colSpan={FLIGHT_TABLE_COL_SPAN} style={{ padding: "7px 12px", background: "rgba(120,80,16,.07)", borderBottom: ".5px solid rgba(120,80,16,.15)", borderTop: "1.5px solid rgba(120,80,16,.15)" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                                  <span style={{ fontSize: 11.5, fontWeight: 600, color: "var(--kincha)" }}>▸ {deptLabel}</span>
+                                  <span style={{ width: 16, height: 16, border: "1px solid rgba(120,80,16,.35)", borderRadius: 3, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--kincha)", lineHeight: 1, flexShrink: 0 }}>{isCollapsed ? "+" : "−"}</span>
+                                  <span style={{ fontSize: 11.5, fontWeight: 600, color: "var(--kincha)" }}>{deptLabel}</span>
                                   <span style={{ fontSize: 10.5, color: "var(--kincha)", opacity: 0.8 }}>{dPersons.length} {t.flightGroupPeople}</span>
                                   <div style={{ display: "flex", gap: 5, marginLeft: "auto", flexWrap: "wrap" }}>
                                     {warnSummaryKeys.filter((k) => deptWarnCounts[k] > 0).map((k) => (
@@ -6801,6 +6851,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                               </td>
                             </tr>
                           );
+                          if (isCollapsed) return [deptBanner];
                           const rows = dPersons.flatMap((p) => {
                             const fl = flights.find((x) => x.person_id === p.id);
                             const legs = getVisibleFlightLegs(fl, flightLegFilter);
@@ -6810,40 +6861,53 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                         });
                       }
                       return flightTableSections.flatMap((section) => {
-                        const personRows = section.type === "personList"
+                        const sectionKey = `flight:section:${section.key}`;
+                        const isCollapsed = collapsedHotels.has(sectionKey);
+                        const toggleIcon = (
+                          <span style={{ width: 16, height: 16, border: "1px solid var(--keisenM)", borderRadius: 3, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--nezumi)", lineHeight: 1, flexShrink: 0, marginRight: 8 }}>{isCollapsed ? "+" : "−"}</span>
+                        );
+                        if (section.type === "personList") {
+                          const banner = (
+                            <tr key={`${section.key}-banner`} onClick={() => toggleHotelCollapsed(sectionKey)} style={{ cursor: "pointer", background: "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
+                              <td colSpan={FLIGHT_TABLE_COL_SPAN} style={{ padding: "7px 12px", fontSize: 11.5, fontWeight: 600, color: "var(--nezumi)" }}>
+                                {toggleIcon}{t.flightMgmt} · {section.entries.length} {t.flightGroupPeople}
+                              </td>
+                            </tr>
+                          );
+                          if (isCollapsed) return [banner];
+                          const rows = section.entries.flatMap(({ personId, legs }) => {
+                            const p = displayFlightPersons.find((x) => x.id === personId);
+                            if (!p) return [];
+                            const fl = flights.find((x) => x.person_id === personId);
+                            return renderFlightPersonRows(p, fl, legs, ctx);
+                          });
+                          return [banner, ...rows];
+                        }
+                        const bannerClass = section.type === "ungrouped"
+                          ? "flight-group-banner flight-group-banner-ungrouped"
+                          : `flight-group-banner flight-group-banner-${section.leg}`;
+                        const banner = (
+                          <tr key={`${section.key}-banner`} className={bannerClass} onClick={() => toggleHotelCollapsed(sectionKey)} style={{ cursor: "pointer" }}>
+                            <td colSpan={FLIGHT_TABLE_COL_SPAN}>
+                              {toggleIcon}{section.label} · {section.personIds.length} {t.flightGroupPeople}
+                            </td>
+                          </tr>
+                        );
+                        if (isCollapsed) return [banner];
+                        const rows = section.type === "ungrouped"
                           ? section.entries.flatMap(({ personId, legs }) => {
                               const p = displayFlightPersons.find((x) => x.id === personId);
                               if (!p) return [];
                               const fl = flights.find((x) => x.person_id === personId);
                               return renderFlightPersonRows(p, fl, legs, ctx);
                             })
-                          : (() => {
-                              const bannerClass = section.type === "ungrouped"
-                                ? "flight-group-banner flight-group-banner-ungrouped"
-                                : `flight-group-banner flight-group-banner-${section.leg}`;
-                              const banner = (
-                                <tr key={`${section.key}-banner`} className={bannerClass}>
-                                  <td colSpan={FLIGHT_TABLE_COL_SPAN}>
-                                    {section.label} · {section.personIds.length} {t.flightGroupPeople}
-                                  </td>
-                                </tr>
-                              );
-                              const rows = section.type === "ungrouped"
-                                ? section.entries.flatMap(({ personId, legs }) => {
-                                    const p = displayFlightPersons.find((x) => x.id === personId);
-                                    if (!p) return [];
-                                    const fl = flights.find((x) => x.person_id === personId);
-                                    return renderFlightPersonRows(p, fl, legs, ctx);
-                                  })
-                                : section.personIds.flatMap((pid) => {
-                                    const p = displayFlightPersons.find((x) => x.id === pid);
-                                    if (!p) return [];
-                                    const fl = flights.find((x) => x.person_id === pid);
-                                    return renderFlightPersonRows(p, fl, [section.leg], ctx);
-                                  });
-                              return [banner, ...rows];
-                            })();
-                        return personRows;
+                          : section.personIds.flatMap((pid) => {
+                              const p = displayFlightPersons.find((x) => x.id === pid);
+                              if (!p) return [];
+                              const fl = flights.find((x) => x.person_id === pid);
+                              return renderFlightPersonRows(p, fl, [section.leg], ctx);
+                            });
+                        return [banner, ...rows];
                       });
                     })()}
                   </tbody>
@@ -7089,8 +7153,13 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       return <p style={{ fontSize: 13, color: "var(--nezumi)", padding: "24px 0" }}>{t.noData}</p>;
                     }
 
+                    const allStaySectionKeys = hotelGroups.map((g) => `stay:${g.hotelId}`);
+
                     return (
                       <div>
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+                          <CollapseAllButton sectionKeys={allStaySectionKeys} collapsedHotels={collapsedHotels} onToggle={setManyCollapsed} t={t} />
+                        </div>
                         {hotelGroups.map((group) => {
                           const rows = sortStayRows(group.rows);
                           const assigned = rows.filter((r) => r.room_number);
@@ -7272,6 +7341,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   personIndex={personIndex}
                   collapsedHotels={collapsedHotels}
                   toggleHotelCollapsed={toggleHotelCollapsed}
+                  setManyCollapsed={setManyCollapsed}
                 />
               )}
             </div>
