@@ -5148,6 +5148,14 @@ function HotelMasterForm({ init, onSave, onClose, t, shootPhases }) {
     return out;
   };
 
+  const buildInventory = () => {
+    const src = f.room_type_inventory || {};
+    const validKeys = uniformPrice ? ["All"] : [...ROOM_TYPES_FOR_RATES, ...customTypes.map((c) => c.name).filter(Boolean)];
+    const out = {};
+    validKeys.forEach((k) => { if (src[k] != null && src[k] !== "") out[k] = +src[k]; });
+    return out;
+  };
+
   return (
     <div>
       <Field label={t.hotelName}><input style={inpStyle} value={f.name} onChange={set("name")} /></Field>
@@ -5253,7 +5261,7 @@ function HotelMasterForm({ init, onSave, onClose, t, shootPhases }) {
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
-        <button type="button" onClick={() => onSave({ ...f, room_type_rates: buildRates(), shoot_phase_id: f.shoot_phase_id || null, check_in_time: f.check_in_time || "15:00", check_out_time: f.check_out_time || "11:00", inventory_enabled: f.inventory_enabled || false, room_type_inventory: f.room_type_inventory || {} })} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
+        <button type="button" onClick={() => onSave({ ...f, room_type_rates: buildRates(), shoot_phase_id: f.shoot_phase_id || null, check_in_time: f.check_in_time || "15:00", check_out_time: f.check_out_time || "11:00", inventory_enabled: f.inventory_enabled || false, room_type_inventory: buildInventory() })} disabled={!f.name.trim()} style={pBtn(!f.name.trim())}>{t.save}</button>
       </div>
     </div>
   );
