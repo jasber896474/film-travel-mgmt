@@ -17,6 +17,7 @@
     body{font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif;background:#f2efe8}
     input,select,textarea,button{font-family:'Noto Sans JP',sans-serif}
     @media print{.no-print{display:none!important}body{background:white}@page{size:A4 landscape;margin:10mm}}
+    .person-opt:hover{background:var(--washi)}
   </style>
 </head>
 <body>
@@ -30,6 +31,8 @@ const OWNER_ID = "006bf3d7-934c-4a86-a14c-17757334b618";
 let _token = null;
 
 const SESSION_KEY = "sb_session";
+const IDLE_LIMIT_MS = 60 * 60 * 1000; // 60 分鐘無操作自動登出
+const IDLE_WARN_MS = 60 * 1000;       // 剩 1 分鐘時顯示警告
 
 const saveSession = (res) => {
   localStorage.setItem(SESSION_KEY, JSON.stringify({
@@ -391,6 +394,7 @@ const T = {
     verifyTitle: "驗證信已發送", verifyHint: "管理員審核通過後即可存取專案。", verifyContact: "若有急件請聯絡系統管理員。", toLoginBtn: "返回登入",
     registerFailed: "申請送出失敗，請稍後再試或聯絡管理員。",
     sessionExpiredTitle: "登入已過期", sessionExpiredMsg: "請重新登入以繼續操作。", sessionExpiredBtn: "重新登入",
+    idleWarningTitle: "閒置逾時提醒", idleWarningMsg: "您已閒置一段時間，將於 {n} 秒後自動登出。", idleContinue: "繼續使用", idleLogoutNow: "立即登出",
     projects: "專案列表", newProject: "新增專案", openProject: "開啟", projectName: "專案名稱", projectDesc: "說明（選填）",
     create: "建立", creating: "建立中…", cancel: "取消", save: "儲存", edit: "編輯", delete: "刪除", add: "新增",
     saved: "已儲存", deleted: "已刪除", confirm: "確認",
@@ -540,6 +544,7 @@ const T = {
     registerTitle: "新账号申请", registerBtn: "申请登录", registerName: "姓名（选填）", registerMessage: "申请消息（选填）", registerMessagePh: "所属・职务等", registerPwConfirm: "确认密码",
     verifyTitle: "验证邮件已发送", verifyHint: "管理员审核通过后即可访问项目。", verifyContact: "如有急件请联系系统管理员。", toLoginBtn: "返回登录",
     sessionExpiredTitle: "登录已过期", sessionExpiredMsg: "请重新登录以继续操作。", sessionExpiredBtn: "重新登录",
+    idleWarningTitle: "闲置超时提醒", idleWarningMsg: "您已闲置一段时间，将于 {n} 秒后自动登出。", idleContinue: "继续使用", idleLogoutNow: "立即登出",
     projects: "项目列表", newProject: "新建项目", openProject: "打开", projectName: "项目名称", projectDesc: "说明（选填）",
     create: "创建", creating: "创建中…", cancel: "取消", save: "保存", edit: "编辑", delete: "删除", add: "新增",
     saved: "已保存", deleted: "已删除", confirm: "确认",
@@ -688,6 +693,7 @@ const T = {
     registerTitle: "Register Account", registerBtn: "Request Access", registerName: "Name (optional)", registerMessage: "Message (optional)", registerMessagePh: "Dept, role, etc.", registerPwConfirm: "Confirm password",
     verifyTitle: "Verification Email Sent", verifyHint: "You can access projects after admin approval.", verifyContact: "For urgent requests, contact your system administrator.", toLoginBtn: "Back to Login",
     sessionExpiredTitle: "Session Expired", sessionExpiredMsg: "Please sign in again to continue.", sessionExpiredBtn: "Sign In Again",
+    idleWarningTitle: "Idle Timeout Warning", idleWarningMsg: "You've been inactive. You'll be logged out in {n} seconds.", idleContinue: "Stay Logged In", idleLogoutNow: "Log Out Now",
     projects: "Projects", newProject: "New Project", openProject: "Open", projectName: "Project Name", projectDesc: "Description (optional)",
     create: "Create", creating: "Creating…", cancel: "Cancel", save: "Save", edit: "Edit", delete: "Delete", add: "Add",
     saved: "Saved", deleted: "Deleted", confirm: "Confirm",
@@ -834,6 +840,7 @@ const T = {
     registerTitle: "계정 신청", registerBtn: "접근 요청", registerName: "이름 (선택)", registerMessage: "메시지 (선택)", registerMessagePh: "부서, 직무 등", registerPwConfirm: "비밀번호 확인",
     verifyTitle: "인증 메일 발송", verifyHint: "관리자 승인 후 프로젝트에 접근할 수 있습니다.", verifyContact: "긴급한 경우 시스템 관리자에게 연락하세요.", toLoginBtn: "로그인으로",
     sessionExpiredTitle: "세션 만료", sessionExpiredMsg: "계속하려면 다시 로그인하세요.", sessionExpiredBtn: "다시 로그인",
+    idleWarningTitle: "유휴 시간 초과 경고", idleWarningMsg: "잠시 활동이 없었습니다. {n}초 후 자동 로그아웃됩니다.", idleContinue: "계속 사용", idleLogoutNow: "지금 로그아웃",
     projects: "프로젝트", newProject: "새 프로젝트", openProject: "열기", projectName: "프로젝트명", projectDesc: "설명 (선택)",
     create: "생성", creating: "생성 중…", cancel: "취소", save: "저장", edit: "편집", delete: "삭제", add: "추가",
     saved: "저장됨", deleted: "삭제됨", confirm: "확인",
@@ -979,6 +986,7 @@ const T = {
     registerTitle: "新規登録", registerBtn: "申請する", registerName: "お名前（任意）", registerMessage: "メッセージ（任意）", registerMessagePh: "所属・役職など", registerPwConfirm: "パスワード確認",
     verifyTitle: "確認メール送信", verifyHint: "管理者承認後にアクセスできます。", verifyContact: "お急ぎの場合はシステム管理者へご連絡ください。", toLoginBtn: "ログインへ",
     sessionExpiredTitle: "セッション期限切れ", sessionExpiredMsg: "続行するには再ログインしてください。", sessionExpiredBtn: "再ログイン",
+    idleWarningTitle: "アイドルタイムアウトの警告", idleWarningMsg: "操作がないため、{n}秒後に自動的にログアウトされます。", idleContinue: "続けて使用", idleLogoutNow: "今すぐログアウト",
     projects: "プロジェクト", newProject: "新規", openProject: "開く", projectName: "名称", projectDesc: "説明（任意）",
     create: "作成", creating: "作成中…", cancel: "キャンセル", save: "保存", edit: "編集", delete: "削除", add: "追加",
     saved: "保存しました", deleted: "削除しました", confirm: "確定",
@@ -2691,6 +2699,53 @@ function SessionExpiredModal({ t, onRelogin }) {
   );
 }
 
+/** 右上角閒置自動登出倒數顯示；剩 1 分鐘時彈出警告，使用者操作（含全域監聽）會重設倒數 */
+function IdleGuard({ lastActivityRef, onTimeout, t }) {
+  const [remaining, setRemaining] = useState(IDLE_LIMIT_MS);
+
+  useEffect(() => {
+    const tick = () => {
+      const rem = Math.max(0, IDLE_LIMIT_MS - (Date.now() - lastActivityRef.current));
+      setRemaining(rem);
+      if (rem <= 0) onTimeout();
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const mins = Math.floor(remaining / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+  const warn = remaining <= IDLE_WARN_MS;
+  const stayActive = () => { lastActivityRef.current = Date.now(); };
+
+  return (
+    <>
+      <div title={t.idleWarningTitle} style={{
+        position: "fixed", top: 8, right: 12, zIndex: 90,
+        fontSize: 10, padding: "3px 9px", borderRadius: 10,
+        background: warn ? "var(--shu)" : "rgba(10,10,14,.4)",
+        color: "var(--washi)", letterSpacing: "0.05em",
+        fontFamily: "'Noto Sans JP',sans-serif", pointerEvents: "none",
+        transition: "background .3s",
+      }}>
+        🔒 {pad2(mins)}:{pad2(secs)}
+      </div>
+      {warn && (
+        <Modal title={t.idleWarningTitle} onClose={stayActive}>
+          <p style={{ fontSize: 13, color: "var(--nezumi)", marginBottom: 20, lineHeight: 1.7 }}>
+            {t.idleWarningMsg.replace("{n}", String(Math.max(1, Math.ceil(remaining / 1000))))}
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button type="button" style={{ ...pBtn(false), flex: 1 }} onClick={stayActive}>{t.idleContinue}</button>
+            <button type="button" style={{ ...pBtn(false), flex: 1, background: "var(--kincha)" }} onClick={onTimeout}>{t.idleLogoutNow}</button>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+}
+
 function Modal({ title, onClose, children, wide }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,10,14,0.68)", backdropFilter: "blur(3px)" }}>
@@ -2751,6 +2806,72 @@ function DeptFilter({ depts, value, onChange, allLabel }) {
       <option value="">{allLabel}</option>
       {depts.map((d) => <option key={d} value={d}>{d}</option>)}
     </select>
+  );
+}
+
+/** 可輸入文字搜尋的人員選擇器：選項顯示「編號　姓名」，並依 personIndex 順序排列 */
+function PersonSearchSelect({ persons, personIndex, value, onChange, placeholder, style }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const onDocDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setQuery(""); }
+    };
+    document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, []);
+
+  const padLen = persons.length >= 100 ? 3 : 2;
+  const numOf = (p) => String(personIndex?.[p.id] ?? "").padStart(padLen, "0");
+  const nameOf = (p) => p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim() || "—";
+  const labelOf = (p) => `${numOf(p)}　${nameOf(p)}`;
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return persons;
+    return persons.filter((p) => {
+      const hay = [p.name_kanji, p.last_roman, p.first_roman, numOf(p)].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [persons, query]);
+
+  const selected = persons.find((p) => String(p.id) === String(value));
+
+  return (
+    <div ref={ref} style={{ position: "relative", ...style }}>
+      <input
+        style={inpStyle} className="wa-input"
+        value={open ? query : (selected ? labelOf(selected) : "")}
+        placeholder={placeholder}
+        onFocus={() => { setOpen(true); setQuery(""); }}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") { setOpen(false); setQuery(""); e.target.blur(); }
+          else if (e.key === "Enter" && filtered.length) { onChange(filtered[0].id); setOpen(false); setQuery(""); }
+        }}
+      />
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 2px)", left: 0, right: 0, zIndex: 50,
+          background: "var(--shiro)", border: "1px solid var(--keisenM)", borderRadius: 4,
+          maxHeight: 240, overflowY: "auto", boxShadow: "0 4px 12px rgba(0,0,0,.12)",
+        }}>
+          {filtered.length === 0 && (
+            <div style={{ padding: "8px 12px", fontSize: 12, color: "var(--usunezumi)" }}>—</div>
+          )}
+          {filtered.map((p) => (
+            <div key={p.id} className="person-opt"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { onChange(p.id); setOpen(false); setQuery(""); }}
+              style={{ padding: "7px 12px", fontSize: 13, cursor: "pointer", color: "var(--sumi)" }}>
+              {labelOf(p)}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -7332,10 +7453,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchHotelName} value={searchCHotel} onChange={(e) => setSearchCHotel(e.target.value)} />
                     <input style={{ ...inpStyle, width: "100%" }} className="wa-input" placeholder={t.searchRoomType} value={searchCRoom} onChange={(e) => setSearchCRoom(e.target.value)} />
                     {canEdit && (
-                      <select style={{ ...inpStyle, width: "100%" }} className="wa-input" value={addStayPerson} onChange={(e) => setAddStayPerson(e.target.value)}>
-                        <option value="">{t.addSegment}</option>
-                        {persons.filter((p) => !p.hide_from_stays).map((p) => <option key={p.id} value={p.id}>{p.name_kanji || p.last_roman}</option>)}
-                      </select>
+                      <PersonSearchSelect
+                        persons={persons.filter((p) => !p.hide_from_stays)}
+                        personIndex={personIndex}
+                        value={addStayPerson}
+                        onChange={(id) => setAddStayPerson(String(id))}
+                        placeholder={t.addSegment}
+                        style={{ width: "100%" }}
+                      />
                     )}
                     {canEdit && (
                       <button type="button" style={{ ...pBtn(!addStayPerson), width: "100%" }} disabled={!addStayPerson} onClick={() => { openStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
@@ -8157,11 +8282,45 @@ function App() {
   const [theme, setTheme] = useState(() => (localStorage.getItem("app_theme") === "dark" ? "dark" : "light"));
   const [booting, setBooting] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const lastActivityRef = useRef(Date.now());
 
   useLayoutEffect(() => {
     applyThemeVars(theme);
     localStorage.setItem("app_theme", theme);
   }, [theme]);
+
+  // ── 閒置偵測：監聽全域操作，重設最後活動時間；持續有操作時也順便延長 Supabase session ──
+  useEffect(() => {
+    if (!token) return;
+    const markActive = () => { lastActivityRef.current = Date.now(); };
+    const events = ["mousedown", "keydown", "touchstart", "wheel", "scroll"];
+    events.forEach((ev) => document.addEventListener(ev, markActive, { passive: true }));
+
+    const refreshTimer = setInterval(async () => {
+      const idleFor = Date.now() - lastActivityRef.current;
+      if (idleFor > IDLE_LIMIT_MS) return; // 已閒置過久，交給 IdleGuard 處理登出
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return;
+        const sess = JSON.parse(raw);
+        if (sess.expires_at && Date.now() > sess.expires_at - 120000 && sess.refresh_token) {
+          const refreshed = await api.refresh(sess.refresh_token);
+          if (refreshed.access_token) {
+            saveSession(refreshed);
+            _token = refreshed.access_token;
+            setToken(refreshed.access_token);
+          }
+        }
+      } catch { /* 忽略，交由一般 401 流程處理 */ }
+    }, 5 * 60 * 1000);
+
+    return () => {
+      events.forEach((ev) => document.removeEventListener(ev, markActive));
+      clearInterval(refreshTimer);
+    };
+  }, [token]);
+
+  const handleIdleLogout = () => { api.logout(); clearSession(); window.location.reload(); };
 
   // ── Detect password reset link (type=recovery in URL hash) ──
   const recoveryToken = useMemo(() => {
@@ -8245,8 +8404,9 @@ function App() {
   );
   if (!token) return <><GlobalStyles /><LoginScreen onLogin={(tk, u, l) => applyAuth(tk, u, l)} /></>;
   const handleThemeChange = (m) => setTheme(m === "dark" ? "dark" : "light");
-  if (!project) return <><GlobalStyles /><ProjectSelector user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onSelect={(proj, role) => { setProject(proj); setUserRole(isSystemOwner && !role ? "owner" : role); }} /></>;
-  return <><GlobalStyles /><ProjectApp project={project} userRole={userRole} user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onBack={() => { setProject(null); setUserRole(null); }} onProjectUpdate={setProject} /></>;
+  const idleGuard = <IdleGuard lastActivityRef={lastActivityRef} onTimeout={handleIdleLogout} t={T[lang]} />;
+  if (!project) return <><GlobalStyles />{idleGuard}<ProjectSelector user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onSelect={(proj, role) => { setProject(proj); setUserRole(isSystemOwner && !role ? "owner" : role); }} /></>;
+  return <><GlobalStyles />{idleGuard}<ProjectApp project={project} userRole={userRole} user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onBack={() => { setProject(null); setUserRole(null); }} onProjectUpdate={setProject} /></>;
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
