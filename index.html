@@ -213,6 +213,7 @@ const normalizeStayDate = (val) => {
 function stayFormInit(raw) {
   if (!raw) return null;
   return {
+    id: raw.id,
     hotel_id: String(raw.hotel_id ?? ""),
     room_type: raw.room_type || "Single",
     room_custom: raw.room_custom || "",
@@ -3574,12 +3575,16 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
   );
 }
 
-function getHotelRoomInventory(hotel, roomLabel, allStays, roommates) {
+function getHotelRoomInventory(hotel, roomLabel, allStays, roommates, checkIn, checkOut, excludeStayId) {
   if (!hotel?.inventory_enabled || !hotel?.room_type_inventory) return null;
   const inv = hotel.room_type_inventory;
   const key = inv["All"] !== undefined ? "All" : roomLabel;
   const total = inv[key];
   if (total == null || total === "") return null;
+  // 日期區間尚未填齊時，無法判斷是否重疊，先不顯示庫存狀態
+  if (!checkIn || !checkOut) return null;
+  const ci = String(checkIn).slice(0, 10);
+  const co = String(checkOut).slice(0, 10);
   const rmGroups = roommates && roommates.length ? buildRoommateGroups(roommates) : null;
   const getRoommateRoot = (pid) => {
     if (!rmGroups) return `person:${pid}`;
@@ -3592,9 +3597,16 @@ function getHotelRoomInventory(hotel, roomLabel, allStays, roommates) {
   const used = new Set();
   (allStays || []).forEach((s) => {
     if (+s.hotel_id !== +hotel.id) return;
+    if (excludeStayId != null && s.id === excludeStayId) return;
     const sl = s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "");
     const matchKey = inv["All"] !== undefined ? true : sl === roomLabel;
     if (!matchKey) return;
+    // 日期區間重疊判斷：退房當天視為「不重疊」，可立即讓下一位入住
+    const sCi = String(s.check_in || "").slice(0, 10);
+    const sCo = String(s.check_out || "").slice(0, 10);
+    if (!sCi || !sCo) return;
+    const overlaps = sCi < co && ci < sCo;
+    if (!overlaps) return;
     if (s.special_room_name) used.add(`special:${s.id}`);
     else if ((s.room_number || "").trim()) used.add(`room:${(s.room_number||"").trim()}`);
     else if (s.person_id != null) used.add(getRoommateRoot(s.person_id));
@@ -3686,14 +3698,14 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
           <select style={inpStyle} value={roomSelectValue} onChange={handleRoomTypeChange} disabled={!f.hotel_id}>
             {!f.hotel_id && <option value="">--</option>}
             {roomTypeOptions.map((rt) => {
-              const inv = getHotelRoomInventory(selectedHotel, rt, allStays, roommates);
+              const inv = getHotelRoomInventory(selectedHotel, rt, allStays, roommates, f.check_in, f.check_out, init?.id);
               const isFull = inv && inv.remaining <= 0;
               const label = inv ? (isFull ? `${rt} ⛔ 已滿 ${inv.used}/${inv.total}` : inv.remaining <= 2 ? `${rt} ⚠ 剩 ${inv.remaining} 間` : `${rt} (${inv.remaining} 間)`) : rt;
               return <option key={rt} value={rt} disabled={isFull}>{label}</option>;
             })}
           </select>
           {(() => {
-            const inv = getHotelRoomInventory(selectedHotel, roomSelectValue, allStays, roommates);
+            const inv = getHotelRoomInventory(selectedHotel, roomSelectValue, allStays, roommates, f.check_in, f.check_out, init?.id);
             if (!inv) return null;
             const isFull = inv.remaining <= 0;
             const isWarn = !isFull && inv.remaining <= 2;
