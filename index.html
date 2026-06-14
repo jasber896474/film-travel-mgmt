@@ -508,7 +508,7 @@ const T = {
     resetPwTitle: "設定新密碼", newPw: "新密碼", confirmNewPw: "確認新密碼", resetPwBtn: "更新密碼",
     resetPwSuccess: "密碼已更新，請重新登入", backToLogin: "返回登入",
     langSelectLabel: "選擇語言（登入後鎖定）", langLockHint: "登入後語系將固定，如需切換請重新登入",
-    errEmailPw: "請輸入電子郵件和密碼", errPwMatch: "密碼不一致", errPwLen: "密碼請輸入6位以上",
+    errEmailPw: "請輸入電子郵件和密碼", errPwMatch: "密碼不一致", errPwLen: "密碼請輸入6位以上", errLoginFailed: "登入失敗，請確認帳號密碼", errEmailNotConfirmed: "信箱尚未驗證，請查看您的電子郵件並點擊驗證連結後再登入",
     memberAdd: "新增成員", memberCurrent: "目前成員（{n} 人）", memberAlready: "此用戶已是成員", memberSelf: "無法移除自己",
     memberUidHint: "請輸入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查詢 User ID", memberUidInfo: "→ Authentication → Users → 複製 UUID", memberAddBtn: "加入",
     stayRequired: "請選擇飯店並填寫入住/退房日期", syncRoommateTitle: "同步同室者住宿", syncRoommateMsg: "是否同步更新同室者的飯店、房型與日期？",
@@ -658,7 +658,7 @@ const T = {
     resetPwTitle: "设定新密码", newPw: "新密码", confirmNewPw: "确认新密码", resetPwBtn: "更新密码",
     resetPwSuccess: "密码已更新，请重新登录", backToLogin: "返回登录",
     langSelectLabel: "选择语言（登录后锁定）", langLockHint: "登录后语言将固定，如需切换请重新登录",
-    errEmailPw: "请输入电子邮件和密码", errPwMatch: "密码不一致", errPwLen: "密码请输入6位以上",
+    errEmailPw: "请输入电子邮件和密码", errPwMatch: "密码不一致", errPwLen: "密码请输入6位以上", errLoginFailed: "登录失败，请确认账号密码", errEmailNotConfirmed: "邮箱尚未验证，请查看您的电子邮件并点击验证链接后再登录",
     memberAdd: "新增成员", memberCurrent: "当前成员（{n} 人）", memberAlready: "该用户已是成员", memberSelf: "无法移除自己",
     memberUidHint: "请输入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查询 User ID", memberUidInfo: "→ Authentication → Users → 复制 UUID", memberAddBtn: "加入",
     stayRequired: "请选择饭店并填写入住/退房日期", syncRoommateTitle: "同步同住者住宿", syncRoommateMsg: "是否同步更新同住者的饭店、房型与日期？",
@@ -806,7 +806,7 @@ const T = {
     resetPwTitle: "Set New Password", newPw: "New Password", confirmNewPw: "Confirm New Password", resetPwBtn: "Update Password",
     resetPwSuccess: "Password updated. Please sign in.", backToLogin: "Back to Login",
     langSelectLabel: "Language (locked after login)", langLockHint: "Language is fixed after login. Sign out to change.",
-    errEmailPw: "Enter email and password", errPwMatch: "Passwords do not match", errPwLen: "Password must be at least 6 characters",
+    errEmailPw: "Enter email and password", errPwMatch: "Passwords do not match", errPwLen: "Password must be at least 6 characters", errLoginFailed: "Login failed. Please check your email and password.", errEmailNotConfirmed: "Email not confirmed yet. Please check your inbox and click the confirmation link before signing in.",
     memberAdd: "Add Member", memberCurrent: "Members ({n})", memberAlready: "Already a member", memberSelf: "Cannot remove yourself",
     memberUidHint: "Enter User ID from Supabase Auth.", memberUidLabel: "Find User ID", memberUidInfo: "→ Authentication → Users → copy UUID", memberAddBtn: "Add",
     stayRequired: "Select hotel and dates", syncRoommateTitle: "Sync roommates", syncRoommateMsg: "Sync hotel, room type and dates for roommates?",
@@ -953,7 +953,7 @@ const T = {
     resetPwTitle: "새 비밀번호 설정", newPw: "새 비밀번호", confirmNewPw: "비밀번호 확인", resetPwBtn: "비밀번호 업데이트",
     resetPwSuccess: "비밀번호가 업데이트되었습니다. 다시 로그인하세요.", backToLogin: "로그인으로 돌아가기",
     langSelectLabel: "언어 선택 (로그인 후 고정)", langLockHint: "로그인 후 언어가 고정됩니다. 변경하려면 다시 로그인하세요.",
-    errEmailPw: "이메일과 비밀번호를 입력하세요", errPwMatch: "비밀번호가 일치하지 않습니다", errPwLen: "6자 이상 입력하세요",
+    errEmailPw: "이메일과 비밀번호를 입력하세요", errPwMatch: "비밀번호가 일치하지 않습니다", errPwLen: "6자 이상 입력하세요", errLoginFailed: "로그인 실패. 이메일과 비밀번호를 확인하세요.", errEmailNotConfirmed: "이메일이 아직 인증되지 않았습니다. 받은 메일에서 인증 링크를 클릭한 후 로그인해 주세요.",
     memberAdd: "멤버 추가", memberCurrent: "현재 멤버 ({n}명)", memberAlready: "이미 멤버입니다", memberSelf: "본인은 삭제할 수 없습니다",
     memberUidHint: "Supabase Authentication의 User ID를 입력하세요.", memberUidLabel: "User ID 확인 방법", memberUidInfo: "→ Authentication → Users → UUID 복사", memberAddBtn: "추가",
     stayRequired: "호텔과 날짜를 입력하세요", syncRoommateTitle: "룸메이트 동기화", syncRoommateMsg: "룸메이트의 호텔·객실·날짜를 동기화하시겠습니까?",
@@ -1099,7 +1099,7 @@ const T = {
     resetPwTitle: "新しいパスワードを設定", newPw: "新しいパスワード", confirmNewPw: "パスワードの確認", resetPwBtn: "パスワードを更新",
     resetPwSuccess: "パスワードを更新しました。再度ログインしてください。", backToLogin: "ログインに戻る",
     langSelectLabel: "言語選択（ログイン後に固定）", langLockHint: "ログイン後は言語が固定されます。変更するには再ログインしてください。",
-    errEmailPw: "メールとパスワード", errPwMatch: "不一致", errPwLen: "6文字以上",
+    errEmailPw: "メールとパスワード", errPwMatch: "不一致", errPwLen: "6文字以上", errLoginFailed: "ログインに失敗しました。メールとパスワードをご確認ください。", errEmailNotConfirmed: "メールアドレスが未確認です。受信したメールの確認リンクをクリックしてからログインしてください。",
     memberAdd: "追加", memberCurrent: "メンバー（{n}）", memberAlready: "追加済", memberSelf: "自分は不可",
     memberUidHint: "User ID", memberUidLabel: "User ID", memberUidInfo: "→ Authentication → Users", memberAddBtn: "追加",
     stayRequired: "ホテルと日付", syncRoommateTitle: "同室者同期", syncRoommateMsg: "同室者の宿泊を同期しますか？",
@@ -5841,7 +5841,9 @@ function LoginScreen({ onLogin }) {
         _token = res.access_token;
         localStorage.setItem("app_lang", lang);
         onLogin(res.access_token, res.user, lang);
-      } else setError(res.error_description || res.message || "Login failed");
+      } else if (res.error_code === "email_not_confirmed") {
+        setError(t.errEmailNotConfirmed);
+      } else setError(res.error_description || res.msg || res.message || t.errLoginFailed);
     } catch (e) { setError(String(e.message)); } finally { setLoading(false); }
   };
 
@@ -5866,7 +5868,7 @@ function LoginScreen({ onLogin }) {
       const reqToken = res.access_token || SUPABASE_KEY;
       const reqRes = await fetch(`${SUPABASE_URL}/rest/v1/user_requests`, {
         method: "POST",
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${reqToken}`, "Content-Type": "application/json", Prefer: "return=representation" },
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${reqToken}`, "Content-Type": "application/json", Prefer: "return=minimal" },
         body: JSON.stringify(reqBody),
       });
       if (!reqRes.ok) throw new Error(parseApiError(await reqRes.text(), reqRes.status));
