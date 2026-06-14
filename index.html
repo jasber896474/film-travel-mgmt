@@ -405,8 +405,8 @@ const T = {
     invoiceModeMergedHint: "跟飯店帳單一樣：同一段入住時間、同一種房型會合成一行，方便逐項對金額。",
     invoiceModePerRoomHint: "一間房（或一個人）一行，適合查「這間房／這個人」是怎麼算出來的。",
     invoiceModeDiffHint: "兩種看法的總額有時會差一點，多半是房號還沒填好，或同房的入住日期對不上。要跟飯店對帳，請用「飯店合併」。",
-    invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "計價明細",
-    invoiceSubtotal: "房費小計", invoiceSegmentSubtotal: "段小計", invoiceRooms: "間", invoiceNights: "晚",
+    invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "計價明細", invoiceQuantity: "間數",
+    invoiceSubtotal: "房費小計", invoiceSegmentSubtotal: "段小計", invoiceMultiRate: "依日期分段計價", invoiceRooms: "間", invoiceNights: "晚",
     invoiceDateRange: "至", invoicePrint: "列印核對表",
     invoiceNoData: "尚無住宿資料可對帳", invoiceAvgRate: "均價",
     staffList: "工作人員列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "飯店清單",
@@ -433,7 +433,7 @@ const T = {
     hideFromVehiclesHint: "開啟後，此人不顯示於派車配置與每日配車單",
     hideFromFlightsHint: "開啟後，此人不顯示於航班管理名單（不需安排機票者適用）",
     flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班機", flightDiffFlight: "分批搭機", collapseAll: "全部摺疊", expandAll: "全部展開",
-    groupByDept: "依部門", warnFilter: "警示", warnFilterTitle: "顯示警示種類", selectAll: "全選", deselectAll: "取消全選", printSelectHotels: "選擇要列印的飯店", printSelectHint: "未勾選的飯店不會出現在列印結果中。每間飯店會自動從新的一頁開始。", confirmPrint: "確認列印", printShowGuests: "顯示房號入住人員", printShowGuestsHint: "在合併模式下，列印時於每筆房型下方列出各房號入住的人員姓名，方便告知飯店每個房間住的是誰。", printIncludeAmount: "包含金額", printIncludeAmountHint: "取消勾選會隱藏所有金額（計價明細、小計、總計），只保留日期、房型、間數與晚數，適合先跟飯店核對房況再各自核對金額。",
+    groupByDept: "依部門", warnFilter: "警示", warnFilterTitle: "顯示警示種類", selectAll: "全選", deselectAll: "取消全選", printSelectHotels: "選擇要列印的飯店", printSelectHint: "未勾選的飯店不會出現在列印結果中。每間飯店會自動從新的一頁開始。", confirmPrint: "確認列印", printShowGuests: "顯示房號入住人員", printShowGuestsHint: "在合併模式下，列印時於每筆房型下方列出各房號入住的人員姓名，方便告知飯店每個房間住的是誰。", printIncludeAmount: "包含金額", printIncludeAmountHint: "取消勾選會隱藏所有金額（計價明細、小計、總計），只保留日期、房型、間數與晚數，適合先跟飯店核對房況再各自核對金額。", printShowSegments: "展開分段計價明細", printShowSegmentsHint: "若同一住宿段內因跨日房價不同而分成多段，勾選後會列印每段的單價與段小計；不勾選則只顯示這一段的房費小計總額。",
     arrTimePickup: "抵達時間 ↓接機",
     flightUngrouped: "未分組／資料未完成",
     flightGroupPeople: "人",
@@ -555,8 +555,8 @@ const T = {
     invoiceModeMergedHint: "跟饭店账单一样：同一段入住时间、同一种房型会合成一行，方便逐项对金额。",
     invoiceModePerRoomHint: "一间房（或一个人）一行，适合查「这间房／这个人」是怎么算出来的。",
     invoiceModeDiffHint: "两种看法的总额有时会差一点，多半是房号还没填好，或同房的入住日期对不上。要跟饭店对账，请用「饭店合并」。",
-    invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "计价明细",
-    invoiceSubtotal: "房费小计", invoiceSegmentSubtotal: "段小计", invoiceRooms: "间", invoiceNights: "晚",
+    invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "计价明细", invoiceQuantity: "间数",
+    invoiceSubtotal: "房费小计", invoiceSegmentSubtotal: "段小计", invoiceMultiRate: "依日期分段计价", invoiceRooms: "间", invoiceNights: "晚",
     invoiceDateRange: "至", invoicePrint: "打印核对表",
     invoiceNoData: "暂无住宿数据可对账", invoiceAvgRate: "均价",
     staffList: "工作人员列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "饭店列表",
@@ -583,7 +583,7 @@ const T = {
     hideFromVehiclesHint: "开启后，此人不显示于派车配置与每日配车单",
     hideFromFlightsHint: "开启后，此人不显示于航班管理名单（不需安排机票者适用）",
     flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班机", flightDiffFlight: "分批搭机", collapseAll: "全部折叠", expandAll: "全部展开",
-    groupByDept: "依部门", warnFilter: "警示", warnFilterTitle: "显示警示种类", selectAll: "全选", deselectAll: "取消全选", printSelectHotels: "选择要打印的酒店", printSelectHint: "未勾选的酒店不会出现在打印结果中。每间酒店会自动从新的一页开始。", confirmPrint: "确认打印", printShowGuests: "显示房号入住人员", printShowGuestsHint: "在合并模式下，打印时于每笔房型下方列出各房号入住的人员姓名，方便告知酒店每个房间住的是谁。", printIncludeAmount: "包含金额", printIncludeAmountHint: "取消勾选会隐藏所有金额（计价明细、小计、总计），只保留日期、房型、间数与晚数，适合先跟酒店核对房况再各自核对金额。",
+    groupByDept: "依部门", warnFilter: "警示", warnFilterTitle: "显示警示种类", selectAll: "全选", deselectAll: "取消全选", printSelectHotels: "选择要打印的酒店", printSelectHint: "未勾选的酒店不会出现在打印结果中。每间酒店会自动从新的一页开始。", confirmPrint: "确认打印", printShowGuests: "显示房号入住人员", printShowGuestsHint: "在合并模式下，打印时于每笔房型下方列出各房号入住的人员姓名，方便告知酒店每个房间住的是谁。", printIncludeAmount: "包含金额", printIncludeAmountHint: "取消勾选会隐藏所有金额（计价明细、小计、总计），只保留日期、房型、间数与晚数，适合先跟酒店核对房况再各自核对金额。", printShowSegments: "展开分段计价明细", printShowSegmentsHint: "若同一住宿段内因跨日房价不同而分成多段，勾选后会打印每段的单价与段小计；不勾选则只显示这一段的房费小计总额。",
     arrTimePickup: "抵达时间 ↓接机",
     flightUngrouped: "未分组／资料未完成",
     flightGroupPeople: "人",
@@ -704,8 +704,8 @@ const T = {
     invoiceModeMergedHint: "Like the hotel’s invoice: same stay dates and room type on one line — easy to compare totals.",
     invoiceModePerRoomHint: "One line per room (or person) — good for checking how a specific room was priced.",
     invoiceModeDiffHint: "Totals may differ slightly — often missing room numbers or mismatched dates. Use Hotel summary when reconciling with the hotel.",
-    invoiceBatch: "Batch", invoiceRoomType: "Room Type", invoiceFormula: "Pricing Detail",
-    invoiceSubtotal: "Subtotal", invoiceSegmentSubtotal: "Segment subtotal", invoiceRooms: "rm", invoiceNights: "nts",
+    invoiceBatch: "Batch", invoiceRoomType: "Room Type", invoiceFormula: "Pricing Detail", invoiceQuantity: "Rooms / Nights",
+    invoiceSubtotal: "Subtotal", invoiceSegmentSubtotal: "Segment subtotal", invoiceMultiRate: "Rate varies by date", invoiceRooms: "rm", invoiceNights: "nts",
     invoiceDateRange: "to", invoicePrint: "Print Checklist",
     invoiceNoData: "No stay data available for invoicing", invoiceAvgRate: "avg",
     staffList: "Staff List", flightMgmt: "Flight Management", hotelMgmt: "Accommodation", hotelList: "Hotel List",
@@ -732,7 +732,7 @@ const T = {
     hideFromVehiclesHint: "When on, this person won't appear in vehicle assignments",
     hideFromFlightsHint: "When on, this person won't appear in the flight list (no ticket needed)",
     flightOutbound: "Outbound", flightReturn: "Return", flightSameFlight: "Same flight", flightDiffFlight: "Split flights", collapseAll: "Collapse All", expandAll: "Expand All",
-    groupByDept: "By Dept", warnFilter: "Warnings", warnFilterTitle: "Show warning types", selectAll: "Select all", deselectAll: "Deselect all", printSelectHotels: "Select hotels to print", printSelectHint: "Unchecked hotels will not appear in the printout. Each hotel starts on a new page.", confirmPrint: "Confirm print", printShowGuests: "Show guests per room", printShowGuestsHint: "In merged mode, list each room\u2019s occupant names under the room line, so the hotel knows who stays in which room.", printIncludeAmount: "Include amounts", printIncludeAmountHint: "Uncheck to hide all prices (pricing detail, subtotals, total) and keep only dates, room types, room counts and nights \u2014 useful for checking room details with the hotel before reconciling amounts separately.",
+    groupByDept: "By Dept", warnFilter: "Warnings", warnFilterTitle: "Show warning types", selectAll: "Select all", deselectAll: "Deselect all", printSelectHotels: "Select hotels to print", printSelectHint: "Unchecked hotels will not appear in the printout. Each hotel starts on a new page.", confirmPrint: "Confirm print", printShowGuests: "Show guests per room", printShowGuestsHint: "In merged mode, list each room\u2019s occupant names under the room line, so the hotel knows who stays in which room.", printIncludeAmount: "Include amounts", printIncludeAmountHint: "Uncheck to hide all prices (pricing detail, subtotals, total) and keep only dates, room types, room counts and nights \u2014 useful for checking room details with the hotel before reconciling amounts separately.", printShowSegments: "Show price-segment breakdown", printShowSegmentsHint: "If a stay is split into multiple rate periods due to date-based pricing, checking this prints each period's unit price and subtotal; unchecked shows only the combined subtotal for that stay.",
     arrTimePickup: "Arrival ↓ pickup",
     flightUngrouped: "Ungrouped / incomplete",
     flightGroupPeople: "pax",
@@ -851,8 +851,8 @@ const T = {
     invoiceModeMergedHint: "호텔 청구서와 같습니다. 같은 숙박 기간·같은 객실 유형을 한 줄로 묶어 금액을 대조하기 쉽습니다.",
     invoiceModePerRoomHint: "객실(또는 1인)당 한 줄 — 특정 객실·특정 인원 요금을 확인할 때 좋습니다.",
     invoiceModeDiffHint: "두 방식의 합계가 조금 다를 수 있습니다. 객실 번호 미입력·숙박 날짜 불일치가 흔한 원인입니다. 호텔과 대조할 때는 「호텔 합산」을 사용하세요.",
-    invoiceBatch: "일괄", invoiceRoomType: "객실 유형", invoiceFormula: "요금 내역",
-    invoiceSubtotal: "소계", invoiceSegmentSubtotal: "구간 소계", invoiceRooms: "실", invoiceNights: "박",
+    invoiceBatch: "일괄", invoiceRoomType: "객실 유형", invoiceFormula: "요금 내역", invoiceQuantity: "객실수",
+    invoiceSubtotal: "소계", invoiceSegmentSubtotal: "구간 소계", invoiceMultiRate: "날짜별 요금 다름", invoiceRooms: "실", invoiceNights: "박",
     invoiceDateRange: "~", invoicePrint: "대조표 인쇄",
     invoiceNoData: "청구할 숙박 데이터가 없습니다", invoiceAvgRate: "평균",
     staffList: "스태프 목록", flightMgmt: "항공 관리", hotelMgmt: "숙박 관리", hotelList: "호텔 목록",
@@ -879,7 +879,7 @@ const T = {
     hideFromVehiclesHint: "켜면 차량 배정 목록에서 표시되지 않습니다",
     hideFromFlightsHint: "켜면 항공 관리 목록에서 숨겨집니다 (항공권 불필요)",
     flightOutbound: "출국", flightReturn: "귀국", flightSameFlight: "동일 항공편", flightDiffFlight: "분산 탑승", collapseAll: "전체 접기", expandAll: "전체 펼치기",
-    groupByDept: "부서별", warnFilter: "경고", warnFilterTitle: "경고 표시 유형", selectAll: "전체 선택", deselectAll: "전체 해제", printSelectHotels: "인쇄할 호텔 선택", printSelectHint: "선택하지 않은 호텔은 인쇄 결과에 나타나지 않습니다. 각 호텔은 새 페이지에서 시작됩니다.", confirmPrint: "인쇄 확인", printShowGuests: "객실별 투숙객 표시", printShowGuestsHint: "병합 모드에서 인쇄 시 각 객실 아래에 투숙객 이름을 표시하여 호텔에 어느 방에 누가 묵는지 알려줍니다.", printIncludeAmount: "금액 포함", printIncludeAmountHint: "선택 해제 시 모든 금액(요금 내역, 소계, 총계)을 숨기고 날짜, 객실 유형, 객실 수, 숙박일만 표시합니다. 호텔과 객실 현황을 먼저 대조한 뒤 금액을 따로 확인할 때 유용합니다.",
+    groupByDept: "부서별", warnFilter: "경고", warnFilterTitle: "경고 표시 유형", selectAll: "전체 선택", deselectAll: "전체 해제", printSelectHotels: "인쇄할 호텔 선택", printSelectHint: "선택하지 않은 호텔은 인쇄 결과에 나타나지 않습니다. 각 호텔은 새 페이지에서 시작됩니다.", confirmPrint: "인쇄 확인", printShowGuests: "객실별 투숙객 표시", printShowGuestsHint: "병합 모드에서 인쇄 시 각 객실 아래에 투숙객 이름을 표시하여 호텔에 어느 방에 누가 묵는지 알려줍니다.", printIncludeAmount: "금액 포함", printIncludeAmountHint: "선택 해제 시 모든 금액(요금 내역, 소계, 총계)을 숨기고 날짜, 객실 유형, 객실 수, 숙박일만 표시합니다. 호텔과 객실 현황을 먼저 대조한 뒤 금액을 따로 확인할 때 유용합니다.", printShowSegments: "구간별 요금 내역 표시", printShowSegmentsHint: "날짜별 요금 차이로 한 숙박 구간이 여러 구간으로 나뉘는 경우, 체크하면 각 구간의 단가와 소계를 인쇄합니다. 체크 해제 시 해당 구간의 합산 소계만 표시됩니다.",
     arrTimePickup: "도착 ↓ 픽업",
     flightUngrouped: "미분류／미완료",
     flightGroupPeople: "명",
@@ -997,8 +997,8 @@ const T = {
     invoiceModeMergedHint: "ホテルの請求書と同じ考え方です。同じ宿泊期間・同じ部屋タイプを1行にまとめ、金額の照合がしやすくなります。",
     invoiceModePerRoomHint: "1部屋（または1人）1行 — 特定の部屋・人の料金を確認するとき向けです。",
     invoiceModeDiffHint: "2つの見方で合計が少しずれることがあります。部屋番号未入力・宿泊日の不一致がよくある原因です。ホテルとの照合は「ホテル合算」を使ってください。",
-    invoiceBatch: "バッチ", invoiceRoomType: "部屋タイプ", invoiceFormula: "料金内訳",
-    invoiceSubtotal: "小計", invoiceSegmentSubtotal: "区間小計", invoiceRooms: "室", invoiceNights: "泊",
+    invoiceBatch: "バッチ", invoiceRoomType: "部屋タイプ", invoiceFormula: "料金内訳", invoiceQuantity: "室数",
+    invoiceSubtotal: "小計", invoiceSegmentSubtotal: "区間小計", invoiceMultiRate: "日付により料金が異なります", invoiceRooms: "室", invoiceNights: "泊",
     invoiceDateRange: "〜", invoicePrint: "照合表を印刷",
     invoiceNoData: "請求できる宿泊データがありません", invoiceAvgRate: "平均",
     staffList: "スタッフ", flightMgmt: "フライト管理", hotelMgmt: "宿泊管理", hotelList: "ホテル",
@@ -1025,7 +1025,7 @@ const T = {
     hideFromVehiclesHint: "オンにすると配車リストから非表示になります",
     hideFromFlightsHint: "オンにするとフライト管理リストから非表示（航空券不要の場合）",
     flightOutbound: "往路", flightReturn: "復路", flightSameFlight: "同フライト", flightDiffFlight: "別フライト", collapseAll: "すべて折りたたむ", expandAll: "すべて展開",
-    groupByDept: "部署別", warnFilter: "警告", warnFilterTitle: "警告種類", selectAll: "全選択", deselectAll: "選択解除", printSelectHotels: "印刷するホテルを選択", printSelectHint: "チェックを外したホテルは印刷結果に表示されません。各ホテルは新しいページから始まります。", confirmPrint: "印刷確認", printShowGuests: "部屋ごとの宿泊者を表示", printShowGuestsHint: "統合モードで印刷時、各部屋の下に宿泊者名を表示し、ホテルにどの部屋に誰が泊まるか伝えます。", printIncludeAmount: "金額を含める", printIncludeAmountHint: "チェックを外すと金額（料金内訳・小計・合計）をすべて非表示にし、日付・部屋タイプ・部屋数・泊数のみ表示します。ホテルと部屋の状況を先に確認し、金額は別途照合する場合に便利です。",
+    groupByDept: "部署別", warnFilter: "警告", warnFilterTitle: "警告種類", selectAll: "全選択", deselectAll: "選択解除", printSelectHotels: "印刷するホテルを選択", printSelectHint: "チェックを外したホテルは印刷結果に表示されません。各ホテルは新しいページから始まります。", confirmPrint: "印刷確認", printShowGuests: "部屋ごとの宿泊者を表示", printShowGuestsHint: "統合モードで印刷時、各部屋の下に宿泊者名を表示し、ホテルにどの部屋に誰が泊まるか伝えます。", printIncludeAmount: "金額を含める", printIncludeAmountHint: "チェックを外すと金額（料金内訳・小計・合計）をすべて非表示にし、日付・部屋タイプ・部屋数・泊数のみ表示します。ホテルと部屋の状況を先に確認し、金額は別途照合する場合に便利です。", printShowSegments: "区間別料金内訳を表示", printShowSegmentsHint: "日付により料金が異なるため宿泊期間が複数の区間に分かれる場合、チェックすると各区間の単価と小計を印刷します。チェックを外すとその期間の合計小計のみ表示されます。",
     arrTimePickup: "到着 ↓送迎",
     flightUngrouped: "未分類／未入力",
     flightGroupPeople: "名",
@@ -4774,6 +4774,7 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
   const [printSelected, setPrintSelected] = useState(null);
   const [printShowGuests, setPrintShowGuests] = useState(false);
   const [printIncludeAmount, setPrintIncludeAmount] = useState(true);
+  const [printShowSegments, setPrintShowSegments] = useState(false);
   const staysWithName = useMemo(() => stays.map((s) => {
     if (!s.person_id || !persons) return s;
     const p = persons.find((x) => x.id === s.person_id);
@@ -4803,27 +4804,45 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
     >{label}</button>
   );
 
-  const handlePrint = (selectedHids, showGuests, includeAmount) => {
+  const handlePrint = (selectedHids, showGuests, includeAmount, showSegments) => {
     const printData = selectedHids ? data.filter((hd) => selectedHids.has(String(hd.hid))) : data;
     const printTotal = printData.reduce((s, h) => s + h.hotelTotal, 0);
-    const colCount = includeAmount ? 4 : 2;
+    const colCount = includeAmount ? 4 : 3;
     const rows = printData.map((hd, idx) => {
       const batchRows = hd.batches.map((b, i) => {
         const segments = b.segments || [b];
         const multiSeg = segments.length > 1;
-        const segRows = segments.map((seg) => `
+        const expandSegments = multiSeg && includeAmount && showSegments;
+        const occupancyCell = (seg) => includeAmount
+          ? `${formatMoney(convertMoney(seg.unitPrice, project), project, lang)} × ${b.roomCount} ${t.invoiceRooms} × ${seg.nights} ${t.invoiceNights}`
+          : `${b.roomCount} ${t.invoiceRooms} × ${seg.nights} ${t.invoiceNights}`;
+        let mainRows;
+        if (expandSegments) {
+          const segRows = segments.map((seg) => `
         <tr style="break-inside:avoid;">
           <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${seg.check_in} ${t.invoiceDateRange} ${seg.check_out}<br><small style="color:#666;">(${t.nights || "共"} ${seg.nights} ${t.invoiceNights})</small></td>
           <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}${b.subLabel ? `<br><small style="color:#666;">${b.subLabel}</small>` : ""}</td>
-          ${includeAmount ? `<td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(seg.unitPrice, project), project, lang)} × ${b.roomCount} ${t.invoiceRooms} × ${seg.nights} ${t.invoiceNights}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(seg.batchTotal, project), project, lang)}</td>` : ""}
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${occupancyCell(seg)}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(seg.batchTotal, project), project, lang)}</td>
         </tr>`).join("");
-        const subtotalRow = multiSeg && includeAmount ? `
+          const subtotalRow = `
         <tr style="break-inside:avoid;font-style:italic;">
           <td colspan="2" style="padding:6px 12px;border-bottom:1px solid #e0ebe4;color:#666;font-size:9pt;">${t.invoiceSegmentSubtotal}</td>
           <td colspan="2" style="padding:6px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;color:#666;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.batchTotal, project), project, lang)}</td>
-        </tr>` : "";
-        const mainRows = segRows + subtotalRow;
+        </tr>`;
+          mainRows = segRows + subtotalRow;
+        } else {
+          const occ = multiSeg
+            ? `${b.roomCount} ${t.invoiceRooms} × ${b.nights} ${t.invoiceNights}${includeAmount ? `<br><small style="color:#999;">(${t.invoiceMultiRate})</small>` : ""}`
+            : occupancyCell(segments[0]);
+          mainRows = `
+        <tr style="break-inside:avoid;">
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.check_in} ${t.invoiceDateRange} ${b.check_out}<br><small style="color:#666;">(${t.nights || "共"} ${b.nights} ${t.invoiceNights})</small></td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}${b.subLabel ? `<br><small style="color:#666;">${b.subLabel}</small>` : ""}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${occ}</td>
+          ${includeAmount ? `<td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.batchTotal, project), project, lang)}</td>` : ""}
+        </tr>`;
+        }
         if (!showGuests || !b.roomGroups || !b.roomGroups.length) return mainRows;
         const guestLines = b.roomGroups.map((g) => {
           const names = g.stays.map((s) => s.special_room_name ? `🏷 ${s.special_room_name}` : (s._personName || "—")).join("、");
@@ -4841,13 +4860,10 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
                 <td colspan="3" style="padding:10px 12px;font-weight:700;font-size:10pt;">${t.invoiceSubtotal}</td>
                 <td style="padding:10px 12px;text-align:right;font-weight:800;font-size:12pt;color:#1a3028;">${formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}</td>
               </tr>` : "";
-      const headCols = includeAmount
-        ? `<th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.nights}數 / 日期</th>
+      const headCols = `<th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.nights}數 / 日期</th>
                 <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceRoomType}</th>
-                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceFormula}</th>
-                <th style="padding:8px 12px;text-align:right;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceSubtotal}</th>`
-        : `<th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.nights}數 / 日期</th>
-                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceRoomType}</th>`;
+                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${includeAmount ? t.invoiceFormula : t.invoiceQuantity}</th>${includeAmount ? `
+                <th style="padding:8px 12px;text-align:right;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceSubtotal}</th>` : ""}`;
       return `
         <div style="margin-bottom:28px;${pageBreak}">
           <div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:10px 16px;border-radius:6px 6px 0 0;font-size:13pt;font-family:'Noto Serif JP',serif;font-weight:600;break-after:avoid;break-inside:avoid;">${hd.hotel?.name || "—"}</div>
@@ -4974,81 +4990,92 @@ ${rows}${totalBanner}
                   const segments = b.segments || [b];
                   const multiSeg = segments.length > 1;
                   const roomGroups = b.roomGroups;
+                  const expandable = multiSeg || !!roomGroups;
+                  const isExpanded = expandable && expandedBatch === rowKey;
                   return (
                     <React.Fragment key={rowKey}>
-                      {segments.map((seg, si) => {
-                        const isLast = si === segments.length - 1;
-                        const expandable = isLast && !!roomGroups;
-                        return (
-                          <tr
-                            key={si}
-                            style={{ background: i % 2 === 0 ? "var(--shiro)" : "var(--washi)", borderBottom: (multiSeg || !expandable) ? "1px solid var(--keisenL)" : "none", cursor: expandable && !multiSeg ? "pointer" : "default" }}
-                            onClick={expandable && !multiSeg ? () => setExpandedBatch((prev) => prev === rowKey ? null : rowKey) : undefined}
-                          >
-                            <td style={{ padding: "11px 14px", verticalAlign: "top" }}>
-                              <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
-                                {fmtDate(seg.check_in, lang)} {t.invoiceDateRange} {fmtDate(seg.check_out, lang)}
-                              </div>
-                              <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 3, fontWeight: 600 }}>{seg.nights} {t.invoiceNights}</div>
-                            </td>
-                            <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>
-                              {b.roomLabel}
-                              {b.subLabel && <div style={{ fontSize: 10.5, color: "var(--nezumi)", marginTop: 3 }}>{b.subLabel}</div>}
-                            </td>
-                            <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
-                              <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(seg.unitPrice, project), project, lang)}</span>
+                      <tr
+                        style={{ background: i % 2 === 0 ? "var(--shiro)" : "var(--washi)", borderBottom: "1px solid var(--keisenL)", cursor: expandable ? "pointer" : "default" }}
+                        onClick={expandable ? () => setExpandedBatch((prev) => prev === rowKey ? null : rowKey) : undefined}
+                      >
+                        <td style={{ padding: "11px 14px", verticalAlign: "top" }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
+                            {fmtDate(b.check_in, lang)} {t.invoiceDateRange} {fmtDate(b.check_out, lang)}
+                          </div>
+                          <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 3, fontWeight: 600 }}>{b.nights} {t.invoiceNights}</div>
+                        </td>
+                        <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>
+                          {b.roomLabel}
+                          {b.subLabel && <div style={{ fontSize: 10.5, color: "var(--nezumi)", marginTop: 3 }}>{b.subLabel}</div>}
+                        </td>
+                        <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
+                          {!multiSeg ? (
+                            <>
+                              <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(segments[0].unitPrice, project), project, lang)}</span>
                               <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
                               <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
                               <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
-                              <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{seg.nights} {t.invoiceNights}</span>
-                            </td>
-                            <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, fontSize: 13, color: "var(--asagi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
-                              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-                                {formatMoney(convertMoney(seg.batchTotal, project), project, lang)}
-                                {expandable && !multiSeg && (
-                                  <span style={{ fontSize: 12, color: "var(--nezumi)", transition: "transform .2s", display: "inline-block", transform: expandedBatch === rowKey ? "rotate(90deg)" : "none" }}>›</span>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {multiSeg && (
-                        <tr
-                          style={{ background: "var(--washi)", borderBottom: "1px solid var(--keisenL)", fontStyle: "italic", cursor: roomGroups ? "pointer" : "default" }}
-                          onClick={roomGroups ? () => setExpandedBatch((prev) => prev === rowKey ? null : rowKey) : undefined}
-                        >
-                          <td colSpan={3} style={{ padding: "8px 14px", fontSize: 11.5, fontWeight: 700, color: "var(--nezumi)" }}>{t.invoiceSegmentSubtotal}</td>
-                          <td style={{ padding: "8px 14px", textAlign: "right", fontWeight: 700, fontSize: 12.5, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-                              {formatMoney(convertMoney(b.batchTotal, project), project, lang)}
-                              {roomGroups && (
-                                <span style={{ fontSize: 12, color: "var(--nezumi)", transition: "transform .2s", display: "inline-block", transform: expandedBatch === rowKey ? "rotate(90deg)" : "none" }}>›</span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                      {roomGroups && expandedBatch === rowKey && (
+                              <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.nights} {t.invoiceNights}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
+                              <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
+                              <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.nights} {t.invoiceNights}</span>
+                              <div style={{ fontSize: 10, color: "var(--usunezumi)", marginTop: 3 }}>{t.invoiceMultiRate}</div>
+                            </>
+                          )}
+                        </td>
+                        <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, fontSize: 13, color: "var(--asagi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                            {formatMoney(convertMoney(b.batchTotal, project), project, lang)}
+                            {expandable && (
+                              <span style={{ fontSize: 12, color: "var(--nezumi)", transition: "transform .2s", display: "inline-block", transform: isExpanded ? "rotate(90deg)" : "none" }}>›</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {isExpanded && (
                         <tr style={{ background: "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
                           <td colSpan={4} style={{ padding: "10px 18px 12px 24px" }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{b.roomCount} {t.invoiceRooms}</div>
-                            {roomGroups.map((g) => (
-                              <div key={g.label} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "4px 0", borderBottom: "1px solid var(--keisenL)" }}>
-                                <span style={{ fontSize: 11, padding: "2px 7px", border: "1px solid var(--keisenM)", borderRadius: 3, color: "var(--nezumi)", fontWeight: 600, minWidth: 36, textAlign: "center", flexShrink: 0, marginTop: 1 }}>{g.label}</span>
-                                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px", alignItems: "center" }}>
-                                  {g.stays.map((s, si) => (
-                                    <React.Fragment key={s.id}>
-                                      {si > 0 && <span style={{ color: "var(--keisenM)", fontSize: 13 }}>·</span>}
-                                      <span style={{ fontSize: 12, color: "var(--sumi)" }}>
-                                        {s.special_room_name ? `🏷 ${s.special_room_name}` : (s._personName || "—")}
-                                        {s.check_out && <span style={{ fontSize: 10, color: "var(--usunezumi)", marginLeft: 4 }}>～{fmtDate(s.check_out, lang)}</span>}
-                                      </span>
-                                    </React.Fragment>
-                                  ))}
-                                </div>
+                            {multiSeg && (
+                              <div style={{ marginBottom: roomGroups ? 12 : 0 }}>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6 }}>{t.invoiceFormula}</div>
+                                {segments.map((seg, si) => (
+                                  <div key={si} style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "5px 0", borderBottom: "1px solid var(--keisenL)", fontSize: 12 }}>
+                                    <span style={{ color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
+                                      {fmtDate(seg.check_in, lang)} {t.invoiceDateRange} {fmtDate(seg.check_out, lang)}（{seg.nights} {t.invoiceNights}）
+                                    </span>
+                                    <span style={{ color: "var(--nezumi)", fontVariantNumeric: "tabular-nums" }}>
+                                      <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(seg.unitPrice, project), project, lang)}</span>
+                                      {" × "}{b.roomCount} {t.invoiceRooms}{" × "}{seg.nights} {t.invoiceNights}
+                                      {" = "}<span style={{ fontWeight: 700, color: "var(--asagi)" }}>{formatMoney(convertMoney(seg.batchTotal, project), project, lang)}</span>
+                                    </span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
+                            {roomGroups && (
+                              <div>
+                                <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{b.roomCount} {t.invoiceRooms}</div>
+                                {roomGroups.map((g) => (
+                                  <div key={g.label} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "4px 0", borderBottom: "1px solid var(--keisenL)" }}>
+                                    <span style={{ fontSize: 11, padding: "2px 7px", border: "1px solid var(--keisenM)", borderRadius: 3, color: "var(--nezumi)", fontWeight: 600, minWidth: 36, textAlign: "center", flexShrink: 0, marginTop: 1 }}>{g.label}</span>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px", alignItems: "center" }}>
+                                      {g.stays.map((s, si) => (
+                                        <React.Fragment key={s.id}>
+                                          {si > 0 && <span style={{ color: "var(--keisenM)", fontSize: 13 }}>·</span>}
+                                          <span style={{ fontSize: 12, color: "var(--sumi)" }}>
+                                            {s.special_room_name ? `🏷 ${s.special_room_name}` : (s._personName || "—")}
+                                            {s.check_out && <span style={{ fontSize: 10, color: "var(--usunezumi)", marginLeft: 4 }}>～{fmtDate(s.check_out, lang)}</span>}
+                                          </span>
+                                        </React.Fragment>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </td>
                         </tr>
                       )}
@@ -5099,6 +5126,15 @@ ${rows}${totalBanner}
               <span style={{ display: "block", fontSize: 11, color: "var(--nezumi)", lineHeight: 1.6, marginTop: 2 }}>{t.printIncludeAmountHint}</span>
             </span>
           </label>
+          {invoiceMode === "merged" && printIncludeAmount && (
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 12px", border: "1px solid var(--keisenL)", borderRadius: 6, marginBottom: 12, cursor: "pointer", background: "var(--washi)" }}>
+              <input type="checkbox" checked={printShowSegments} onChange={(e) => setPrintShowSegments(e.target.checked)} style={{ marginTop: 2 }} />
+              <span>
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)" }}>{t.printShowSegments}</span>
+                <span style={{ display: "block", fontSize: 11, color: "var(--nezumi)", lineHeight: 1.6, marginTop: 2 }}>{t.printShowSegmentsHint}</span>
+              </span>
+            </label>
+          )}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: "50vh", overflowY: "auto", marginBottom: 16 }}>
             {data.map((hd) => {
               const hid = String(hd.hid);
@@ -5126,7 +5162,7 @@ ${rows}${totalBanner}
             <button
               type="button"
               disabled={!printSelected || printSelected.size === 0}
-              onClick={() => { handlePrint(printSelected, printShowGuests, printIncludeAmount); setShowPrintSelect(false); }}
+              onClick={() => { handlePrint(printSelected, printShowGuests, printIncludeAmount, printShowSegments); setShowPrintSelect(false); }}
               style={{ ...pBtn(false), opacity: (!printSelected || printSelected.size === 0) ? 0.4 : 1, cursor: (!printSelected || printSelected.size === 0) ? "not-allowed" : "pointer" }}
             >{t.confirmPrint}</button>
           </div>
