@@ -2700,49 +2700,56 @@ function SessionExpiredModal({ t, onRelogin }) {
 }
 
 /** 右上角閒置自動登出倒數顯示；剩 1 分鐘時彈出警告，使用者操作（含全域監聽）會重設倒數 */
-function IdleGuard({ lastActivityRef, onTimeout, t }) {
-  const [remaining, setRemaining] = useState(IDLE_LIMIT_MS);
-
+/** 共用：計算距離自動登出剩餘毫秒數，每秒更新 */
+function useIdleRemaining(lastActivityRef) {
+  const [remaining, setRemaining] = useState(() => Math.max(0, IDLE_LIMIT_MS - (Date.now() - lastActivityRef.current)));
   useEffect(() => {
-    const tick = () => {
-      const rem = Math.max(0, IDLE_LIMIT_MS - (Date.now() - lastActivityRef.current));
-      setRemaining(rem);
-      if (rem <= 0) onTimeout();
-    };
+    const tick = () => setRemaining(Math.max(0, IDLE_LIMIT_MS - (Date.now() - lastActivityRef.current)));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [lastActivityRef]);
+  return remaining;
+}
 
+/** Header 按鈕群內的閒置倒數膠囊，外觀沿用 hdrBtn 樣式；剩 1 分鐘時轉為警示色 */
+function IdleBadge({ lastActivityRef, t, baseStyle }) {
+  const remaining = useIdleRemaining(lastActivityRef);
   const mins = Math.floor(remaining / 60000);
   const secs = Math.floor((remaining % 60000) / 1000);
   const warn = remaining <= IDLE_WARN_MS;
-  const stayActive = () => { lastActivityRef.current = Date.now(); };
-
   return (
-    <>
-      <div title={t.idleWarningTitle} style={{
-        position: "fixed", top: 8, right: 12, zIndex: 90,
-        fontSize: 10, padding: "3px 9px", borderRadius: 10,
-        background: warn ? "var(--shu)" : "rgba(10,10,14,.4)",
-        color: "var(--washi)", letterSpacing: "0.05em",
-        fontFamily: "'Noto Sans JP',sans-serif", pointerEvents: "none",
-        transition: "background .3s",
-      }}>
-        🔒 {pad2(mins)}:{pad2(secs)}
+    <span title={t.idleWarningTitle} style={{
+      ...baseStyle,
+      display: "flex", alignItems: "center", gap: 6, cursor: "default",
+      background: warn ? "var(--shu)" : baseStyle.background,
+      borderColor: warn ? "var(--shu)" : undefined,
+      color: warn ? "var(--shiro)" : baseStyle.color,
+      transition: "background .3s, border-color .3s",
+    }}>
+      <span aria-hidden="true" style={{ fontSize: 11, opacity: 0.8, lineHeight: 1 }}>🔒</span>
+      {pad2(mins)}:{pad2(secs)}
+    </span>
+  );
+}
+
+/** 倒數最後 60 秒時跳出警告 Modal，倒數到 0 時觸發自動登出 */
+function IdleLogoutGuard({ lastActivityRef, onTimeout, t }) {
+  const remaining = useIdleRemaining(lastActivityRef);
+  useEffect(() => { if (remaining <= 0) onTimeout(); }, [remaining]);
+  const warn = remaining <= IDLE_WARN_MS;
+  if (!warn) return null;
+  const stayActive = () => { lastActivityRef.current = Date.now(); };
+  return (
+    <Modal title={t.idleWarningTitle} onClose={stayActive}>
+      <p style={{ fontSize: 13, color: "var(--nezumi)", marginBottom: 20, lineHeight: 1.7 }}>
+        {t.idleWarningMsg.replace("{n}", String(Math.max(1, Math.ceil(remaining / 1000))))}
+      </p>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button type="button" style={{ ...pBtn(false), flex: 1 }} onClick={stayActive}>{t.idleContinue}</button>
+        <button type="button" style={{ ...pBtn(false), flex: 1, background: "var(--kincha)" }} onClick={onTimeout}>{t.idleLogoutNow}</button>
       </div>
-      {warn && (
-        <Modal title={t.idleWarningTitle} onClose={stayActive}>
-          <p style={{ fontSize: 13, color: "var(--nezumi)", marginBottom: 20, lineHeight: 1.7 }}>
-            {t.idleWarningMsg.replace("{n}", String(Math.max(1, Math.ceil(remaining / 1000))))}
-          </p>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button type="button" style={{ ...pBtn(false), flex: 1 }} onClick={stayActive}>{t.idleContinue}</button>
-            <button type="button" style={{ ...pBtn(false), flex: 1, background: "var(--kincha)" }} onClick={onTimeout}>{t.idleLogoutNow}</button>
-          </div>
-        </Modal>
-      )}
-    </>
+    </Modal>
   );
 }
 
@@ -5871,7 +5878,7 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLangChange, onSelect }) {
+function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLangChange, onSelect, lastActivityRef }) {
   const t = T[lang];
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -6005,6 +6012,7 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <IdleBadge lastActivityRef={lastActivityRef} t={t} baseStyle={hdrBtn} />
           <ThemeToggle theme={theme} onChange={onThemeChange} t={tSel} />
           <button type="button" onClick={() => { api.logout(); clearSession(); window.location.reload(); }} style={hdrBtn}>{t.logout}</button>
         </div>
@@ -6120,7 +6128,7 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
   );
 }
 
-function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThemeChange, onLangChange, onBack, onProjectUpdate }) {
+function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThemeChange, onLangChange, onBack, onProjectUpdate, lastActivityRef }) {
   const pid = project.id;
   const t = T[lang];
   const canEdit = isSystemOwner || ["owner", "admin", "editor"].includes(userRole);
@@ -7113,6 +7121,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
             </>
           )}
           <button type="button" onClick={() => tabExportFn[tab]?.()} style={{ ...hdrBtn2, background: "var(--moegi3)", border: "1px solid rgba(43,90,76,.35)" }}>{t.exportCSV}</button>
+          <IdleBadge lastActivityRef={lastActivityRef} t={t} baseStyle={hdrBtn2} />
           <ThemeToggle theme={theme} onChange={onThemeChange} t={t} />
           <LangSwitcher lang={lang} onChange={(l) => { localStorage.setItem("app_lang", l); onLangChange(l); }} />
         </div>
@@ -8404,9 +8413,9 @@ function App() {
   );
   if (!token) return <><GlobalStyles /><LoginScreen onLogin={(tk, u, l) => applyAuth(tk, u, l)} /></>;
   const handleThemeChange = (m) => setTheme(m === "dark" ? "dark" : "light");
-  const idleGuard = <IdleGuard lastActivityRef={lastActivityRef} onTimeout={handleIdleLogout} t={T[lang]} />;
-  if (!project) return <><GlobalStyles />{idleGuard}<ProjectSelector user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onSelect={(proj, role) => { setProject(proj); setUserRole(isSystemOwner && !role ? "owner" : role); }} /></>;
-  return <><GlobalStyles />{idleGuard}<ProjectApp project={project} userRole={userRole} user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onBack={() => { setProject(null); setUserRole(null); }} onProjectUpdate={setProject} /></>;
+  const idleGuard = <IdleLogoutGuard lastActivityRef={lastActivityRef} onTimeout={handleIdleLogout} t={T[lang]} />;
+  if (!project) return <><GlobalStyles />{idleGuard}<ProjectSelector user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onSelect={(proj, role) => { setProject(proj); setUserRole(isSystemOwner && !role ? "owner" : role); }} lastActivityRef={lastActivityRef} /></>;
+  return <><GlobalStyles />{idleGuard}<ProjectApp project={project} userRole={userRole} user={user} isSystemOwner={isSystemOwner} lang={lang} theme={theme} onThemeChange={handleThemeChange} onLangChange={handleLangChange} onBack={() => { setProject(null); setUserRole(null); }} onProjectUpdate={setProject} lastActivityRef={lastActivityRef} /></>;
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
