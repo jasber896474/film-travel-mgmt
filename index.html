@@ -4078,7 +4078,7 @@ function generateVehicleReportHTML(cards, project, lang, t) {
     </article>`;
   }).join("");
 
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_rDocTitle}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -4132,6 +4132,15 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards, 
   const projectName = project?.name || "";
   const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
   const typeLabel = { stay: t.reportTypeStay, flight: t.reportTypeFlight, staff: t.reportTypeStaff, vehicle: t.reportTypeVehicle }[type] || type;
+  const _rNow = new Date();
+  const _rMm = String(_rNow.getMonth() + 1).padStart(2, "0");
+  const _rDd = String(_rNow.getDate()).padStart(2, "0");
+  const _rDate = `${_rMm}月${_rDd}日`;
+  const _rDocTitle = type === "flight"
+    ? `${_rDate}_flight_${projectName}`
+    : type === "staff"
+      ? `${_rDate}_staff list_${projectName}`
+      : `${typeLabel} — ${projectName}`;
 
   const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
 
@@ -4163,7 +4172,7 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards, 
       </div>`;
     }).join("");
     const cols2 = isLandscape ? "columns:2;column-gap:14mm;" : "";
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_rDocTitle}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;padding:2mm;}
 @page{size:A4 ${pageDir};margin:8mm 10mm;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
@@ -4276,7 +4285,7 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards, 
 </div>`;
   }
 
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_rDocTitle}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:9pt;color:#1a2820;background:#fff;}
 @page{size:A4 ${pageDir};margin:12mm 14mm;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
