@@ -4806,6 +4806,13 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
 
   const handlePrint = (selectedHids, showGuests, includeAmount, showSegments) => {
     const printData = selectedHids ? data.filter((hd) => selectedHids.has(String(hd.hid))) : data;
+    const _now = new Date();
+    const _mm = String(_now.getMonth() + 1).padStart(2, "0");
+    const _dd = String(_now.getDate()).padStart(2, "0");
+    const _datePrefix = `${_mm}月${_dd}日`;
+    const _docTitle = printData.length === 1
+      ? `${_datePrefix}_${printData[0].hotel?.name || t.invoiceTitle}`
+      : `${_datePrefix}_飯店核對總表`;
     const printTotal = printData.reduce((s, h) => s + h.hotelTotal, 0);
     const colCount = includeAmount ? 4 : 3;
     const rows = printData.map((hd, idx) => {
@@ -4883,7 +4890,7 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
   <span style="font-size:18pt;font-family:'Noto Serif JP',serif;font-weight:600;">${formatMoney(convertMoney(printTotal, project), project, lang)}</span>
 </div>` : "";
 
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t.invoiceTitle}</title>
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_docTitle}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:10pt;color:#1a2820;padding:12mm;}
 @page{size:A4 portrait;margin:10mm 12mm;}
