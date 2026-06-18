@@ -4813,6 +4813,61 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
     >{label}</button>
   );
 
+  // ── 快照工具 ──────────────────────────────────────────────
+  const _snapKey = `hotelChecklistSnapshot_${project?.id || "default"}`;
+
+  const _buildSnapshot = (hotelData) => ({
+    ts: Date.now(),
+    hotels: hotelData.map((hd) => ({
+      hid: String(hd.hid),
+      name: hd.hotel?.name || "",
+      total: hd.hotelTotal,
+      batches: (hd.batches || []).map((b) => ({
+        key: `${b.check_in}|${b.check_out}|${b.roomLabel}`,
+        check_in: b.check_in,
+        check_out: b.check_out,
+        roomLabel: b.roomLabel,
+        roomCount: b.roomCount,
+        nights: b.nights,
+        batchTotal: b.batchTotal,
+      })),
+    })),
+  });
+
+  const _loadSnapshot = () => {
+    try { return JSON.parse(localStorage.getItem(_snapKey) || "null"); } catch { return null; }
+  };
+
+  const _saveSnapshot = (hotelData) => {
+    try { localStorage.setItem(_snapKey, JSON.stringify(_buildSnapshot(hotelData))); } catch {}
+  };
+
+  // 比對單一飯店的 batches，回傳每個 batch 的狀態 map（key → "new"|"changed"|"deleted"|null）
+  const _diffBatches = (oldBatches, newBatches) => {
+    const result = {}; // key → { status, old }
+    const oldMap = {};
+    (oldBatches || []).forEach((b) => { oldMap[b.key] = b; });
+    const newMap = {};
+    (newBatches || []).forEach((b) => { newMap[b.key] = b; });
+
+    // 新的 batch
+    (newBatches || []).forEach((b) => {
+      if (!oldMap[b.key]) {
+        result[b.key] = { status: "new" };
+      } else {
+        const o = oldMap[b.key];
+        const changed = o.roomCount !== b.roomCount || o.nights !== b.nights || o.batchTotal !== b.batchTotal;
+        if (changed) result[b.key] = { status: "changed", old: o };
+      }
+    });
+    // 刪除的 batch
+    (oldBatches || []).forEach((b) => {
+      if (!newMap[b.key]) result[b.key] = { status: "deleted", old: b };
+    });
+    return result;
+  };
+
+  // ── handlePrint ───────────────────────────────────────────
   const handlePrint = (selectedHids, showGuests, includeAmount, showSegments) => {
     const printData = selectedHids ? data.filter((hd) => selectedHids.has(String(hd.hid))) : data;
     const _now = new Date();
@@ -4822,10 +4877,62 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
     const _docTitle = printData.length === 1
       ? `${_datePrefix}_${printData[0].hotel?.name || t.invoiceTitle}`
       : `${_datePrefix}_飯店核對總表`;
+
+    // 讀取快照並建立比對 map
+    const _snap = _loadSnapshot();
+    const _snapHotelMap = {};
+    if (_snap) (_snap.hotels || []).forEach((h) => { _snapHotelMap[h.hid] = h; });
+    const _hasSnap = !!_snap;
+    const _snapTime = _snap ? (() => {
+      const d = new Date(_snap.ts);
+      const sm = String(d.getMonth() + 1).padStart(2, "0");
+      const sd = String(d.getDate()).padStart(2, "0");
+      const sh = String(d.getHours()).padStart(2, "0");
+      const smin = String(d.getMinutes()).padStart(2, "0");
+      return `${sm}月${sd}日 ${sh}:${smin}`;
+    })() : "";
+
+    // 儲存本次快照（列印後即更新基準）
+    _saveSnapshot(data);
     const printTotal = printData.reduce((s, h) => s + h.hotelTotal, 0);
     const colCount = includeAmount ? 4 : 3;
     const rows = printData.map((hd, idx) => {
+      // 差異比對：取得此飯店的 batch diff map
+      const _snapHotel = _snapHotelMap[String(hd.hid)];
+      const _diffMap = _hasSnap ? _diffBatches(_snapHotel?.batches, (hd.batches || []).map((b) => ({
+        key: `${b.check_in}|${b.check_out}|${b.roomLabel}`,
+        check_in: b.check_in, check_out: b.check_out,
+        roomLabel: b.roomLabel, roomCount: b.roomCount,
+        nights: b.nights, batchTotal: b.batchTotal,
+      }))) : {};
+      // 此飯店是否為新增（快照中不存在）
+      const _hotelIsNew = _hasSnap && !_snapHotel;
+      // 整理刪除的 batches（需額外渲染）
+      const _deletedBatches = _hasSnap && _snapHotel
+        ? (_snapHotel.batches || []).filter((ob) => _diffMap[ob.key]?.status === "deleted")
+        : [];
+
       const batchRows = hd.batches.map((b, i) => {
+        const bKey = `${b.check_in}|${b.check_out}|${b.roomLabel}`;
+        const _diff = _diffMap[bKey];
+        const _isNew = _hotelIsNew || _diff?.status === "new";
+        const _isChanged = _diff?.status === "changed";
+        const _old = _diff?.old;
+        // 行底色
+        const _rowBg = _isNew ? "background:#edfbf0;" : _isChanged ? "background:#fffbe6;" : "";
+        // 差異標籤
+        const _badge = _isNew
+          ? `<span style="display:inline-block;margin-left:6px;padding:1px 6px;background:#22a959;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;vertical-align:middle;">新增</span>`
+          : _isChanged
+          ? `<span style="display:inline-block;margin-left:6px;padding:1px 6px;background:#e6a817;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;vertical-align:middle;">變更</span>`
+          : "";
+        // 舊值說明行（僅 changed 時）
+        const _oldRow = _isChanged && _old ? `
+        <tr style="break-inside:avoid;background:#fffbe6;">
+          <td colspan="${colCount}" style="padding:2px 12px 6px 28px;border-bottom:1px solid #f0e0b0;font-size:8.5pt;color:#a07820;">
+            ← 原：${_old.roomCount} 間 × ${_old.nights} 晚${includeAmount ? `　${formatMoney(convertMoney(_old.batchTotal, project), project, lang)}` : ""}
+          </td>
+        </tr>` : "";
         const segments = b.segments || [b];
         const multiSeg = segments.length > 1;
         const expandSegments = multiSeg && includeAmount && showSegments;
@@ -4835,9 +4942,9 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
         let mainRows;
         if (expandSegments) {
           const segRows = segments.map((seg) => `
-        <tr style="break-inside:avoid;">
+        <tr style="break-inside:avoid;${_rowBg}">
           <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${seg.check_in} ${t.invoiceDateRange} ${seg.check_out}<br><small style="color:#666;">(${t.nights || "共"} ${seg.nights} ${t.invoiceNights})</small></td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}${b.subLabel ? `<br><small style="color:#666;">${b.subLabel}</small>` : ""}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}${b.subLabel ? `<br><small style="color:#666;">${b.subLabel}</small>` : ""}${_badge}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${occupancyCell(seg)}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(seg.batchTotal, project), project, lang)}</td>
         </tr>`).join("");
@@ -4852,14 +4959,14 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
             ? `${b.roomCount} ${t.invoiceRooms} × ${b.nights} ${t.invoiceNights}${includeAmount ? `<br><small style="color:#999;">(${t.invoiceMultiRate})</small>` : ""}`
             : occupancyCell(segments[0]);
           mainRows = `
-        <tr style="break-inside:avoid;">
+        <tr style="break-inside:avoid;${_rowBg}">
           <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.check_in} ${t.invoiceDateRange} ${b.check_out}<br><small style="color:#666;">(${t.nights || "共"} ${b.nights} ${t.invoiceNights})</small></td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}${b.subLabel ? `<br><small style="color:#666;">${b.subLabel}</small>` : ""}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}${b.subLabel ? `<br><small style="color:#666;">${b.subLabel}</small>` : ""}${_badge}</td>
           <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${occ}</td>
           ${includeAmount ? `<td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.batchTotal, project), project, lang)}</td>` : ""}
         </tr>`;
         }
-        if (!showGuests || !b.roomGroups || !b.roomGroups.length) return mainRows;
+        if (!showGuests || !b.roomGroups || !b.roomGroups.length) return _oldRow + mainRows;
         const guestLines = b.roomGroups.map((g) => {
           const names = g.stays.map((s) => s.special_room_name ? `🏷 ${s.special_room_name}` : (s._personName || "—")).join("、");
           return `<div style="margin-bottom:2px;"><span style="display:inline-block;min-width:46px;padding:1px 6px;border:1px solid #cfd8d3;border-radius:3px;font-size:8pt;font-weight:700;text-align:center;margin-right:8px;">${g.label}</span>${names}</div>`;
@@ -4868,8 +4975,18 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
         <tr style="break-inside:avoid;">
           <td colspan="${colCount}" style="padding:2px 12px 10px 28px;border-bottom:1px solid #e0ebe4;font-size:9pt;color:#444;">${guestLines}</td>
         </tr>`;
-        return mainRows + guestRow;
+        return _oldRow + mainRows + guestRow;
       }).join("");
+
+      // 刪除的 batch 渲染（快照中有、現在沒有）
+      const _deletedRows = _deletedBatches.map((ob) => `
+        <tr style="break-inside:avoid;background:#fff0f0;">
+          <td style="padding:8px 12px;border-bottom:1px solid #f0c0c0;color:#c0392b;text-decoration:line-through;">${ob.check_in} ${t.invoiceDateRange} ${ob.check_out}<br><small>(${t.nights || "共"} ${ob.nights} ${t.invoiceNights})</small></td>
+          <td style="padding:8px 12px;border-bottom:1px solid #f0c0c0;color:#c0392b;text-decoration:line-through;">${ob.roomLabel}<span style="text-decoration:none;display:inline-block;margin-left:6px;padding:1px 6px;background:#c0392b;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;">刪除</span></td>
+          <td style="padding:8px 12px;border-bottom:1px solid #f0c0c0;color:#c0392b;text-decoration:line-through;">${ob.roomCount} 間 × ${ob.nights} 晚</td>
+          ${includeAmount ? `<td style="padding:8px 12px;border-bottom:1px solid #f0c0c0;text-align:right;color:#c0392b;text-decoration:line-through;font-weight:700;">${formatMoney(convertMoney(ob.batchTotal, project), project, lang)}</td>` : ""}
+        </tr>`).join("");
+
       const pageBreak = idx > 0 ? "page-break-before:always;" : "";
       const subtotalRow = includeAmount ? `
               <tr style="background:#eaf2ec;break-inside:avoid;">
@@ -4880,14 +4997,17 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
                 <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceRoomType}</th>
                 <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${includeAmount ? t.invoiceFormula : t.invoiceQuantity}</th>${includeAmount ? `
                 <th style="padding:8px 12px;text-align:right;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceSubtotal}</th>` : ""}`;
+      const _hotelBadge = _hotelIsNew
+        ? `<span style="margin-left:10px;padding:2px 8px;background:#22a959;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;vertical-align:middle;">新飯店</span>`
+        : "";
       return `
         <div style="margin-bottom:28px;${pageBreak}">
-          <div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:10px 16px;border-radius:6px 6px 0 0;font-size:13pt;font-family:'Noto Serif JP',serif;font-weight:600;break-after:avoid;break-inside:avoid;">${hd.hotel?.name || "—"}</div>
+          <div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:10px 16px;border-radius:6px 6px 0 0;font-size:13pt;font-family:'Noto Serif JP',serif;font-weight:600;break-after:avoid;break-inside:avoid;">${hd.hotel?.name || "—"}${_hotelBadge}</div>
           <table style="width:100%;border-collapse:collapse;border:1px solid #e0ebe4;border-top:none;">
             <thead style="display:table-header-group;">
               <tr style="background:#f0f5f1;break-inside:avoid;">${headCols}</tr>
             </thead>
-            <tbody>${batchRows}${subtotalRow}
+            <tbody>${batchRows}${_deletedRows}${subtotalRow}
             </tbody>
           </table>
         </div>`;
@@ -4899,16 +5019,47 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
   <span style="font-size:18pt;font-family:'Noto Serif JP',serif;font-weight:600;">${formatMoney(convertMoney(printTotal, project), project, lang)}</span>
 </div>` : "";
 
+    // 計算整體差異摘要
+    const _totalNew = printData.reduce((s, hd) => {
+      const snap = _snapHotelMap[String(hd.hid)];
+      if (!snap) return s + (hd.batches?.length || 0);
+      const dm = _diffBatches(snap.batches, (hd.batches || []).map((b) => ({ key: `${b.check_in}|${b.check_out}|${b.roomLabel}`, check_in: b.check_in, check_out: b.check_out, roomLabel: b.roomLabel, roomCount: b.roomCount, nights: b.nights, batchTotal: b.batchTotal })));
+      return s + Object.values(dm).filter((d) => d.status === "new").length;
+    }, 0);
+    const _totalChanged = printData.reduce((s, hd) => {
+      const snap = _snapHotelMap[String(hd.hid)];
+      if (!snap) return s;
+      const dm = _diffBatches(snap.batches, (hd.batches || []).map((b) => ({ key: `${b.check_in}|${b.check_out}|${b.roomLabel}`, check_in: b.check_in, check_out: b.check_out, roomLabel: b.roomLabel, roomCount: b.roomCount, nights: b.nights, batchTotal: b.batchTotal })));
+      return s + Object.values(dm).filter((d) => d.status === "changed").length;
+    }, 0);
+    const _totalDeleted = printData.reduce((s, hd) => {
+      const snap = _snapHotelMap[String(hd.hid)];
+      if (!snap) return s;
+      const dm = _diffBatches(snap.batches, (hd.batches || []).map((b) => ({ key: `${b.check_in}|${b.check_out}|${b.roomLabel}`, check_in: b.check_in, check_out: b.check_out, roomLabel: b.roomLabel, roomCount: b.roomCount, nights: b.nights, batchTotal: b.batchTotal })));
+      return s + Object.values(dm).filter((d) => d.status === "deleted").length;
+    }, 0);
+    const _hasDiff = _hasSnap && (_totalNew + _totalChanged + _totalDeleted > 0);
+    const _diffBar = _hasSnap ? (_hasDiff ? `
+<div style="margin-bottom:14px;padding:10px 16px;border-radius:6px;border:1px solid #d4c060;background:#fffbe6;display:flex;align-items:center;gap:16px;flex-wrap:wrap;break-inside:avoid;">
+  <span style="font-size:8.5pt;color:#7a6010;font-weight:700;">與 ${_snapTime} 版本比較</span>
+  ${_totalNew > 0 ? `<span style="padding:2px 9px;background:#22a959;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;">新增 ${_totalNew}</span>` : ""}
+  ${_totalChanged > 0 ? `<span style="padding:2px 9px;background:#e6a817;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;">變更 ${_totalChanged}</span>` : ""}
+  ${_totalDeleted > 0 ? `<span style="padding:2px 9px;background:#c0392b;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;">刪除 ${_totalDeleted}</span>` : ""}
+</div>` : `
+<div style="margin-bottom:14px;padding:8px 16px;border-radius:6px;border:1px solid #b8d8c0;background:#f0faf3;break-inside:avoid;">
+  <span style="font-size:8pt;color:#2a6040;">✓ 與 ${_snapTime} 版本相比，無任何變更</span>
+</div>`) : "";
+
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_docTitle}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:10pt;color:#1a2820;padding:12mm;}
 @page{size:A4 portrait;margin:10mm 12mm;}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style>
 </head><body>
-<div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:14px 18px;border-radius:6px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;break-after:avoid;break-inside:avoid;">
+<div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:14px 18px;border-radius:6px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;break-after:avoid;break-inside:avoid;">
   <div><div style="font-family:'Noto Serif JP',serif;font-size:15pt;font-weight:600;">${t.invoiceTitle}</div><div style="font-size:9pt;opacity:.75;margin-top:4px;">${project?.name || ""} · ${new Date().toLocaleDateString()}</div></div>
 </div>
-${rows}${totalBanner}
+${_diffBar}${rows}${totalBanner}
 </body></html>`;
     openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
   };
