@@ -3924,12 +3924,21 @@ function escReportHtml(s) {
 }
 
 function injectReportPreviewToolbar(html, printLabel, closeLabel) {
+  const hasDiff = html.includes('class="diff-mark"');
+  const diffToggleBtn = hasDiff ? `
+<button type="button" id="diff-toggle-btn" onclick="(function(){
+  var on = document.body.classList.toggle('diff-hidden');
+  document.getElementById('diff-toggle-btn').style.background = on ? 'rgba(255,255,255,.12)' : '#e6a817';
+  document.getElementById('diff-toggle-btn').textContent = on ? '👁 顯示差異' : '👁 隱藏差異';
+})()" style="padding:8px 16px;border:1px solid rgba(255,255,255,.28);border-radius:6px;background:#e6a817;color:#fff;font-size:13px;cursor:pointer;font-weight:600;">👁 隱藏差異</button>` : "";
   const bar = `<div id="report-preview-bar" style="position:sticky;top:0;z-index:9999;display:flex;justify-content:center;align-items:center;gap:10px;padding:10px 16px;background:#1a3028;color:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);font-family:'Noto Sans JP',sans-serif;">
 <button type="button" onclick="window.print()" style="padding:8px 22px;border:none;border-radius:6px;background:#3e8470;color:#fff;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.04em;">🖨 ${escReportHtml(printLabel)}</button>
+${diffToggleBtn}
 <button type="button" onclick="window.close()" style="padding:8px 16px;border:1px solid rgba(255,255,255,.28);border-radius:6px;background:transparent;color:#fff;font-size:13px;cursor:pointer;">${escReportHtml(closeLabel)}</button>
 </div>`;
-  const printHide = "@media print{#report-preview-bar{display:none!important;}}";
-  let out = html.includes("</head>") ? html.replace("</head>", `<style>${printHide}</style></head>`) : html;
+  const diffHideStyle = `.diff-hidden .diff-mark{display:none!important;}.diff-hidden tr.diff-row td{background:white!important;}.diff-hidden tr.diff-row-deleted{display:none!important;}`;
+  const printHide = `@media print{#report-preview-bar{display:none!important;}}`;
+  let out = html.includes("</head>") ? html.replace("</head>", `<style>${printHide}\n${diffHideStyle}</style></head>`) : html;
   if (/<body[^>]*>/i.test(out)) return out.replace(/<body([^>]*)>/i, `<body$1>${bar}`);
   return bar + out;
 }
@@ -4126,7 +4135,7 @@ function openVehicleReportPrint(vehicles, assignments, persons, project, lang, t
   openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
 }
 
-function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards, hotelSummary }) {
+function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards, hotelSummary, diffInfo }) {
   const isLandscape = cols.length > 6;
   const pageDir = isLandscape ? "landscape" : "portrait";
   const projectName = project?.name || "";
@@ -4233,7 +4242,16 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards, 
     const isAmber = tier === 2 || tier === 3;
     const isBlue  = tier === 1 || tier === 4;
     const bg = isAmber ? (tIdx%2===0?"#fffbf0":"#fff8e8") : isBlue ? (tIdx%2===0?"#f0f6ff":"#e8f0fb") : (tIdx%2===0?"#ffffff":"#f5faf6");
-    rows.push(`<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`);
+    // diff 標示（flight / staff）
+    const _dEntry = (diffInfo && row._pid) ? diffInfo.map[row._pid] : null;
+    const _dBg = _dEntry === "new" ? "background:#edfbf0;" : _dEntry === "changed" ? "background:#fffbe6;" : "";
+    const _dBadge = _dEntry === "new"
+      ? `<span class="diff-mark" style="display:inline-block;margin-left:5px;padding:1px 5px;background:#22a959;color:#fff;border-radius:3px;font-size:7pt;font-weight:700;vertical-align:middle;">新增</span>`
+      : _dEntry === "changed"
+      ? `<span class="diff-mark" style="display:inline-block;margin-left:5px;padding:1px 5px;background:#e6a817;color:#fff;border-radius:3px;font-size:7pt;font-weight:700;vertical-align:middle;">變更</span>`
+      : "";
+    const _rowStyle = _dBg || `background:${bg};`;
+    rows.push(`<tr${_dEntry ? ' class="diff-row diff-mark"' : ""}>${cols.map((c, ci) => `<td style="${tdStyle}${_dBg || `background:${bg};`}">${(row[c.key] ?? "—")}${ci === 2 && _dBadge ? _dBadge : ""}</td>`).join("")}</tr>`);
     tIdx++;
     groupSum += row._amt || 0;
     if (type === "stay" && idx === data.length - 1 && prevHotelKey !== "none" && prevHotelKey !== undefined) {
@@ -4285,17 +4303,37 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards, 
 </div>`;
   }
 
+  // diff bar（flight / staff 限定）
+  const _grDiffBar = (() => {
+    if (!diffInfo || !diffInfo.snapTime) return "";
+    const nNew = Object.values(diffInfo.map).filter(v => v === "new").length;
+    const nChg = Object.values(diffInfo.map).filter(v => v === "changed").length;
+    const nDel = diffInfo.deleted || 0;
+    const anyDiff = nNew + nChg + nDel > 0;
+    if (anyDiff) return `
+<div class="diff-mark" style="margin-bottom:12px;padding:8px 14px;border-radius:5px;border:1px solid #d4c060;background:#fffbe6;display:flex;align-items:center;gap:14px;flex-wrap:wrap;break-inside:avoid;">
+  <span style="font-size:8pt;color:#7a6010;font-weight:700;">與 ${diffInfo.snapTime} 版本比較</span>
+  ${nNew > 0 ? `<span style="padding:1px 8px;background:#22a959;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;">新增 ${nNew}</span>` : ""}
+  ${nChg > 0 ? `<span style="padding:1px 8px;background:#e6a817;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;">變更 ${nChg}</span>` : ""}
+  ${nDel > 0 ? `<span style="padding:1px 8px;background:#c0392b;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;">刪除 ${nDel}</span>` : ""}
+</div>`;
+    return `
+<div class="diff-mark" style="margin-bottom:12px;padding:7px 14px;border-radius:5px;border:1px solid #b8d8c0;background:#f0faf3;break-inside:avoid;">
+  <span style="font-size:8pt;color:#2a6040;">✓ 與 ${diffInfo.snapTime} 版本相比，無任何變更</span>
+</div>`;
+  })();
+
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_rDocTitle}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:9pt;color:#1a2820;background:#fff;}
 @page{size:A4 ${pageDir};margin:12mm 14mm;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-.doc-header{background:${headerGrad};color:#fff;padding:14px 18px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.doc-header{background:${headerGrad};color:#fff;padding:14px 18px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 table{width:100%;border-collapse:collapse;border-radius:4px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.09);}
 .footer{margin-top:14px;font-size:7pt;color:#aaa;text-align:right;border-top:1px solid #d8e8dc;padding-top:6px;}</style></head>
 <body style="padding:2mm;">
 <div class="doc-header"><div><div style="font-size:8pt;opacity:.7;letter-spacing:.1em;text-transform:uppercase;">${typeLabel}</div><div style="font-family:'Noto Serif JP',serif;font-size:13pt;font-weight:600;margin-top:3px;">${projectName}</div></div>
 <div style="text-align:right;font-size:8pt;opacity:.75;"><div>${now}</div><div>${data.length} rows · ${isLandscape ? "A4 Landscape" : "A4 Portrait"}</div></div></div>
-${summaryHtml}
+${_grDiffBar}${summaryHtml}
 <table><thead>${thead}</thead><tbody>${rows.join("")}</tbody></table>
 <div class="footer">${projectName} · ${typeLabel} · ${now}</div>
 </body></html>`;
@@ -4481,6 +4519,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
         const fl = flights.find((x) => x.person_id === p.id);
         const fmtTs = (ts) => { const v = toDatetimeLocalValue(ts); return v ? v.replace("T", " ") : "—"; };
         return {
+          _pid: p.id,
           no: personIndex[p.id] || "",
           dept: p.dept || "—",
           name_kanji: p.name_kanji || "—",
@@ -4506,6 +4545,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       return [...persons]
         .sort((a, b) => (personIndex[a.id] || 9999) - (personIndex[b.id] || 9999))
         .map((p) => ({
+        _pid: p.id,
         no: personIndex[p.id] || "",
         dept: p.dept || "—",
         title: [p.title_kanji, p.title_other].filter(Boolean).join(" / ") || "—",
@@ -4546,9 +4586,69 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       out._hotelKey = row._hotelKey;
       out._hotelName = row._hotelName;
       out._amt = row._amt;
+      out._pid = row._pid;
       return out;
     });
-    const html = generateReportHTML({ type: reportType, cols: sel, data, project, lang, t, hotelSummary: lastHotelSummary });
+
+    // ── 快照差異（flight / staff）──────────────────────────
+    let diffInfo = null;
+    if (reportType === "flight" || reportType === "staff") {
+      const _sKey = `reportSnapshot_${project?.id || "default"}_${reportType}`;
+      const _fmtSnapTime = (ts) => {
+        const d = new Date(ts);
+        return `${String(d.getMonth()+1).padStart(2,"0")}月${String(d.getDate()).padStart(2,"0")}日 ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+      };
+      // 序列化目前資料快照（以 person_id 為 key，值為 JSON 字串）
+      const _buildSnap = (rows) => {
+        const m = {};
+        rows.forEach((r) => {
+          if (!r._pid) return;
+          const snap = {};
+          if (reportType === "flight") {
+            const fl = flights.find((x) => x.person_id === r._pid);
+            snap.airline = fl?.airline || ""; snap.flight_no = fl?.flight_no || "";
+            snap.dep_airport = fl?.dep_airport || ""; snap.dep_time = fl?.dep_time || "";
+            snap.arr_airport = fl?.arr_airport || ""; snap.arr_time = fl?.arr_time || "";
+            snap.ret_airline = fl?.ret_airline || ""; snap.ret_flight_no = fl?.ret_flight_no || "";
+            snap.ret_dep_time = fl?.ret_dep_time || ""; snap.ret_arr_time = fl?.ret_arr_time || "";
+          } else {
+            const p = persons.find((x) => x.id === r._pid);
+            snap.dept = p?.dept || ""; snap.title_kanji = p?.title_kanji || "";
+            snap.name_kanji = p?.name_kanji || ""; snap.last_roman = p?.last_roman || "";
+            snap.first_roman = p?.first_roman || ""; snap.importance = p?.importance || 0;
+            snap.passport = p?.passport || ""; snap.dob = p?.dob || "";
+            snap.passport_exp = p?.passport_exp || "";
+          }
+          m[String(r._pid)] = JSON.stringify(snap);
+        });
+        return m;
+      };
+      let _oldSnap = null;
+      try { _oldSnap = JSON.parse(localStorage.getItem(_sKey) || "null"); } catch {}
+      const _nowSnap = { ts: Date.now(), rows: _buildSnap(rawRows) };
+      // 存快照（本次即成為下次基準）
+      try { localStorage.setItem(_sKey, JSON.stringify(_nowSnap)); } catch {}
+
+      if (_oldSnap) {
+        const snapTime = _fmtSnapTime(_oldSnap.ts);
+        const diffMap = {};
+        const currentPids = new Set(rawRows.map((r) => String(r._pid)).filter(Boolean));
+        // 新增 / 變更
+        rawRows.forEach((r) => {
+          if (!r._pid) return;
+          const pid = String(r._pid);
+          const oldVal = _oldSnap.rows[pid];
+          const newVal = _nowSnap.rows[pid];
+          if (!oldVal) { diffMap[pid] = "new"; }
+          else if (oldVal !== newVal) { diffMap[pid] = "changed"; }
+        });
+        // 刪除（快照有、現在沒有）
+        const deleted = Object.keys(_oldSnap.rows).filter((pid) => !currentPids.has(pid)).length;
+        diffInfo = { map: diffMap, snapTime, deleted };
+      }
+    }
+
+    const html = generateReportHTML({ type: reportType, cols: sel, data, project, lang, t, hotelSummary: lastHotelSummary, diffInfo });
     openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
   };
 
@@ -4922,13 +5022,13 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
         const _rowBg = _isNew ? "background:#edfbf0;" : _isChanged ? "background:#fffbe6;" : "";
         // 差異標籤
         const _badge = _isNew
-          ? `<span style="display:inline-block;margin-left:6px;padding:1px 6px;background:#22a959;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;vertical-align:middle;">新增</span>`
+          ? `<span class="diff-mark" style="display:inline-block;margin-left:6px;padding:1px 6px;background:#22a959;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;vertical-align:middle;">新增</span>`
           : _isChanged
-          ? `<span style="display:inline-block;margin-left:6px;padding:1px 6px;background:#e6a817;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;vertical-align:middle;">變更</span>`
+          ? `<span class="diff-mark" style="display:inline-block;margin-left:6px;padding:1px 6px;background:#e6a817;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;vertical-align:middle;">變更</span>`
           : "";
         // 舊值說明行（僅 changed 時）
         const _oldRow = _isChanged && _old ? `
-        <tr style="break-inside:avoid;background:#fffbe6;">
+        <tr class="diff-row diff-mark" style="break-inside:avoid;background:#fffbe6;">
           <td colspan="${colCount}" style="padding:2px 12px 6px 28px;border-bottom:1px solid #f0e0b0;font-size:8.5pt;color:#a07820;">
             ← 原：${_old.roomCount} 間 × ${_old.nights} 晚${includeAmount ? `　${formatMoney(convertMoney(_old.batchTotal, project), project, lang)}` : ""}
           </td>
@@ -4980,7 +5080,7 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
 
       // 刪除的 batch 渲染（快照中有、現在沒有）
       const _deletedRows = _deletedBatches.map((ob) => `
-        <tr style="break-inside:avoid;background:#fff0f0;">
+        <tr class="diff-row-deleted diff-mark" style="break-inside:avoid;background:#fff0f0;">
           <td style="padding:8px 12px;border-bottom:1px solid #f0c0c0;color:#c0392b;text-decoration:line-through;">${ob.check_in} ${t.invoiceDateRange} ${ob.check_out}<br><small>(${t.nights || "共"} ${ob.nights} ${t.invoiceNights})</small></td>
           <td style="padding:8px 12px;border-bottom:1px solid #f0c0c0;color:#c0392b;text-decoration:line-through;">${ob.roomLabel}<span style="text-decoration:none;display:inline-block;margin-left:6px;padding:1px 6px;background:#c0392b;color:#fff;border-radius:3px;font-size:7.5pt;font-weight:700;">刪除</span></td>
           <td style="padding:8px 12px;border-bottom:1px solid #f0c0c0;color:#c0392b;text-decoration:line-through;">${ob.roomCount} 間 × ${ob.nights} 晚</td>
@@ -4998,7 +5098,7 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
                 <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${includeAmount ? t.invoiceFormula : t.invoiceQuantity}</th>${includeAmount ? `
                 <th style="padding:8px 12px;text-align:right;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceSubtotal}</th>` : ""}`;
       const _hotelBadge = _hotelIsNew
-        ? `<span style="margin-left:10px;padding:2px 8px;background:#22a959;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;vertical-align:middle;">新飯店</span>`
+        ? `<span class="diff-mark" style="margin-left:10px;padding:2px 8px;background:#22a959;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;vertical-align:middle;">新飯店</span>`
         : "";
       return `
         <div style="margin-bottom:28px;${pageBreak}">
@@ -5040,13 +5140,13 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
     }, 0);
     const _hasDiff = _hasSnap && (_totalNew + _totalChanged + _totalDeleted > 0);
     const _diffBar = _hasSnap ? (_hasDiff ? `
-<div style="margin-bottom:14px;padding:10px 16px;border-radius:6px;border:1px solid #d4c060;background:#fffbe6;display:flex;align-items:center;gap:16px;flex-wrap:wrap;break-inside:avoid;">
+<div class="diff-mark" style="margin-bottom:14px;padding:10px 16px;border-radius:6px;border:1px solid #d4c060;background:#fffbe6;display:flex;align-items:center;gap:16px;flex-wrap:wrap;break-inside:avoid;">
   <span style="font-size:8.5pt;color:#7a6010;font-weight:700;">與 ${_snapTime} 版本比較</span>
   ${_totalNew > 0 ? `<span style="padding:2px 9px;background:#22a959;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;">新增 ${_totalNew}</span>` : ""}
   ${_totalChanged > 0 ? `<span style="padding:2px 9px;background:#e6a817;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;">變更 ${_totalChanged}</span>` : ""}
   ${_totalDeleted > 0 ? `<span style="padding:2px 9px;background:#c0392b;color:#fff;border-radius:3px;font-size:8pt;font-weight:700;">刪除 ${_totalDeleted}</span>` : ""}
 </div>` : `
-<div style="margin-bottom:14px;padding:8px 16px;border-radius:6px;border:1px solid #b8d8c0;background:#f0faf3;break-inside:avoid;">
+<div class="diff-mark" style="margin-bottom:14px;padding:8px 16px;border-radius:6px;border:1px solid #b8d8c0;background:#f0faf3;break-inside:avoid;">
   <span style="font-size:8pt;color:#2a6040;">✓ 與 ${_snapTime} 版本相比，無任何變更</span>
 </div>`) : "";
 
