@@ -2218,8 +2218,10 @@ function UnassignedRoomsPanel({ personsNoStay, activeStayPhase, activePhaseName,
 function HotelStatsByDatePanel({
   t, lang, project, statsDate, setStatsDate, statsHotelId, setStatsHotelId,
   stayNightDates, hotels, selectedHotelDayStats, hotelStatsDayCostFmt,
+  stays, persons, roommates,
 }) {
   const [open, setOpen] = React.useState(false);
+  const [guestView, setGuestView] = React.useState("dept");
   const hasSelection = statsDate && statsHotelId && selectedHotelDayStats;
   return (
     <div style={{ marginTop: 24, marginBottom: 20, background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)", overflow: "hidden" }}>
@@ -2291,6 +2293,105 @@ function HotelStatsByDatePanel({
               .replace("{rooms}", String(selectedHotelDayStats.st.rooms))
               .replace("{cost}", hotelStatsDayCostFmt)}
           </p>
+          {(() => {
+            if (!stays || !persons) return null;
+            const hotel = selectedHotelDayStats.hotel;
+            const hotelStays = stays.filter((s) => +s.hotel_id === +hotel.id && stayActiveOnDate(s, statsDate));
+            if (!hotelStays.length) return null;
+            const guestEntries = [];
+            hotelStays.forEach((s) => {
+              if (s.special_room_name) return;
+              const p = persons.find((x) => x.id === s.person_id);
+              if (!p) return;
+              const nextDay = addDaysToDateStr(statsDate, 1);
+              let stayType;
+              if (s.check_in === statsDate) stayType = "ci";
+              else if (s.check_out === nextDay) stayType = "co";
+              else stayType = "stay";
+              guestEntries.push({ p, s, stayType });
+            });
+            if (!guestEntries.length) return null;
+            const typeLabel = { ci: "今日入住", co: "今日退房", stay: "續住" };
+            const typeStyle = {
+              ci: { background: "var(--moegi3)", color: "var(--moegi)", border: "1px solid rgba(43,90,76,.25)" },
+              co: { background: "rgba(173,48,48,.08)", color: "var(--shu)", border: "1px solid rgba(173,48,48,.22)" },
+              stay: { background: "var(--asagi2)", color: "var(--asagi)", border: "1px solid rgba(58,120,140,.25)" },
+            };
+            const byDept = {};
+            guestEntries.forEach(({ p, stayType }) => {
+              const dept = p.dept || "—";
+              if (!byDept[dept]) byDept[dept] = [];
+              byDept[dept].push({ p, stayType });
+            });
+            const byRoom = {};
+            guestEntries.forEach(({ p, s, stayType }) => {
+              const rn = (s.room_number || "").trim() || "\u00b7";
+              if (!byRoom[rn]) byRoom[rn] = [];
+              byRoom[rn].push({ p, s, stayType });
+            });
+            const tagStyle = (st) => ({
+              display: "inline-flex", alignItems: "center", gap: 4,
+              fontSize: 11, padding: "2px 9px", borderRadius: 20,
+              whiteSpace: "nowrap", fontWeight: 600, ...typeStyle[st],
+            });
+            const ciCount = guestEntries.filter((e) => e.stayType === "ci").length;
+            const coCount = guestEntries.filter((e) => e.stayType === "co").length;
+            const stayCount = guestEntries.filter((e) => e.stayType === "stay").length;
+            return (
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--keisenL)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", fontSize: 11 }}>
+                    {ciCount > 0 && <span style={{ color: "var(--moegi)", fontWeight: 600 }}>● 今日入住 {ciCount}</span>}
+                    {stayCount > 0 && <span style={{ color: "var(--asagi)", fontWeight: 600 }}>● 續住 {stayCount}</span>}
+                    {coCount > 0 && <span style={{ color: "var(--shu)", fontWeight: 600 }}>● 今日退房 {coCount}</span>}
+                  </div>
+                  <div style={{ display: "inline-flex", border: "1px solid var(--keisenM)", borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+                    {[["dept", "依部門"], ["room", "依房號"]].map(([k, lb]) => (
+                      <button key={k} type="button" onClick={() => setGuestView(k)} style={{ padding: "3px 10px", border: "none", cursor: "pointer", fontSize: 11, fontFamily: "inherit", background: guestView === k ? "var(--moegi)" : "transparent", color: guestView === k ? "var(--shiro)" : "var(--nezumi)", fontWeight: guestView === k ? 700 : 400 }}>{lb}</button>
+                    ))}
+                  </div>
+                </div>
+                {guestView === "dept" ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {Object.entries(byDept).sort((a, b) => a[0] === "—" ? 1 : b[0] === "—" ? -1 : a[0].localeCompare(b[0], "zh-TW")).map(([dept, items]) => (
+                      <div key={dept}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em", marginBottom: 5, display: "flex", justifyContent: "space-between" }}>
+                          <span>{dept}</span><span style={{ fontWeight: 400 }}>{items.length} 人</span>
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {items.map(({ p, stayType }, i) => (
+                            <span key={i} style={tagStyle(stayType)}>
+                              {p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim()}
+                              <span style={{ fontSize: 9.5, opacity: 0.72, fontWeight: 400 }}>{typeLabel[stayType]}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {Object.entries(byRoom).sort((a, b) => a[0] === "\u00b7" ? 1 : b[0] === "\u00b7" ? -1 : a[0].localeCompare(b[0], undefined, { numeric: true })).map(([rn, items]) => (
+                      <div key={rn}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", marginBottom: 5, display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ padding: "1px 7px", border: "1px solid var(--keisenM)", borderRadius: 4, fontFamily: "monospace", fontSize: 11, color: rn === "\u00b7" ? "var(--kincha)" : "var(--nezumi)" }}>{rn === "\u00b7" ? "待分配" : `${rn} 房`}</span>
+                          <span style={{ fontWeight: 400 }}>{items.length} 人</span>
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {items.map(({ p, stayType }, i) => (
+                            <span key={i} style={tagStyle(stayType)}>
+                              {p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim()}
+                              <span style={{ fontSize: 9.5, opacity: 0.72, fontWeight: 400 }}>{typeLabel[stayType]}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </>
       )}
     </div>}
@@ -8078,6 +8179,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     hotels={hotels}
                     selectedHotelDayStats={selectedHotelDayStats}
                     hotelStatsDayCostFmt={hotelStatsDayCostFmt}
+                    stays={stays}
+                    persons={persons}
+                    roommates={roommates}
                   />
                 </>
               )}
