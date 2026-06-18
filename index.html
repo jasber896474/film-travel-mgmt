@@ -426,6 +426,7 @@ const T = {
     hotelStatsByDateHint: "請先選擇飯店與日期，分開計算各飯店當晚人數、房數與費用（費用依主檔「日期例外」，同房號或同室者只計一筆）。",
     hotelStatsByDateWhere: "位置：頂部「住宿」分頁 →「住宿一覽」",
     guestNights: "人次", roomNights: "客室泊數",
+    guestCi: "今日入住", guestCo: "今日退房", guestStay: "續住", guestByDept: "依部門", guestByRoom: "依房號",
     specialRoom: "專用空間", specialRoomName: "空間名稱（器材間・梳化間等）", addSpecialRoom: "新增專用空間",
     onSite: "參與現場", offSiteHint: "關閉後將從排車與住宿名單中隱藏",
     hideFromStays: "隱藏於住宿名單", hideFromVehicles: "隱藏於派車名單", hideFromFlights: "隱藏於航班名單",
@@ -576,6 +577,7 @@ const T = {
     hotelStatsByDateHint: "请先选择饭店与日期，分开计算各饭店当晚人数、房数与费用。",
     hotelStatsByDateWhere: "位置：顶部「住宿」分页 →「住宿一览」",
     guestNights: "人次", roomNights: "客房泊数",
+    guestCi: "今日入住", guestCo: "今日退房", guestStay: "续住", guestByDept: "按部门", guestByRoom: "按房号",
     specialRoom: "专用空间", specialRoomName: "空间名称（器材间・化妆间等）", addSpecialRoom: "新增专用空间",
     onSite: "参与现场", offSiteHint: "关闭后将从排车与住宿名单中隐藏",
     hideFromStays: "隐藏于住宿名单", hideFromVehicles: "隐藏于派车名单", hideFromFlights: "隐藏于航班名单",
@@ -725,6 +727,7 @@ const T = {
     hotelStatsByDateHint: "Guests and rooms from the stay list; cost from hotel master daily rates (one charge per room / roommate group).",
     hotelStatsByDateWhere: "Location: Hotels tab → Stay list (top of page)",
     guestNights: "guest-nights", roomNights: "room-nights",
+    guestCi: "Check-in today", guestCo: "Check-out today", guestStay: "Staying", guestByDept: "By dept", guestByRoom: "By room",
     specialRoom: "Special Space", specialRoomName: "Space name (equipment room, makeup room…)", addSpecialRoom: "Add special space",
     onSite: "On-site", offSiteHint: "When off, hidden from vehicle & stay lists",
     hideFromStays: "Hide from stays", hideFromVehicles: "Hide from vehicles", hideFromFlights: "Hide from flights",
@@ -872,6 +875,7 @@ const T = {
     hotelStatsByDateHint: "인원·객실은 숙박 목록, 비용은 호텔 마스터 일자별 요금(같은 방·룸메이트 1회만).",
     hotelStatsByDateWhere: "위치: 숙박 → 숙박 일람 (상단)",
     guestNights: "인원박", roomNights: "객실박",
+    guestCi: "오늘 체크인", guestCo: "오늘 체크아웃", guestStay: "숙박 중", guestByDept: "부서별", guestByRoom: "객실별",
     specialRoom: "전용 공간", specialRoomName: "공간 이름(장비실·분장실 등)", addSpecialRoom: "전용 공간 추가",
     onSite: "현장 참여", offSiteHint: "끄면 차량·숙박 목록에서 숨겨집니다",
     hideFromStays: "숙박 목록에서 숨김", hideFromVehicles: "차량 목록에서 숨김", hideFromFlights: "항공 목록에서 숨김",
@@ -1018,6 +1022,7 @@ const T = {
     hotelStatsByDateHint: "人数・部屋は宿泊一覧、費用はホテルマスタの日別料金（同室・ルームメイトは1回のみ）。",
     hotelStatsByDateWhere: "場所：宿泊 → 宿泊一覧（ページ上部）",
     guestNights: "人泊", roomNights: "室泊",
+    guestCi: "本日チェックイン", guestCo: "本日チェックアウト", guestStay: "滞在中", guestByDept: "部署別", guestByRoom: "部屋別",
     specialRoom: "専用スペース", specialRoomName: "スペース名（機材室・メイク室など）", addSpecialRoom: "専用スペースを追加",
     onSite: "現場参加", offSiteHint: "オフにすると車両・宿泊リストから非表示になります",
     hideFromStays: "宿泊リストから非表示", hideFromVehicles: "配車リストから非表示", hideFromFlights: "フライトリストから非表示",
@@ -2296,22 +2301,25 @@ function HotelStatsByDatePanel({
           {(() => {
             if (!stays || !persons) return null;
             const hotel = selectedHotelDayStats.hotel;
-            const hotelStays = stays.filter((s) => +s.hotel_id === +hotel.id && stayActiveOnDate(s, statsDate));
+            const hotelStays = stays.filter((s) => {
+              if (+s.hotel_id !== +hotel.id || !s.check_in || !s.check_out) return false;
+              // 退房日也顯示：check_in <= statsDate <= check_out
+              return s.check_in <= statsDate && statsDate <= s.check_out;
+            });
             if (!hotelStays.length) return null;
             const guestEntries = [];
             hotelStays.forEach((s) => {
               if (s.special_room_name) return;
               const p = persons.find((x) => x.id === s.person_id);
               if (!p) return;
-              const nextDay = addDaysToDateStr(statsDate, 1);
               let stayType;
-              if (s.check_in === statsDate) stayType = "ci";
-              else if (s.check_out === nextDay) stayType = "co";
+              if (s.check_out === statsDate) stayType = "co";       // 退房日 = 所選日期
+              else if (s.check_in === statsDate) stayType = "ci";  // 入住日 = 所選日期
               else stayType = "stay";
               guestEntries.push({ p, s, stayType });
             });
             if (!guestEntries.length) return null;
-            const typeLabel = { ci: "今日入住", co: "今日退房", stay: "續住" };
+            const typeLabel = { ci: t.guestCi || "CI", co: t.guestCo || "CO", stay: t.guestStay || "—" };
             const typeStyle = {
               ci: { background: "var(--moegi3)", color: "var(--moegi)", border: "1px solid rgba(43,90,76,.25)" },
               co: { background: "rgba(173,48,48,.08)", color: "var(--shu)", border: "1px solid rgba(173,48,48,.22)" },
@@ -2341,12 +2349,12 @@ function HotelStatsByDatePanel({
               <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--keisenL)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", fontSize: 11 }}>
-                    {ciCount > 0 && <span style={{ color: "var(--moegi)", fontWeight: 600 }}>● 今日入住 {ciCount}</span>}
-                    {stayCount > 0 && <span style={{ color: "var(--asagi)", fontWeight: 600 }}>● 續住 {stayCount}</span>}
-                    {coCount > 0 && <span style={{ color: "var(--shu)", fontWeight: 600 }}>● 今日退房 {coCount}</span>}
+                    {ciCount > 0 && <span style={{ color: "var(--moegi)", fontWeight: 600 }}>● {t.guestCi} {ciCount}</span>}
+                    {stayCount > 0 && <span style={{ color: "var(--asagi)", fontWeight: 600 }}>● {t.guestStay} {stayCount}</span>}
+                    {coCount > 0 && <span style={{ color: "var(--shu)", fontWeight: 600 }}>● {t.guestCo} {coCount}</span>}
                   </div>
                   <div style={{ display: "inline-flex", border: "1px solid var(--keisenM)", borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
-                    {[["dept", "依部門"], ["room", "依房號"]].map(([k, lb]) => (
+                    {[["dept", t.guestByDept || "依部門"], ["room", t.guestByRoom || "依房號"]].map(([k, lb]) => (
                       <button key={k} type="button" onClick={() => setGuestView(k)} style={{ padding: "3px 10px", border: "none", cursor: "pointer", fontSize: 11, fontFamily: "inherit", background: guestView === k ? "var(--moegi)" : "transparent", color: guestView === k ? "var(--shiro)" : "var(--nezumi)", fontWeight: guestView === k ? 700 : 400 }}>{lb}</button>
                     ))}
                   </div>
