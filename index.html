@@ -2308,17 +2308,21 @@ function HotelStatsByDatePanel({
             });
             if (!hotelStays.length) return null;
             const guestEntries = [];
+            const specialEntries = [];
             hotelStays.forEach((s) => {
-              if (s.special_room_name) return;
+              let stayType;
+              if (s.check_out === statsDate) stayType = "co";
+              else if (s.check_in === statsDate) stayType = "ci";
+              else stayType = "stay";
+              if (s.special_room_name) {
+                specialEntries.push({ s, stayType });
+                return;
+              }
               const p = persons.find((x) => x.id === s.person_id);
               if (!p) return;
-              let stayType;
-              if (s.check_out === statsDate) stayType = "co";       // 退房日 = 所選日期
-              else if (s.check_in === statsDate) stayType = "ci";  // 入住日 = 所選日期
-              else stayType = "stay";
               guestEntries.push({ p, s, stayType });
             });
-            if (!guestEntries.length) return null;
+            if (!guestEntries.length && !specialEntries.length) return null;
             const typeLabel = { ci: t.guestCi || "CI", co: t.guestCo || "CO", stay: t.guestStay || "—" };
             const typeStyle = {
               ci: { background: "var(--moegi3)", color: "var(--moegi)", border: "1px solid rgba(43,90,76,.25)" },
@@ -2329,22 +2333,35 @@ function HotelStatsByDatePanel({
             guestEntries.forEach(({ p, stayType }) => {
               const dept = p.dept || "—";
               if (!byDept[dept]) byDept[dept] = [];
-              byDept[dept].push({ p, stayType });
+              byDept[dept].push({ label: p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim(), stayType, isSpecial: false });
             });
             const byRoom = {};
             guestEntries.forEach(({ p, s, stayType }) => {
               const rn = (s.room_number || "").trim() || "\u00b7";
               if (!byRoom[rn]) byRoom[rn] = [];
-              byRoom[rn].push({ p, s, stayType });
+              byRoom[rn].push({ label: p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim(), stayType, isSpecial: false });
+            });
+            // 專用空間：依部門顯示為「🏷 空間名」，依房號歸入對應房號
+            const specialDeptKey = t.specialRoom || "專用空間";
+            specialEntries.forEach(({ s, stayType }) => {
+              if (!byDept[specialDeptKey]) byDept[specialDeptKey] = [];
+              byDept[specialDeptKey].push({ label: s.special_room_name, stayType, isSpecial: true });
+              const rn = (s.room_number || "").trim() || "\u00b7";
+              if (!byRoom[rn]) byRoom[rn] = [];
+              byRoom[rn].push({ label: s.special_room_name, stayType, isSpecial: true });
             });
             const tagStyle = (st) => ({
               display: "inline-flex", alignItems: "center", gap: 4,
               fontSize: 11, padding: "2px 9px", borderRadius: 20,
               whiteSpace: "nowrap", fontWeight: 600, ...typeStyle[st],
             });
-            const ciCount = guestEntries.filter((e) => e.stayType === "ci").length;
-            const coCount = guestEntries.filter((e) => e.stayType === "co").length;
-            const stayCount = guestEntries.filter((e) => e.stayType === "stay").length;
+            const allEntries = [
+              ...guestEntries.map((e) => e.stayType),
+              ...specialEntries.map((e) => e.stayType),
+            ];
+            const ciCount = allEntries.filter((t) => t === "ci").length;
+            const coCount = allEntries.filter((t) => t === "co").length;
+            const stayCount = allEntries.filter((t) => t === "stay").length;
             return (
               <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--keisenL)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
@@ -2367,9 +2384,9 @@ function HotelStatsByDatePanel({
                           <span>{dept}</span><span style={{ fontWeight: 400 }}>{items.length} 人</span>
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                          {items.map(({ p, stayType }, i) => (
+                          {items.map(({ label, stayType, isSpecial }, i) => (
                             <span key={i} style={tagStyle(stayType)}>
-                              {p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim()}
+                              {isSpecial && <span style={{ opacity: 0.65 }}>🏷</span>}{label}
                               <span style={{ fontSize: 9.5, opacity: 0.72, fontWeight: 400 }}>{typeLabel[stayType]}</span>
                             </span>
                           ))}
@@ -2386,9 +2403,9 @@ function HotelStatsByDatePanel({
                           <span style={{ fontWeight: 400 }}>{items.length} 人</span>
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                          {items.map(({ p, stayType }, i) => (
+                          {items.map(({ label, stayType, isSpecial }, i) => (
                             <span key={i} style={tagStyle(stayType)}>
-                              {p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim()}
+                              {isSpecial && <span style={{ opacity: 0.65 }}>🏷</span>}{label}
                               <span style={{ fontSize: 9.5, opacity: 0.72, fontWeight: 400 }}>{typeLabel[stayType]}</span>
                             </span>
                           ))}
