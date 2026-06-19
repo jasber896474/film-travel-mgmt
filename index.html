@@ -1641,7 +1641,8 @@ function buildFlightTableSections(persons, flights, legFilter, t, lang) {
       const key = flightBaggageGroupKey(fl, leg);
       if (!key) return;
       if (!map.has(key)) {
-        map.set(key, { type: "group", key: `${leg}:${key}`, leg, label: flightBaggageGroupLabel(fl, leg, t, lang), personIds: [] });
+        const depTime = leg === "out" ? fl.dep_time : fl.ret_dep_time;
+        map.set(key, { type: "group", key: `${leg}:${key}`, leg, label: flightBaggageGroupLabel(fl, leg, t, lang), depTime: depTime || "", personIds: [] });
       }
       const g = map.get(key);
       if (!g.personIds.includes(p.id)) {
@@ -1650,7 +1651,12 @@ function buildFlightTableSections(persons, flights, legFilter, t, lang) {
       }
     });
     Array.from(map.values())
-      .sort((a, b) => a.label.localeCompare(b.label, "zh-TW"))
+      .sort((a, b) => {
+        if (a.depTime && b.depTime) return a.depTime.localeCompare(b.depTime);
+        if (a.depTime) return -1;
+        if (b.depTime) return 1;
+        return a.label.localeCompare(b.label, "zh-TW");
+      })
       .filter((g) => g.personIds.length > 0)
       .forEach((g) => sections.push(g));
   });
@@ -2303,7 +2309,6 @@ function HotelStatsByDatePanel({
             const hotel = selectedHotelDayStats.hotel;
             const hotelStays = stays.filter((s) => {
               if (+s.hotel_id !== +hotel.id || !s.check_in || !s.check_out) return false;
-              // 退房日也顯示：check_in <= statsDate <= check_out
               return s.check_in <= statsDate && statsDate <= s.check_out;
             });
             if (!hotelStays.length) return null;
@@ -2341,7 +2346,6 @@ function HotelStatsByDatePanel({
               if (!byRoom[rn]) byRoom[rn] = [];
               byRoom[rn].push({ label: p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim(), stayType, isSpecial: false });
             });
-            // 專用空間：依部門顯示為「🏷 空間名」，依房號歸入對應房號
             const specialDeptKey = t.specialRoom || "專用空間";
             specialEntries.forEach(({ s, stayType }) => {
               if (!byDept[specialDeptKey]) byDept[specialDeptKey] = [];
@@ -2359,9 +2363,9 @@ function HotelStatsByDatePanel({
               ...guestEntries.map((e) => e.stayType),
               ...specialEntries.map((e) => e.stayType),
             ];
-            const ciCount = allEntries.filter((t) => t === "ci").length;
-            const coCount = allEntries.filter((t) => t === "co").length;
-            const stayCount = allEntries.filter((t) => t === "stay").length;
+            const ciCount = allEntries.filter((tt) => tt === "ci").length;
+            const coCount = allEntries.filter((tt) => tt === "co").length;
+            const stayCount = allEntries.filter((tt) => tt === "stay").length;
             return (
               <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--keisenL)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
