@@ -4194,6 +4194,10 @@ function generateVehicleReportHTML(cards, project, lang, t) {
   const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
   const totalPax = cards.reduce((s, c) => s + c.paxCount, 0);
   const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
+  const _vNow = new Date();
+  const _vMm = String(_vNow.getMonth() + 1).padStart(2, "0");
+  const _vDd = String(_vNow.getDate()).padStart(2, "0");
+  const _rDocTitle = `${_vMm}月${_vDd}日_${t.reportTypeVehicle || "配車表"}_${project?.name || ""}`;
 
   const blocks = cards.map((c) => {
     const paxHtml = c.pax.length
