@@ -2340,20 +2340,23 @@ function HotelStatsByDatePanel({
               if (!byDept[dept]) byDept[dept] = [];
               byDept[dept].push({ label: p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim(), stayType, isSpecial: false });
             });
-            const byRoom = {};
+            const byRoomDate = {};
             guestEntries.forEach(({ p, s, stayType }) => {
               const rn = (s.room_number || "").trim() || "\u00b7";
-              if (!byRoom[rn]) byRoom[rn] = [];
-              byRoom[rn].push({ label: p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim(), stayType, isSpecial: false });
+              const key = `${rn}|${s.check_in || "?"}|${s.check_out || "?"}`;
+              if (!byRoomDate[key]) byRoomDate[key] = { room: rn, ci: s.check_in, co: s.check_out, items: [] };
+              byRoomDate[key].items.push({ label: p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim(), stayType, isSpecial: false, checkIn: s.check_in });
             });
             const specialDeptKey = t.specialRoom || "專用空間";
             specialEntries.forEach(({ s, stayType }) => {
               if (!byDept[specialDeptKey]) byDept[specialDeptKey] = [];
               byDept[specialDeptKey].push({ label: s.special_room_name, stayType, isSpecial: true });
               const rn = (s.room_number || "").trim() || "\u00b7";
-              if (!byRoom[rn]) byRoom[rn] = [];
-              byRoom[rn].push({ label: s.special_room_name, stayType, isSpecial: true });
+              const key = `${rn}|${s.check_in || "?"}|${s.check_out || "?"}`;
+              if (!byRoomDate[key]) byRoomDate[key] = { room: rn, ci: s.check_in, co: s.check_out, items: [] };
+              byRoomDate[key].items.push({ label: s.special_room_name, stayType, isSpecial: true, checkIn: s.check_in });
             });
+            const byRoom = byRoomDate;
             const tagStyle = (st) => ({
               display: "inline-flex", alignItems: "center", gap: 4,
               fontSize: 11, padding: "2px 9px", borderRadius: 20,
@@ -2400,22 +2403,41 @@ function HotelStatsByDatePanel({
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {Object.entries(byRoom).sort((a, b) => a[0] === "\u00b7" ? 1 : b[0] === "\u00b7" ? -1 : a[0].localeCompare(b[0], undefined, { numeric: true })).map(([rn, items]) => (
-                      <div key={rn}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", marginBottom: 5, display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ padding: "1px 7px", border: "1px solid var(--keisenM)", borderRadius: 4, fontFamily: "monospace", fontSize: 11, color: rn === "\u00b7" ? "var(--kincha)" : "var(--nezumi)" }}>{rn === "\u00b7" ? "待分配" : `${rn} 房`}</span>
-                          <span style={{ fontWeight: 400 }}>{items.length} 人</span>
+                    {Object.entries(byRoom).sort((a, b) => {
+                      const aRn = a[1].room || "\u00b7";
+                      const bRn = b[1].room || "\u00b7";
+                      if (aRn === "\u00b7" && bRn !== "\u00b7") return 1;
+                      if (aRn !== "\u00b7" && bRn === "\u00b7") return -1;
+                      if (aRn !== bRn) return aRn.localeCompare(bRn, undefined, { numeric: true });
+                      return (a[1].ci || "").localeCompare(b[1].ci || "");
+                    }).map(([key, roomData]) => {
+                      const rn = roomData.room || "\u00b7";
+                      const ci = roomData.ci || "—";
+                      const co = roomData.co || "—";
+                      const dateRange = ci !== "—" && co !== "—" ? `${ci.slice(5)} ～ ${co.slice(5)}` : "—";
+                      const mainCheckIn = ci;
+                      return (
+                        <div key={key}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", marginBottom: 5, display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ padding: "1px 7px", border: "1px solid var(--keisenM)", borderRadius: 4, fontFamily: "monospace", fontSize: 11, color: rn === "\u00b7" ? "var(--kincha)" : "var(--nezumi)" }}>{rn === "\u00b7" ? "待分配" : `${rn} 房`}</span>
+                            <span style={{ fontSize: 9, color: "var(--asagi)", fontWeight: 500 }}>({dateRange})</span>
+                            <span style={{ fontWeight: 400 }}>{roomData.items.length} 人</span>
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                            {roomData.items.map(({ label, stayType, isSpecial, checkIn }, i) => {
+                              const isDiffDate = checkIn && checkIn !== mainCheckIn;
+                              return (
+                                <span key={i} style={tagStyle(stayType)}>
+                                  {isSpecial && <span style={{ opacity: 0.65 }}>🏷</span>}{label}
+                                  <span style={{ fontSize: 9.5, opacity: 0.72, fontWeight: 400 }}>{typeLabel[stayType]}</span>
+                                  {isDiffDate && <span style={{ fontSize: 8.5, opacity: 0.65, marginLeft: 2 }}>({checkIn?.slice(5)} 入)</span>}
+                                </span>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                          {items.map(({ label, stayType, isSpecial }, i) => (
-                            <span key={i} style={tagStyle(stayType)}>
-                              {isSpecial && <span style={{ opacity: 0.65 }}>🏷</span>}{label}
-                              <span style={{ fontSize: 9.5, opacity: 0.72, fontWeight: 400 }}>{typeLabel[stayType]}</span>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
