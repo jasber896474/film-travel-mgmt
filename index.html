@@ -328,6 +328,70 @@ function buildFlightPayload(f, personId, projectId) {
   };
 }
 
+const FLIGHT_COST_TYPES = [
+  { key: "base_out", labelKey: "flightCostBaseOut" },
+  { key: "base_ret", labelKey: "flightCostBaseRet" },
+  { key: "package", labelKey: "flightCostPackage" },
+  { key: "baggage_prepaid", labelKey: "flightCostBaggagePrepaid" },
+  { key: "baggage_overage", labelKey: "flightCostBaggageOverage" },
+  { key: "change_fee", labelKey: "flightCostChangeFee" },
+  { key: "cancel_fee", labelKey: "flightCostCancelFee" },
+  { key: "reissue", labelKey: "flightCostReissue" },
+  { key: "agency_fee", labelKey: "flightCostAgencyFee" },
+  { key: "refund", labelKey: "flightCostRefund" },
+  { key: "other", labelKey: "flightCostOther" },
+];
+
+const FLIGHT_COST_LEGS = [
+  { key: "out", labelKey: "flightOutbound" },
+  { key: "ret", labelKey: "flightReturn" },
+  { key: "both", labelKey: "flightCostLegBoth" },
+  { key: "unallocated", labelKey: "flightCostLegUnalloc" },
+];
+
+function flightCostTypeLabel(type, t) {
+  const row = FLIGHT_COST_TYPES.find((x) => x.key === type);
+  return row ? t[row.labelKey] : type;
+}
+
+function flightCostLegLabel(leg, t) {
+  const row = FLIGHT_COST_LEGS.find((x) => x.key === leg);
+  return row ? t[row.labelKey] : leg;
+}
+
+function normalizeFlightCostAmount(costType, amount) {
+  const n = parseFloat(amount);
+  if (!Number.isFinite(n)) return 0;
+  if (costType === "refund" && n > 0) return -n;
+  return n;
+}
+
+function buildFlightCostPayload(f, personId, projectId, user) {
+  const trim = (v) => (v || "").trim() || null;
+  return {
+    project_id: projectId,
+    person_id: personId,
+    cost_type: f.cost_type || "other",
+    leg: f.leg || "both",
+    amount: normalizeFlightCostAmount(f.cost_type, f.amount),
+    currency: trim(f.currency),
+    paid_at: f.paid_at ? String(f.paid_at).slice(0, 10) : null,
+    vendor: trim(f.vendor),
+    receipt_no: trim(f.receipt_no),
+    note: trim(f.note),
+    created_by: user?.id || null,
+    created_by_email: user?.email || null,
+  };
+}
+
+function sumCostItems(items, project) {
+  return (items || []).reduce((s, i) => s + convertMoney(+i.amount || 0, project), 0);
+}
+
+function personHasPackageCost(items) {
+  return (items || []).some((i) => i.cost_type === "package" || i.leg === "unallocated");
+}
+
 const todayStr = () => localDateStr();
 const todayDT = () => localDateTimeStr();
 
@@ -492,6 +556,28 @@ const T = {
     bagCalcLeg: "航段", bagCalcSelectFlight: "選擇班機", bagCalcChecked: "託運", bagCalcAllow: "額度", bagCalcOver: "超重",
     bagCalcTotalOver: "合計超重", bagCalcEstFee: "估計超重費", bagCalcNoData: "請勾選人員或選擇班機",
     bagCalcPerPerson: "kg／人", bagCalcPickHint: "勾選要一起試算的人（通常為同一班機）",
+    bagCalcUnassignedFlight: "未指定班機",
+    flightPrintReport: "列印報表", flightPrintMgmt: "列印航班管理（依篩選）", flightPrintBaggage: "列印行李超重試算（依篩選）",
+    flightPrintSelect: "列印選擇…", flightPrintThisGroup: "列印此班", flightPrintSelectTitle: "列印選擇",
+    flightPrintScopeFiltered: "依目前篩選", flightPrintScopeGroup: "指定班機", flightPrintSelectPeople: "人員（可取消勾選）",
+    flightPrintCompactTitle: "班機名單", flightPrintFilterSummary: "篩選條件",
+    subFlightMgmt: "航班管理", subFlightCosts: "機票費用",
+    flightCostTitle: "機票費用記帳", flightCostHint: "製片／生活／會計統一登記；每筆保留明細，改票、重購、退款請另增一筆。",
+    flightCostAdd: "新增費用", flightCostBatchAdd: "批次新增", flightCostPrint: "列印費用表",
+    flightCostTotal: "機票總支出", flightCostByDept: "部門小計", flightCostPersonTotal: "合計",
+    flightCostNoItems: "尚無費用紀錄", flightCostItemCount: "{n} 筆",
+    flightCostBaseOut: "去程票價", flightCostBaseRet: "回程票價", flightCostPackage: "來回套票（整包）",
+    flightCostBaggagePrepaid: "預購超重", flightCostBaggageOverage: "機場超重",
+    flightCostChangeFee: "改票費", flightCostCancelFee: "取消費", flightCostReissue: "重購機票",
+    flightCostAgencyFee: "旅行社服務費", flightCostRefund: "退款", flightCostOther: "其他",
+    flightCostLegBoth: "去回程", flightCostLegUnalloc: "不分／整包",
+    flightCostVendor: "廠商（航空／旅行社）", flightCostReceipt: "收據／票號", flightCostPaidAt: "付款日期",
+    flightCostNote: "備註", flightCostAmount: "金額", flightCostType: "費用類型",
+    flightCostFlagPackage: "整包", flightCostBatchHint: "勾選人員後，每人各新增一筆相同金額。",
+    flightCostBatchSelected: "已選 {n} 人", flightCostSummary: "費用摘要", flightCostViewAll: "查看全部費用",
+    flightCostAddForPerson: "新增費用", flightCostEdit: "編輯費用", flightCostDeleteConfirm: "確定刪除此筆費用？",
+    flightCostRecordedBy: "登記", flightCostSelectPerson: "選擇人員", flightCostAllTypes: "全部類型",
+    flightCostNetTotal: "淨支出",
     locationTag: "拍攝地點", locationTagPh: "例：花蓮 Phase 1、高雄 Phase 2",
     allLocations: "全部地點", allHotels: "全部飯店", filterByHotel: "依飯店篩選",
     stayGuestCount: "人", stayRoomCount: "間",
@@ -651,6 +737,28 @@ const T = {
     bagCalcLeg: "航段", bagCalcSelectFlight: "选择班机", bagCalcChecked: "托运", bagCalcAllow: "额度", bagCalcOver: "超重",
     bagCalcTotalOver: "合计超重", bagCalcEstFee: "估计超重费", bagCalcNoData: "请勾选人员或选择班机",
     bagCalcPerPerson: "kg／人", bagCalcPickHint: "勾选要一起试算的人（通常为同一班机）",
+    bagCalcUnassignedFlight: "未指定班机",
+    flightPrintReport: "打印报表", flightPrintMgmt: "打印航班管理（依筛选）", flightPrintBaggage: "打印行李超重试算（依筛选）",
+    flightPrintSelect: "打印选择…", flightPrintThisGroup: "打印此班", flightPrintSelectTitle: "打印选择",
+    flightPrintScopeFiltered: "依目前筛选", flightPrintScopeGroup: "指定班机", flightPrintSelectPeople: "人员（可取消勾选）",
+    flightPrintCompactTitle: "班机名单", flightPrintFilterSummary: "筛选条件",
+    subFlightMgmt: "航班管理", subFlightCosts: "机票费用",
+    flightCostTitle: "机票费用记账", flightCostHint: "制片／生活／会计统一登记；每笔保留明细，改票、重购、退款请另增一笔。",
+    flightCostAdd: "新增费用", flightCostBatchAdd: "批次新增", flightCostPrint: "打印费用表",
+    flightCostTotal: "机票总支出", flightCostByDept: "部门小计", flightCostPersonTotal: "合计",
+    flightCostNoItems: "尚无费用纪录", flightCostItemCount: "{n} 笔",
+    flightCostBaseOut: "去程票价", flightCostBaseRet: "回程票价", flightCostPackage: "来回套票（整包）",
+    flightCostBaggagePrepaid: "预购超重", flightCostBaggageOverage: "机场超重",
+    flightCostChangeFee: "改票费", flightCostCancelFee: "取消费", flightCostReissue: "重购机票",
+    flightCostAgencyFee: "旅行社服务费", flightCostRefund: "退款", flightCostOther: "其他",
+    flightCostLegBoth: "去回程", flightCostLegUnalloc: "不分／整包",
+    flightCostVendor: "厂商（航空／旅行社）", flightCostReceipt: "收据／票号", flightCostPaidAt: "付款日期",
+    flightCostNote: "备注", flightCostAmount: "金额", flightCostType: "费用类型",
+    flightCostFlagPackage: "整包", flightCostBatchHint: "勾选人员后，每人各新增一笔相同金额。",
+    flightCostBatchSelected: "已选 {n} 人", flightCostSummary: "费用摘要", flightCostViewAll: "查看全部费用",
+    flightCostAddForPerson: "新增费用", flightCostEdit: "编辑费用", flightCostDeleteConfirm: "确定删除此笔费用？",
+    flightCostRecordedBy: "登记", flightCostSelectPerson: "选择人员", flightCostAllTypes: "全部类型",
+    flightCostNetTotal: "净支出",
     locationTag: "拍摄地点", locationTagPh: "例：花莲 Phase 1、高雄 Phase 2",
     allLocations: "全部地点", allHotels: "全部饭店", filterByHotel: "按饭店筛选",
     stayGuestCount: "人", stayRoomCount: "间",
@@ -809,6 +917,28 @@ const T = {
     bagCalcLeg: "Leg", bagCalcSelectFlight: "Select flight", bagCalcChecked: "Checked", bagCalcAllow: "Allow.", bagCalcOver: "Over",
     bagCalcTotalOver: "Total over", bagCalcEstFee: "Est. fee", bagCalcNoData: "Select people or a flight",
     bagCalcPerPerson: "kg/person", bagCalcPickHint: "Check people to include (usually same flight)",
+    bagCalcUnassignedFlight: "Unassigned flight",
+    flightPrintReport: "Print report", flightPrintMgmt: "Print flights (filtered)", flightPrintBaggage: "Print baggage calc (filtered)",
+    flightPrintSelect: "Print selection…", flightPrintThisGroup: "Print group", flightPrintSelectTitle: "Print selection",
+    flightPrintScopeFiltered: "Current filters", flightPrintScopeGroup: "Specific flight", flightPrintSelectPeople: "People (uncheck to exclude)",
+    flightPrintCompactTitle: "Flight roster", flightPrintFilterSummary: "Filters",
+    subFlightMgmt: "Flights", subFlightCosts: "Ticket costs",
+    flightCostTitle: "Ticket cost ledger", flightCostHint: "Central bookkeeping for production/life/accounting. Add a new line for each change, reissue, or refund.",
+    flightCostAdd: "Add cost", flightCostBatchAdd: "Batch add", flightCostPrint: "Print costs",
+    flightCostTotal: "Total ticket spend", flightCostByDept: "By department", flightCostPersonTotal: "Total",
+    flightCostNoItems: "No cost records", flightCostItemCount: "{n} items",
+    flightCostBaseOut: "Outbound fare", flightCostBaseRet: "Return fare", flightCostPackage: "Round-trip package",
+    flightCostBaggagePrepaid: "Prepaid baggage", flightCostBaggageOverage: "Airport overage",
+    flightCostChangeFee: "Change fee", flightCostCancelFee: "Cancel fee", flightCostReissue: "Reissue",
+    flightCostAgencyFee: "Agency fee", flightCostRefund: "Refund", flightCostOther: "Other",
+    flightCostLegBoth: "Both legs", flightCostLegUnalloc: "Unallocated / package",
+    flightCostVendor: "Vendor (airline/agency)", flightCostReceipt: "Receipt / ticket no.", flightCostPaidAt: "Paid date",
+    flightCostNote: "Note", flightCostAmount: "Amount", flightCostType: "Cost type",
+    flightCostFlagPackage: "Package", flightCostBatchHint: "Selected people each get one line with the same amount.",
+    flightCostBatchSelected: "{n} selected", flightCostSummary: "Cost summary", flightCostViewAll: "View all costs",
+    flightCostAddForPerson: "Add cost", flightCostEdit: "Edit cost", flightCostDeleteConfirm: "Delete this cost line?",
+    flightCostRecordedBy: "Recorded by", flightCostSelectPerson: "Select person", flightCostAllTypes: "All types",
+    flightCostNetTotal: "Net spend",
     locationTag: "Location", locationTagPh: "e.g. Hualien Phase 1, Kaohsiung Phase 2",
     allLocations: "All Locations", allHotels: "All Hotels", filterByHotel: "Filter by hotel",
     stayGuestCount: "pax", stayRoomCount: "rm",
@@ -965,6 +1095,28 @@ const T = {
     bagCalcLeg: "구간", bagCalcSelectFlight: "항공편 선택", bagCalcChecked: "위탁", bagCalcAllow: "한도", bagCalcOver: "초과",
     bagCalcTotalOver: "초과 합계", bagCalcEstFee: "예상 요금", bagCalcNoData: "인원 또는 항공편을 선택",
     bagCalcPerPerson: "kg/인", bagCalcPickHint: "함께 계산할 인원 선택",
+    bagCalcUnassignedFlight: "미지정 항공편",
+    flightPrintReport: "보고서 인쇄", flightPrintMgmt: "항공 관리 인쇄 (필터)", flightPrintBaggage: "수하물 초과 인쇄 (필터)",
+    flightPrintSelect: "인쇄 선택…", flightPrintThisGroup: "이 편 인쇄", flightPrintSelectTitle: "인쇄 선택",
+    flightPrintScopeFiltered: "현재 필터", flightPrintScopeGroup: "특정 항공편", flightPrintSelectPeople: "인원 (체크 해제 가능)",
+    flightPrintCompactTitle: "탑승 명단", flightPrintFilterSummary: "필터",
+    subFlightMgmt: "항공 관리", subFlightCosts: "항공권 비용",
+    flightCostTitle: "항공권 비용 장부", flightCostHint: "제작/생활/회계 통합 기록. 변경·재발권·환불은 각각 새 줄로 추가.",
+    flightCostAdd: "비용 추가", flightCostBatchAdd: "일괄 추가", flightCostPrint: "비용표 인쇄",
+    flightCostTotal: "항공권 총 지출", flightCostByDept: "부서별", flightCostPersonTotal: "합계",
+    flightCostNoItems: "비용 기록 없음", flightCostItemCount: "{n}건",
+    flightCostBaseOut: "출국 요금", flightCostBaseRet: "귀국 요금", flightCostPackage: "왕복 패키지",
+    flightCostBaggagePrepaid: "선불 수하물", flightCostBaggageOverage: "공항 초과",
+    flightCostChangeFee: "변경 수수료", flightCostCancelFee: "취소 수수료", flightCostReissue: "재발권",
+    flightCostAgencyFee: "여행사 수수료", flightCostRefund: "환불", flightCostOther: "기타",
+    flightCostLegBoth: "왕복", flightCostLegUnalloc: "미분류/패키지",
+    flightCostVendor: "업체", flightCostReceipt: "영수증/티켓번호", flightCostPaidAt: "결제일",
+    flightCostNote: "메모", flightCostAmount: "금액", flightCostType: "비용 유형",
+    flightCostFlagPackage: "패키지", flightCostBatchHint: "선택한 인원 각각 동일 금액으로 한 줄 추가.",
+    flightCostBatchSelected: "{n}명 선택", flightCostSummary: "비용 요약", flightCostViewAll: "전체 비용",
+    flightCostAddForPerson: "비용 추가", flightCostEdit: "비용 편집", flightCostDeleteConfirm: "이 비용 줄을 삭제할까요?",
+    flightCostRecordedBy: "등록", flightCostSelectPerson: "인원 선택", flightCostAllTypes: "전체 유형",
+    flightCostNetTotal: "순 지출",
     locationTag: "촬영 장소", locationTagPh: "예: 화련 Phase 1, 가오슝 Phase 2",
     allLocations: "전체 장소", allHotels: "전체 호텔", filterByHotel: "호텔별 필터",
     stayGuestCount: "명", stayRoomCount: "실",
@@ -1121,6 +1273,28 @@ const T = {
     bagCalcLeg: "区間", bagCalcSelectFlight: "便を選択", bagCalcChecked: "預け", bagCalcAllow: "許容", bagCalcOver: "超過",
     bagCalcTotalOver: "超過合計", bagCalcEstFee: "超過料金の見積", bagCalcNoData: "スタッフまたは便を選択してください",
     bagCalcPerPerson: "kg/人", bagCalcPickHint: "試算するスタッフを選択",
+    bagCalcUnassignedFlight: "便未指定",
+    flightPrintReport: "レポート印刷", flightPrintMgmt: "フライト管理を印刷（フィルター）", flightPrintBaggage: "超過手荷物試算を印刷（フィルター）",
+    flightPrintSelect: "印刷選択…", flightPrintThisGroup: "この便を印刷", flightPrintSelectTitle: "印刷選択",
+    flightPrintScopeFiltered: "現在のフィルター", flightPrintScopeGroup: "便を指定", flightPrintSelectPeople: "スタッフ（チェック解除可）",
+    flightPrintCompactTitle: "搭乗者リスト", flightPrintFilterSummary: "フィルター",
+    subFlightMgmt: "フライト管理", subFlightCosts: "航空券費用",
+    flightCostTitle: "航空券費用台帳", flightCostHint: "制作/生活/経理が一括記帳。変更・再発行・返金は行を追加。",
+    flightCostAdd: "費用追加", flightCostBatchAdd: "一括追加", flightCostPrint: "費用表を印刷",
+    flightCostTotal: "航空券総支出", flightCostByDept: "部門別", flightCostPersonTotal: "合計",
+    flightCostNoItems: "費用記録なし", flightCostItemCount: "{n}件",
+    flightCostBaseOut: "往路運賃", flightCostBaseRet: "復路運賃", flightCostPackage: "往復パッケージ",
+    flightCostBaggagePrepaid: "事前超過手荷物", flightCostBaggageOverage: "空港超過",
+    flightCostChangeFee: "変更手数料", flightCostCancelFee: "取消手数料", flightCostReissue: "再発行",
+    flightCostAgencyFee: "旅行会社手数料", flightCostRefund: "返金", flightCostOther: "その他",
+    flightCostLegBoth: "往復", flightCostLegUnalloc: "未区分/パッケージ",
+    flightCostVendor: "業者", flightCostReceipt: "領収書/券番", flightCostPaidAt: "支払日",
+    flightCostNote: "備考", flightCostAmount: "金額", flightCostType: "費用種別",
+    flightCostFlagPackage: "パッケージ", flightCostBatchHint: "選択したスタッフに同額の行を追加。",
+    flightCostBatchSelected: "{n}名選択", flightCostSummary: "費用概要", flightCostViewAll: "すべての費用",
+    flightCostAddForPerson: "費用追加", flightCostEdit: "費用編集", flightCostDeleteConfirm: "この費用行を削除しますか？",
+    flightCostRecordedBy: "登録", flightCostSelectPerson: "スタッフ選択", flightCostAllTypes: "すべて",
+    flightCostNetTotal: "純支出",
     locationTag: "撮影地", locationTagPh: "例：花蓮 Phase 1、高雄 Phase 2",
     allLocations: "すべての撮影地", allHotels: "すべてのホテル", filterByHotel: "ホテルで絞り込み",
     stayGuestCount: "名", stayRoomCount: "室",
@@ -1977,6 +2151,7 @@ function flightBaggageGroupLabel(fl, leg, t, lang) {
 
 function buildFlightBaggageGroups(persons, flights, t, lang) {
   const map = new Map();
+  const assignedPersonLegs = new Set();
   persons.forEach((p) => {
     const fl = flights.find((x) => x.person_id === p.id);
     if (!fl) return;
@@ -1987,10 +2162,37 @@ function buildFlightBaggageGroups(persons, flights, t, lang) {
         map.set(key, { key, leg, label: flightBaggageGroupLabel(fl, leg, t, lang), sortMeta: flightLegSortMeta(fl, leg), personIds: [] });
       }
       const g = map.get(key);
-      if (!g.personIds.includes(p.id)) g.personIds.push(p.id);
+      if (!g.personIds.includes(p.id)) {
+        g.personIds.push(p.id);
+        assignedPersonLegs.add(`${p.id}|${leg}`);
+      }
     });
   });
-  return Array.from(map.values()).sort((a, b) => compareFlightLegMeta(a.sortMeta, b.sortMeta));
+  ["out", "ret"].forEach((leg) => {
+    const orphanIds = [];
+    persons.forEach((p) => {
+      if (assignedPersonLegs.has(`${p.id}|${leg}`)) return;
+      const fl = flights.find((x) => x.person_id === p.id);
+      if (!fl || !personHasBaggageWeight(fl, leg)) return;
+      orphanIds.push(p.id);
+    });
+    if (orphanIds.length > 0) {
+      const key = `${leg}|__baggage_only__`;
+      const legLabel = leg === "out" ? t.flightOutbound : t.flightReturn;
+      map.set(key, {
+        key,
+        leg,
+        label: [legLabel, t.bagCalcUnassignedFlight].join(" · "),
+        sortMeta: { airline: "", date: "", depTime: "", flightNo: "" },
+        personIds: orphanIds,
+        baggageOnly: true,
+      });
+    }
+  });
+  const groups = Array.from(map.values()).sort((a, b) => compareFlightLegMeta(a.sortMeta, b.sortMeta));
+  const normal = groups.filter((g) => !g.baggageOnly);
+  const orphan = groups.filter((g) => g.baggageOnly);
+  return [...normal, ...orphan];
 }
 
 function personLegBaggage(fl, leg) {
@@ -2000,6 +2202,21 @@ function personLegBaggage(fl, leg) {
     checked: parseBagKg(fl[`${pre}checked_bag`]),
     cabin: parseBagKg(fl[`${pre}cabin_bag`]),
   };
+}
+
+function personHasBaggageWeight(fl, leg) {
+  if (!fl) return false;
+  const bag = personLegBaggage(fl, leg);
+  return bag.checked != null || bag.cabin != null;
+}
+
+function detectBaggageLeg(fl) {
+  if (!fl) return "out";
+  const outHas = personHasBaggageWeight(fl, "out");
+  const retHas = personHasBaggageWeight(fl, "ret");
+  if (outHas && !retHas) return "out";
+  if (retHas && !outHas) return "ret";
+  return "out";
 }
 
 function flightHasLeg(fl, leg) {
@@ -3720,14 +3937,27 @@ function FlightLegFields({ title, prefix, f, set, t, lang, isReturn, flightRoute
   );
 }
 
-function FlightForm({ init, onSave, onClose, t, lang, flightRouteMemory }) {
+function FlightForm({ init, onSave, onClose, t, lang, flightRouteMemory, personCostItems, personCostTotal, project, onViewCosts }) {
   const [f, setF] = useState(() => (init ? { ...FLIGHT_BLANK, ...flightFormInit(init) } : { ...FLIGHT_BLANK }));
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const costTotal = personCostTotal != null ? personCostTotal : sumCostItems(personCostItems || [], project);
   return (
     <div>
       <div style={{ display: "flex", flexDirection: "column", gap: 16, maxHeight: "70vh", overflowY: "auto", padding: "2px 4px 2px 2px" }}>
         <FlightLegFields title={t.flightOutbound} prefix="" f={f} set={set} t={t} lang={lang} isReturn={false} flightRouteMemory={flightRouteMemory} />
         <FlightLegFields title={t.flightReturn} prefix="ret" f={f} set={set} t={t} lang={lang} isReturn={true} flightRouteMemory={flightRouteMemory} />
+        {(personCostItems || onViewCosts) && (
+          <div style={{ padding: "10px 12px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)", display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.06em" }}>{t.flightCostSummary}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--moegi)", marginTop: 2 }}>{formatMoney(costTotal, project, lang)}</div>
+              {(personCostItems || []).length > 0 && <div style={{ fontSize: 10.5, color: "var(--usunezumi)", marginTop: 2 }}>{t.flightCostItemCount.replace("{n}", personCostItems.length)}</div>}
+            </div>
+            {onViewCosts && (
+              <button type="button" onClick={onViewCosts} style={{ ...eBtn, borderColor: "rgba(43,90,76,.35)", background: "var(--moegi3)", color: "var(--moegi)" }}>{t.flightCostViewAll}</button>
+            )}
+          </div>
+        )}
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
@@ -3967,15 +4197,14 @@ function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }
   );
 }
 
-function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
+function FlightBaggageCalc({ persons, flights, personIndex, t, lang, allowance, feeRate, onAllowanceChange, onFeeRateChange }) {
   const [bagOpen, setBagOpen] = useState(false);
   const groups = useMemo(() => buildFlightBaggageGroups(persons, flights, t, lang), [persons, flights, t, lang]);
   const [mode, setMode] = useState("flight");
   const [leg, setLeg] = useState("out");
   const [flightKey, setFlightKey] = useState("");
   const [picked, setPicked] = useState(() => new Set());
-  const [allowance, setAllowance] = useState("23");
-  const [feeRate, setFeeRate] = useState("");
+  const pickAutoRef = useRef(null);
 
   useEffect(() => {
     if (mode !== "flight") return;
@@ -3988,6 +4217,18 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
     const g = groups.find((x) => x.key === flightKey);
     if (g) setPicked(new Set(g.personIds));
   }, [mode, flightKey, groups]);
+
+  useEffect(() => {
+    if (mode !== "pick") { pickAutoRef.current = null; return; }
+    const token = `${mode}|${leg}`;
+    if (pickAutoRef.current === token) return;
+    pickAutoRef.current = token;
+    const withWeight = persons.filter((p) => {
+      const fl = flights.find((x) => x.person_id === p.id);
+      return personHasBaggageWeight(fl, leg);
+    }).map((p) => p.id);
+    setPicked(new Set(withWeight));
+  }, [mode, leg, persons, flights]);
 
   const allowanceNum = Math.max(0, parseFloat(allowance) || 0);
   const feeNum = parseFloat(feeRate);
@@ -4011,7 +4252,7 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
   }), [activeIds, persons, flights, mode, groups, flightKey, leg, allowanceNum]);
 
   const totalOver = rows.reduce((s, r) => s + (r.over || 0), 0);
-  const estFee = Number.isFinite(feeNum) && feeNum > 0 ? totalOver * feeNum : null;
+  const estFee = Number.isFinite(feeNum) ? totalOver * feeNum : null;
 
   const togglePick = (id) => setPicked((prev) => {
     const next = new Set(prev);
@@ -4072,12 +4313,12 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
           )}
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 11, color: "var(--nezumi)", fontWeight: 600, whiteSpace: "nowrap" }}>{t.bagCalcAllowance}</span>
-            <input style={{ ...inpStyle, width: 64, textAlign: "center" }} value={allowance} onChange={(e) => setAllowance(e.target.value)} className="wa-input" />
+            <input style={{ ...inpStyle, width: 64, textAlign: "center" }} value={allowance} onChange={(e) => onAllowanceChange(e.target.value)} className="wa-input" />
             <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.bagCalcPerPerson}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 11, color: "var(--nezumi)", fontWeight: 600, whiteSpace: "nowrap" }}>{t.bagCalcFeeRate}</span>
-            <input style={{ ...inpStyle, width: 72, textAlign: "center" }} value={feeRate} onChange={(e) => setFeeRate(e.target.value)} placeholder="—" className="wa-input" />
+            <input style={{ ...inpStyle, width: 72, textAlign: "center" }} value={feeRate} onChange={(e) => onFeeRateChange(e.target.value)} placeholder="—" className="wa-input" />
           </div>
         </div>
         {mode === "pick" && (
@@ -4128,9 +4369,9 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 20, padding: "10px 12px", background: "var(--washi)", borderRadius: 8, alignItems: "baseline" }}>
               <span style={{ fontSize: 12, color: "var(--nezumi)" }}>{t.bagCalcTotalOver}：</span>
               <strong style={{ fontSize: 20, color: totalOver > 0 ? "var(--shu, #ad3030)" : "var(--moegi)", fontVariantNumeric: "tabular-nums" }}>{totalOver > 0 ? `${totalOver} kg` : "0 kg"}</strong>
-              {estFee != null && totalOver > 0 && (
+              {Number.isFinite(feeNum) && (
                 <span style={{ fontSize: 12.5 }}>
-                  {t.bagCalcEstFee}：<strong style={{ color: "var(--shu, #ad3030)" }}>{estFee.toLocaleString()}</strong>
+                  {t.bagCalcEstFee}：<strong style={{ color: totalOver > 0 ? "var(--shu, #ad3030)" : "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>{estFee.toLocaleString()}</strong>
                 </span>
               )}
             </div>
@@ -4139,6 +4380,315 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
           <p style={{ fontSize: 12, color: "var(--nezumi)", padding: "8px 0" }}>{t.bagCalcNoData}</p>
         )}
       </div>}
+    </div>
+  );
+}
+
+const FLIGHT_COST_BLANK = {
+  cost_type: "base_out", leg: "out", amount: "", paid_at: todayStr(), vendor: "", receipt_no: "", note: "",
+};
+
+function FlightCostItemModal({ init, personId, persons, project, user, t, onSave, onClose }) {
+  const [f, setF] = useState(() => ({
+    ...FLIGHT_COST_BLANK,
+    ...(init || {}),
+    person_id: init?.person_id ?? personId ?? (persons[0]?.id || ""),
+    amount: init?.amount != null ? String(init.amount) : "",
+    paid_at: init?.paid_at ? String(init.paid_at).slice(0, 10) : todayStr(),
+  }));
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const canSave = f.person_id && f.cost_type && String(f.amount).trim() !== "";
+
+  return (
+    <Modal title={init?.id ? t.flightCostEdit : t.flightCostAdd} onClose={onClose}>
+      <div style={{ display: "grid", gap: 12 }}>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostSelectPerson}</span>
+          <select style={inpStyle} value={f.person_id} onChange={set("person_id")} className="wa-input" disabled={!!personId && !init?.id}>
+            {persons.map((p) => (
+              <option key={p.id} value={p.id}>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()} {p.dept ? `(${p.dept})` : ""}</option>
+            ))}
+          </select>
+        </label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostType}</span>
+            <select style={inpStyle} value={f.cost_type} onChange={set("cost_type")} className="wa-input">
+              {FLIGHT_COST_TYPES.map((c) => <option key={c.key} value={c.key}>{t[c.labelKey]}</option>)}
+            </select>
+          </label>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.bagCalcLeg}</span>
+            <select style={inpStyle} value={f.leg} onChange={set("leg")} className="wa-input">
+              {FLIGHT_COST_LEGS.map((c) => <option key={c.key} value={c.key}>{t[c.labelKey]}</option>)}
+            </select>
+          </label>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostAmount}</span>
+            <input style={inpStyle} value={f.amount} onChange={set("amount")} className="wa-input" placeholder="0" />
+          </label>
+          <label style={{ display: "grid", gap: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostPaidAt}</span>
+            <input type="date" style={inpStyle} value={f.paid_at} onChange={set("paid_at")} className="wa-input" />
+          </label>
+        </div>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostVendor}</span>
+          <input style={inpStyle} value={f.vendor} onChange={set("vendor")} className="wa-input" />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostReceipt}</span>
+          <input style={inpStyle} value={f.receipt_no} onChange={set("receipt_no")} className="wa-input" />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostNote}</span>
+          <textarea style={{ ...inpStyle, minHeight: 64, resize: "vertical" }} value={f.note} onChange={set("note")} className="wa-input" />
+        </label>
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" disabled={!canSave} onClick={() => onSave(f)} style={pBtn(!canSave)}>{t.save}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function FlightCostBatchModal({ persons, t, onSave, onClose }) {
+  const [picked, setPicked] = useState(() => new Set());
+  const [f, setF] = useState({ ...FLIGHT_COST_BLANK, leg: "unallocated", cost_type: "package" });
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const toggle = (id) => setPicked((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const allOn = picked.size === persons.length && persons.length > 0;
+  const toggleAll = () => setPicked(allOn ? new Set() : new Set(persons.map((p) => p.id)));
+  const canSave = picked.size > 0 && String(f.amount).trim() !== "";
+
+  return (
+    <Modal title={t.flightCostBatchAdd} onClose={onClose}>
+      <p style={{ fontSize: 11.5, color: "var(--nezumi)", marginBottom: 12, lineHeight: 1.55 }}>{t.flightCostBatchHint}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostType}</span>
+          <select style={inpStyle} value={f.cost_type} onChange={set("cost_type")} className="wa-input">
+            {FLIGHT_COST_TYPES.map((c) => <option key={c.key} value={c.key}>{t[c.labelKey]}</option>)}
+          </select>
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.bagCalcLeg}</span>
+          <select style={inpStyle} value={f.leg} onChange={set("leg")} className="wa-input">
+            {FLIGHT_COST_LEGS.map((c) => <option key={c.key} value={c.key}>{t[c.labelKey]}</option>)}
+          </select>
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostAmount}</span>
+          <input style={inpStyle} value={f.amount} onChange={set("amount")} className="wa-input" />
+        </label>
+        <label style={{ display: "grid", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostPaidAt}</span>
+          <input type="date" style={inpStyle} value={f.paid_at} onChange={set("paid_at")} className="wa-input" />
+        </label>
+      </div>
+      <label style={{ display: "grid", gap: 4, marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "var(--nezumi)" }}>{t.flightCostVendor}</span>
+        <input style={inpStyle} value={f.vendor} onChange={set("vendor")} className="wa-input" />
+      </label>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--nezumi)" }}>{t.flightCostBatchSelected.replace("{n}", picked.size)}</span>
+        <button type="button" onClick={toggleAll} style={eBtn}>{allOn ? t.clearFilter : t.allDept}</button>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, maxHeight: 200, overflowY: "auto", marginBottom: 14, padding: "4px 0" }}>
+        {persons.map((p) => (
+          <label key={p.id} style={{
+            display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 6, cursor: "pointer",
+            border: `1px solid ${picked.has(p.id) ? "var(--moegi)" : "var(--keisenL)"}`,
+            background: picked.has(p.id) ? "var(--moegi3)" : "var(--shiro)", fontSize: 12,
+          }}>
+            <input type="checkbox" checked={picked.has(p.id)} onChange={() => toggle(p.id)} />
+            <span>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
+          </label>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" disabled={!canSave} onClick={() => onSave({ ...f, personIds: [...picked] })} style={pBtn(!canSave)}>{t.save}</button>
+      </div>
+    </Modal>
+  );
+}
+
+function generateFlightCostReportHTML({ project, lang, t, rows, grandTotal, deptTotals }) {
+  const projectName = escReportHtml(project?.name || "");
+  const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
+  const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
+  const deptHtml = deptTotals.map((d) => `<span>${escReportHtml(d.dept || t.deptUnset)}: <strong>${escReportHtml(formatMoney(d.total, project, lang))}</strong></span>`).join('<span class="dot"> · </span>');
+  const body = rows.map((block) => {
+    const items = block.items.map((i) => `<tr>
+      <td>${escReportHtml(i.paid_at ? String(i.paid_at).slice(0, 10) : "—")}</td>
+      <td class="left">${escReportHtml(flightCostTypeLabel(i.cost_type, t))}</td>
+      <td>${escReportHtml(flightCostLegLabel(i.leg, t))}</td>
+      <td class="amt ${(+i.amount || 0) < 0 ? "neg" : ""}">${escReportHtml(formatMoney(convertMoney(+i.amount || 0, project), project, lang))}</td>
+      <td class="left">${escReportHtml(i.vendor || "—")}</td>
+      <td class="left">${escReportHtml(i.note || "—")}</td>
+    </tr>`).join("");
+    return `<tr class="person-hdr"><td colspan="6">${escReportHtml(block.name)} · ${escReportHtml(block.dept || t.deptUnset)} · ${escReportHtml(t.flightCostPersonTotal)} ${escReportHtml(formatMoney(block.total, project, lang))}</td></tr>${items}`;
+  }).join("");
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(t.flightCostTitle)} — ${projectName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-size:9pt;line-height:1.4}
+@page{size:A4 portrait;margin:12mm 14mm}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.doc-hdr{background:${headerGrad};color:#fff;padding:4mm 5mm;border-radius:2mm;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm}
+.doc-hdr .title{font-family:'Noto Serif JP',serif;font-size:12pt;font-weight:600}.summary{margin-bottom:3mm;font-size:8.5pt;color:#444;display:flex;flex-wrap:wrap;gap:8px 16px}
+.summary .dot{opacity:.4}table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:2mm}
+th,td{border:.3pt solid #c8d4cc;padding:5px 7px;text-align:center}th{background:#1a3028;color:#fff;font-size:7.5pt}
+td.left{text-align:left}.amt{font-weight:700;color:#2b5a4c}.amt.neg{color:#ad3030}
+.person-hdr td{background:#eef4ef;font-weight:700;text-align:left;color:#2b5a4c}
+.footer{margin-top:3mm;font-size:6pt;color:#aaa;text-align:right;border-top:.3pt solid #d8e8dc;padding-top:1.5mm}</style></head><body>
+<div class="doc-hdr"><div><div class="type">${escReportHtml(t.flightCostTitle)}</div><div class="title">${projectName}</div></div><div class="meta">${escReportHtml(now)}</div></div>
+<div class="summary"><span>${escReportHtml(t.flightCostNetTotal)}: <strong>${escReportHtml(formatMoney(grandTotal, project, lang))}</strong></span>${deptHtml ? `<span class="dot">|</span>${deptHtml}` : ""}</div>
+<table><thead><tr><th>${escReportHtml(t.flightCostPaidAt)}</th><th>${escReportHtml(t.flightCostType)}</th><th>${escReportHtml(t.bagCalcLeg)}</th><th>${escReportHtml(t.flightCostAmount)}</th><th>${escReportHtml(t.flightCostVendor)}</th><th>${escReportHtml(t.flightCostNote)}</th></tr></thead><tbody>${body}</tbody></table>
+<div class="footer">${projectName} · ${escReportHtml(t.flightCostTitle)} · ${escReportHtml(now)}</div></body></html>`;
+}
+
+function FlightCostPanel({
+  persons, flightCostItems, project, lang, t, canEdit, personIndex,
+  search, dept, costTypeFilter, vendorFilter,
+  onAdd, onBatchAdd, onEdit, onDelete, onPrint,
+  expandedPersonId, onToggleExpand, focusPersonId,
+}) {
+  const itemsByPerson = useMemo(() => {
+    const map = new Map();
+    flightCostItems.forEach((i) => {
+      if (!map.has(i.person_id)) map.set(i.person_id, []);
+      map.get(i.person_id).push(i);
+    });
+    map.forEach((arr) => arr.sort((a, b) => String(b.paid_at || b.created_at || "").localeCompare(String(a.paid_at || a.created_at || ""))));
+    return map;
+  }, [flightCostItems]);
+
+  const filteredPersons = useMemo(() => {
+    const kw = (search || "").toLowerCase();
+    return persons.filter((p) => {
+      if (p.hide_from_flights) return false;
+      const nameOk = !kw || [p.name_kanji, p.last_roman, p.first_roman, p.dept].some((v) => (v || "").toLowerCase().includes(kw));
+      const deptOk = !dept || p.dept === dept;
+      const items = itemsByPerson.get(p.id) || [];
+      const typeOk = !costTypeFilter || items.some((i) => i.cost_type === costTypeFilter);
+      const vendorOk = !vendorFilter || items.some((i) => (i.vendor || "").toLowerCase().includes(vendorFilter.toLowerCase()));
+      return nameOk && deptOk && typeOk && vendorOk;
+    });
+  }, [persons, search, dept, costTypeFilter, vendorFilter, itemsByPerson]);
+
+  const grandTotal = useMemo(() => sumCostItems(flightCostItems, project), [flightCostItems, project]);
+
+  const deptTotals = useMemo(() => {
+    const map = new Map();
+    filteredPersons.forEach((p) => {
+      const d = p.dept || "";
+      const total = sumCostItems(itemsByPerson.get(p.id) || [], project);
+      if (!total) return;
+      map.set(d, (map.get(d) || 0) + total);
+    });
+    return [...map.entries()].sort((a, b) => {
+      if (!a[0]) return 1;
+      if (!b[0]) return -1;
+      return a[0].localeCompare(b[0], "zh-TW");
+    }).map(([deptName, total]) => ({ dept: deptName, total }));
+  }, [filteredPersons, itemsByPerson, project]);
+
+  useEffect(() => {
+    if (focusPersonId) onToggleExpand(focusPersonId);
+  }, [focusPersonId]);
+
+  return (
+    <div className="flight-cost-panel" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ background: "linear-gradient(135deg,rgba(43,90,76,.12),rgba(74,127,165,.08))", border: "1px solid var(--keisenM)", borderRadius: 8, padding: "14px 18px", display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 4 }}>{t.flightCostNetTotal}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: "var(--moegi)", fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(grandTotal, project, lang)}</div>
+        </div>
+        {deptTotals.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {deptTotals.map(({ dept: d, total }) => (
+              <span key={d || "__none"} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 20, background: "var(--shiro)", border: "1px solid var(--keisenL)" }}>
+                {d || t.deptUnset}: <strong>{formatMoney(total, project, lang)}</strong>
+              </span>
+            ))}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {canEdit && <button type="button" onClick={onAdd} style={pBtn(false)}>{t.flightCostAdd}</button>}
+          {canEdit && <button type="button" onClick={onBatchAdd} style={{ ...pBtn(false), background: "var(--asagi2)", color: "var(--asagi)", border: "1px solid rgba(74,127,165,.3)", boxShadow: "none" }}>{t.flightCostBatchAdd}</button>}
+          <button type="button" onClick={onPrint} style={{ ...eBtn, borderColor: "rgba(43,90,76,.35)", background: "var(--moegi3)", color: "var(--moegi)" }}>{t.flightCostPrint}</button>
+        </div>
+      </div>
+      <p style={{ fontSize: 11.5, color: "var(--nezumi)", margin: 0, lineHeight: 1.55 }}>{t.flightCostHint}</p>
+      <div style={{ background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
+          <thead>
+            <tr style={{ ...thead }}>
+              <th style={{ ...thS, width: 40 }}>{t.no}</th>
+              <th style={{ ...thS, textAlign: "left" }}>{t.nameKanji}</th>
+              <th style={{ ...thS, textAlign: "left" }}>{t.dept}</th>
+              <th style={{ ...thS }}>{t.flightCostType}</th>
+              <th style={{ ...thS, textAlign: "right" }}>{t.flightCostPersonTotal}</th>
+              {canEdit && <th style={{ ...thS, width: 120 }}>{t.action}</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredPersons.length === 0 ? (
+              <tr><td colSpan={canEdit ? 6 : 5} style={{ padding: 24, textAlign: "center", color: "var(--nezumi)" }}>{t.flightCostNoItems}</td></tr>
+            ) : filteredPersons.map((p) => {
+              const items = itemsByPerson.get(p.id) || [];
+              const total = sumCostItems(items, project);
+              const expanded = expandedPersonId === p.id;
+              const hasPackage = personHasPackageCost(items);
+              return (
+                <React.Fragment key={p.id}>
+                  <tr style={{ borderTop: "1px solid var(--keisenL)", background: expanded ? "var(--washi)" : "transparent", cursor: "pointer" }} onClick={() => onToggleExpand(expanded ? null : p.id)}>
+                    <td style={tdS()}>{personIndex[p.id]}</td>
+                    <td style={{ ...tdS(), textAlign: "left", fontWeight: 600 }}>{p.name_kanji || "—"}</td>
+                    <td style={{ ...tdS(), textAlign: "left", color: "var(--nezumi)" }}>{p.dept || "—"}</td>
+                    <td style={tdS()}>
+                      {items.length ? t.flightCostItemCount.replace("{n}", items.length) : "—"}
+                      {hasPackage && <span style={{ marginLeft: 6, fontSize: 10, padding: "1px 6px", borderRadius: 10, background: "var(--kincha2)", color: "var(--kincha)", fontWeight: 600 }}>{t.flightCostFlagPackage}</span>}
+                    </td>
+                    <td style={{ ...tdS(), textAlign: "right", fontWeight: 700, color: "var(--asagi)", fontVariantNumeric: "tabular-nums" }}>{formatMoney(total, project, lang)}</td>
+                    {canEdit && (
+                      <td style={tdS()} onClick={(e) => e.stopPropagation()}>
+                        <button type="button" style={{ ...aBtn, fontSize: 10, padding: "4px 8px" }} onClick={() => onAdd(p.id)}>{t.flightCostAddForPerson}</button>
+                      </td>
+                    )}
+                  </tr>
+                  {expanded && items.length > 0 && items.map((i) => (
+                    <tr key={i.id} style={{ background: "rgba(43,90,76,.03)" }}>
+                      <td />
+                      <td colSpan={2} style={{ ...tdS(), textAlign: "left", fontSize: 11.5, color: "var(--nezumi)" }}>
+                        {i.paid_at ? String(i.paid_at).slice(0, 10) : "—"} · {flightCostTypeLabel(i.cost_type, t)} · {flightCostLegLabel(i.leg, t)}
+                        {i.vendor ? ` · ${i.vendor}` : ""}
+                        {i.note ? <div style={{ marginTop: 2, opacity: 0.85 }}>{i.note}</div> : null}
+                      </td>
+                      <td style={{ ...tdS(), fontSize: 11, color: "var(--usunezumi)" }}>{i.receipt_no || "—"}</td>
+                      <td style={{ ...tdS(), textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: (+i.amount || 0) < 0 ? "var(--shu)" : "var(--sumi)" }}>{formatMoney(convertMoney(+i.amount || 0, project), project, lang)}</td>
+                      {canEdit && (
+                        <td style={tdS()}>
+                          <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
+                            <button type="button" style={{ ...eBtn, fontSize: 10, padding: "3px 8px" }} onClick={() => onEdit(i)}>{t.edit}</button>
+                            <button type="button" style={{ ...dBtn, fontSize: 10, padding: "3px 8px" }} onClick={() => onDelete(i)}>{t.delete}</button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                  {expanded && items.length === 0 && (
+                    <tr><td colSpan={canEdit ? 6 : 5} style={{ padding: "12px 16px", fontSize: 11.5, color: "var(--nezumi)" }}>{t.flightCostNoItems}</td></tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -4465,6 +5015,371 @@ body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-si
 function openVehicleReportPrint(vehicles, assignments, persons, project, lang, t) {
   const html = generateVehicleReportHTML(buildVehicleReportCards(vehicles, assignments, persons, lang, t), project, lang, t);
   openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
+}
+
+function buildFlightFilterSummary({ t, flightLegFilter, deptB, searchB, searchBRoman, searchBAirline, searchBStatus, flightSameDiffFilter, flightWarnFilters, personCount }) {
+  const parts = [];
+  if (flightLegFilter === "out") parts.push(t.flightOutbound);
+  else if (flightLegFilter === "ret") parts.push(t.flightReturn);
+  else parts.push(t.allPhases);
+  if (deptB) parts.push(deptB);
+  if (searchB) parts.push(`"${searchB}"`);
+  if (searchBRoman) parts.push(`${t.searchRoman}: ${searchBRoman}`);
+  if (searchBAirline) parts.push(`${t.airline}: ${searchBAirline}`);
+  if (searchBStatus) {
+    const statusLabels = { arranged: t.arranged_short, "missing-out": t.missingOut_short, "missing-ret": t.missingRet_short, none: t.unArranged_short };
+    parts.push(statusLabels[searchBStatus] || searchBStatus);
+  }
+  if (flightSameDiffFilter === "same") parts.push(t.flightSameFlight);
+  if (flightSameDiffFilter === "diff") parts.push(t.flightDiffFlight);
+  if (flightWarnFilters?.length) parts.push(`${t.activeFilters} ×${flightWarnFilters.length}`);
+  parts.push(`${personCount} ${t.flightGroupPeople}`);
+  return parts.join(" · ");
+}
+
+function flightStatusShort(fl, t) {
+  if (!fl) return t.unArranged_short;
+  const hasOut = fl.airline || fl.flight_no;
+  const hasRet = fl.ret_airline || fl.ret_flight_no;
+  if (hasOut && hasRet) return t.arranged_short;
+  if (hasOut) return t.missingRet_short;
+  if (hasRet) return t.missingOut_short;
+  return t.unArranged_short;
+}
+
+function flightLegCellPlainText(fl, col, leg, lang) {
+  const field = leg === "ret" ? `ret_${col.field}` : col.field;
+  if (col.type === "text") return escReportHtml(fl?.[field] || "—");
+  if (col.type === "bag") {
+    const v = fl?.[field];
+    if (!v) return "—";
+    const kg = parseBagKg(v);
+    return kg != null ? `${kg} kg` : escReportHtml(v);
+  }
+  if (col.type === "time") {
+    const dt = fmtFlightDateTime(fl?.[field], lang);
+    if (!dt) return "—";
+    const cls = col.highlight === "pickup" ? ' class="pickup"' : "";
+    return `<span${cls}>${escReportHtml(dt.date)}<br>${escReportHtml(dt.time)}</span>`;
+  }
+  if (col.type === "apt") {
+    const termField = leg === "ret" ? `ret_${col.termField}` : col.termField;
+    const code = fl?.[field] || "—";
+    const term = fl?.[termField] ? ` <span class="term">T${escReportHtml(String(fl[termField]).replace(/^T/i, ""))}</span>` : "";
+    return `${escReportHtml(code)}${term}`;
+  }
+  return "—";
+}
+
+function flightPersonNamePlain(p) {
+  const kanji = (p.name_kanji || "").trim();
+  const roman = `${p.last_roman || ""} ${p.first_roman || ""}`.trim();
+  return { kanji: kanji || "—", roman: roman || "—" };
+}
+
+function buildFlightMgmtReportRows(persons, flights, personIndex, legsFilter, lang, t) {
+  const rows = [];
+  persons.forEach((p) => {
+    const fl = flights.find((x) => x.person_id === p.id);
+    const legs = getVisibleFlightLegs(fl, legsFilter);
+    const displayLegs = legs.length ? legs : ["empty"];
+    const names = flightPersonNamePlain(p);
+    const st = flightStatusShort(fl, t);
+    displayLegs.forEach((leg, li) => {
+      if (leg === "empty") {
+        rows.push(`<tr>
+          <td>${escReportHtml(String(personIndex[p.id] ?? ""))}</td>
+          <td class="left">${escReportHtml(p.dept || "—")}</td>
+          <td class="left">${escReportHtml(names.kanji)}</td>
+          <td class="left">${escReportHtml(names.roman)}</td>
+          <td>—</td>
+          <td colspan="${FLIGHT_LEG_TABLE_COLS.length}" class="left muted">— ${escReportHtml(t.flightNone)} —</td>
+          <td>${escReportHtml(st)}</td>
+        </tr>`);
+        return;
+      }
+      const legLabel = leg === "out" ? t.flightOutbound : t.flightReturn;
+      const cells = FLIGHT_LEG_TABLE_COLS.map((c) => `<td>${flightLegCellPlainText(fl, c, leg, lang)}</td>`).join("");
+      rows.push(`<tr class="leg-${leg}">
+        ${li === 0 ? `<td rowspan="${displayLegs.length}">${escReportHtml(String(personIndex[p.id] ?? ""))}</td>
+          <td rowspan="${displayLegs.length}" class="left">${escReportHtml(p.dept || "—")}</td>
+          <td rowspan="${displayLegs.length}" class="left">${escReportHtml(names.kanji)}</td>
+          <td rowspan="${displayLegs.length}" class="left">${escReportHtml(names.roman)}</td>` : ""}
+        <td><span class="leg-tag">${escReportHtml(legLabel)}</span></td>
+        ${cells}
+        ${li === 0 ? `<td rowspan="${displayLegs.length}">${escReportHtml(st)}</td>` : ""}
+      </tr>`);
+    });
+  });
+  return rows.join("");
+}
+
+function buildFlightMgmtSectionRows(section, persons, flights, personIndex, flightLegFilter, lang, t) {
+  if (section.type === "personList") {
+    const subset = section.entries.map((e) => persons.find((p) => p.id === e.personId)).filter(Boolean);
+    return `<tr class="section"><td colspan="${FLIGHT_TABLE_COL_SPAN}">${escReportHtml(t.flightMgmt)} · ${section.entries.length} ${escReportHtml(t.flightGroupPeople)}</td></tr>`
+      + buildFlightMgmtReportRows(subset, flights, personIndex, "all", lang, t);
+  }
+  const bannerClass = section.type === "ungrouped" ? "section ungrouped" : `section leg-${section.leg}`;
+  const banner = `<tr class="${bannerClass}"><td colspan="${FLIGHT_TABLE_COL_SPAN}">${escReportHtml(section.label)} · ${section.personIds.length} ${escReportHtml(t.flightGroupPeople)}</td></tr>`;
+  if (section.type === "ungrouped") {
+    const subset = section.entries.map((e) => persons.find((p) => p.id === e.personId)).filter(Boolean);
+    return banner + buildFlightMgmtReportRows(subset, flights, personIndex, flightLegFilter, lang, t);
+  }
+  const subset = section.personIds.map((id) => persons.find((p) => p.id === id)).filter(Boolean);
+  return banner + buildFlightMgmtReportRows(subset, flights, personIndex, section.leg, lang, t);
+}
+
+function generateFlightMgmtReportHTML({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter }) {
+  const projectName = escReportHtml(project?.name || "");
+  const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
+  const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
+  const headCols = [
+    ...FLIGHT_PERSON_COLS.map((c) => `<th>${escReportHtml(t[c.labelKey])}</th>`),
+    `<th>${escReportHtml(t.bagCalcLeg)}</th>`,
+    ...FLIGHT_LEG_TABLE_COLS.map((c) => `<th>${escReportHtml(c.highlight === "pickup" ? t.arrTimePickup : t[c.labelKey])}</th>`),
+    `<th>${escReportHtml(t.status)}</th>`,
+  ].join("");
+  const body = sections.map((s) => buildFlightMgmtSectionRows(s, persons, flights, personIndex, flightLegFilter, lang, t)).join("");
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(title)} — ${projectName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-size:8pt;line-height:1.35}
+@page{size:A4 landscape;margin:8mm 10mm}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.doc-hdr{background:${headerGrad};color:#fff;padding:3mm 4mm;border-radius:1.5mm;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3mm;gap:4mm}
+.doc-hdr .type{font-size:6pt;opacity:.72;letter-spacing:.12em;text-transform:uppercase}
+.doc-hdr .title{font-family:'Noto Serif JP',serif;font-size:11pt;font-weight:600;margin-top:.5mm}
+.doc-hdr .meta{font-size:6.5pt;opacity:.78;text-align:right;line-height:1.45;max-width:48%}
+.sub{font-size:7pt;color:#555;margin-bottom:2.5mm}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:7pt}
+th,td{border:.3pt solid #c8d4cc;padding:2px 3px;text-align:center;vertical-align:middle;word-wrap:break-word;overflow-wrap:anywhere}
+th{background:#1a3028;color:#fff;font-size:6pt;font-weight:600;letter-spacing:.04em}
+td.left{text-align:left}
+.muted{color:#888}
+.section td{background:#eef4ef;font-weight:700;text-align:left;padding:4px 6px;color:#2b5a4c;font-size:7.5pt}
+.section.leg-out td{background:#e8f2ea;color:#2b5a4c}
+.section.leg-ret td{background:#e6eef4;color:#3a788c}
+.section.ungrouped td{background:#f5f5f0;color:#666}
+.leg-out td{background:#fafdfa}
+.leg-ret td{background:#f8fafb}
+.leg-tag{display:inline-block;padding:1px 4px;border-radius:3px;font-size:6pt;font-weight:700;background:#e8f0ea;color:#2b5a4c}
+.leg-ret .leg-tag{background:#e6eef4;color:#3a788c}
+.pickup{background:#d8eef5;padding:1px 3px;border-radius:2px;display:inline-block}
+.term{font-size:6pt;color:#888}
+.footer{margin-top:2mm;font-size:5.5pt;color:#aaa;text-align:right;border-top:.3pt solid #d8e8dc;padding-top:1mm}
+</style></head><body>
+<div class="doc-hdr"><div><div class="type">${escReportHtml(t.flightMgmt)}</div><div class="title">${escReportHtml(title)}</div></div>
+<div class="meta"><div>${escReportHtml(now)}</div><div>${escReportHtml(subtitle || "")}</div></div></div>
+${subtitle ? `<div class="sub">${escReportHtml(t.flightPrintFilterSummary)}：${escReportHtml(subtitle)}</div>` : ""}
+<table><thead><tr>${headCols}</tr></thead><tbody>${body}</tbody></table>
+<div class="footer">${projectName} · ${escReportHtml(t.flightMgmt)} · ${escReportHtml(now)}</div>
+</body></html>`;
+}
+
+function buildBaggageCalcRows(personIds, persons, flights, calcLeg, allowanceNum, t) {
+  return personIds.map((pid) => {
+    const p = persons.find((x) => x.id === pid);
+    const fl = flights.find((x) => x.person_id === pid);
+    if (!p) return "";
+    const leg = calcLeg || detectBaggageLeg(fl);
+    const bag = personLegBaggage(fl, leg);
+    const checked = bag.checked;
+    const over = checked != null && allowanceNum > 0 ? Math.max(0, checked - allowanceNum) : null;
+    const names = flightPersonNamePlain(p);
+    return `<tr>
+      <td class="left">${escReportHtml(names.kanji)}</td>
+      <td class="left">${escReportHtml(names.roman)}</td>
+      <td class="left">${escReportHtml(p.dept || "—")}</td>
+      <td>${checked != null ? `${checked} kg` : "—"}</td>
+      <td>${allowanceNum > 0 ? `${allowanceNum} kg` : "—"}</td>
+      <td class="${over > 0 ? "over" : ""}">${over != null ? (over > 0 ? `${over} kg` : "—") : "—"}</td>
+    </tr>`;
+  }).join("");
+}
+
+function generateFlightBaggageReportHTML({ project, lang, t, persons, flights, personIds, groupLabel, subtitle, allowanceNum, feeNum }) {
+  const projectName = escReportHtml(project?.name || "");
+  const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
+  const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
+  const rows = buildBaggageCalcRows(personIds, persons, flights, null, allowanceNum, t);
+  let totalOver = 0;
+  personIds.forEach((pid) => {
+    const fl = flights.find((x) => x.person_id === pid);
+    const leg = detectBaggageLeg(fl);
+    const checked = personLegBaggage(fl, leg).checked;
+    if (checked != null && allowanceNum > 0) totalOver += Math.max(0, checked - allowanceNum);
+  });
+  const estFee = Number.isFinite(feeNum) ? totalOver * feeNum : null;
+  const summaryParts = [
+    `<span>${escReportHtml(t.bagCalcTotalOver)}：<strong class="${totalOver > 0 ? "over" : "ok"}">${totalOver > 0 ? `${totalOver} kg` : "0 kg"}</strong></span>`,
+  ];
+  if (Number.isFinite(feeNum)) {
+    summaryParts.push(`<span>${escReportHtml(t.bagCalcEstFee)}：<strong class="over">${estFee.toLocaleString()}</strong></span>`);
+  }
+  summaryParts.push(`<span class="muted">${escReportHtml(t.bagCalcAllowance)}：${allowanceNum} kg${Number.isFinite(feeNum) ? ` · ${escReportHtml(t.bagCalcFeeRate)}：${feeNum}` : ""}</span>`);
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(t.bagCalcTitle)} — ${projectName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-size:9pt;line-height:1.4}
+@page{size:A4 portrait;margin:12mm 14mm}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.doc-hdr{background:${headerGrad};color:#fff;padding:4mm 5mm;border-radius:2mm;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm}
+.doc-hdr .type{font-size:6.5pt;opacity:.72;letter-spacing:.12em;text-transform:uppercase}
+.doc-hdr .title{font-family:'Noto Serif JP',serif;font-size:12pt;font-weight:600;margin-top:.5mm}
+.doc-hdr .meta{font-size:7pt;opacity:.78;text-align:right;line-height:1.45;max-width:48%}
+.sub{font-size:8pt;color:#555;margin-bottom:3mm}
+.group{font-size:9pt;font-weight:700;color:#2b5a4c;margin:3mm 0 2mm}
+table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:3mm}
+th,td{border:.3pt solid #c8d4cc;padding:5px 8px;text-align:center}
+th{background:#1a3028;color:#fff;font-size:7.5pt}
+td.left{text-align:left}
+.over{color:#ad3030;font-weight:700}
+.ok{color:#2b5a4c;font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;padding:10px 12px;background:#f5f8f5;border-radius:4px;font-size:9pt}
+.summary .muted{color:#777;font-size:8pt}
+.footer{margin-top:3mm;font-size:6pt;color:#aaa;text-align:right;border-top:.3pt solid #d8e8dc;padding-top:1.5mm}
+</style></head><body>
+<div class="doc-hdr"><div><div class="type">${escReportHtml(t.bagCalcTitle)}</div><div class="title">${projectName}</div></div>
+<div class="meta"><div>${escReportHtml(now)}</div><div>${escReportHtml(subtitle || "")}</div></div></div>
+${groupLabel ? `<div class="group">${escReportHtml(groupLabel)}</div>` : ""}
+${subtitle ? `<div class="sub">${escReportHtml(t.flightPrintFilterSummary)}：${escReportHtml(subtitle)}</div>` : ""}
+<table><thead><tr>
+<th class="left">${escReportHtml(t.nameKanji)}</th>
+<th class="left">${escReportHtml(t.nameEnglish)}</th>
+<th class="left">${escReportHtml(t.dept)}</th>
+<th>${escReportHtml(t.bagCalcChecked)}</th>
+<th>${escReportHtml(t.bagCalcAllow)}</th>
+<th>${escReportHtml(t.bagCalcOver)}</th>
+</tr></thead><tbody>${rows}</tbody></table>
+<div class="summary">${summaryParts.join("")}</div>
+<div class="footer">${projectName} · ${escReportHtml(t.bagCalcTitle)} · ${escReportHtml(now)}</div>
+</body></html>`;
+}
+
+function openFlightMgmtReportPrint({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter }) {
+  const html = generateFlightMgmtReportHTML({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter });
+  openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
+}
+
+function openFlightBaggageReportPrint({ project, lang, t, persons, flights, personIds, groupLabel, subtitle, allowance, feeRate }) {
+  const allowanceNum = Math.max(0, parseFloat(allowance) || 0);
+  const feeNum = parseFloat(feeRate);
+  const html = generateFlightBaggageReportHTML({
+    project, lang, t, persons, flights, personIds, groupLabel, subtitle, allowanceNum,
+    feeNum: Number.isFinite(feeNum) ? feeNum : null,
+  });
+  openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
+}
+
+function FlightPrintSelectModal({ onClose, onPreview, persons, flights, flightLegFilter, groups, t, filterSummary, defaultAllowance, defaultFeeRate }) {
+  const [reportType, setReportType] = useState("mgmt");
+  const [scope, setScope] = useState("filtered");
+  const [flightKey, setFlightKey] = useState("");
+  const [picked, setPicked] = useState(() => new Set(persons.map((p) => p.id)));
+  const [allowance, setAllowance] = useState(defaultAllowance || "23");
+  const [feeRate, setFeeRate] = useState(defaultFeeRate || "");
+
+  const filteredGroups = useMemo(() => {
+    if (flightLegFilter === "all") return groups;
+    return groups.filter((g) => g.leg === flightLegFilter);
+  }, [groups, flightLegFilter]);
+
+  useEffect(() => {
+    if (scope !== "group" || !filteredGroups.length) return;
+    if (!filteredGroups.some((g) => g.key === flightKey)) setFlightKey(filteredGroups[0].key);
+  }, [scope, filteredGroups, flightKey]);
+
+  useEffect(() => {
+    if (scope !== "group" || !flightKey) return;
+    const g = filteredGroups.find((x) => x.key === flightKey);
+    if (g) setPicked(new Set(g.personIds));
+  }, [scope, flightKey, filteredGroups]);
+
+  const togglePick = (id) => setPicked((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
+  const pill = (active) => ({
+    padding: "6px 14px", fontSize: 12, borderRadius: 20, cursor: "pointer", border: "1px solid var(--keisenM)",
+    background: active ? "var(--moegi)" : "var(--shiro)", color: active ? "var(--shiro)" : "var(--sumi)",
+    fontWeight: active ? 600 : 400,
+  });
+
+  const previewDisabled = scope === "group" ? picked.size === 0 : persons.length === 0;
+
+  return (
+    <Modal title={t.flightPrintSelectTitle} onClose={onClose}>
+      <div style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 14, lineHeight: 1.5 }}>
+        {t.flightPrintFilterSummary}：{filterSummary}
+      </div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        <button type="button" onClick={() => setReportType("mgmt")} style={pill(reportType === "mgmt")}>{t.flightMgmt}</button>
+        <button type="button" onClick={() => setReportType("baggage")} style={pill(reportType === "baggage")}>{t.bagCalcTitle}</button>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        <button type="button" onClick={() => setScope("filtered")} style={pill(scope === "filtered")}>{t.flightPrintScopeFiltered}</button>
+        <button type="button" onClick={() => setScope("group")} style={pill(scope === "group")} disabled={!filteredGroups.length}>{t.flightPrintScopeGroup}</button>
+      </div>
+      {scope === "group" && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--nezumi)", marginBottom: 6 }}>{t.bagCalcSelectFlight}</div>
+          <select style={{ ...inpStyle, width: "100%", fontSize: 12 }} value={flightKey} onChange={(e) => setFlightKey(e.target.value)} className="wa-input">
+            {filteredGroups.map((g) => (
+              <option key={g.key} value={g.key}>{g.label} ({g.personIds.length})</option>
+            ))}
+          </select>
+        </div>
+      )}
+      {scope === "group" && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--nezumi)", marginBottom: 8 }}>{t.flightPrintSelectPeople}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, maxHeight: 180, overflowY: "auto", padding: "4px 0" }}>
+            {persons.filter((p) => {
+              const g = filteredGroups.find((x) => x.key === flightKey);
+              return g ? g.personIds.includes(p.id) : false;
+            }).map((p) => (
+              <label key={p.id} style={{
+                display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 6, cursor: "pointer",
+                border: `1px solid ${picked.has(p.id) ? "var(--moegi)" : "var(--keisenL)"}`,
+                background: picked.has(p.id) ? "var(--moegi3)" : "var(--shiro)", fontSize: 12,
+              }}>
+                <input type="checkbox" checked={picked.has(p.id)} onChange={() => togglePick(p.id)} />
+                <span>{p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim()}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+      {reportType === "baggage" && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 16, alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: "var(--nezumi)", fontWeight: 600 }}>{t.bagCalcAllowance}</span>
+            <input style={{ ...inpStyle, width: 64, textAlign: "center" }} value={allowance} onChange={(e) => setAllowance(e.target.value)} className="wa-input" />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: "var(--nezumi)", fontWeight: 600 }}>{t.bagCalcFeeRate}</span>
+            <input style={{ ...inpStyle, width: 72, textAlign: "center" }} value={feeRate} onChange={(e) => setFeeRate(e.target.value)} placeholder="—" className="wa-input" />
+          </div>
+        </div>
+      )}
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" disabled={previewDisabled} onClick={() => onPreview({
+          reportType,
+          scope,
+          flightKey: scope === "group" ? flightKey : null,
+          selectedPersonIds: scope === "filtered" ? persons.map((p) => p.id) : [...picked],
+          allowance,
+          feeRate,
+        })} style={pBtn(previewDisabled)}>{t.previewReport}</button>
+      </div>
+    </Modal>
+  );
 }
 
 function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }) {
@@ -6068,7 +6983,7 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
     if (!window.confirm(t.deleteProjConfirm)) return;
     try {
       await Promise.all([
-        "persons", "flights", "stays", "hotels", "pricing_rules", "roommates", "vehicles", "vehicle_assignments", "user_projects",
+        "persons", "flights", "stays", "hotels", "pricing_rules", "roommates", "vehicles", "vehicle_assignments", "user_projects", "flight_cost_items",
       ].map((tbl) => api.deleteWhere(tbl, "project_id", projId).catch(() => {})));
       await api.delete("projects", projId);
       showToast(t.deleted); load();
@@ -6282,6 +7197,18 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [showWarnDropdown, setShowWarnDropdown] = useState(false);
   const [flightWarnFilters, setFlightWarnFilters] = useState([]);
   const warnDropdownRef = useRef(null);
+  const [showFlightPrintMenu, setShowFlightPrintMenu] = useState(false);
+  const [showFlightPrintModal, setShowFlightPrintModal] = useState(false);
+  const flightPrintMenuRef = useRef(null);
+  const [bagCalcAllowance, setBagCalcAllowance] = useState("23");
+  const [bagCalcFeeRate, setBagCalcFeeRate] = useState("");
+  const [flightSub, setFlightSub] = useState("mgmt");
+  const [flightCostItems, setFlightCostItems] = useState([]);
+  const [flightCostModal, setFlightCostModal] = useState(null);
+  const [flightCostExpanded, setFlightCostExpanded] = useState(null);
+  const [flightCostFocusPerson, setFlightCostFocusPerson] = useState(null);
+  const [costTypeFilter, setCostTypeFilter] = useState("");
+  const [costVendorFilter, setCostVendorFilter] = useState("");
   const [collapsedHotels, setCollapsedHotels] = useState(() => {
     try {
       const raw = localStorage.getItem("collapsedHotelSections");
@@ -6316,6 +7243,17 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showWarnDropdown]);
+
+  useEffect(() => {
+    if (!showFlightPrintMenu) return;
+    const handler = (e) => {
+      if (flightPrintMenuRef.current && !flightPrintMenuRef.current.contains(e.target)) {
+        setShowFlightPrintMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showFlightPrintMenu]);
 
   const debSearchA = useDebounced(searchA);
   const debSearchB = useDebounced(searchB);
@@ -6420,7 +7358,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     if (!isRefresh) setLoading(true);
     try {
       const pf = `&project_id=eq.${pid}`;
-      const [p, f, s, h, pr, rm, vh, va, dd] = await Promise.all([
+      const [p, f, s, h, pr, rm, vh, va, dd, fc] = await Promise.all([
         api.get("persons", pf + "&order=sort_order.asc,id.asc"),
         api.get("flights", pf),
         api.get("stays", pf),
@@ -6430,9 +7368,11 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         api.get("vehicles", pf + "&order=created_at.asc").catch(() => []),
         api.get("vehicle_assignments", pf + "&order=sort_order.asc,id.asc").catch(() => null),
         api.get("daily_dispatches", pf + "&order=dispatch_date.asc,sort_order.asc,id.asc").catch(() => []),
+        api.get("flight_cost_items", pf + "&order=paid_at.desc,created_at.desc").catch(() => []),
       ]);
       setPersons(p);
       setFlights(f); setHotels(h); setPricingRules(pr); setRoommates(rm); setVehicles(vh || []);
+      setFlightCostItems(Array.isArray(fc) ? fc : []);
       let nextStays = s;
       if (canEdit && s.length && h.length) {
         try { nextStays = await persistStayAmountsFromAllocations(s, pr, h, api); } catch (_) { /* 載入時同步失敗不阻擋 */ }
@@ -6709,6 +7649,173 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     return flightTableSections.map((s) => `flight:section:${s.key}`);
   }, [flightDeptGroups, flightTableSections]);
 
+  const flightBaggageGroups = useMemo(
+    () => buildFlightBaggageGroups(sortedDisplayFlightPersons, flights, t, lang),
+    [sortedDisplayFlightPersons, flights, t, lang],
+  );
+
+  const flightPrintFilterSummary = useMemo(() => buildFlightFilterSummary({
+    t,
+    flightLegFilter,
+    deptB,
+    searchB: debSearchB,
+    searchBRoman,
+    searchBAirline,
+    searchBStatus,
+    flightSameDiffFilter,
+    flightWarnFilters,
+    personCount: sortedDisplayFlightPersons.length,
+  }), [t, flightLegFilter, deptB, debSearchB, searchBRoman, searchBAirline, searchBStatus, flightSameDiffFilter, flightWarnFilters, sortedDisplayFlightPersons.length]);
+
+  const runFlightPrint = ({ reportType, personIds, groupLabel, groupLeg, allowance, feeRate }) => {
+    const ids = personIds || sortedDisplayFlightPersons.map((p) => p.id);
+    const targetPersons = ids.map((id) => sortedDisplayFlightPersons.find((p) => p.id === id)).filter(Boolean);
+    const subtitle = flightPrintFilterSummary;
+    if (reportType === "baggage") {
+      openFlightBaggageReportPrint({
+        project,
+        lang,
+        t,
+        persons: sortedDisplayFlightPersons,
+        flights,
+        personIds: ids,
+        groupLabel,
+        subtitle,
+        allowance: allowance ?? bagCalcAllowance,
+        feeRate: feeRate ?? bagCalcFeeRate,
+      });
+      return;
+    }
+    const sections = groupLabel
+      ? [{ type: "group", key: "print-group", leg: groupLeg || (flightLegFilter === "ret" ? "ret" : "out"), label: groupLabel, personIds: ids }]
+      : buildFlightTableSections(targetPersons, flights, flightLegFilter, t, lang);
+    openFlightMgmtReportPrint({
+      project,
+      lang,
+      t,
+      personIndex,
+      persons: sortedDisplayFlightPersons,
+      flights,
+      sections,
+      title: groupLabel ? `${t.flightPrintCompactTitle} — ${groupLabel}` : `${project.name} — ${t.flightMgmt}`,
+      subtitle,
+      flightLegFilter,
+    });
+  };
+
+  const printFlightMgmtFiltered = () => {
+    setShowFlightPrintMenu(false);
+    runFlightPrint({ reportType: "mgmt" });
+  };
+
+  const printFlightBaggageFiltered = () => {
+    setShowFlightPrintMenu(false);
+    runFlightPrint({ reportType: "baggage" });
+  };
+
+  const printFlightGroup = (section) => {
+    runFlightPrint({
+      reportType: "mgmt",
+      personIds: section.personIds,
+      groupLabel: section.label,
+      groupLeg: section.leg,
+    });
+  };
+
+  const handleFlightPrintSelect = ({ reportType, scope, flightKey, selectedPersonIds, allowance, feeRate }) => {
+    setShowFlightPrintModal(false);
+    const group = scope === "group" && flightKey ? flightBaggageGroups.find((g) => g.key === flightKey) : null;
+    runFlightPrint({
+      reportType,
+      personIds: selectedPersonIds,
+      groupLabel: group?.label,
+      groupLeg: group?.leg,
+      allowance,
+      feeRate,
+    });
+  };
+
+  const flightCostEligiblePersons = useMemo(
+    () => sortPersonsByFlight(persons.filter((p) => !p.hide_from_flights), flights),
+    [persons, flights],
+  );
+
+  const flightCostItemsByPerson = useMemo(() => {
+    const map = new Map();
+    flightCostItems.forEach((i) => {
+      if (!map.has(i.person_id)) map.set(i.person_id, []);
+      map.get(i.person_id).push(i);
+    });
+    return map;
+  }, [flightCostItems]);
+
+  const saveFlightCostItem = async (form, existingId) => {
+    try {
+      const data = buildFlightCostPayload(form, +form.person_id, pid, user);
+      if (existingId) {
+        delete data.created_by;
+        delete data.created_by_email;
+        delete data.project_id;
+        const [r] = await api.update("flight_cost_items", existingId, data);
+        setFlightCostItems((items) => items.map((x) => x.id === existingId ? r : x));
+      } else {
+        const [r] = await api.insert("flight_cost_items", data);
+        setFlightCostItems((items) => [r, ...items]);
+      }
+      showToast(t.saved);
+      setFlightCostModal(null);
+    } catch (e) { showToast(e.message); }
+  };
+
+  const saveFlightCostBatch = async ({ personIds, ...form }) => {
+    try {
+      const rows = await Promise.all(personIds.map(async (personId) => {
+        const data = buildFlightCostPayload(form, personId, pid, user);
+        const [r] = await api.insert("flight_cost_items", data);
+        return r;
+      }));
+      setFlightCostItems((items) => [...rows, ...items]);
+      showToast(t.saved);
+      setFlightCostModal(null);
+    } catch (e) { showToast(e.message); }
+  };
+
+  const deleteFlightCostItem = async (item) => {
+    if (!window.confirm(t.flightCostDeleteConfirm)) return;
+    try {
+      await api.delete("flight_cost_items", item.id);
+      setFlightCostItems((items) => items.filter((x) => x.id !== item.id));
+      showToast(t.deleted);
+    } catch (e) { showToast(e.message); }
+  };
+
+  const printFlightCosts = () => {
+    const rows = flightCostEligiblePersons.map((p) => {
+      const items = flightCostItemsByPerson.get(p.id) || [];
+      if (!items.length) return null;
+      const total = sumCostItems(items, project);
+      return {
+        name: p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim() || "—",
+        dept: p.dept || "",
+        total,
+        items,
+      };
+    }).filter(Boolean);
+    const grandTotal = sumCostItems(flightCostItems, project);
+    const deptMap = new Map();
+    rows.forEach((r) => deptMap.set(r.dept, (deptMap.get(r.dept) || 0) + r.total));
+    const deptTotals = [...deptMap.entries()].map(([deptName, total]) => ({ dept: deptName, total }));
+    const html = generateFlightCostReportHTML({ project, lang, t, rows, grandTotal, deptTotals });
+    openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
+  };
+
+  const openFlightCostsForPerson = (personId) => {
+    setFlightModal(null);
+    setFlightSub("costs");
+    setFlightCostFocusPerson(personId);
+    setFlightCostExpanded(personId);
+  };
+
   const flatStays = useMemo(() => {
     const rows = [];
     stays.forEach((s) => {
@@ -6833,6 +7940,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         api.deleteWhere("stays", "person_id", id),
         api.deleteWhere("roommates", "person_id", id),
         api.deleteWhere("roommates", "partner_id", id),
+        api.deleteWhere("flight_cost_items", "person_id", id),
       ]);
       await cleanupPersonVehicles(id);
       await api.delete("persons", id);
@@ -6842,6 +7950,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       setFlights((fl) => fl.filter((x) => x.person_id !== id));
       setStays((st) => st.filter((x) => x.person_id !== id));
       setRoommates((r) => r.filter((x) => x.person_id !== id && x.partner_id !== id));
+      setFlightCostItems((fc) => fc.filter((x) => x.person_id !== id));
       showToast(t.deleted);
     } catch (e) { showToast(e.message); }
   };
@@ -6855,6 +7964,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         api.deleteWhere("stays", "person_id", id),
         api.deleteWhere("roommates", "person_id", id),
         api.deleteWhere("roommates", "partner_id", id),
+        api.deleteWhere("flight_cost_items", "person_id", id),
       ]);
       await cleanupPersonVehicles(id);
       await api.delete("persons", id);
@@ -7327,18 +8437,78 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
           {tab === "B" && (
             <div className="tab-content flight-tab">
-              <div className="no-print" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
+              <div className="no-print" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12, alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }} data-tour="flight-mgmt">
                   <div style={{ width: 3, height: 18, background: "var(--asagi)", borderRadius: 2 }} />
-                  <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--sumi)", margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{t.flightMgmt}</h2>
+                  <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--sumi)", margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{flightSub === "costs" ? t.flightCostTitle : t.flightMgmt}</h2>
                 </div>
+                {flightSub === "mgmt" && (
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <SearchBar value={searchB} onChange={setSearchB} placeholder={t.searchFlight} />
                   <DeptFilter depts={allDepts} value={deptB} onChange={setDeptB} allLabel={t.allDept} />
                   <button type="button" onClick={() => setShowFlightAdv((v) => !v)} style={eBtn}>{showFlightAdv ? "−" : "+"} {t.activeFilters}</button>
-                  <button type="button" onClick={() => window.print()} style={{ ...eBtn, borderColor: "rgba(43,90,76,.35)", background: "var(--moegi3)", color: "var(--moegi)" }}>{t.printPage}</button>
+                  <div ref={flightPrintMenuRef} style={{ position: "relative" }}>
+                    <button type="button" onClick={() => setShowFlightPrintMenu((v) => !v)} style={{ ...eBtn, borderColor: "rgba(43,90,76,.35)", background: "var(--moegi3)", color: "var(--moegi)" }}>{t.flightPrintReport} ▾</button>
+                    {showFlightPrintMenu && (
+                      <div style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 120, background: "var(--shiro)", border: "1px solid var(--keisenM)", borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,.12)", minWidth: 240, overflow: "hidden" }}>
+                        <button type="button" onClick={printFlightMgmtFiltered} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintMgmt}</button>
+                        <button type="button" onClick={printFlightBaggageFiltered} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", borderTop: "1px solid var(--keisenL)", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintBaggage}</button>
+                        <button type="button" onClick={() => { setShowFlightPrintMenu(false); setShowFlightPrintModal(true); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", borderTop: "1px solid var(--keisenL)", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintSelect}</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+                )}
+                {flightSub === "costs" && (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <SearchBar value={searchB} onChange={setSearchB} placeholder={t.searchFlight} />
+                  <DeptFilter depts={allDepts} value={deptB} onChange={setDeptB} allLabel={t.allDept} />
+                  <select style={{ ...inpStyle, fontSize: 12 }} value={costTypeFilter} onChange={(e) => setCostTypeFilter(e.target.value)} className="wa-input">
+                    <option value="">{t.flightCostAllTypes}</option>
+                    {FLIGHT_COST_TYPES.map((c) => <option key={c.key} value={c.key}>{t[c.labelKey]}</option>)}
+                  </select>
+                  <input style={{ ...inpStyle, width: 140 }} value={costVendorFilter} onChange={(e) => setCostVendorFilter(e.target.value)} placeholder={t.flightCostVendor} className="wa-input" />
+                </div>
+                )}
               </div>
+              <div className="no-print" style={{ display: "flex", background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 16, width: "fit-content", gap: 2 }}>
+                {[["mgmt", t.subFlightMgmt], ["costs", t.subFlightCosts]].map(([k, lb]) => (
+                  <button key={k} type="button" data-tour={k === "costs" ? "flight-costs" : undefined} onClick={() => { setFlightSub(k); if (k === "mgmt") setFlightCostFocusPerson(null); }} style={{
+                    padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12.5,
+                    fontFamily: "'Noto Sans JP',sans-serif", letterSpacing: "0.02em",
+                    fontWeight: flightSub === k ? 600 : 400,
+                    color: flightSub === k ? "var(--sumi)" : "var(--nezumi)",
+                    background: flightSub === k ? "var(--shiro)" : "transparent",
+                    borderRadius: 6,
+                    boxShadow: flightSub === k ? "0 1px 4px rgba(0,0,0,.08)" : "none",
+                    transition: "all .15s",
+                  }}>{lb}</button>
+                ))}
+              </div>
+              {flightSub === "costs" && (
+                <FlightCostPanel
+                  persons={flightCostEligiblePersons}
+                  flightCostItems={flightCostItems}
+                  project={project}
+                  lang={lang}
+                  t={t}
+                  canEdit={canEdit}
+                  personIndex={personIndex}
+                  search={debSearchB}
+                  dept={deptB}
+                  costTypeFilter={costTypeFilter}
+                  vendorFilter={costVendorFilter}
+                  onAdd={(personId) => setFlightCostModal({ mode: "single", personId: personId || null })}
+                  onBatchAdd={() => setFlightCostModal({ mode: "batch" })}
+                  onEdit={(item) => setFlightCostModal({ mode: "single", item })}
+                  onDelete={deleteFlightCostItem}
+                  onPrint={printFlightCosts}
+                  expandedPersonId={flightCostExpanded}
+                  onToggleExpand={setFlightCostExpanded}
+                  focusPersonId={flightCostFocusPerson}
+                />
+              )}
+              {flightSub === "mgmt" && (<>
               {showFlightAdv && (
                 <div className="no-print" style={{ background: "var(--washi)", padding: "16px 18px", marginBottom: 14, borderRadius: 8, border: "1px solid var(--keisenL)", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10 }}>
                   <input style={inpStyle} placeholder={t.searchRoman} value={searchBRoman} onChange={(e) => setSearchBRoman(e.target.value)} className="wa-input" />
@@ -7478,9 +8648,16 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           ? "flight-group-banner flight-group-banner-ungrouped"
                           : `flight-group-banner flight-group-banner-${section.leg}`;
                         const banner = (
-                          <tr key={`${section.key}-banner`} className={bannerClass} onClick={() => toggleHotelCollapsed(sectionKey)} style={{ cursor: "pointer" }}>
-                            <td colSpan={FLIGHT_TABLE_COL_SPAN}>
-                              {toggleIcon}{section.label} · {section.personIds.length} {t.flightGroupPeople}
+                          <tr key={`${section.key}-banner`} className={bannerClass} style={{ cursor: "pointer" }}>
+                            <td colSpan={FLIGHT_TABLE_COL_SPAN} onClick={() => toggleHotelCollapsed(sectionKey)}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                <span style={{ display: "inline-flex", alignItems: "center", flex: "1 1 auto" }}>
+                                  {toggleIcon}{section.label} · {section.personIds.length} {t.flightGroupPeople}
+                                </span>
+                                {section.type === "group" && (
+                                  <button type="button" className="no-print" onClick={(e) => { e.stopPropagation(); printFlightGroup(section); }} style={{ ...eBtn, fontSize: 10, padding: "3px 10px", flexShrink: 0, marginLeft: "auto" }}>{t.flightPrintThisGroup}</button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -7504,7 +8681,17 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   </tbody>
                 </table>
               </div>
-              <FlightBaggageCalc persons={sortedDisplayFlightPersons} flights={flights} personIndex={personIndex} t={t} lang={lang} />
+              <FlightBaggageCalc
+                persons={sortedDisplayFlightPersons}
+                flights={flights}
+                personIndex={personIndex}
+                t={t}
+                lang={lang}
+                allowance={bagCalcAllowance}
+                feeRate={bagCalcFeeRate}
+                onAllowanceChange={setBagCalcAllowance}
+                onFeeRateChange={setBagCalcFeeRate}
+              />
               <FlightCheckinConflictPanel
                 persons={sortedDisplayFlightPersons}
                 flights={flights}
@@ -7513,6 +8700,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                 t={t}
                 lang={lang}
               />
+              </>)}
             </div>
           )}
 
@@ -8211,8 +9399,74 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       )}
 
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
-      {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} lang={lang} flightRouteMemory={flightRouteMemory} /></Modal>}
+      {flightModal && (
+        <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}>
+          <FlightForm
+            init={flightModal.data}
+            onSave={async (f) => {
+              try {
+                const ex = flights.find((x) => x.person_id === flightModal.pid);
+                const data = buildFlightPayload(f, flightModal.pid, pid);
+                if (ex) {
+                  const [r] = await api.update("flights", ex.id, data);
+                  setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x));
+                } else {
+                  const [r] = await api.insert("flights", data);
+                  setFlights((fl) => [...fl, r]);
+                }
+                showToast(t.saved);
+                setFlightModal(null);
+              } catch (e) { showToast(e.message); }
+            }}
+            onClose={() => setFlightModal(null)}
+            t={t}
+            lang={lang}
+            flightRouteMemory={flightRouteMemory}
+            project={project}
+            personCostItems={flightCostItemsByPerson.get(flightModal.pid) || []}
+            personCostTotal={sumCostItems(flightCostItemsByPerson.get(flightModal.pid) || [], project)}
+            onViewCosts={() => openFlightCostsForPerson(flightModal.pid)}
+          />
+        </Modal>
+      )}
+      {flightCostModal?.mode === "single" && (
+        <FlightCostItemModal
+          init={flightCostModal.item}
+          personId={flightCostModal.personId}
+          persons={flightCostEligiblePersons}
+          project={project}
+          user={user}
+          t={t}
+          onClose={() => setFlightCostModal(null)}
+          onSave={(form) => saveFlightCostItem(form, flightCostModal.item?.id)}
+        />
+      )}
+      {flightCostModal?.mode === "batch" && (
+        <FlightCostBatchModal
+          persons={flightCostEligiblePersons.filter((p) => !deptB || p.dept === deptB).filter((p) => {
+            const kw = debSearchB.toLowerCase();
+            return !kw || [p.name_kanji, p.last_roman, p.first_roman, p.dept].some((v) => (v || "").toLowerCase().includes(kw));
+          })}
+          t={t}
+          onClose={() => setFlightCostModal(null)}
+          onSave={saveFlightCostBatch}
+        />
+      )}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
+      {showFlightPrintModal && (
+        <FlightPrintSelectModal
+          onClose={() => setShowFlightPrintModal(false)}
+          onPreview={handleFlightPrintSelect}
+          persons={sortedDisplayFlightPersons}
+          flights={flights}
+          flightLegFilter={flightLegFilter}
+          groups={flightBaggageGroups}
+          t={t}
+          filterSummary={flightPrintFilterSummary}
+          defaultAllowance={bagCalcAllowance}
+          defaultFeeRate={bagCalcFeeRate}
+        />
+      )}
       {guideSection && (
         <GuidePanel
           open
