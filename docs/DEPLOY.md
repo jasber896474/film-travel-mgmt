@@ -35,5 +35,35 @@ git push origin HEAD:main
 
 ## 分支說明
 
-- `main`：追蹤 `origin/main`（正式站）
+- `main`：追蹤 `origin/main`（**正式站，唯一部署來源**）
 - 功能分支完成後：`git push origin 你的分支:main` 或先 merge 到本地 main 再 push
+
+### v0.app 實驗分支（請勿部署）
+
+| 項目 | 說明 |
+|------|------|
+| 分支名 | `taiwan-japan-travel-planner` |
+| 來源 | v0.app 自動產生（藍色主題、`prototype.html`、`pnpm-lock.yaml`） |
+| 狀態 | **未合併進 `main`**，與正式 App 無關 |
+| 正式版 | 永遠以 `main` 為準（綠色主題、`App.jsx` + `index.html`） |
+
+若 Vercel 或 GitHub 曾指向此分支，請改回 `main`（見下方）。
+
+## Vercel 部署
+
+正式網址（若已連 Vercel）：**https://film-travel-mgmt.vercel.app/**
+
+1. 登入 [Vercel Dashboard](https://vercel.com/dashboard) → 選 **film-travel-mgmt**
+2. **Settings → Git → Production Branch** 設為 **`main`**
+3. 若曾部署 `taiwan-japan-travel-planner`，到 **Deployments** 找最新 **`main`** 部署 → **Promote to Production**
+4. 不需要 v0 分支時，可在 GitHub 刪除遠端分支：
+
+```bash
+git push origin --delete taiwan-japan-travel-planner
+```
+
+或在 GitHub：**Repository → Branches →** `taiwan-japan-travel-planner` **→ Delete branch**
+
+## GitHub Pages（與 Vercel 並用時）
+
+Pages 同樣只應從 **`main`** 建置：**https://jasber896474.github.io/film-travel-mgmt/**

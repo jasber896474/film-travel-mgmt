@@ -402,7 +402,8 @@ const T = {
     no: "編號", dept: "部門", jobTitle: "職稱", titleTopPh: "上排（自訂）", titleBottomPh: "下排（自訂）", titleTopCol: "職稱（上）", titleBottomCol: "職稱（下）",
     nameKanji: "姓名（漢字）", nameEnglish: "姓名(英文)", nameRoman: "羅馬拼音", nameSurname: "姓", nameGiven: "名", importance: "重要度",
     status: "安排狀態", passport: "護照 / ID Card", dob: "出生年月日", passportExp: "護照效期", dietNotes: "飲食限制/備註", action: "操作", select: "選取",
-    arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩餘不足180天",
+    arranged: "已安排", missingOut: "缺去程", missingRet: "缺回程", partial: "部分完成", unArranged: "未安排", passportWarn: "剩餘不足180天",
+    warnArrBeforeCI: "抵達早於入住", warnArrAfterCI: "抵達晚於入住", warnDepBeforeCO: "出發早於退房", warnNoDep: "退房後無回程",
     addStaff: "新增工作人員", editStaff: "編輯工作人員",
     airline: "航空公司", flightNo: "航班號", cabin: "艙等", pnr: "訂位代號",
     depAirport: "出發機場", depTerminal: "出發航廈", depTime: "出發時間", arrAirport: "抵達機場", arrTerminal: "抵達航廈", arrTime: "抵達時間",
@@ -419,7 +420,8 @@ const T = {
     hideFromStaysHint: "開啟後，此人不顯示於住宿一覽與住宿篩選名單",
     hideFromVehiclesHint: "開啟後，此人不顯示於派車配置與每日配車單",
     hideFromFlightsHint: "開啟後，此人不顯示於航班管理名單（不需安排機票者適用）",
-    flightOutbound: "去程", flightReturn: "回程",
+    flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班機", flightDiffFlight: "分批搭機", collapseAll: "全部摺疊", expandAll: "全部展開",
+    groupByDept: "依部門", warnFilter: "警示", warnFilterTitle: "顯示警示種類", selectAll: "全選",
     arrTimePickup: "抵達時間 ↓接機",
     flightUngrouped: "未分組／資料未完成",
     flightGroupPeople: "人",
@@ -471,7 +473,7 @@ const T = {
     vehicleReportCompactHint: "列印完整車輛卡片（車號、路線、乘客等），A4 直式雙欄緊湊排版，一頁約可列 10 台車以上。",
     soloStayNights: "獨住{n}晚",
     searchHotelName: "搜尋飯店…", searchRoomType: "搜尋房型…", searchRoman: "羅馬拼音", searchStatus: "安排狀態", allStatus: "全部狀態",
-    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除篩選", exportCSV: "匯出 CSV", importCSV: "匯入 CSV",
+    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", missingOut_short: "缺去程", missingRet_short: "缺回程", clearFilter: "清除篩選", exportCSV: "匯出 CSV", importCSV: "匯入 CSV",
     importEmpty: "檔案內沒有可匯入的資料", importFormatError: "CSV 格式不符，請先「匯出 CSV」取得正確欄位標題後再填入",
     importConfirm: "將匯入 {n} 筆工作人員（編號相同者更新，否則以「部門＋姓名（漢字）」比對更新，其餘新增）。是否繼續？",
     importDone: "匯入完成：{ok} 筆成功{fail}", importFailSuffix: "，{fail} 筆失敗", importing: "匯入中…",
@@ -542,7 +544,8 @@ const T = {
     no: "编号", dept: "部门", jobTitle: "职称", titleTopPh: "上排（自定义）", titleBottomPh: "下排（自定义）", titleTopCol: "职称（上）", titleBottomCol: "职称（下）",
     nameKanji: "姓名（汉字）", nameEnglish: "姓名(英文)", nameRoman: "罗马拼音", nameSurname: "姓", nameGiven: "名", importance: "重要度",
     status: "安排状态", passport: "护照 / ID Card", dob: "出生年月日", passportExp: "护照效期", dietNotes: "饮食限制/备注", action: "操作", select: "选取",
-    arranged: "已安排", partial: "部分完成", unArranged: "未安排", passportWarn: "剩余不足180天",
+    arranged: "已安排", missingOut: "缺去程", missingRet: "缺回程", partial: "部分完成", unArranged: "未安排", passportWarn: "剩余不足180天",
+    warnArrBeforeCI: "抵达早于入住", warnArrAfterCI: "抵达晚于入住", warnDepBeforeCO: "出发早于退房", warnNoDep: "退房后无回程",
     addStaff: "新增工作人员", editStaff: "编辑工作人员",
     airline: "航空公司", flightNo: "航班号", cabin: "舱位", pnr: "订座代号",
     depAirport: "出发机场", depTerminal: "出发航站", depTime: "出发时间", arrAirport: "到达机场", arrTerminal: "到达航站", arrTime: "到达时间",
@@ -559,7 +562,8 @@ const T = {
     hideFromStaysHint: "开启后，此人不显示于住宿一览与住宿筛选名单",
     hideFromVehiclesHint: "开启后，此人不显示于派车配置与每日配车单",
     hideFromFlightsHint: "开启后，此人不显示于航班管理名单（不需安排机票者适用）",
-    flightOutbound: "去程", flightReturn: "回程",
+    flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班机", flightDiffFlight: "分批搭机", collapseAll: "全部折叠", expandAll: "全部展开",
+    groupByDept: "依部门", warnFilter: "警示", warnFilterTitle: "显示警示种类", selectAll: "全选",
     arrTimePickup: "抵达时间 ↓接机",
     flightUngrouped: "未分组／资料未完成",
     flightGroupPeople: "人",
@@ -611,7 +615,7 @@ const T = {
     vehicleReportCompactHint: "打印完整车辆卡片（车号、路线、乘客等），A4 直式双栏紧凑排版，一页约可列 10 台车以上。",
     soloStayNights: "独住{n}晚",
     searchHotelName: "搜索饭店…", searchRoomType: "搜索房型…", searchRoman: "罗马拼音", searchStatus: "安排状态", allStatus: "全部状态",
-    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除筛选", exportCSV: "导出 CSV", importCSV: "导入 CSV",
+    arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", missingOut_short: "缺去程", missingRet_short: "缺回程", clearFilter: "清除筛选", exportCSV: "导出 CSV", importCSV: "导入 CSV",
     importEmpty: "文件内没有可导入的数据", importFormatError: "CSV 格式不符，请先「导出 CSV」取得正确栏位标题后再填入",
     importConfirm: "将导入 {n} 笔工作人员（编号相同者更新，否则以「部门＋姓名（汉字）」比对更新，其余新增）。是否继续？",
     importDone: "导入完成：{ok} 笔成功{fail}", importFailSuffix: "，{fail} 笔失败", importing: "导入中…",
@@ -681,7 +685,8 @@ const T = {
     no: "No.", dept: "Dept", jobTitle: "Title", titleTopPh: "Top line (custom)", titleBottomPh: "Bottom line (custom)", titleTopCol: "Title (top)", titleBottomCol: "Title (bottom)",
     nameKanji: "Name", nameEnglish: "Name (English)", nameRoman: "Romanized", nameSurname: "Last", nameGiven: "First", importance: "Priority",
     status: "Status", passport: "Passport / ID Card", dob: "DOB", passportExp: "Expiry", dietNotes: "Diet / Notes", action: "Actions", select: "Select",
-    arranged: "Arranged", partial: "Partial", unArranged: "Pending", passportWarn: "Expires within 180 days",
+    arranged: "Arranged", missingOut: "No Outbound", missingRet: "No Return", partial: "Partial", unArranged: "Pending", passportWarn: "Expires within 180 days",
+    warnArrBeforeCI: "Arrives before check-in", warnArrAfterCI: "Arrives after check-in", warnDepBeforeCO: "Departs before check-out", warnNoDep: "No return after check-out",
     addStaff: "Add Staff", editStaff: "Edit Staff",
     airline: "Airline", flightNo: "Flight No.", cabin: "Cabin", pnr: "PNR",
     depAirport: "Dep. Airport", depTerminal: "Dep. Terminal", depTime: "Dep. Time", arrAirport: "Arr. Airport", arrTerminal: "Arr. Terminal", arrTime: "Arr. Time",
@@ -698,7 +703,8 @@ const T = {
     hideFromStaysHint: "When on, this person won't appear in the accommodation list",
     hideFromVehiclesHint: "When on, this person won't appear in vehicle assignments",
     hideFromFlightsHint: "When on, this person won't appear in the flight list (no ticket needed)",
-    flightOutbound: "Outbound", flightReturn: "Return",
+    flightOutbound: "Outbound", flightReturn: "Return", flightSameFlight: "Same flight", flightDiffFlight: "Split flights", collapseAll: "Collapse All", expandAll: "Expand All",
+    groupByDept: "By Dept", warnFilter: "Warnings", warnFilterTitle: "Show warning types", selectAll: "Select all",
     arrTimePickup: "Arrival ↓ pickup",
     flightUngrouped: "Ungrouped / incomplete",
     flightGroupPeople: "pax",
@@ -749,7 +755,7 @@ const T = {
     vehicleReportCompactHint: "Print full vehicle cards (plate, route, passengers) in compact A4 portrait, 2 columns — about 10+ vehicles per page.",
     soloStayNights: "Solo {n} nights",
     searchHotelName: "Search hotel…", searchRoomType: "Search room type…", searchRoman: "Romanized", searchStatus: "Status", allStatus: "All",
-    arranged_short: "Done", unArranged_short: "Pending", partial_short: "Partial", clearFilter: "Clear filters", exportCSV: "Export CSV", importCSV: "Import CSV",
+    arranged_short: "Done", unArranged_short: "Pending", partial_short: "Partial", missingOut_short: "No Out", missingRet_short: "No Ret", clearFilter: "Clear filters", exportCSV: "Export CSV", importCSV: "Import CSV",
     importEmpty: "No rows to import", importFormatError: "Invalid CSV — export staff CSV first and use the same headers",
     importConfirm: "Import {n} staff row(s)? Same No. updates that row; else match dept + name (Kanji); otherwise add new. Continue?",
     importDone: "Import done: {ok} succeeded{fail}", importFailSuffix: ", {fail} failed", importing: "Importing…",
@@ -818,7 +824,8 @@ const T = {
     no: "번호", dept: "부서", jobTitle: "직함", titleTopPh: "상단 (직접 입력)", titleBottomPh: "하단 (직접 입력)", titleTopCol: "직함 (상)", titleBottomCol: "직함 (하)",
     nameKanji: "이름", nameEnglish: "이름(영문)", nameRoman: "로마자", nameSurname: "성", nameGiven: "이름", importance: "중요도",
     status: "상태", passport: "여권 / ID Card", dob: "생년월일", passportExp: "만료", dietNotes: "식단/비고", action: "작업", select: "선택",
-    arranged: "완료", partial: "일부", unArranged: "미배정", passportWarn: "180일 미만",
+    arranged: "완료", missingOut: "가는편 없음", missingRet: "오는편 없음", partial: "일부", unArranged: "미배정", passportWarn: "180일 미만",
+    warnArrBeforeCI: "도착이 체크인 전", warnArrAfterCI: "도착이 체크인 후", warnDepBeforeCO: "출발이 체크아웃 전", warnNoDep: "체크아웃 후 귀국편 없음",
     addStaff: "스태프 추가", editStaff: "스태프 편집",
     airline: "항공사", flightNo: "편명", cabin: "좌석", pnr: "PNR",
     depAirport: "출발", depTerminal: "터미널", depTime: "출발 시각", arrAirport: "도착", arrTerminal: "터미널", arrTime: "도착 시각",
@@ -835,7 +842,8 @@ const T = {
     hideFromStaysHint: "켜면 숙박 목록에서 표시되지 않습니다",
     hideFromVehiclesHint: "켜면 차량 배정 목록에서 표시되지 않습니다",
     hideFromFlightsHint: "켜면 항공 관리 목록에서 숨겨집니다 (항공권 불필요)",
-    flightOutbound: "출국", flightReturn: "귀국",
+    flightOutbound: "출국", flightReturn: "귀국", flightSameFlight: "동일 항공편", flightDiffFlight: "분산 탑승", collapseAll: "전체 접기", expandAll: "전체 펼치기",
+    groupByDept: "부서별", warnFilter: "경고", warnFilterTitle: "경고 표시 유형", selectAll: "전체 선택",
     arrTimePickup: "도착 ↓ 픽업",
     flightUngrouped: "미분류／미완료",
     flightGroupPeople: "명",
@@ -886,7 +894,7 @@ const T = {
     vehicleReportCompactHint: "차량 카드(번호, 경로, 탑승자 등)를 A4 세로 2단으로 압축 인쇄, 한 페이지에 약 10대 이상.",
     soloStayNights: "단독 {n}박",
     searchHotelName: "호텔…", searchRoomType: "객실…", searchRoman: "로마자", searchStatus: "상태", allStatus: "전체",
-    arranged_short: "완료", unArranged_short: "미배정", partial_short: "일부", clearFilter: "필터 초기화", exportCSV: "CSV보내기", importCSV: "CSV 가져오기",
+    arranged_short: "완료", unArranged_short: "미배정", partial_short: "일부", missingOut_short: "가는편없음", missingRet_short: "오는편없음", clearFilter: "필터 초기화", exportCSV: "CSV보내기", importCSV: "CSV 가져오기",
     importEmpty: "가져올 데이터 없음", importFormatError: "CSV 형식 오류 — 먼저보내기로 양식 확인",
     importConfirm: "{n}명 가져오기 (번호 일치 시 수정, 부서+이름 일치 시 수정, 나머지 추가). 계속?",
     importDone: "완료: {ok}건{fail}", importFailSuffix: ", 실패 {fail}건", importing: "가져오는 중…",
@@ -955,7 +963,8 @@ const T = {
     no: "No.", dept: "部署", jobTitle: "役職", titleTopPh: "上段（自由入力）", titleBottomPh: "下段（自由入力）", titleTopCol: "役職（上）", titleBottomCol: "役職（下）",
     nameKanji: "氏名", nameEnglish: "氏名（英語）", nameRoman: "ローマ字", nameSurname: "姓", nameGiven: "名", importance: "重要度",
     status: "状況", passport: "パスポート / ID", dob: "生年月日", passportExp: "有効期限", dietNotes: "食事制限・備考", action: "操作", select: "選択",
-    arranged: "手配済", partial: "一部", unArranged: "未手配", passportWarn: "残り180日未満",
+    arranged: "手配済", missingOut: "往路なし", missingRet: "復路なし", partial: "一部", unArranged: "未手配", passportWarn: "残り180日未満",
+    warnArrBeforeCI: "到着がCI前", warnArrAfterCI: "到着がCI後", warnDepBeforeCO: "出発がCO前", warnNoDep: "CO後帰路なし",
     addStaff: "スタッフ追加", editStaff: "スタッフ編集",
     airline: "航空会社", flightNo: "便名", cabin: "クラス", pnr: "PNR",
     depAirport: "出発空港", depTerminal: "ターミナル", depTime: "出発", arrAirport: "到着空港", arrTerminal: "ターミナル", arrTime: "到着",
@@ -972,7 +981,8 @@ const T = {
     hideFromStaysHint: "オンにすると宿泊一覧・宿泊の選択リストから非表示になります",
     hideFromVehiclesHint: "オンにすると配車の選択リストから非表示になります",
     hideFromFlightsHint: "オンにするとフライト管理から非表示になります（航空券不要の方向け）",
-    flightOutbound: "往路", flightReturn: "復路",
+    flightOutbound: "往路", flightReturn: "復路", flightSameFlight: "同フライト", flightDiffFlight: "別フライト", collapseAll: "すべて折りたたむ", expandAll: "すべて展開",
+    groupByDept: "部署別", warnFilter: "警告", warnFilterTitle: "警告種類", selectAll: "全選択",
     arrTimePickup: "到着 ↓送迎",
     flightUngrouped: "未分類／未入力",
     flightGroupPeople: "名",
@@ -1024,7 +1034,7 @@ const T = {
     vehicleReportCompactHint: "車両カード（号車・ルート・同乗者など）を A4 縦2列のコンパクト版で印刷。1ページに約10台以上。",
     soloStayNights: "単独{n}泊",
     searchHotelName: "ホテル名…", searchRoomType: "部屋タイプ…", searchRoman: "ローマ字", searchStatus: "状況", allStatus: "すべて",
-    arranged_short: "済", unArranged_short: "未", partial_short: "一部", clearFilter: "クリア", exportCSV: "CSV出力", importCSV: "CSV取込",
+    arranged_short: "済", unArranged_short: "未", partial_short: "一部", missingOut_short: "往路なし", missingRet_short: "復路なし", clearFilter: "クリア", exportCSV: "CSV出力", importCSV: "CSV取込",
     importEmpty: "取込データがありません", importFormatError: "CSV形式が異なります。先にCSV出力で見本を取得してください",
     importConfirm: "{n}件を取り込みます（番号一致は更新、部署＋氏名一致は更新、それ以外は新規）。続行しますか？",
     importDone: "完了：{ok}件{fail}", importFailSuffix: "、失敗{fail}件", importing: "取込中…",
@@ -1311,6 +1321,28 @@ function getGuideContent(lang) {
 
 const starLabel = (s) => (s === 3 ? "★★★" : s === 2 ? "★★" : s === 1 ? "★" : "");
 const IMPORTANCE = [3, 2, 1, 0];
+
+function CollapseAllButton({ sectionKeys, collapsedHotels, onToggle, t, dark }) {
+  if (!sectionKeys || sectionKeys.length === 0) return null;
+  const allCollapsed = sectionKeys.every((k) => collapsedHotels.has(k));
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(sectionKeys)}
+      className="no-print"
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 600,
+        padding: "5px 12px", borderRadius: 6, cursor: "pointer",
+        border: dark ? "1px solid rgba(255,255,255,.25)" : "1px solid var(--keisenM)",
+        background: dark ? "rgba(255,255,255,.08)" : "var(--shiro)",
+        color: dark ? "var(--washi)" : "var(--nezumi)",
+      }}
+    >
+      <span style={{ fontSize: 13, lineHeight: 1 }}>{allCollapsed ? "▣" : "▢"}</span>
+      {allCollapsed ? (t.expandAll || "全部展開") : (t.collapseAll || "全部摺疊")}
+    </button>
+  );
+}
 
 function groupByDeptLabel(items, getDept, lang, emptyLabel) {
   const map = new Map();
@@ -1608,6 +1640,35 @@ function flightHasLeg(fl, leg) {
   return !!(fl.ret_airline || fl.ret_flight_no || fl.ret_dep_time || fl.ret_dep_airport);
 }
 
+function buildFlightSameDiffMap(persons, flights) {
+  const result = new Map();
+  ["out", "ret"].forEach((leg) => {
+    const groups = new Map();
+    persons.forEach((p) => {
+      const fl = flights.find((x) => x.person_id === p.id);
+      if (!fl || !flightHasLeg(fl, leg)) return;
+      const ts = leg === "out" ? fl.dep_time : fl.ret_dep_time;
+      const dateStr = ts ? String(ts).slice(0, 10) : "";
+      if (!dateStr) return;
+      const fn = `${(leg === "out" ? fl.airline : fl.ret_airline) || ""}|${(leg === "out" ? fl.flight_no : fl.ret_flight_no) || ""}`.trim();
+      if (!groups.has(dateStr)) groups.set(dateStr, new Map());
+      const dateGroup = groups.get(dateStr);
+      if (!dateGroup.has(fn)) dateGroup.set(fn, []);
+      dateGroup.get(fn).push(p.id);
+    });
+    groups.forEach((dateGroup) => {
+      const status = dateGroup.size > 1 ? "diff" : "same";
+      dateGroup.forEach((personIds) => {
+        personIds.forEach((pid) => {
+          if (!result.has(pid)) result.set(pid, { out: null, ret: null });
+          result.get(pid)[leg] = status;
+        });
+      });
+    });
+  });
+  return result;
+}
+
 function getVisibleFlightLegs(fl, filter) {
   const hasOut = flightHasLeg(fl, "out");
   const hasRet = flightHasLeg(fl, "ret");
@@ -1714,8 +1775,46 @@ function buildFlightTableSections(persons, flights, legFilter, t, lang) {
 const FLIGHT_TABLE_COL_SPAN = FLIGHT_PERSON_COLS.length + 1 + FLIGHT_LEG_TABLE_COLS.length + 2;
 
 function renderFlightPersonRows(p, fl, legs, ctx) {
-  const { personIndex, lang, t, canEdit, setFlightModal, statusBadge } = ctx;
+  const { personIndex, lang, t, canEdit, setFlightModal, statusBadge, stays, activeWarnFilters } = ctx;
   const hasF = fl && fl.airline;
+
+  // ── 日期不符警示計算 ──
+  const personStays = (stays || []).filter((s) => s.person_id === p.id && s.hotel_id && s.check_in && s.check_out);
+  const earliestCI = personStays.length ? personStays.reduce((a, b) => a.check_in <= b.check_in ? a : b).check_in : null;
+  const latestCO  = personStays.length ? personStays.reduce((a, b) => a.check_out >= b.check_out ? a : b).check_out : null;
+  const arrDateStr = fl?.arr_time ? String(fl.arr_time).slice(0, 10) : null;
+  const retDepDateStr = fl?.ret_dep_time ? String(fl.ret_dep_time).slice(0, 10) : null;
+
+  const warns = [];
+  if (arrDateStr && earliestCI) {
+    if (arrDateStr < earliestCI) warns.push("arrBeforeCI");
+    else if (arrDateStr > earliestCI) warns.push("arrAfterCI");
+  }
+  if (retDepDateStr && latestCO) {
+    if (retDepDateStr < latestCO) warns.push("depBeforeCO");
+  }
+  if (latestCO && !retDepDateStr && fl) {
+    warns.push("noDep");
+  }
+
+  const warnLabels = {
+    arrBeforeCI: t.warnArrBeforeCI,
+    arrAfterCI:  t.warnArrAfterCI,
+    depBeforeCO: t.warnDepBeforeCO,
+    noDep:       t.warnNoDep,
+  };
+  const warnFilterKeys = {
+    arrBeforeCI: "arrBeforeCI",
+    arrAfterCI:  "arrAfterCI",
+    depBeforeCO: "depBeforeCO",
+    noDep:       "noDep",
+  };
+
+  const activeWarns = activeWarnFilters && activeWarnFilters.length > 0
+    ? warns.filter((w) => activeWarnFilters.includes(warnFilterKeys[w]))
+    : [];
+  const hasWarn = activeWarns.length > 0;
+
   const dtCell = (dt, pickup) => dt ? (
     pickup ? (
       <div className="pickup-wrap">
@@ -1744,20 +1843,35 @@ function renderFlightPersonRows(p, fl, legs, ctx) {
     </td>
   ));
 
+  const rowWarnStyle = hasWarn ? { background: "rgba(160,48,48,.04)" } : undefined;
+
   if (legs[0] === "empty") {
+    const st = !fl ? "none" : (fl.airline || fl.flight_no) && (fl.ret_airline || fl.ret_flight_no) ? "arranged" : (fl.airline || fl.flight_no) ? "missing-ret" : (fl.ret_airline || fl.ret_flight_no) ? "missing-out" : "none";
     return [(
-      <tr key={`${p.id}-empty`} className="flight-person-end">
+      <tr key={`${p.id}-empty`} className="flight-person-end" style={rowWarnStyle}>
         {personCells(1)}
         <td colSpan={FLIGHT_LEG_TABLE_COLS.length + 1} style={flightCell({ textAlign: "left", color: "var(--nezumi)", fontSize: 12 })}>— {t.flightNone} —</td>
-        <td style={flightCell()}>{statusBadge("none")}</td>
+        <td style={flightCell()}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "center" }}>
+            {statusBadge(st)}
+            {activeWarns.map((w) => (
+              <span key={w} style={{ fontSize: 9.5, padding: "1px 6px", borderRadius: 4, background: "rgba(160,48,48,.09)", color: "#a03030", border: "1px solid rgba(160,48,48,.18)", whiteSpace: "nowrap" }}>{warnLabels[w]}</span>
+            ))}
+          </div>
+        </td>
         <td className="flight-col-act no-print" style={flightCell()}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{t.addFlight}</button>}</td>
       </tr>
     )];
   }
 
   const multi = legs.length > 1;
+  const st = (fl?.airline || fl?.flight_no) && (fl?.ret_airline || fl?.ret_flight_no) ? "arranged"
+    : (fl?.airline || fl?.flight_no) ? "missing-ret"
+    : (fl?.ret_airline || fl?.ret_flight_no) ? "missing-out"
+    : "none";
+
   return legs.map((leg, li) => (
-    <tr key={`${p.id}-${leg}`} className={`flight-row-${leg}${li === legs.length - 1 ? " flight-person-end" : ""}`}>
+    <tr key={`${p.id}-${leg}`} className={`flight-row-${leg}${li === legs.length - 1 ? " flight-person-end" : ""}`} style={rowWarnStyle}>
       {li === 0 ? personCells(multi ? legs.length : 1) : null}
       <td style={flightCell()}><span className={`leg-tag ${leg === "out" ? "leg-out" : "leg-ret"}`}>{leg === "out" ? t.flightOutbound : t.flightReturn}</span></td>
       {FLIGHT_LEG_TABLE_COLS.map((c) => (
@@ -1767,7 +1881,14 @@ function renderFlightPersonRows(p, fl, legs, ctx) {
       ))}
       {li === 0 ? (
         <>
-          <td rowSpan={multi ? legs.length : undefined} style={flightCell()}>{statusBadge(hasF ? "arranged" : "none")}</td>
+          <td rowSpan={multi ? legs.length : undefined} style={flightCell()}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "center" }}>
+              {statusBadge(st)}
+              {activeWarns.map((w) => (
+                <span key={w} style={{ fontSize: 9.5, padding: "1px 6px", borderRadius: 4, background: "rgba(160,48,48,.09)", color: "#a03030", border: "1px solid rgba(160,48,48,.18)", whiteSpace: "nowrap" }}>{warnLabels[w]}</span>
+              ))}
+            </div>
+          </td>
           <td rowSpan={multi ? legs.length : undefined} className="flight-col-act no-print" style={flightCell()}>{canEdit && <button type="button" style={{ ...aBtn, marginRight: 0 }} onClick={() => setFlightModal({ pid: p.id, data: fl || null })}>{hasF ? t.edit : t.addFlight}</button>}</td>
         </>
       ) : null}
@@ -1775,20 +1896,68 @@ function renderFlightPersonRows(p, fl, legs, ctx) {
   ));
 }
 
-function FlightLegFilter({ value, onChange, t }) {
-  const opts = [["all", t.allPhases], ["out", t.flightOutbound], ["ret", t.flightReturn]];
+function FlightLegFilter({ value, onChange, groupByDept, onGroupByDept, sameDiffFilter, onSameDiffFilter, warnFilters, onWarnFilters, showWarnDropdown, onToggleWarnDropdown, warnDropdownRef, t }) {
+  const legOpts = [["all", t.allPhases], ["out", t.flightOutbound], ["ret", t.flightReturn]];
+  const WARN_OPTS = [
+    { key: "arrBeforeCI", label: t.warnArrBeforeCI, color: "#a03030", bg: "rgba(160,48,48,.1)", border: "rgba(160,48,48,.2)" },
+    { key: "arrAfterCI",  label: t.warnArrAfterCI,  color: "#854f0b", bg: "rgba(143,99,24,.1)", border: "rgba(143,99,24,.2)" },
+    { key: "depBeforeCO", label: t.warnDepBeforeCO, color: "#a03030", bg: "rgba(160,48,48,.1)", border: "rgba(160,48,48,.2)" },
+    { key: "noDep",       label: t.warnNoDep,       color: "#3a788c", bg: "rgba(58,120,140,.1)", border: "rgba(58,120,140,.2)" },
+    { key: "missingOut",  label: t.missingOut,      color: "var(--nezumi)", bg: "rgba(112,112,124,.07)", border: "rgba(112,112,124,.2)" },
+    { key: "missingRet",  label: t.missingRet,      color: "var(--nezumi)", bg: "rgba(112,112,124,.07)", border: "rgba(112,112,124,.2)" },
+  ];
+  const warnCount = warnFilters.length;
+  const pillBase = { padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 6, fontFamily: "'Noto Sans JP',sans-serif", transition: "all .15s" };
+  const activePill = (accent) => ({ ...pillBase, fontWeight: 600, color: "var(--shiro)", background: accent });
+  const inactivePill = { ...pillBase, fontWeight: 400, color: "var(--nezumi)", background: "transparent" };
+  const vdiv = { width: 1, alignSelf: "stretch", background: "var(--keisenM)", margin: "2px 6px" };
+
+  const toggleWarn = (key) => {
+    onWarnFilters(warnFilters.includes(key) ? warnFilters.filter((k) => k !== key) : [...warnFilters, key]);
+  };
+
   return (
-    <div className="no-print flight-leg-filter" style={{ display: "flex", gap: 4, background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 12, width: "fit-content", border: "1px solid var(--keisenL)" }}>
-      {opts.map(([k, lb]) => (
-        <button key={k} type="button" onClick={() => onChange(k)} style={{
-          padding: "6px 16px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 6,
-          fontFamily: "'Noto Sans JP',sans-serif",
-          fontWeight: value === k ? 600 : 400,
-          color: value === k ? "var(--shiro)" : "var(--nezumi)",
-          background: value === k ? (k === "ret" ? "var(--asagi)" : "var(--moegi)") : "transparent",
-          transition: "all .15s",
-        }}>{lb}</button>
-      ))}
+    <div style={{ marginBottom: 12, position: "relative" }} ref={warnDropdownRef}>
+      <div className="no-print flight-leg-filter" style={{ display: "inline-flex", gap: 4, background: "var(--washi)", borderRadius: 8, padding: 4, width: "fit-content", border: "1px solid var(--keisenL)", flexWrap: "wrap", rowGap: 4 }}>
+        {legOpts.map(([k, lb]) => (
+          <button key={k} type="button" onClick={() => onChange(k)} style={value === k ? activePill(k === "ret" ? "var(--asagi)" : "var(--moegi)") : inactivePill}>{lb}</button>
+        ))}
+        <div style={vdiv} />
+        <button type="button" onClick={() => onSameDiffFilter(sameDiffFilter === "same" ? null : "same")} style={sameDiffFilter === "same" ? activePill("var(--asagi)") : inactivePill}>
+          {t.flightSameFlight || "同班機"}
+        </button>
+        <button type="button" onClick={() => onSameDiffFilter(sameDiffFilter === "diff" ? null : "diff")} style={sameDiffFilter === "diff" ? activePill("var(--kincha)") : inactivePill}>
+          {t.flightDiffFlight || "分批搭機"}
+        </button>
+        <div style={vdiv} />
+        <button type="button" onClick={onGroupByDept} style={groupByDept ? activePill("var(--kincha)") : inactivePill}>
+          {t.groupByDept || "依部門"}
+        </button>
+        <div style={vdiv} />
+        <button type="button" onClick={onToggleWarnDropdown} style={warnCount > 0 ? { ...activePill("var(--shu,#a03030)"), display: "flex", alignItems: "center", gap: 4 } : { ...inactivePill, display: "flex", alignItems: "center", gap: 4 }}>
+          ⚠ {t.warnFilter || "警示"}
+          {warnCount > 0 && (
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%", background: "rgba(255,255,255,.28)", fontSize: 9, fontWeight: 700 }}>{warnCount}</span>
+          )}
+        </button>
+      </div>
+      {showWarnDropdown && (
+        <div className="no-print" style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 120, background: "var(--shiro)", border: "1px solid var(--keisenM)", borderRadius: 8, padding: "12px 14px", minWidth: 360, boxShadow: "0 4px 20px rgba(0,0,0,.12)", display: "flex", flexDirection: "column", gap: 7 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--nezumi)", letterSpacing: "0.04em" }}>{t.warnFilterTitle || "顯示警示種類"}</span>
+            <div style={{ display: "flex", gap: 5 }}>
+              <button type="button" onClick={() => onWarnFilters(WARN_OPTS.map((o) => o.key))} style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 4, border: "1px solid var(--keisenM)", background: "transparent", color: "var(--nezumi)", cursor: "pointer" }}>{t.selectAll || "全選"}</button>
+              <button type="button" onClick={() => onWarnFilters([])} style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 4, border: "1px solid var(--keisenM)", background: "transparent", color: "var(--nezumi)", cursor: "pointer" }}>{t.clearFilter}</button>
+            </div>
+          </div>
+          {WARN_OPTS.map((o) => (
+            <label key={o.key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, border: `1px solid ${warnFilters.includes(o.key) ? o.border : "var(--keisenL)"}`, background: warnFilters.includes(o.key) ? o.bg : "var(--washi)", cursor: "pointer" }}>
+              <input type="checkbox" checked={warnFilters.includes(o.key)} onChange={() => toggleWarn(o.key)} style={{ accentColor: "#a03030", width: 14, height: 14, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 5, background: o.bg, color: o.color, border: `1px solid ${o.border}`, whiteSpace: "nowrap" }}>{o.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -5338,6 +5507,45 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [searchBAirline, setSearchBAirline] = useState("");
   const [searchBStatus, setSearchBStatus] = useState("");
   const [flightLegFilter, setFlightLegFilter] = useState("all");
+  const [flightGroupByDept, setFlightGroupByDept] = useState(false);
+  const [flightSameDiffFilter, setFlightSameDiffFilter] = useState(null);
+  const [showWarnDropdown, setShowWarnDropdown] = useState(false);
+  const [flightWarnFilters, setFlightWarnFilters] = useState([]);
+  const warnDropdownRef = useRef(null);
+  const [collapsedHotels, setCollapsedHotels] = useState(() => {
+    try {
+      const raw = localStorage.getItem("collapsedHotelSections");
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch { return new Set(); }
+  });
+  const toggleHotelCollapsed = (key) => {
+    setCollapsedHotels((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      try { localStorage.setItem("collapsedHotelSections", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
+  const setManyCollapsed = (keys) => {
+    setCollapsedHotels((prev) => {
+      const next = new Set(prev);
+      const allCollapsed = keys.length > 0 && keys.every((k) => next.has(k));
+      keys.forEach((k) => { if (allCollapsed) next.delete(k); else next.add(k); });
+      try { localStorage.setItem("collapsedHotelSections", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (!showWarnDropdown) return;
+    const handler = (e) => {
+      if (warnDropdownRef.current && !warnDropdownRef.current.contains(e.target)) {
+        setShowWarnDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showWarnDropdown]);
 
   const debSearchA = useDebounced(searchA);
   const debSearchB = useDebounced(searchB);
@@ -5508,15 +5716,15 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     })));
   };
 
-  const getStatus = useCallback((id) => {
+  const getFlightStatus = useCallback((id) => {
     const fl = flights.find((x) => x.person_id === id);
-    const ps = stays.filter((st) => st.person_id === id);
-    const hasF = fl && fl.airline && fl.flight_no;
-    const hasS = ps.some((s) => s.hotel_id && s.check_in && s.check_out);
-    if (hasF && hasS) return "arranged";
-    if (hasF || hasS) return "partial";
+    const hasOut = fl && (fl.airline || fl.flight_no);
+    const hasRet = fl && (fl.ret_airline || fl.ret_flight_no);
+    if (hasOut && hasRet) return "arranged";
+    if (hasOut && !hasRet) return "missing-ret";
+    if (!hasOut && hasRet) return "missing-out";
     return "none";
-  }, [flights, stays]);
+  }, [flights]);
 
   const shootPhases = useMemo(() => getShootPhases(project), [project]);
   const hotelPhaseMap = useMemo(() => Object.fromEntries(hotels.map((h) => [+h.id, h.shoot_phase_id || ""])), [hotels]);
@@ -5659,20 +5867,51 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     const nameOk = !kw || [p.name_kanji, p.last_roman, p.first_roman, p.dept].some((v) => (v || "").toLowerCase().includes(kw));
     const romanOk = !searchBRoman || [p.last_roman, p.first_roman].some((v) => (v || "").toLowerCase().includes(searchBRoman.toLowerCase()));
     const airlineOk = !searchBAirline || (fl?.airline || "").toLowerCase().includes(searchBAirline.toLowerCase());
-    const st = getStatus(p.id);
-    const statusOk = !searchBStatus || (searchBStatus === "arranged" ? st === "arranged" : searchBStatus === "partial" ? st === "partial" : st === "none");
+    const st = getFlightStatus(p.id);
+    const statusOk = !searchBStatus || st === searchBStatus;
     return nameOk && romanOk && airlineOk && statusOk && (!deptB || p.dept === deptB);
-  }), [persons, flights, debSearchB, deptB, searchBRoman, searchBAirline, searchBStatus, getStatus]);
+  }), [persons, flights, debSearchB, deptB, searchBRoman, searchBAirline, searchBStatus, getFlightStatus]);
+
+  const flightSameDiffMap = useMemo(() => buildFlightSameDiffMap(persons, flights), [persons, flights]);
 
   const displayFlightPersons = useMemo(() => filteredFlightPersons.filter((p) => {
     const fl = flights.find((x) => x.person_id === p.id);
-    return getVisibleFlightLegs(fl, flightLegFilter).length > 0;
-  }), [filteredFlightPersons, flights, flightLegFilter]);
+    if (getVisibleFlightLegs(fl, flightLegFilter).length === 0) return false;
+    if (flightSameDiffFilter) {
+      const sd = flightSameDiffMap.get(p.id);
+      const legsToCheck = flightLegFilter === "out" ? ["out"] : flightLegFilter === "ret" ? ["ret"] : ["out", "ret"];
+      const matches = legsToCheck.some((leg) => sd && sd[leg] === flightSameDiffFilter);
+      if (!matches) return false;
+    }
+    return true;
+  }), [filteredFlightPersons, flights, flightLegFilter, flightSameDiffFilter, flightSameDiffMap]);
 
   const flightTableSections = useMemo(
     () => buildFlightTableSections(displayFlightPersons, flights, flightLegFilter, t, lang),
     [displayFlightPersons, flights, flightLegFilter, t, lang],
   );
+
+  const flightDeptGroups = useMemo(() => {
+    if (!flightGroupByDept) return null;
+    const deptOrder = [];
+    const deptMap = {};
+    displayFlightPersons.forEach((p) => {
+      const d = p.dept || "";
+      if (!deptMap[d]) { deptMap[d] = []; deptOrder.push(d); }
+      deptMap[d].push(p);
+    });
+    const sorted = [...deptOrder].sort((a, b) => {
+      if (!a) return 1;
+      if (!b) return -1;
+      return a.localeCompare(b, "zh-TW");
+    });
+    return sorted.map((d) => ({ dept: d, persons: deptMap[d] }));
+  }, [flightGroupByDept, displayFlightPersons]);
+
+  const currentFlightSectionKeys = useMemo(() => {
+    if (flightDeptGroups) return flightDeptGroups.map(({ dept }) => `flight:dept:${dept}`);
+    return flightTableSections.map((s) => `flight:section:${s.key}`);
+  }, [flightDeptGroups, flightTableSections]);
 
   const flatStays = useMemo(() => {
     const rows = [];
@@ -6112,6 +6351,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const statusBadge = (s) => {
     const cfg = s === "arranged"
       ? { bg: "var(--moegi3)", c: "var(--moegi)", border: "rgba(43,90,76,.2)", lb: t.arranged }
+      : s === "missing-out"
+      ? { bg: "var(--kincha2)", c: "var(--kincha)", border: "rgba(143,99,24,.2)", lb: t.missingOut }
+      : s === "missing-ret"
+      ? { bg: "rgba(58,120,140,.08)", c: "var(--asagi)", border: "rgba(58,120,140,.2)", lb: t.missingRet }
       : s === "partial"
       ? { bg: "var(--kincha2)", c: "var(--kincha)", border: "rgba(143,99,24,.2)", lb: t.partial }
       : { bg: "rgba(112,112,124,.07)", c: "var(--nezumi)", border: "rgba(112,112,124,.18)", lb: t.unArranged };
@@ -6306,7 +6549,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   <select style={inpStyle} value={searchBStatus} onChange={(e) => setSearchBStatus(e.target.value)} className="wa-input">
                     <option value="">{t.allStatus}</option>
                     <option value="arranged">{t.arranged_short}</option>
-                    <option value="partial">{t.partial_short}</option>
+                    <option value="missing-out">{t.missingOut_short}</option>
+                    <option value="missing-ret">{t.missingRet_short}</option>
                     <option value="none">{t.unArranged_short}</option>
                   </select>
                   <button type="button" style={dBtn} onClick={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }}>{t.clearFilter}</button>
@@ -6315,8 +6559,19 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
               <div className="no-print">
                 <FilterChips chips={[{ key: "r", label: searchBRoman }, { key: "a", label: searchBAirline }, { key: "s", label: searchBStatus }].filter((c) => c.label)} onClear={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }} t={t} />
               </div>
-              <FlightLegFilter value={flightLegFilter} onChange={setFlightLegFilter} t={t} />
-              <p className="no-print" style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 10, letterSpacing: "0.03em" }}>{t.resultsCount.replace("{n}", displayFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
+              <FlightLegFilter
+                value={flightLegFilter} onChange={setFlightLegFilter}
+                groupByDept={flightGroupByDept} onGroupByDept={() => setFlightGroupByDept((v) => !v)}
+                sameDiffFilter={flightSameDiffFilter} onSameDiffFilter={setFlightSameDiffFilter}
+                warnFilters={flightWarnFilters} onWarnFilters={setFlightWarnFilters}
+                showWarnDropdown={showWarnDropdown} onToggleWarnDropdown={() => setShowWarnDropdown((v) => !v)}
+                warnDropdownRef={warnDropdownRef}
+                t={t}
+              />
+              <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 10, flexWrap: "wrap" }}>
+                <p style={{ fontSize: 11, color: "var(--nezumi)", letterSpacing: "0.03em", margin: 0 }}>{t.resultsCount.replace("{n}", displayFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
+                <CollapseAllButton sectionKeys={currentFlightSectionKeys} collapsedHotels={collapsedHotels} onToggle={setManyCollapsed} t={t} />
+              </div>
               <div className="flight-print-title print-only">{project.name} — {t.flightMgmt}{flightLegFilter !== "all" ? ` · ${flightLegFilter === "out" ? t.flightOutbound : t.flightReturn}` : ""}</div>
               <div className="flight-table-wrap">
                 <table style={tblW} className="flight-table flight-table-rows">
@@ -6343,43 +6598,111 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     </tr>
                   </thead>
                   <tbody>
-                    {flightTableSections.flatMap((section) => {
-                      const ctx = { personIndex, lang, t, canEdit, setFlightModal, statusBadge };
-                      const personRows = section.type === "personList"
-                        ? section.entries.flatMap(({ personId, legs }) => {
+                    {(() => {
+                      const ctx = { personIndex, lang, t, canEdit, setFlightModal, statusBadge, stays, activeWarnFilters: flightWarnFilters };
+                      if (flightDeptGroups) {
+                        return flightDeptGroups.flatMap(({ dept, persons: dPersons }) => {
+                          const deptLabel = dept || t.deptUnset;
+                          const deptWarnCounts = {};
+                          dPersons.forEach((p) => {
+                            const fl = flights.find((x) => x.person_id === p.id);
+                            const personStays = stays.filter((s) => s.person_id === p.id && s.hotel_id && s.check_in && s.check_out);
+                            const earliestCI = personStays.length ? personStays.reduce((a, b) => a.check_in <= b.check_in ? a : b).check_in : null;
+                            const latestCO  = personStays.length ? personStays.reduce((a, b) => a.check_out >= b.check_out ? a : b).check_out : null;
+                            const arrDateStr = fl?.arr_time ? String(fl.arr_time).slice(0, 10) : null;
+                            const retDepDateStr = fl?.ret_dep_time ? String(fl.ret_dep_time).slice(0, 10) : null;
+                            const hasOut = fl && (fl.airline || fl.flight_no);
+                            const hasRet = fl && (fl.ret_airline || fl.ret_flight_no);
+                            if (arrDateStr && earliestCI && arrDateStr < earliestCI) deptWarnCounts.arrBeforeCI = (deptWarnCounts.arrBeforeCI || 0) + 1;
+                            if (arrDateStr && earliestCI && arrDateStr > earliestCI) deptWarnCounts.arrAfterCI = (deptWarnCounts.arrAfterCI || 0) + 1;
+                            if (retDepDateStr && latestCO && retDepDateStr < latestCO) deptWarnCounts.depBeforeCO = (deptWarnCounts.depBeforeCO || 0) + 1;
+                            if (latestCO && !retDepDateStr && fl) deptWarnCounts.noDep = (deptWarnCounts.noDep || 0) + 1;
+                            if (!hasOut) deptWarnCounts.missingOut = (deptWarnCounts.missingOut || 0) + 1;
+                            if (!hasRet) deptWarnCounts.missingRet = (deptWarnCounts.missingRet || 0) + 1;
+                          });
+                          const warnSummaryKeys = ["missingOut", "missingRet", "arrBeforeCI", "arrAfterCI", "depBeforeCO", "noDep"];
+                          const warnLabelsMap = { arrBeforeCI: t.warnArrBeforeCI, arrAfterCI: t.warnArrAfterCI, depBeforeCO: t.warnDepBeforeCO, noDep: t.warnNoDep, missingOut: t.missingOut, missingRet: t.missingRet };
+                          const warnColors = { arrBeforeCI: "#a03030", arrAfterCI: "#854f0b", depBeforeCO: "#a03030", noDep: "#3a788c", missingOut: "var(--kincha)", missingRet: "var(--asagi)" };
+                          const warnBgs = { arrBeforeCI: "rgba(160,48,48,.1)", arrAfterCI: "rgba(143,99,24,.1)", depBeforeCO: "rgba(160,48,48,.1)", noDep: "rgba(58,120,140,.1)", missingOut: "var(--kincha2)", missingRet: "rgba(58,120,140,.08)" };
+                          const sectionKey = `flight:dept:${dept}`;
+                          const isCollapsed = collapsedHotels.has(sectionKey);
+                          const deptBanner = (
+                            <tr key={`dept-${dept}-banner`} onClick={() => toggleHotelCollapsed(sectionKey)} style={{ cursor: "pointer" }}>
+                              <td colSpan={FLIGHT_TABLE_COL_SPAN} style={{ padding: "7px 12px", background: "rgba(120,80,16,.07)", borderBottom: ".5px solid rgba(120,80,16,.15)", borderTop: "1.5px solid rgba(120,80,16,.15)" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                                  <span style={{ width: 16, height: 16, border: "1px solid rgba(120,80,16,.35)", borderRadius: 3, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--kincha)", lineHeight: 1, flexShrink: 0 }}>{isCollapsed ? "+" : "−"}</span>
+                                  <span style={{ fontSize: 11.5, fontWeight: 600, color: "var(--kincha)" }}>{deptLabel}</span>
+                                  <span style={{ fontSize: 10.5, color: "var(--kincha)", opacity: 0.8 }}>{dPersons.length} {t.flightGroupPeople}</span>
+                                  <div style={{ display: "flex", gap: 5, marginLeft: "auto", flexWrap: "wrap" }}>
+                                    {warnSummaryKeys.filter((k) => deptWarnCounts[k] > 0).map((k) => (
+                                      <span key={k} style={{ fontSize: 10, padding: "1px 7px", borderRadius: 10, fontWeight: 600, background: warnBgs[k], color: warnColors[k] }}>
+                                        {warnLabelsMap[k]} ×{deptWarnCounts[k]}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                          if (isCollapsed) return [deptBanner];
+                          const rows = dPersons.flatMap((p) => {
+                            const fl = flights.find((x) => x.person_id === p.id);
+                            const legs = getVisibleFlightLegs(fl, flightLegFilter);
+                            return renderFlightPersonRows(p, fl, legs.length ? legs : ["empty"], ctx);
+                          });
+                          return [deptBanner, ...rows];
+                        });
+                      }
+                      return flightTableSections.flatMap((section) => {
+                        const sectionKey = `flight:section:${section.key}`;
+                        const isCollapsed = collapsedHotels.has(sectionKey);
+                        const toggleIcon = (
+                          <span style={{ width: 16, height: 16, border: "1px solid var(--keisenM)", borderRadius: 3, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--nezumi)", lineHeight: 1, flexShrink: 0, marginRight: 8 }}>{isCollapsed ? "+" : "−"}</span>
+                        );
+                        if (section.type === "personList") {
+                          const banner = (
+                            <tr key={`${section.key}-banner`} onClick={() => toggleHotelCollapsed(sectionKey)} style={{ cursor: "pointer", background: "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
+                              <td colSpan={FLIGHT_TABLE_COL_SPAN} style={{ padding: "7px 12px", fontSize: 11.5, fontWeight: 600, color: "var(--nezumi)" }}>
+                                {toggleIcon}{t.flightMgmt} · {section.entries.length} {t.flightGroupPeople}
+                              </td>
+                            </tr>
+                          );
+                          if (isCollapsed) return [banner];
+                          const rows = section.entries.flatMap(({ personId, legs }) => {
                             const p = displayFlightPersons.find((x) => x.id === personId);
                             if (!p) return [];
                             const fl = flights.find((x) => x.person_id === personId);
                             return renderFlightPersonRows(p, fl, legs, ctx);
-                          })
-                        : (() => {
-                            const bannerClass = section.type === "ungrouped"
-                              ? "flight-group-banner flight-group-banner-ungrouped"
-                              : `flight-group-banner flight-group-banner-${section.leg}`;
-                            const banner = (
-                              <tr key={`${section.key}-banner`} className={bannerClass}>
-                                <td colSpan={FLIGHT_TABLE_COL_SPAN}>
-                                  {section.label} · {section.personIds.length} {t.flightGroupPeople}
-                                </td>
-                              </tr>
-                            );
-                            const rows = section.type === "ungrouped"
-                              ? section.entries.flatMap(({ personId, legs }) => {
-                                  const p = displayFlightPersons.find((x) => x.id === personId);
-                                  if (!p) return [];
-                                  const fl = flights.find((x) => x.person_id === personId);
-                                  return renderFlightPersonRows(p, fl, legs, ctx);
-                                })
-                              : section.personIds.flatMap((pid) => {
-                                  const p = displayFlightPersons.find((x) => x.id === pid);
-                                  if (!p) return [];
-                                  const fl = flights.find((x) => x.person_id === pid);
-                                  return renderFlightPersonRows(p, fl, [section.leg], ctx);
-                                });
-                            return [banner, ...rows];
-                          })();
-                      return personRows;
-                    })}
+                          });
+                          return [banner, ...rows];
+                        }
+                        const bannerClass = section.type === "ungrouped"
+                          ? "flight-group-banner flight-group-banner-ungrouped"
+                          : `flight-group-banner flight-group-banner-${section.leg}`;
+                        const banner = (
+                          <tr key={`${section.key}-banner`} className={bannerClass} onClick={() => toggleHotelCollapsed(sectionKey)} style={{ cursor: "pointer" }}>
+                            <td colSpan={FLIGHT_TABLE_COL_SPAN}>
+                              {toggleIcon}{section.label} · {section.personIds.length} {t.flightGroupPeople}
+                            </td>
+                          </tr>
+                        );
+                        if (isCollapsed) return [banner];
+                        const rows = section.type === "ungrouped"
+                          ? section.entries.flatMap(({ personId, legs }) => {
+                              const p = displayFlightPersons.find((x) => x.id === personId);
+                              if (!p) return [];
+                              const fl = flights.find((x) => x.person_id === personId);
+                              return renderFlightPersonRows(p, fl, legs, ctx);
+                            })
+                          : section.personIds.flatMap((pid) => {
+                              const p = displayFlightPersons.find((x) => x.id === pid);
+                              if (!p) return [];
+                              const fl = flights.find((x) => x.person_id === pid);
+                              return renderFlightPersonRows(p, fl, [section.leg], ctx);
+                            });
+                        return [banner, ...rows];
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
