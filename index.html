@@ -8143,7 +8143,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       );
                     };
 
-                    if (!hotelGroups.length) {
+                    if (!hotelGroups.length && !personsNoStay.length) {
                       return <p style={{ fontSize: 13, color: "var(--nezumi)", padding: "24px 0" }}>{t.noData}</p>;
                     }
 
