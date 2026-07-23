@@ -345,7 +345,7 @@ const LANGS = { "zh-TW": "繁體中文", "zh-CN": "简体中文", en: "English",
 
 const T = {
   "zh-TW": {
-    appName: "劇組交通住宿管理系統", logout: "登出", print: "列印", members: "成員管理", back: "返回", settings: "專案設定",
+    appName: "劇組交通住宿管理系統", logout: "登出", print: "列印", printPage: "列印本頁", members: "成員管理", back: "返回", settings: "專案設定",
     themeLight: "淺色", themeDark: "深色",
     loginTitle: "請登入", loginEmail: "電子郵件", loginPw: "密碼", loginBtn: "登入", loginHint: "存取權限由管理員邀請授予",
     registerTitle: "新帳號申請", registerBtn: "申請登入", registerName: "姓名（選填）", registerMessage: "申請訊息（選填）", registerMessagePh: "所屬・職務等", registerPwConfirm: "確認密碼",
@@ -419,7 +419,7 @@ const T = {
     dispatchNoConfigTemplate: "車輛配置尚無乘車人員，請先在「車輛配置」分頁排班",
     dispatchNothingToImport: "今日已包含這些人員，無需重複帶入",
     vehicleConfig: "車輛配置",
-    exportReport: "匯出報表", reportExport: "報表匯出", selectCols: "選擇輸出欄位", previewReport: "預覽",
+    exportReport: "列印報表", reportExport: "報表列印", selectCols: "選擇列印欄位", previewReport: "預覽列印",
     reportTypeStay: "住宿表", reportTypeFlight: "航班表", reportTypeStaff: "工作人員列表", reportTypeVehicle: "配車表",
     statsPickHotel: "選擇飯店", statsPickDate: "選擇日期", statsSelectHotelFirst: "請先選擇飯店",
     statsDaySummaryOne: "{date} · {hotel}：{guests} 人 · {rooms} 間房 · {cost}",
@@ -443,7 +443,7 @@ const T = {
     unassignedPhaseRooms: "未配房人員（{phase}）",
     unassignedRoomSection: "待分配房號",
     vehicleSimpleHint: "需變更乘車配置時，請直接新增車輛即可。",
-    vehicleReportCompactHint: "匯出完整車輛卡片（車號、路線、乘客等），A4 直式雙欄緊湊排版，一頁約可列 10 台車以上。",
+    vehicleReportCompactHint: "列印完整車輛卡片（車號、路線、乘客等），A4 直式雙欄緊湊排版，一頁約可列 10 台車以上。",
     soloStayNights: "獨住{n}晚",
     searchHotelName: "搜尋飯店…", searchRoomType: "搜尋房型…", searchRoman: "羅馬拼音", searchStatus: "安排狀態", allStatus: "全部狀態",
     arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除篩選", exportCSV: "匯出 CSV", importCSV: "匯入 CSV",
@@ -486,7 +486,7 @@ const T = {
     guideSecStaff: "工作人員", guideSecFlight: "航班", guideSecStay: "住宿", guideSecVehicle: "配車", guideSecInvoice: "請款對帳",
   },
   "zh-CN": {
-    appName: "剧组交通住宿管理系统", logout: "登出", print: "打印", members: "成员管理", back: "返回", settings: "项目设定",
+    appName: "剧组交通住宿管理系统", logout: "登出", print: "打印", printPage: "打印本页", members: "成员管理", back: "返回", settings: "项目设定",
     themeLight: "浅色", themeDark: "深色",
     loginTitle: "请登录", loginEmail: "电子邮件", loginPw: "密码", loginBtn: "登录", loginHint: "访问权限由管理员邀请授予",
     registerTitle: "新账号申请", registerBtn: "申请登录", registerName: "姓名（选填）", registerMessage: "申请消息（选填）", registerMessagePh: "所属・职务等", registerPwConfirm: "确认密码",
@@ -559,7 +559,7 @@ const T = {
     dispatchNoConfigTemplate: "车辆配置尚无乘车人员，请先在「车辆配置」分页排班",
     dispatchNothingToImport: "今日已包含这些人员，无需重复带入",
     vehicleConfig: "车辆配置",
-    exportReport: "导出报表", reportExport: "报表导出", selectCols: "选择输出列", previewReport: "预览",
+    exportReport: "打印报表", reportExport: "报表打印", selectCols: "选择打印列", previewReport: "预览打印",
     reportTypeStay: "住宿表", reportTypeFlight: "航班表", reportTypeStaff: "工作人员列表", reportTypeVehicle: "用车表",
     statsPickHotel: "选择饭店", statsPickDate: "选择日期", statsSelectHotelFirst: "请先选择饭店",
     statsDaySummaryOne: "{date} · {hotel}：{guests} 人 · {rooms} 间房 · {cost}",
@@ -583,7 +583,7 @@ const T = {
     unassignedPhaseRooms: "未配房人员（{phase}）",
     unassignedRoomSection: "待分配房号",
     vehicleSimpleHint: "需变更乘车安排时，请直接新增车辆。",
-    vehicleReportCompactHint: "导出完整车辆卡片（车号、路线、乘客等），A4 直式双栏紧凑排版，一页约可列 10 台车以上。",
+    vehicleReportCompactHint: "打印完整车辆卡片（车号、路线、乘客等），A4 直式双栏紧凑排版，一页约可列 10 台车以上。",
     soloStayNights: "独住{n}晚",
     searchHotelName: "搜索饭店…", searchRoomType: "搜索房型…", searchRoman: "罗马拼音", searchStatus: "安排状态", allStatus: "全部状态",
     arranged_short: "已安排", unArranged_short: "未安排", partial_short: "部分完成", clearFilter: "清除筛选", exportCSV: "导出 CSV", importCSV: "导入 CSV",
@@ -626,7 +626,7 @@ const T = {
     guideSecStaff: "工作人员", guideSecFlight: "航班", guideSecStay: "住宿", guideSecVehicle: "配车", guideSecInvoice: "请款对账",
   },
   en: {
-    appName: "Production Travel & Accommodation", logout: "Logout", print: "Print", members: "Members", back: "Back", settings: "Settings",
+    appName: "Production Travel & Accommodation", logout: "Logout", print: "Print", printPage: "Print This Page", members: "Members", back: "Back", settings: "Settings",
     loginTitle: "Please Login", loginEmail: "Email", loginPw: "Password", loginBtn: "Login", loginHint: "Access is granted by admin invitation",
     registerTitle: "Register Account", registerBtn: "Request Access", registerName: "Name (optional)", registerMessage: "Message (optional)", registerMessagePh: "Dept, role, etc.", registerPwConfirm: "Confirm password",
     verifyTitle: "Verification Email Sent", verifyHint: "You can access projects after admin approval.", verifyContact: "For urgent requests, contact your system administrator.", toLoginBtn: "Back to Login",
@@ -698,7 +698,7 @@ const T = {
     dispatchNoConfigTemplate: "No passengers in vehicle config yet — set up under Vehicle Config first",
     dispatchNothingToImport: "Today already includes these passengers",
     vehicleConfig: "Vehicle Config",
-    exportReport: "Export Report", reportExport: "Report Export", selectCols: "Select columns", previewReport: "Preview",
+    exportReport: "Print Report", reportExport: "Print Report", selectCols: "Select print columns", previewReport: "Preview & Print",
     reportTypeStay: "Accommodation", reportTypeFlight: "Flights", reportTypeStaff: "Staff List", reportTypeVehicle: "Vehicles",
     statsPickHotel: "Hotel", statsPickDate: "Date", statsSelectHotelFirst: "Select a hotel first",
     statsDaySummaryOne: "{date} · {hotel}: {guests} guests · {rooms} rooms · {cost}",
@@ -721,7 +721,7 @@ const T = {
     unassignedPhaseRoomsHint: "These persons have no stay in this phase yet — click a name to add",
     unassignedPhaseRooms: "Unassigned ({phase})",
     unassignedRoomSection: "Room pending",
-    vehicleReportCompactHint: "Full vehicle cards (plate, route, passengers) in compact A4 portrait, 2 columns — about 10+ vehicles per page.",
+    vehicleReportCompactHint: "Print full vehicle cards (plate, route, passengers) in compact A4 portrait, 2 columns — about 10+ vehicles per page.",
     soloStayNights: "Solo {n} nights",
     searchHotelName: "Search hotel…", searchRoomType: "Search room type…", searchRoman: "Romanized", searchStatus: "Status", allStatus: "All",
     arranged_short: "Done", unArranged_short: "Pending", partial_short: "Partial", clearFilter: "Clear filters", exportCSV: "Export CSV", importCSV: "Import CSV",
@@ -763,7 +763,7 @@ const T = {
     guideSecStaff: "Staff", guideSecFlight: "Flights", guideSecStay: "Hotels", guideSecVehicle: "Vehicles", guideSecInvoice: "Invoice",
   },
   ko: {
-    appName: "제작진 교통·숙박 관리", logout: "로그아웃", print: "인쇄", members: "멤버", back: "뒤로", settings: "설정",
+    appName: "제작진 교통·숙박 관리", logout: "로그아웃", print: "인쇄", printPage: "현재 페이지 인쇄", members: "멤버", back: "뒤로", settings: "설정",
     loginTitle: "로그인", loginEmail: "이메일", loginPw: "비밀번호", loginBtn: "로그인", loginHint: "관리자 초대로 접근 권한이 부여됩니다",
     registerTitle: "계정 신청", registerBtn: "접근 요청", registerName: "이름 (선택)", registerMessage: "메시지 (선택)", registerMessagePh: "부서, 직무 등", registerPwConfirm: "비밀번호 확인",
     verifyTitle: "인증 메일 발송", verifyHint: "관리자 승인 후 프로젝트에 접근할 수 있습니다.", verifyContact: "긴급한 경우 시스템 관리자에게 연락하세요.", toLoginBtn: "로그인으로",
@@ -835,7 +835,7 @@ const T = {
     dispatchNoConfigTemplate: "차량 설정에 탑승자가 없습니다. 먼저 「차량 설정」에서 배정하세요",
     dispatchNothingToImport: "오늘 이미 포함된 인원입니다",
     vehicleConfig: "차량 설정",
-    exportReport: "보고서 내보내기", reportExport: "보고서 내보내기", selectCols: "출력 열 선택", previewReport: "미리보기",
+    exportReport: "보고서 인쇄", reportExport: "보고서 인쇄", selectCols: "인쇄 열 선택", previewReport: "미리보기 인쇄",
     reportTypeStay: "숙박표", reportTypeFlight: "항공표", reportTypeStaff: "스태프 목록", reportTypeVehicle: "배차표",
     statsPickHotel: "호텔 선택", statsPickDate: "날짜 선택", statsSelectHotelFirst: "호텔을 먼저 선택하세요",
     statsDaySummaryOne: "{date} · {hotel}: {guests}명 · {rooms}실 · {cost}",
@@ -858,7 +858,7 @@ const T = {
     unassignedPhaseRoomsHint: "이 구역에 아직 숙박이 없는 인원 — 이름을 클릭하세요",
     unassignedPhaseRooms: "미배정 ({phase})",
     unassignedRoomSection: "객실 번호 미배정",
-    vehicleReportCompactHint: "차량 카드(번호, 경로, 탑승자 등)를 A4 세로 2단으로 압축 출력, 한 페이지에 약 10대 이상.",
+    vehicleReportCompactHint: "차량 카드(번호, 경로, 탑승자 등)를 A4 세로 2단으로 압축 인쇄, 한 페이지에 약 10대 이상.",
     soloStayNights: "단독 {n}박",
     searchHotelName: "호텔…", searchRoomType: "객실…", searchRoman: "로마자", searchStatus: "상태", allStatus: "전체",
     arranged_short: "완료", unArranged_short: "미배정", partial_short: "일부", clearFilter: "필터 초기화", exportCSV: "CSV보내기", importCSV: "CSV 가져오기",
@@ -900,7 +900,7 @@ const T = {
     guideSecStaff: "스태프", guideSecFlight: "항공", guideSecStay: "숙박", guideSecVehicle: "차량", guideSecInvoice: "청구서",
   },
   ja: {
-    appName: "制作 交通・宿泊管理", logout: "ログアウト", print: "印刷", members: "メンバー", back: "戻る", settings: "設定",
+    appName: "制作 交通・宿泊管理", logout: "ログアウト", print: "印刷", printPage: "このページを印刷", members: "メンバー", back: "戻る", settings: "設定",
     loginTitle: "ログイン", loginEmail: "メール", loginPw: "パスワード", loginBtn: "ログイン", loginHint: "管理者からの招待でアクセスできます",
     registerTitle: "新規登録", registerBtn: "申請する", registerName: "お名前（任意）", registerMessage: "メッセージ（任意）", registerMessagePh: "所属・役職など", registerPwConfirm: "パスワード確認",
     verifyTitle: "確認メールを送信しました", verifyHint: "管理者の承認後にプロジェクトへアクセスできます。", verifyContact: "お急ぎの場合はシステム管理者へご連絡ください。", toLoginBtn: "ログインへ戻る",
@@ -973,7 +973,7 @@ const T = {
     dispatchNothingToImport: "本日はすでに同じ人員が含まれています",
     vehicleConfig: "車両設定",
     vehicleSimpleHint: "乗車の割り当てを変えるときは、車両を追加するか既存車両を編集してください。",
-    exportReport: "レポート出力", reportExport: "レポート出力", selectCols: "出力列を選択", previewReport: "プレビュー",
+    exportReport: "レポート印刷", reportExport: "レポート印刷", selectCols: "印刷列を選択", previewReport: "プレビュー印刷",
     reportTypeStay: "宿泊表", reportTypeFlight: "フライト表", reportTypeStaff: "スタッフ一覧", reportTypeVehicle: "配車表",
     statsPickHotel: "ホテル選択", statsPickDate: "日付", statsSelectHotelFirst: "先にホテルを選択してください",
     statsDaySummaryOne: "{date} · {hotel}：{guests}名・{rooms}室・{cost}",
@@ -996,7 +996,7 @@ const T = {
     unassignedPhaseRoomsHint: "このエリアにまだ宿泊がないスタッフです。名前を押すと追加できます",
     unassignedPhaseRooms: "宿泊未割当（{phase}）",
     unassignedRoomSection: "部屋番号未設定",
-    vehicleReportCompactHint: "車両カード（号車・ルート・同乗者など）を A4 縦2列のコンパクト版で出力。1ページに約10台以上。",
+    vehicleReportCompactHint: "車両カード（号車・ルート・同乗者など）を A4 縦2列のコンパクト版で印刷。1ページに約10台以上。",
     soloStayNights: "単独{n}泊",
     searchHotelName: "ホテル名…", searchRoomType: "部屋タイプ…", searchRoman: "ローマ字", searchStatus: "状況", allStatus: "すべて",
     arranged_short: "済", unArranged_short: "未", partial_short: "一部", clearFilter: "クリア", exportCSV: "CSV出力", importCSV: "CSV取込",
@@ -3310,7 +3310,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
   );
 }
 
-// ─── 高質感報表匯出 ────────────────────────────────────────────
+// ─── 報表列印 ────────────────────────────────────────────
 const VEHICLE_REPORT_CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
 
 function vehicleNoCirc(vehicleNo, index) {
@@ -3776,7 +3776,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       <div style={{ marginBottom: 10, fontSize: 11, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.08em", textTransform: "uppercase" }}>{reportType === "vehicle" ? (t.reportTypeVehicle || "配車表") : t.selectCols}</div>
       {reportType === "vehicle" ? (
         <div style={{ background: "var(--washi)", padding: "12px 14px", borderRadius: 6, fontSize: 11.5, color: "var(--nezumi)", marginBottom: 16, lineHeight: 1.65 }}>
-          {t.vehicleReportCompactHint || "匯出完整車輛卡片（車號、路線、乘客等），A4 直式雙欄緊湊排版，一頁約可列 10 台車以上。"}
+          {t.vehicleReportCompactHint || "列印完整車輛卡片（車號、路線、乘客等），A4 直式雙欄緊湊排版，一頁約可列 10 台車以上。"}
         </div>
       ) : (
       <>
@@ -6269,7 +6269,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   <SearchBar value={searchB} onChange={setSearchB} placeholder={t.searchFlight} />
                   <DeptFilter depts={allDepts} value={deptB} onChange={setDeptB} allLabel={t.allDept} />
                   <button type="button" onClick={() => setShowFlightAdv((v) => !v)} style={eBtn}>{showFlightAdv ? "−" : "+"} {t.activeFilters}</button>
-                  <button type="button" onClick={() => window.print()} style={{ ...eBtn, borderColor: "rgba(43,90,76,.35)", background: "var(--moegi3)", color: "var(--moegi)" }}>{t.print}</button>
+                  <button type="button" onClick={() => window.print()} style={{ ...eBtn, borderColor: "rgba(43,90,76,.35)", background: "var(--moegi3)", color: "var(--moegi)" }}>{t.printPage}</button>
                 </div>
               </div>
               {showFlightAdv && (
