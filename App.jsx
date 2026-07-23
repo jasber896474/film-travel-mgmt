@@ -2542,7 +2542,7 @@ function GuidePanel({ open, section, onSectionChange, onClose, lang, t, onHighli
           display: "flex", flexDirection: "column", animation: "guideSlideIn .22s ease both",
         }}
       >
-        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--keisenL)", background: "var(--washi)" }}>
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--keisenL)", background: "var(--bg)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif" }}>{t.guideTitle}</h2>
             <button type="button" onClick={onClose} aria-label={t.guideClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "var(--usunezumi)", lineHeight: 1 }}>×</button>
@@ -2582,8 +2582,10 @@ function GuidePanel({ open, section, onSectionChange, onClose, lang, t, onHighli
                     type="button"
                     onClick={() => onHighlight(h)}
                     style={{
-                      ...eBtn, width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 12,
-                      background: "var(--washi)", borderColor: "var(--keisenM)",
+                      width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 12,
+                      borderRadius: 4, border: "1px solid var(--keisenM)", cursor: "pointer",
+                      background: "var(--moegi3)", color: "var(--sumi)", whiteSpace: "nowrap",
+                      fontFamily: "'Noto Sans JP',sans-serif",
                     }}
                   >→ {h.label}</button>
                 ))}

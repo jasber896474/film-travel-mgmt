@@ -2567,7 +2567,7 @@ function GuidePanel({ open, section, onSectionChange, onClose, lang, t, onHighli
           display: "flex", flexDirection: "column", animation: "guideSlideIn .22s ease both",
         }}
       >
-        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--keisenL)", background: "var(--washi)" }}>
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--keisenL)", background: "var(--bg)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif" }}>{t.guideTitle}</h2>
             <button type="button" onClick={onClose} aria-label={t.guideClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "var(--usunezumi)", lineHeight: 1 }}>×</button>
@@ -2607,8 +2607,10 @@ function GuidePanel({ open, section, onSectionChange, onClose, lang, t, onHighli
                     type="button"
                     onClick={() => onHighlight(h)}
                     style={{
-                      ...eBtn, width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 12,
-                      background: "var(--washi)", borderColor: "var(--keisenM)",
+                      width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 12,
+                      borderRadius: 4, border: "1px solid var(--keisenM)", cursor: "pointer",
+                      background: "var(--moegi3)", color: "var(--sumi)", whiteSpace: "nowrap",
+                      fontFamily: "'Noto Sans JP',sans-serif",
                     }}
                   >→ {h.label}</button>
                 ))}
@@ -3335,7 +3337,7 @@ function HotelStayForm({ init, hotels, pricingRules, onSave, onClose, t, project
   );
 }
 
-// ─── 高質感報表匯出 ────────────────────────────────────────────
+// ─── 報表列印 ────────────────────────────────────────────
 const VEHICLE_REPORT_CIRC = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
 
 function vehicleNoCirc(vehicleNo, index) {
@@ -3801,7 +3803,7 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       <div style={{ marginBottom: 10, fontSize: 11, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.08em", textTransform: "uppercase" }}>{reportType === "vehicle" ? (t.reportTypeVehicle || "配車表") : t.selectCols}</div>
       {reportType === "vehicle" ? (
         <div style={{ background: "var(--washi)", padding: "12px 14px", borderRadius: 6, fontSize: 11.5, color: "var(--nezumi)", marginBottom: 16, lineHeight: 1.65 }}>
-          {t.vehicleReportCompactHint || "匯出完整車輛卡片（車號、路線、乘客等），A4 直式雙欄緊湊排版，一頁約可列 10 台車以上。"}
+          {t.vehicleReportCompactHint || "列印完整車輛卡片（車號、路線、乘客等），A4 直式雙欄緊湊排版，一頁約可列 10 台車以上。"}
         </div>
       ) : (
       <>
