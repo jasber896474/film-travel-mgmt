@@ -399,12 +399,27 @@ function readScrollPosition() {
   return window.scrollY || document.documentElement.scrollTop || 0;
 }
 
+// 航班日期：固定無年份（不依賴 locale 自動格式）
+function fmtFlightDateNoYear(ts, lang) {
+  const d = parseLocalDateTime(ts);
+  if (!d) return "";
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  if (lang === "ja") return `${m}月${day}日`;
+  if (lang === "en") {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[m - 1]} ${day}`;
+  }
+  if (lang === "ko") return `${m}월 ${day}일`;
+  if (lang === "zh-CN") return `${m}月${day}日`;
+  return `${m}/${day}`;
+}
+
 // 航班時間：雙排顯示（無年份 / 24小時制）
 const fmtFlightDateTime = (ts, lang) => {
   const d = parseLocalDateTime(ts);
   if (!d) return null;
-  const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
-  const datePart = d.toLocaleDateString(loc, { month: "numeric", day: "numeric" });
+  const datePart = fmtFlightDateNoYear(ts, lang);
   const timePart = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   return { date: datePart, time: timePart };
 };
@@ -557,10 +572,10 @@ const T = {
     bagCalcTotalOver: "合計超重", bagCalcEstFee: "估計超重費", bagCalcNoData: "請勾選人員或選擇班機",
     bagCalcPerPerson: "kg／人", bagCalcPickHint: "勾選要一起試算的人（通常為同一班機）",
     bagCalcUnassignedFlight: "未指定班機",
-    flightPrintReport: "列印報表", flightPrintMgmt: "列印航班管理（依篩選）", flightPrintBaggage: "列印行李超重試算（依篩選）",
-    flightPrintSelect: "列印選擇…", flightPrintThisGroup: "列印此班", flightPrintSelectTitle: "列印選擇",
+    flightPrintReport: "列印", flightPrintMgmt: "列印目前列表（{n} 人）", flightPrintBaggage: "列印行李試算（{n} 人）",
+    flightPrintSelect: "自訂列印…", flightPrintThisGroup: "列印此班", flightPrintSelectTitle: "自訂列印",
     flightPrintScopeFiltered: "依目前篩選", flightPrintScopeGroup: "指定班機", flightPrintSelectPeople: "人員（可取消勾選）",
-    flightPrintCompactTitle: "班機名單", flightPrintFilterSummary: "篩選條件",
+    flightPrintCompactTitle: "班機名單", flightPrintFilterSummary: "篩選條件", flightPrintRoster: "班機名單（精簡）",
     subFlightMgmt: "航班管理", subFlightCosts: "機票費用",
     flightCostTitle: "機票費用記帳", flightCostHint: "製片／生活／會計統一登記；每筆保留明細，改票、重購、退款請另增一筆。",
     flightCostAdd: "新增費用", flightCostBatchAdd: "批次新增", flightCostPrint: "列印費用表",
@@ -738,10 +753,10 @@ const T = {
     bagCalcTotalOver: "合计超重", bagCalcEstFee: "估计超重费", bagCalcNoData: "请勾选人员或选择班机",
     bagCalcPerPerson: "kg／人", bagCalcPickHint: "勾选要一起试算的人（通常为同一班机）",
     bagCalcUnassignedFlight: "未指定班机",
-    flightPrintReport: "打印报表", flightPrintMgmt: "打印航班管理（依筛选）", flightPrintBaggage: "打印行李超重试算（依筛选）",
-    flightPrintSelect: "打印选择…", flightPrintThisGroup: "打印此班", flightPrintSelectTitle: "打印选择",
+    flightPrintReport: "打印", flightPrintMgmt: "打印目前列表（{n} 人）", flightPrintBaggage: "打印行李试算（{n} 人）",
+    flightPrintSelect: "自定义打印…", flightPrintThisGroup: "打印此班", flightPrintSelectTitle: "自定义打印",
     flightPrintScopeFiltered: "依目前筛选", flightPrintScopeGroup: "指定班机", flightPrintSelectPeople: "人员（可取消勾选）",
-    flightPrintCompactTitle: "班机名单", flightPrintFilterSummary: "筛选条件",
+    flightPrintCompactTitle: "班机名单", flightPrintFilterSummary: "筛选条件", flightPrintRoster: "班机名单（精简）",
     subFlightMgmt: "航班管理", subFlightCosts: "机票费用",
     flightCostTitle: "机票费用记账", flightCostHint: "制片／生活／会计统一登记；每笔保留明细，改票、重购、退款请另增一笔。",
     flightCostAdd: "新增费用", flightCostBatchAdd: "批次新增", flightCostPrint: "打印费用表",
@@ -918,10 +933,10 @@ const T = {
     bagCalcTotalOver: "Total over", bagCalcEstFee: "Est. fee", bagCalcNoData: "Select people or a flight",
     bagCalcPerPerson: "kg/person", bagCalcPickHint: "Check people to include (usually same flight)",
     bagCalcUnassignedFlight: "Unassigned flight",
-    flightPrintReport: "Print report", flightPrintMgmt: "Print flights (filtered)", flightPrintBaggage: "Print baggage calc (filtered)",
-    flightPrintSelect: "Print selection…", flightPrintThisGroup: "Print group", flightPrintSelectTitle: "Print selection",
+    flightPrintReport: "Print", flightPrintMgmt: "Print list ({n} pax)", flightPrintBaggage: "Print baggage ({n} pax)",
+    flightPrintSelect: "Custom print…", flightPrintThisGroup: "Print group", flightPrintSelectTitle: "Custom print",
     flightPrintScopeFiltered: "Current filters", flightPrintScopeGroup: "Specific flight", flightPrintSelectPeople: "People (uncheck to exclude)",
-    flightPrintCompactTitle: "Flight roster", flightPrintFilterSummary: "Filters",
+    flightPrintCompactTitle: "Flight roster", flightPrintFilterSummary: "Filters", flightPrintRoster: "Flight roster (compact)",
     subFlightMgmt: "Flights", subFlightCosts: "Ticket costs",
     flightCostTitle: "Ticket cost ledger", flightCostHint: "Central bookkeeping for production/life/accounting. Add a new line for each change, reissue, or refund.",
     flightCostAdd: "Add cost", flightCostBatchAdd: "Batch add", flightCostPrint: "Print costs",
@@ -1096,10 +1111,10 @@ const T = {
     bagCalcTotalOver: "초과 합계", bagCalcEstFee: "예상 요금", bagCalcNoData: "인원 또는 항공편을 선택",
     bagCalcPerPerson: "kg/인", bagCalcPickHint: "함께 계산할 인원 선택",
     bagCalcUnassignedFlight: "미지정 항공편",
-    flightPrintReport: "보고서 인쇄", flightPrintMgmt: "항공 관리 인쇄 (필터)", flightPrintBaggage: "수하물 초과 인쇄 (필터)",
-    flightPrintSelect: "인쇄 선택…", flightPrintThisGroup: "이 편 인쇄", flightPrintSelectTitle: "인쇄 선택",
+    flightPrintReport: "인쇄", flightPrintMgmt: "현재 목록 인쇄 ({n}명)", flightPrintBaggage: "수하물 인쇄 ({n}명)",
+    flightPrintSelect: "맞춤 인쇄…", flightPrintThisGroup: "이 편 인쇄", flightPrintSelectTitle: "맞춤 인쇄",
     flightPrintScopeFiltered: "현재 필터", flightPrintScopeGroup: "특정 항공편", flightPrintSelectPeople: "인원 (체크 해제 가능)",
-    flightPrintCompactTitle: "탑승 명단", flightPrintFilterSummary: "필터",
+    flightPrintCompactTitle: "탑승 명단", flightPrintFilterSummary: "필터", flightPrintRoster: "탑승 명단 (간략)",
     subFlightMgmt: "항공 관리", subFlightCosts: "항공권 비용",
     flightCostTitle: "항공권 비용 장부", flightCostHint: "제작/생활/회계 통합 기록. 변경·재발권·환불은 각각 새 줄로 추가.",
     flightCostAdd: "비용 추가", flightCostBatchAdd: "일괄 추가", flightCostPrint: "비용표 인쇄",
@@ -1274,10 +1289,10 @@ const T = {
     bagCalcTotalOver: "超過合計", bagCalcEstFee: "超過料金の見積", bagCalcNoData: "スタッフまたは便を選択してください",
     bagCalcPerPerson: "kg/人", bagCalcPickHint: "試算するスタッフを選択",
     bagCalcUnassignedFlight: "便未指定",
-    flightPrintReport: "レポート印刷", flightPrintMgmt: "フライト管理を印刷（フィルター）", flightPrintBaggage: "超過手荷物試算を印刷（フィルター）",
-    flightPrintSelect: "印刷選択…", flightPrintThisGroup: "この便を印刷", flightPrintSelectTitle: "印刷選択",
+    flightPrintReport: "印刷", flightPrintMgmt: "現在の一覧を印刷（{n} 名）", flightPrintBaggage: "手荷物試算を印刷（{n} 名）",
+    flightPrintSelect: "カスタム印刷…", flightPrintThisGroup: "この便を印刷", flightPrintSelectTitle: "カスタム印刷",
     flightPrintScopeFiltered: "現在のフィルター", flightPrintScopeGroup: "便を指定", flightPrintSelectPeople: "スタッフ（チェック解除可）",
-    flightPrintCompactTitle: "搭乗者リスト", flightPrintFilterSummary: "フィルター",
+    flightPrintCompactTitle: "搭乗者リスト", flightPrintFilterSummary: "フィルター", flightPrintRoster: "搭乗者リスト（簡易）",
     subFlightMgmt: "フライト管理", subFlightCosts: "航空券費用",
     flightCostTitle: "航空券費用台帳", flightCostHint: "制作/生活/経理が一括記帳。変更・再発行・返金は行を追加。",
     flightCostAdd: "費用追加", flightCostBatchAdd: "一括追加", flightCostPrint: "費用表を印刷",
@@ -2071,6 +2086,17 @@ const FLIGHT_LEG_TABLE_COLS = [
   { field: "airline", labelKey: "airline", w: 56, type: "text", muted: true },
   { field: "flight_no", labelKey: "flightNo", w: 60, type: "text", muted: true },
   { field: "pnr", labelKey: "pnr", w: 56, type: "text", muted: true },
+];
+
+/** 班機名單（列印此班）：精簡欄位，不含航段／航空公司／狀態 */
+const FLIGHT_ROSTER_COLS = [
+  { field: "dep_airport", labelKey: "depAirport", type: "apt", termField: "dep_terminal" },
+  { field: "dep_time", labelKey: "depTime", type: "time" },
+  { field: "arr_airport", labelKey: "arrAirport", type: "apt", termField: "arr_terminal" },
+  { field: "arr_time", labelKey: "arrTime", type: "time", highlight: "pickup" },
+  { field: "checked_bag", labelKey: "checkedBag", type: "bag" },
+  { field: "cabin_bag", labelKey: "cabinBag", type: "bag" },
+  { field: "pnr", labelKey: "pnr", type: "text" },
 ];
 
 const FLIGHT_TABLE_DATA_COL_WEIGHTS = [
@@ -5047,7 +5073,50 @@ function flightStatusShort(fl, t) {
   return t.unArranged_short;
 }
 
-function flightLegCellPlainText(fl, col, leg, lang) {
+function flightReportNowLabel(lang) {
+  return new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
+}
+
+const FLIGHT_REPORT_HEADER_GRAD = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
+
+function flightReportSharedCSS({ page = "landscape", bodySize = "8pt", tableSize = "7pt" } = {}) {
+  return `*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-size:${bodySize};line-height:1.35}
+@page{size:A4 ${page};margin:8mm 10mm}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.doc-hdr{background:${FLIGHT_REPORT_HEADER_GRAD};color:#fff;padding:3mm 4mm;border-radius:1.5mm;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3mm;gap:4mm}
+.doc-hdr .type{font-size:6pt;opacity:.72;letter-spacing:.12em;text-transform:uppercase}
+.doc-hdr .title{font-family:'Noto Serif JP',serif;font-size:11pt;font-weight:600;margin-top:.5mm}
+.doc-hdr .meta{font-size:6.5pt;opacity:.78;text-align:right;line-height:1.45;max-width:52%}
+.group{font-size:8pt;font-weight:700;color:#2b5a4c;margin-bottom:2.5mm;line-height:1.45}
+.sub{font-size:7pt;color:#555;margin-bottom:2.5mm}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:${tableSize}}
+th,td{border:.3pt solid #c8d4cc;padding:3px 4px;text-align:center;vertical-align:middle;word-wrap:break-word;overflow-wrap:anywhere}
+th{background:#1a3028;color:#fff;font-size:6pt;font-weight:600;letter-spacing:.04em}
+td.left{text-align:left}
+.muted{color:#888}
+.apt-wrap,.dt-wrap{display:block;line-height:1.3}
+.apt-code,.dt-time{font-size:7.5pt;font-weight:700;color:#1a2820}
+.apt-term,.dt-date{font-size:6pt;color:#666;margin-top:1px}
+.pickup-wrap{background:#d8eef5;border-radius:2px;padding:2px 3px;display:block}
+.pickup-wrap .dt-time{color:#1a5276}
+.pickup-time-only{background:#d8eef5;border-radius:2px;padding:1px 4px;font-weight:700;color:#1a5276;display:inline-block}
+.footer{margin-top:2mm;font-size:5.5pt;color:#aaa;text-align:right;border-top:.3pt solid #d8e8dc;padding-top:1mm}`;
+}
+
+function flightReportDocHeader(typeLabel, title, metaLines) {
+  const meta = (metaLines || []).filter(Boolean).map((l) => `<div>${escReportHtml(l)}</div>`).join("");
+  return `<div class="doc-hdr"><div><div class="type">${escReportHtml(typeLabel)}</div><div class="title">${escReportHtml(title)}</div></div><div class="meta">${meta}</div></div>`;
+}
+
+function personRosterLeg(fl, legFilter) {
+  if (legFilter === "out" || legFilter === "ret") return legFilter;
+  if (fl?.dep_time || fl?.airline || fl?.flight_no) return "out";
+  if (fl?.ret_dep_time || fl?.ret_airline || fl?.ret_flight_no) return "ret";
+  return "out";
+}
+
+function flightLegCellPlainText(fl, col, leg, lang, { timeOnly = false, stacked = false } = {}) {
   const field = leg === "ret" ? `ret_${col.field}` : col.field;
   if (col.type === "text") return escReportHtml(fl?.[field] || "—");
   if (col.type === "bag") {
@@ -5059,13 +5128,21 @@ function flightLegCellPlainText(fl, col, leg, lang) {
   if (col.type === "time") {
     const dt = fmtFlightDateTime(fl?.[field], lang);
     if (!dt) return "—";
-    const cls = col.highlight === "pickup" ? ' class="pickup"' : "";
-    return `<span${cls}>${escReportHtml(dt.date)}<br>${escReportHtml(dt.time)}</span>`;
+    if (timeOnly) {
+      const cls = col.highlight === "pickup" ? ' class="pickup-time-only"' : "";
+      return `<span${cls}>${escReportHtml(dt.time)}</span>`;
+    }
+    const wrapCls = col.highlight === "pickup" ? "pickup-wrap" : "dt-wrap";
+    return `<div class="${wrapCls}"><div class="dt-date">${escReportHtml(dt.date)}</div><div class="dt-time">${escReportHtml(dt.time)}</div></div>`;
   }
   if (col.type === "apt") {
     const termField = leg === "ret" ? `ret_${col.termField}` : col.termField;
     const code = fl?.[field] || "—";
-    const term = fl?.[termField] ? ` <span class="term">T${escReportHtml(String(fl[termField]).replace(/^T/i, ""))}</span>` : "";
+    const termRaw = fl?.[termField] ? String(fl[termField]).replace(/^T/i, "") : "";
+    if (stacked || timeOnly) {
+      return `<div class="apt-wrap"><div class="apt-code">${escReportHtml(code)}</div>${termRaw ? `<div class="apt-term">T${escReportHtml(termRaw)}</div>` : ""}</div>`;
+    }
+    const term = termRaw ? ` <span class="term">T${escReportHtml(termRaw)}</span>` : "";
     return `${escReportHtml(code)}${term}`;
   }
   return "—";
@@ -5099,7 +5176,7 @@ function buildFlightMgmtReportRows(persons, flights, personIndex, legsFilter, la
         return;
       }
       const legLabel = leg === "out" ? t.flightOutbound : t.flightReturn;
-      const cells = FLIGHT_LEG_TABLE_COLS.map((c) => `<td>${flightLegCellPlainText(fl, c, leg, lang)}</td>`).join("");
+      const cells = FLIGHT_LEG_TABLE_COLS.map((c) => `<td>${flightLegCellPlainText(fl, c, leg, lang, { stacked: true })}</td>`).join("");
       rows.push(`<tr class="leg-${leg}">
         ${li === 0 ? `<td rowspan="${displayLegs.length}">${escReportHtml(String(personIndex[p.id] ?? ""))}</td>
           <td rowspan="${displayLegs.length}" class="left">${escReportHtml(p.dept || "—")}</td>
@@ -5130,10 +5207,49 @@ function buildFlightMgmtSectionRows(section, persons, flights, personIndex, flig
   return banner + buildFlightMgmtReportRows(subset, flights, personIndex, section.leg, lang, t);
 }
 
+function buildFlightRosterReportRows(persons, flights, personIndex, legFilter, lang, t, { timeOnly = true } = {}) {
+  return persons.map((p) => {
+    const fl = flights.find((x) => x.person_id === p.id);
+    const leg = typeof legFilter === "string" && (legFilter === "out" || legFilter === "ret")
+      ? legFilter
+      : personRosterLeg(fl, legFilter);
+    const names = flightPersonNamePlain(p);
+    const cells = FLIGHT_ROSTER_COLS.map((c) => `<td>${flightLegCellPlainText(fl, c, leg, lang, { timeOnly, stacked: true })}</td>`).join("");
+    return `<tr>
+      <td>${escReportHtml(String(personIndex[p.id] ?? ""))}</td>
+      <td class="left">${escReportHtml(p.dept || "—")}</td>
+      <td class="left">${escReportHtml(names.kanji)}</td>
+      <td class="left">${escReportHtml(names.roman)}</td>
+      ${cells}
+    </tr>`;
+  }).join("");
+}
+
+function generateFlightRosterReportHTML({ project, lang, t, personIndex, persons, flights, groupLabel, groupLeg, personCount, legFilter }) {
+  const projectName = escReportHtml(project?.name || "");
+  const now = flightReportNowLabel(lang);
+  const leg = groupLeg || (legFilter === "ret" ? "ret" : legFilter === "out" ? "out" : null);
+  const headCols = [
+    ...FLIGHT_PERSON_COLS.map((c) => `<th>${escReportHtml(t[c.labelKey])}</th>`),
+    ...FLIGHT_ROSTER_COLS.map((c) => `<th>${escReportHtml(c.highlight === "pickup" ? t.arrTimePickup : t[c.labelKey])}</th>`),
+  ].join("");
+  const body = buildFlightRosterReportRows(persons, flights, personIndex, leg || legFilter || "out", lang, t, { timeOnly: true });
+  const count = personCount ?? persons.length;
+  const metaLines = [now, `${count} ${t.flightGroupPeople}`];
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(t.flightPrintCompactTitle)} — ${projectName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>${flightReportSharedCSS({ page: "landscape", bodySize: "8.5pt", tableSize: "7.5pt" })}
+</style></head><body>
+${flightReportDocHeader(t.flightPrintCompactTitle, project?.name || "", metaLines)}
+${groupLabel ? `<div class="group">${escReportHtml(groupLabel)}</div>` : ""}
+<table><thead><tr>${headCols}</tr></thead><tbody>${body}</tbody></table>
+<div class="footer">${projectName} · ${escReportHtml(t.flightPrintCompactTitle)} · ${escReportHtml(now)}</div>
+</body></html>`;
+}
+
 function generateFlightMgmtReportHTML({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter }) {
   const projectName = escReportHtml(project?.name || "");
-  const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
-  const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
+  const now = flightReportNowLabel(lang);
   const headCols = [
     ...FLIGHT_PERSON_COLS.map((c) => `<th>${escReportHtml(t[c.labelKey])}</th>`),
     `<th>${escReportHtml(t.bagCalcLeg)}</th>`,
@@ -5141,37 +5257,20 @@ function generateFlightMgmtReportHTML({ project, lang, t, personIndex, persons, 
     `<th>${escReportHtml(t.status)}</th>`,
   ].join("");
   const body = sections.map((s) => buildFlightMgmtSectionRows(s, persons, flights, personIndex, flightLegFilter, lang, t)).join("");
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(title)} — ${projectName}</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-size:8pt;line-height:1.35}
-@page{size:A4 landscape;margin:8mm 10mm}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-.doc-hdr{background:${headerGrad};color:#fff;padding:3mm 4mm;border-radius:1.5mm;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3mm;gap:4mm}
-.doc-hdr .type{font-size:6pt;opacity:.72;letter-spacing:.12em;text-transform:uppercase}
-.doc-hdr .title{font-family:'Noto Serif JP',serif;font-size:11pt;font-weight:600;margin-top:.5mm}
-.doc-hdr .meta{font-size:6.5pt;opacity:.78;text-align:right;line-height:1.45;max-width:48%}
-.sub{font-size:7pt;color:#555;margin-bottom:2.5mm}
-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:7pt}
-th,td{border:.3pt solid #c8d4cc;padding:2px 3px;text-align:center;vertical-align:middle;word-wrap:break-word;overflow-wrap:anywhere}
-th{background:#1a3028;color:#fff;font-size:6pt;font-weight:600;letter-spacing:.04em}
-td.left{text-align:left}
-.muted{color:#888}
-.section td{background:#eef4ef;font-weight:700;text-align:left;padding:4px 6px;color:#2b5a4c;font-size:7.5pt}
+  const extraCss = `.section td{background:#eef4ef;font-weight:700;text-align:left;padding:4px 6px;color:#2b5a4c;font-size:7.5pt}
 .section.leg-out td{background:#e8f2ea;color:#2b5a4c}
 .section.leg-ret td{background:#e6eef4;color:#3a788c}
 .section.ungrouped td{background:#f5f5f0;color:#666}
 .leg-out td{background:#fafdfa}
 .leg-ret td{background:#f8fafb}
 .leg-tag{display:inline-block;padding:1px 4px;border-radius:3px;font-size:6pt;font-weight:700;background:#e8f0ea;color:#2b5a4c}
-.leg-ret .leg-tag{background:#e6eef4;color:#3a788c}
-.pickup{background:#d8eef5;padding:1px 3px;border-radius:2px;display:inline-block}
-.term{font-size:6pt;color:#888}
-.footer{margin-top:2mm;font-size:5.5pt;color:#aaa;text-align:right;border-top:.3pt solid #d8e8dc;padding-top:1mm}
+.leg-ret .leg-tag{background:#e6eef4;color:#3a788c}`;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(title)} — ${projectName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>${flightReportSharedCSS({ page: "landscape" })}
+${extraCss}
 </style></head><body>
-<div class="doc-hdr"><div><div class="type">${escReportHtml(t.flightMgmt)}</div><div class="title">${escReportHtml(title)}</div></div>
-<div class="meta"><div>${escReportHtml(now)}</div><div>${escReportHtml(subtitle || "")}</div></div></div>
+${flightReportDocHeader(t.flightMgmt, title, [now, subtitle].filter(Boolean))}
 ${subtitle ? `<div class="sub">${escReportHtml(t.flightPrintFilterSummary)}：${escReportHtml(subtitle)}</div>` : ""}
 <table><thead><tr>${headCols}</tr></thead><tbody>${body}</tbody></table>
 <div class="footer">${projectName} · ${escReportHtml(t.flightMgmt)} · ${escReportHtml(now)}</div>
@@ -5201,8 +5300,7 @@ function buildBaggageCalcRows(personIds, persons, flights, calcLeg, allowanceNum
 
 function generateFlightBaggageReportHTML({ project, lang, t, persons, flights, personIds, groupLabel, subtitle, allowanceNum, feeNum }) {
   const projectName = escReportHtml(project?.name || "");
-  const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
-  const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
+  const now = flightReportNowLabel(lang);
   const rows = buildBaggageCalcRows(personIds, persons, flights, null, allowanceNum, t);
   let totalOver = 0;
   personIds.forEach((pid) => {
@@ -5219,33 +5317,18 @@ function generateFlightBaggageReportHTML({ project, lang, t, persons, flights, p
     summaryParts.push(`<span>${escReportHtml(t.bagCalcEstFee)}：<strong class="over">${estFee.toLocaleString()}</strong></span>`);
   }
   summaryParts.push(`<span class="muted">${escReportHtml(t.bagCalcAllowance)}：${allowanceNum} kg${Number.isFinite(feeNum) ? ` · ${escReportHtml(t.bagCalcFeeRate)}：${feeNum}` : ""}</span>`);
+  const extraCss = `.over{color:#ad3030;font-weight:700}.ok{color:#2b5a4c;font-weight:700}
+.summary{display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;padding:10px 12px;background:#f5f8f5;border-radius:4px;font-size:9pt;margin-top:2mm}
+.summary .muted{color:#777;font-size:8pt}`;
+  const metaLines = [now, groupLabel ? null : subtitle].filter(Boolean);
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(t.bagCalcTitle)} — ${projectName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-size:9pt;line-height:1.4}
-@page{size:A4 portrait;margin:12mm 14mm}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-.doc-hdr{background:${headerGrad};color:#fff;padding:4mm 5mm;border-radius:2mm;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm}
-.doc-hdr .type{font-size:6.5pt;opacity:.72;letter-spacing:.12em;text-transform:uppercase}
-.doc-hdr .title{font-family:'Noto Serif JP',serif;font-size:12pt;font-weight:600;margin-top:.5mm}
-.doc-hdr .meta{font-size:7pt;opacity:.78;text-align:right;line-height:1.45;max-width:48%}
-.sub{font-size:8pt;color:#555;margin-bottom:3mm}
-.group{font-size:9pt;font-weight:700;color:#2b5a4c;margin:3mm 0 2mm}
-table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:3mm}
-th,td{border:.3pt solid #c8d4cc;padding:5px 8px;text-align:center}
-th{background:#1a3028;color:#fff;font-size:7.5pt}
-td.left{text-align:left}
-.over{color:#ad3030;font-weight:700}
-.ok{color:#2b5a4c;font-weight:700}
-.summary{display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;padding:10px 12px;background:#f5f8f5;border-radius:4px;font-size:9pt}
-.summary .muted{color:#777;font-size:8pt}
-.footer{margin-top:3mm;font-size:6pt;color:#aaa;text-align:right;border-top:.3pt solid #d8e8dc;padding-top:1.5mm}
+<style>${flightReportSharedCSS({ page: "portrait", bodySize: "9pt", tableSize: "8.5pt" })}
+${extraCss}
 </style></head><body>
-<div class="doc-hdr"><div><div class="type">${escReportHtml(t.bagCalcTitle)}</div><div class="title">${projectName}</div></div>
-<div class="meta"><div>${escReportHtml(now)}</div><div>${escReportHtml(subtitle || "")}</div></div></div>
+${flightReportDocHeader(t.bagCalcTitle, project?.name || "", metaLines)}
 ${groupLabel ? `<div class="group">${escReportHtml(groupLabel)}</div>` : ""}
-${subtitle ? `<div class="sub">${escReportHtml(t.flightPrintFilterSummary)}：${escReportHtml(subtitle)}</div>` : ""}
+${!groupLabel && subtitle ? `<div class="sub">${escReportHtml(t.flightPrintFilterSummary)}：${escReportHtml(subtitle)}</div>` : ""}
 <table><thead><tr>
 <th class="left">${escReportHtml(t.nameKanji)}</th>
 <th class="left">${escReportHtml(t.nameEnglish)}</th>
@@ -5261,6 +5344,13 @@ ${subtitle ? `<div class="sub">${escReportHtml(t.flightPrintFilterSummary)}：${
 
 function openFlightMgmtReportPrint({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter }) {
   const html = generateFlightMgmtReportHTML({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter });
+  openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
+}
+
+function openFlightRosterReportPrint({ project, lang, t, personIndex, persons, flights, groupLabel, groupLeg, legFilter, personCount }) {
+  const html = generateFlightRosterReportHTML({
+    project, lang, t, personIndex, persons, flights, groupLabel, groupLeg, legFilter, personCount,
+  });
   openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
 }
 
@@ -5319,6 +5409,7 @@ function FlightPrintSelectModal({ onClose, onPreview, persons, flights, flightLe
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
         <button type="button" onClick={() => setReportType("mgmt")} style={pill(reportType === "mgmt")}>{t.flightMgmt}</button>
+        <button type="button" onClick={() => setReportType("roster")} style={pill(reportType === "roster")}>{t.flightPrintRoster}</button>
         <button type="button" onClick={() => setReportType("baggage")} style={pill(reportType === "baggage")}>{t.bagCalcTitle}</button>
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
@@ -7670,7 +7761,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const runFlightPrint = ({ reportType, personIds, groupLabel, groupLeg, allowance, feeRate }) => {
     const ids = personIds || sortedDisplayFlightPersons.map((p) => p.id);
     const targetPersons = ids.map((id) => sortedDisplayFlightPersons.find((p) => p.id === id)).filter(Boolean);
-    const subtitle = flightPrintFilterSummary;
+    const filterSubtitle = flightPrintFilterSummary;
     if (reportType === "baggage") {
       openFlightBaggageReportPrint({
         project,
@@ -7680,15 +7771,29 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         flights,
         personIds: ids,
         groupLabel,
-        subtitle,
+        subtitle: groupLabel ? null : filterSubtitle,
         allowance: allowance ?? bagCalcAllowance,
         feeRate: feeRate ?? bagCalcFeeRate,
       });
       return;
     }
-    const sections = groupLabel
-      ? [{ type: "group", key: "print-group", leg: groupLeg || (flightLegFilter === "ret" ? "ret" : "out"), label: groupLabel, personIds: ids }]
-      : buildFlightTableSections(targetPersons, flights, flightLegFilter, t, lang);
+    if (reportType === "roster") {
+      const leg = groupLeg || (flightLegFilter === "ret" ? "ret" : flightLegFilter === "out" ? "out" : null);
+      openFlightRosterReportPrint({
+        project,
+        lang,
+        t,
+        personIndex,
+        persons: targetPersons,
+        flights,
+        groupLabel,
+        groupLeg: leg,
+        legFilter: flightLegFilter,
+        personCount: targetPersons.length,
+      });
+      return;
+    }
+    const sections = buildFlightTableSections(targetPersons, flights, flightLegFilter, t, lang);
     openFlightMgmtReportPrint({
       project,
       lang,
@@ -7697,8 +7802,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       persons: sortedDisplayFlightPersons,
       flights,
       sections,
-      title: groupLabel ? `${t.flightPrintCompactTitle} — ${groupLabel}` : `${project.name} — ${t.flightMgmt}`,
-      subtitle,
+      title: `${project.name} — ${t.flightMgmt}`,
+      subtitle: filterSubtitle,
       flightLegFilter,
     });
   };
@@ -7715,7 +7820,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
 
   const printFlightGroup = (section) => {
     runFlightPrint({
-      reportType: "mgmt",
+      reportType: "roster",
       personIds: section.personIds,
       groupLabel: section.label,
       groupLeg: section.leg,
@@ -8451,9 +8556,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <button type="button" onClick={() => setShowFlightPrintMenu((v) => !v)} style={{ ...eBtn, borderColor: "rgba(43,90,76,.35)", background: "var(--moegi3)", color: "var(--moegi)" }}>{t.flightPrintReport} ▾</button>
                     {showFlightPrintMenu && (
                       <div style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 120, background: "var(--shiro)", border: "1px solid var(--keisenM)", borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,.12)", minWidth: 240, overflow: "hidden" }}>
-                        <button type="button" onClick={printFlightMgmtFiltered} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintMgmt}</button>
-                        <button type="button" onClick={printFlightBaggageFiltered} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", borderTop: "1px solid var(--keisenL)", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintBaggage}</button>
-                        <button type="button" onClick={() => { setShowFlightPrintMenu(false); setShowFlightPrintModal(true); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", borderTop: "1px solid var(--keisenL)", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintSelect}</button>
+                        <button type="button" onClick={printFlightMgmtFiltered} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintMgmt.replace("{n}", sortedDisplayFlightPersons.length)}</button>
+                        <button type="button" onClick={printFlightBaggageFiltered} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", borderTop: "1px solid var(--keisenL)", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintBaggage.replace("{n}", sortedDisplayFlightPersons.length)}</button>
+                        <div style={{ borderTop: "1px solid var(--keisenL)", margin: "4px 0" }} />
+                        <button type="button" onClick={() => { setShowFlightPrintMenu(false); setShowFlightPrintModal(true); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.flightPrintSelect}</button>
                       </div>
                     )}
                   </div>
