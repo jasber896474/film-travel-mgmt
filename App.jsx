@@ -155,6 +155,16 @@ const fmtDate = (d, lang) => {
   const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
   return parseLocalDate(String(d).slice(0, 10)).toLocaleDateString(loc);
 };
+const fmtMonthDay = (d, lang) => {
+  if (!d) return "—";
+  const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
+  return parseLocalDate(String(d).slice(0, 10)).toLocaleDateString(loc, { month: "numeric", day: "numeric" });
+};
+const fmtWeekday = (d, lang) => {
+  if (!d) return "";
+  const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
+  return parseLocalDate(String(d).slice(0, 10)).toLocaleDateString(loc, { weekday: "short" });
+};
 const diffDays = (a, b) => {
   if (!a || !b) return 0;
   const da = parseLocalDate(a);
@@ -398,6 +408,21 @@ const T = {
     flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班機", flightDiffFlight: "分批搭機", collapseAll: "全部摺疊", expandAll: "全部展開",
     groupByDept: "依部門", warnFilter: "警示", warnFilterTitle: "顯示警示種類", selectAll: "全選",
     arrTimePickup: "抵達時間 ↓接機",
+    flightConflictTitle: "入住時間衝突提示",
+    flightConflictHint: "以下人員去程抵達時間早於飯店可入住時間，請確認是否需要安排早入住或其他安排。",
+    flightConflictCheckinLabel: "飯店可入住",
+    flightConflictArrLabel: "班機抵達",
+    flightConflictNone: "無入住衝突",
+    flightConflictCheckout: "退房時間衝突提示",
+    flightConflictCheckoutHint: "以下人員回程出發時間晚於飯店退房時間，退房後仍需等候，請確認是否安排等候地點或行李寄放。",
+    flightConflictDepLabel: "班機出發",
+    flightConflictCheckoutLabel: "飯店退房",
+    flightConflictEarlyCheckin: "建議多預訂前一晚",
+    flightConflictWait: "建議安排等候地點",
+    flightConflictEarlyCheckinHint: "抵達時間過早，距飯店入住尚有很長時間，建議為該人員加訂前一晚。",
+    flightConflictWaitHint: "抵達時間早於飯店入住，但尚可等候，建議安排咖啡廳、大廳或行程緩衝。",
+    flightConflictCutoffLabel: "需加訂前一晚切點",
+    flightConflictSettingsHint: "早於切點時間抵達 → 建議加訂前一晚；切點至入住時間之間 → 建議安排等候",
     flightUngrouped: "未分組／資料未完成",
     flightGroupPeople: "人",
     bagCheckedTotal: "託運合計", bagCabinTotal: "手提合計",
@@ -540,6 +565,21 @@ const T = {
     flightOutbound: "去程", flightReturn: "回程", flightSameFlight: "同班机", flightDiffFlight: "分批搭机", collapseAll: "全部折叠", expandAll: "全部展开",
     groupByDept: "依部门", warnFilter: "警示", warnFilterTitle: "显示警示种类", selectAll: "全选",
     arrTimePickup: "抵达时间 ↓接机",
+    flightConflictTitle: "入住时间冲突提示",
+    flightConflictHint: "以下人员去程抵达时间早于酒店可入住时间，请确认是否需要安排早入住或其他安排。",
+    flightConflictCheckinLabel: "酒店可入住",
+    flightConflictArrLabel: "航班抵达",
+    flightConflictNone: "无入住冲突",
+    flightConflictCheckout: "退房时间冲突提示",
+    flightConflictCheckoutHint: "以下人员回程出发时间晚于酒店退房时间，退房后仍需等候，请确认是否安排等候地点或行李寄放。",
+    flightConflictDepLabel: "航班出发",
+    flightConflictCheckoutLabel: "酒店退房",
+    flightConflictEarlyCheckin: "建议加订前一晚",
+    flightConflictWait: "建议安排等候地点",
+    flightConflictEarlyCheckinHint: "抵达时间过早，建议为该人员加订前一晚。",
+    flightConflictWaitHint: "抵达时间早于酒店入住，但尚可等候，建议安排等候地点。",
+    flightConflictCutoffLabel: "需加订前一晚切点",
+    flightConflictSettingsHint: "早于切点时间抵达 → 建议加订前一晚；切点至入住时间之间 → 建议安排等候",
     flightUngrouped: "未分组／资料未完成",
     flightGroupPeople: "人",
     bagCheckedTotal: "托运合计", bagCabinTotal: "手提合计",
@@ -681,6 +721,21 @@ const T = {
     flightOutbound: "Outbound", flightReturn: "Return", flightSameFlight: "Same flight", flightDiffFlight: "Split flights", collapseAll: "Collapse All", expandAll: "Expand All",
     groupByDept: "By Dept", warnFilter: "Warnings", warnFilterTitle: "Show warning types", selectAll: "Select all",
     arrTimePickup: "Arrival ↓ pickup",
+    flightConflictTitle: "Early arrival conflict",
+    flightConflictHint: "These people arrive before the hotel check-in time. Consider arranging early check-in.",
+    flightConflictCheckinLabel: "Hotel opens",
+    flightConflictArrLabel: "Flight arrives",
+    flightConflictNone: "No conflicts",
+    flightConflictCheckout: "Late departure conflict",
+    flightConflictCheckoutHint: "These people depart after hotel check-out time. They will need to wait after checkout — consider arranging a waiting area or luggage storage.",
+    flightConflictDepLabel: "Flight departs",
+    flightConflictCheckoutLabel: "Hotel check-out",
+    flightConflictEarlyCheckin: "Book extra night",
+    flightConflictWait: "Arrange waiting area",
+    flightConflictEarlyCheckinHint: "Arrival is very early — recommend booking the previous night.",
+    flightConflictWaitHint: "Arrival is before check-in but manageable — suggest a café, lobby, or buffer activity.",
+    flightConflictCutoffLabel: "Extra night cutoff",
+    flightConflictSettingsHint: "Before cutoff → book extra night; between cutoff and check-in → arrange waiting",
     flightUngrouped: "Ungrouped / incomplete",
     flightGroupPeople: "pax",
     bagCheckedTotal: "Checked total", bagCabinTotal: "Cabin total",
@@ -820,6 +875,21 @@ const T = {
     flightOutbound: "출국", flightReturn: "귀국", flightSameFlight: "동일 항공편", flightDiffFlight: "분산 탑승", collapseAll: "전체 접기", expandAll: "전체 펼치기",
     groupByDept: "부서별", warnFilter: "경고", warnFilterTitle: "경고 표시 유형", selectAll: "전체 선택",
     arrTimePickup: "도착 ↓ 픽업",
+    flightConflictTitle: "체크인 시간 충돌",
+    flightConflictHint: "아래 인원은 호텔 체크인 가능 시간보다 일찍 도착합니다. 얼리 체크인을 확인하세요.",
+    flightConflictCheckinLabel: "호텔 체크인",
+    flightConflictArrLabel: "항공 도착",
+    flightConflictNone: "충돌 없음",
+    flightConflictCheckout: "체크아웃 시간 충돌",
+    flightConflictCheckoutHint: "아래 인원은 체크아웃 후에도 대기가 필요합니다. 대기 장소나 짐 보관을 확인하세요.",
+    flightConflictDepLabel: "항공 출발",
+    flightConflictCheckoutLabel: "호텔 체크아웃",
+    flightConflictEarlyCheckin: "전날 추가 예약 권장",
+    flightConflictWait: "대기 장소 안내 필요",
+    flightConflictEarlyCheckinHint: "도착 시간이 너무 이르므로 전날 예약을 권장합니다.",
+    flightConflictWaitHint: "체크인 전 도착이지만 대기 가능 — 카페·로비 등을 안내하세요.",
+    flightConflictCutoffLabel: "전날 예약 기준 시간",
+    flightConflictSettingsHint: "기준 시간 이전 도착 → 전날 예약; 기준~체크인 사이 → 대기 안내",
     flightUngrouped: "미분류／미완료",
     flightGroupPeople: "명",
     bagCheckedTotal: "위탁 합계", bagCabinTotal: "기내 합계",
@@ -959,6 +1029,21 @@ const T = {
     flightOutbound: "往路", flightReturn: "復路", flightSameFlight: "同フライト", flightDiffFlight: "別フライト", collapseAll: "すべて折りたたむ", expandAll: "すべて展開",
     groupByDept: "部署別", warnFilter: "警告", warnFilterTitle: "警告種類", selectAll: "全選択",
     arrTimePickup: "到着 ↓送迎",
+    flightConflictTitle: "チェックイン時間の注意",
+    flightConflictHint: "以下のスタッフはホテルのチェックイン可能時間より早く到着します。アーリーチェックインをご確認ください。",
+    flightConflictCheckinLabel: "ホテル受付開始",
+    flightConflictArrLabel: "フライト到着",
+    flightConflictNone: "問題なし",
+    flightConflictCheckout: "チェックアウト時間の注意",
+    flightConflictCheckoutHint: "以下のスタッフはホテルのチェックアウト後も待機が必要です。待機場所や荷物預けをご確認ください。",
+    flightConflictDepLabel: "フライト出発",
+    flightConflictCheckoutLabel: "チェックアウト",
+    flightConflictEarlyCheckin: "前泊の追加予約を推奨",
+    flightConflictWait: "待機場所の手配を推奨",
+    flightConflictEarlyCheckinHint: "到着が非常に早いため、前泊の追加予約をお勧めします。",
+    flightConflictWaitHint: "チェックイン前の到着ですが待機可能です。カフェやロビーなどをご案内ください。",
+    flightConflictCutoffLabel: "前泊推奨の切替時間",
+    flightConflictSettingsHint: "切替時間より早い到着 → 前泊推奨；切替時間〜チェックイン → 待機手配",
     flightUngrouped: "未分類／未入力",
     flightGroupPeople: "名",
     bagCheckedTotal: "預け合計", bagCabinTotal: "機内合計",
@@ -1459,6 +1544,117 @@ function rowToStaffPerson(row, format = "v2") {
     diet: String(row[8 + off] ?? "").trim() || null,
   };
 }
+const IATA_AIRLINES = {
+  CI: ["中華航空", "中华航空", "China Airlines", "チャイナエアライン", "중화항공"],
+  BR: ["長榮航空", "长荣航空", "EVA Air", "エバー航空", "에바항공"],
+  AE: ["華信航空", "华信航空", "Mandarin Airlines", "マンダリン航空", "만다린항공"],
+  B7: ["立榮航空", "立荣航空", "UNI Air", "ユニー航空", "유니항공"],
+  JX: ["星宇航空", "星宇航空", "STARLUX Airlines", "スターラックス航空", "스타럭스항공"],
+  IT: ["台灣虎航", "台湾虎航", "Tigerair Taiwan", "タイガーエア台湾", "타이거에어 타이완"],
+  NH: ["全日空", "全日空", "ANA", "全日空(ANA)", "전일본공수(ANA)"],
+  JL: ["日本航空", "日本航空", "JAL", "日本航空(JAL)", "일본항공(JAL)"],
+  MM: ["樂桃航空", "乐桃航空", "Peach Aviation", "Peach Aviation", "피치항공"],
+  GK: ["捷星日本", "捷星日本", "Jetstar Japan", "ジェットスター・ジャパン", "젯스타재팬"],
+  BC: ["天馬航空", "天马航空", "Skymark Airlines", "スカイマーク", "스카이마크"],
+  "7G": ["星悅航空", "星悦航空", "Star Flyer", "スターフライヤー", "스타플라이어"],
+  NU: ["日本越洋航空", "日本越洋航空", "Japan Transocean Air", "日本トランスオーシャン航空", "JTA"],
+  KE: ["大韓航空", "大韩航空", "Korean Air", "大韓航空", "대한항공"],
+  OZ: ["韓亞航空", "韩亚航空", "Asiana Airlines", "アシアナ航空", "아시아나항공"],
+  LJ: ["真航空", "真航空", "Jin Air", "チンエアー", "진에어"],
+  TW: ["德威航空", "德威航空", "T'way Air", "ティーウェイ航空", "티웨이항공"],
+  ZE: ["易斯達航空", "易斯达航空", "Eastar Jet", "イースター航空", "이스타항공"],
+  "7C": ["濟州航空", "济州航空", "Jeju Air", "チェジュ航空", "제주항공"],
+  RS: ["釜山航空", "釜山航空", "Air Busan", "エアプサン", "에어부산"],
+  BX: ["易安航空", "易安航空", "Air Seoul", "エアソウル", "에어서울"],
+  CX: ["國泰航空", "国泰航空", "Cathay Pacific", "キャセイパシフィック航空", "캐세이패시픽"],
+  KA: ["國泰港龍", "国泰港龙", "Cathay Dragon", "キャセイドラゴン航空", "캐세이드래곤"],
+  UO: ["香港快運", "香港快运", "HK Express", "香港エクスプレス", "HK익스프레스"],
+  TG: ["泰國航空", "泰国航空", "Thai Airways", "タイ国際航空", "타이항공"],
+  SQ: ["新加坡航空", "新加坡航空", "Singapore Airlines", "シンガポール航空", "싱가포르항공"],
+  TR: ["酷航", "酷航", "Scoot", "スクート", "스쿠트"],
+  "3K": ["捷星亞洲", "捷星亚洲", "Jetstar Asia", "ジェットスター・アジア", "젯스타아시아"],
+  MH: ["馬來西亞航空", "马来西亚航空", "Malaysia Airlines", "マレーシア航空", "말레이시아항공"],
+  AK: ["亞洲航空", "亚洲航空", "AirAsia", "エアアジア", "에어아시아"],
+  FD: ["泰國亞洲航空", "泰国亚洲航空", "Thai AirAsia", "タイ・エアアジア", "타이에어아시아"],
+  VN: ["越南航空", "越南航空", "Vietnam Airlines", "ベトナム航空", "베트남항공"],
+  VJ: ["越捷航空", "越捷航空", "VietJet Air", "ベトジェットエア", "비엣젯항공"],
+  PR: ["菲律賓航空", "菲律宾航空", "Philippine Airlines", "フィリピン航空", "필리핀항공"],
+  "5J": ["宿霧太平洋", "宿务太平洋", "Cebu Pacific", "セブパシフィック航空", "세부퍠시픽"],
+  GA: ["嘉魯達印尼航空", "嘉鲁达印尼航空", "Garuda Indonesia", "ガルーダ・インドネシア航空", "가루다인도네시아항공"],
+  QZ: ["印尼亞航", "印尼亚航", "AirAsia Indonesia", "インドネシア・エアアジア", "에어아시아인도네시아"],
+  MU: ["中國東方航空", "中国东方航空", "China Eastern", "中国東方航空", "중국동방항공"],
+  CA: ["中國國際航空", "中国国际航空", "Air China", "中国国際航空", "중국국제항공"],
+  CZ: ["中國南方航空", "中国南方航空", "China Southern", "中国南方航空", "중국남방항공"],
+  HU: ["海南航空", "海南航空", "Hainan Airlines", "海南航空", "하이난항공"],
+  FM: ["上海航空", "上海航空", "Shanghai Airlines", "上海航空", "상하이항공"],
+  "3U": ["四川航空", "四川航空", "Sichuan Airlines", "四川航空", "사천항공"],
+  MF: ["廈門航空", "厦门航空", "Xiamen Airlines", "厦門航空", "샤먼항공"],
+  SC: ["山東航空", "山东航空", "Shandong Airlines", "山東航空", "산둥항공"],
+  AA: ["美國航空", "美国航空", "American Airlines", "アメリカン航空", "아메리칸항공"],
+  UA: ["聯合航空", "联合航空", "United Airlines", "ユナイテッド航空", "유나이티드항공"],
+  DL: ["達美航空", "达美航空", "Delta Air Lines", "デルタ航空", "델타항공"],
+  AS: ["阿拉斯加航空", "阿拉斯加航空", "Alaska Airlines", "アラスカ航空", "알래스카항공"],
+  WN: ["西南航空", "西南航空", "Southwest Airlines", "サウスウエスト航空", "사우스웨스트항공"],
+  AC: ["加拿大航空", "加拿大航空", "Air Canada", "エア・カナダ", "에어캐나다"],
+  BA: ["英國航空", "英国航空", "British Airways", "ブリティッシュ・エアウェイズ", "영국항공"],
+  AF: ["法國航空", "法国航空", "Air France", "エールフランス", "에어프랑스"],
+  LH: ["德國漢莎航空", "德国汉莎航空", "Lufthansa", "ルフトハンザ航空", "루프트한자"],
+  KL: ["荷蘭皇家航空", "荷兰皇家航空", "KLM", "KLMオランダ航空", "KLM네덜란드항공"],
+  LX: ["瑞士航空", "瑞士航空", "Swiss", "スイス インターナショナル エアラインズ", "스위스국제항공"],
+  EK: ["阿聯酋航空", "阿联酋航空", "Emirates", "エミレーツ航空", "에미레이트항공"],
+  QR: ["卡達航空", "卡塔尔航空", "Qatar Airways", "カタール航空", "카타르항공"],
+  EY: ["阿提哈德航空", "阿提哈德航空", "Etihad Airways", "エティハド航空", "에티하드항공"],
+  TK: ["土耳其航空", "土耳其航空", "Turkish Airlines", "トルコ航空", "터키항공"],
+  QF: ["澳洲航空", "澳洲航空", "Qantas", "カンタス航空", "콴타스항공"],
+  NZ: ["紐西蘭航空", "新西兰航空", "Air New Zealand", "ニュージーランド航空", "에어뉴질랜드"],
+  FJ: ["斐濟航空", "斐济航空", "Fiji Airways", "フィジー航空", "피지항공"],
+  PG: ["曼谷航空", "曼谷航空", "Bangkok Airways", "バンコクエアウェイズ", "방콕항공"],
+};
+const IATA_AIRLINE_LANG_IDX = { "zh-TW": 0, "zh-CN": 1, en: 2, ja: 3, ko: 4 };
+
+/** 從班機號（如 "CI 0701" / "BR701" / "5J123"）擷取前2碼 IATA 代碼，依目前語言查詢航空公司名稱 */
+function lookupAirlineFromFlightNo(flightNo, lang) {
+  const code = String(flightNo || "").trim().toUpperCase().match(/^[A-Z0-9]{2}/);
+  if (!code) return null;
+  const names = IATA_AIRLINES[code[0]];
+  if (!names) return null;
+  const idx = IATA_AIRLINE_LANG_IDX[lang] ?? 0;
+  return names[idx] || names[0] || null;
+}
+
+/** 正規化班機號：去除空格並轉大寫，作為航線記憶的查找鍵 */
+function normFlightNo(flightNo) {
+  return String(flightNo || "").trim().toUpperCase().replace(/\s+/g, "");
+}
+
+/** 從現有航班資料學習「班機號 → 出發/抵達機場」的對應關係（不含航廈，僅在欄位空白時自動帶入）
+ *  掃描所有航班的去程與回程欄位，依班機號分組，取出現次數最多的機場組合。 */
+function buildFlightRouteMemory(flights) {
+  const counts = new Map();
+  const addEntry = (flightNo, dep, arr) => {
+    const fn = normFlightNo(flightNo);
+    if (!fn || !dep || !arr) return;
+    if (!counts.has(fn)) counts.set(fn, new Map());
+    const m = counts.get(fn);
+    const key = `${dep}|${arr}`;
+    m.set(key, (m.get(key) || 0) + 1);
+  };
+  (flights || []).forEach((f) => {
+    addEntry(f.flight_no, f.dep_airport, f.arr_airport);
+    addEntry(f.ret_flight_no, f.ret_dep_airport, f.ret_arr_airport);
+  });
+  const result = new Map();
+  counts.forEach((m, fn) => {
+    let best = null, bestCount = 0;
+    m.forEach((c, key) => { if (c > bestCount) { bestCount = c; best = key; } });
+    if (best) {
+      const [dep, arr] = best.split("|");
+      result.set(fn, { dep, arr });
+    }
+  });
+  return result;
+}
+
 const CABIN = ["Economy", "Premium Economy", "Business", "First"];
 const ROOM_TYPES = ["Single", "Twin", "Double", "Suite", "Deluxe", "Custom"];
 const ROOM_TYPES_FOR_RATES = ROOM_TYPES.filter((r) => r !== "Custom");
@@ -1509,6 +1705,13 @@ const inpStyle = {
   background: "var(--shiro)", color: "var(--sumi)", fontFamily: "'Noto Sans JP',sans-serif",
   transition: "border-color .18s, box-shadow .18s",
 };
+
+const miniInp = {
+  width: "100%", border: "1px solid var(--keisenM)", borderRadius: 7,
+  padding: "7px 10px", fontSize: 12.5, outline: "none", boxSizing: "border-box",
+  background: "var(--washi)", color: "var(--sumi)", fontFamily: "'Noto Sans JP',sans-serif",
+};
+
 const thS = {
   padding: "10px 8px", textAlign: "center", whiteSpace: "nowrap",
   fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
@@ -3161,39 +3364,378 @@ function AirportTerminalField({ label, airportKey, terminalKey, f, set }) {
   );
 }
 
-function FlightLegFields({ title, prefix, f, set, t }) {
-  const k = (name) => (prefix ? `${prefix}_${name}` : name);
-  const sectionStyle = { fontSize: 12, fontWeight: 700, color: "var(--moegi)", letterSpacing: "0.08em", margin: "8px 0 4px", paddingBottom: 6, borderBottom: "1px solid var(--keisenL)" };
+function RouteEndField({ airportKey, terminalKey, timeKey, f, set, placeholder }) {
+  const value = f[timeKey] || "";
+  const datePart = value ? value.slice(0, 10) : "";
+  const timePart = value && value.length >= 16 ? value.slice(11, 16) : "";
+  const [hh, mm] = timePart ? timePart.split(":") : ["", ""];
+  const combine = (d, h, m) => {
+    if (!d) { set(timeKey)({ target: { value: "" } }); return; }
+    const hStr = (h || "00").padStart(2, "0");
+    const mStr = (m || "00").padStart(2, "0");
+    set(timeKey)({ target: { value: `${d}T${hStr}:${mStr}` } });
+  };
+  const miniSelect = { border: "1px solid var(--keisenM)", borderRadius: 5, padding: "3px 2px", fontSize: 12, textAlign: "center", background: "var(--washi)", color: "var(--sumi)", outline: "none", width: 38, fontFamily: "inherit" };
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
-      <div style={{ ...sectionStyle, gridColumn: "1 / -1" }}>{title}</div>
-      <Field label={t.airline}><input style={inpStyle} value={f[k("airline")] || ""} onChange={set(k("airline"))} className="wa-input" /></Field>
-      <Field label={t.flightNo}><input style={inpStyle} value={f[k("flight_no")] || ""} onChange={set(k("flight_no"))} className="wa-input" /></Field>
-      <Field label={t.cabin}><select style={inpStyle} value={f[k("cabin")] || "Economy"} onChange={set(k("cabin"))} className="wa-input">{CABIN.map((c) => <option key={c}>{c}</option>)}</select></Field>
-      <Field label={t.pnr}><input style={inpStyle} value={f[k("pnr")] || ""} onChange={set(k("pnr"))} className="wa-input" /></Field>
-      <AirportTerminalField label={t.depAirport} airportKey={k("dep_airport")} terminalKey={k("dep_terminal")} f={f} set={set} />
-      <AirportTerminalField label={t.arrAirport} airportKey={k("arr_airport")} terminalKey={k("arr_terminal")} f={f} set={set} />
-      <Field label={t.depTime}><input type="datetime-local" style={inpStyle} value={f[k("dep_time")] || ""} onChange={set(k("dep_time"))} className="wa-input" /></Field>
-      <Field label={t.arrTime}><input type="datetime-local" style={inpStyle} value={f[k("arr_time")] || ""} onChange={set(k("arr_time"))} className="wa-input" /></Field>
-      <Field label={`${t.checkedBag} (${t.optional})`}><input style={inpStyle} value={f[k("checked_bag")] || ""} onChange={set(k("checked_bag"))} className="wa-input" /></Field>
-      <Field label={`${t.cabinBag} (${t.optional})`}><input style={inpStyle} value={f[k("cabin_bag")] || ""} onChange={set(k("cabin_bag"))} className="wa-input" /></Field>
+    <div style={{ flex: 1, textAlign: "center", minWidth: 0 }}>
+      <input
+        value={f[airportKey] || ""}
+        onChange={(e) => set(airportKey)({ target: { value: e.target.value.toUpperCase() } })}
+        placeholder={placeholder || "TPE"} maxLength={4}
+        style={{ width: "100%", border: "none", borderBottom: "2px solid var(--keisenM)", background: "transparent", textAlign: "center", fontSize: 22, fontWeight: 700, fontFamily: "'Noto Serif JP',serif", color: "var(--sumi)", padding: "2px 0", textTransform: "uppercase", outline: "none" }}
+        className="wa-input"
+      />
+      <input
+        value={f[terminalKey] || ""} onChange={set(terminalKey)} placeholder="T#"
+        style={{ width: 44, border: "none", background: "transparent", textAlign: "center", fontSize: 10.5, fontWeight: 700, color: "var(--kincha)", marginTop: 3, outline: "none" }}
+        className="wa-input"
+      />
+      <div style={{ display: "flex", justifyContent: "center", gap: 3, marginTop: 8, alignItems: "center" }}>
+        <select value={hh} onChange={(e) => combine(datePart, e.target.value, mm)} style={miniSelect} className="wa-input">
+          <option value="">--</option>
+          {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((h) => <option key={h} value={h}>{h}</option>)}
+        </select>
+        <span style={{ color: "var(--nezumi)", fontSize: 13, fontWeight: 700 }}>:</span>
+        <select value={mm} onChange={(e) => combine(datePart, hh, e.target.value)} style={miniSelect} className="wa-input">
+          <option value="">--</option>
+          {Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0")).map((m) => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </div>
+      <input
+        type="date" value={datePart} onChange={(e) => combine(e.target.value, hh, mm)}
+        style={{ width: "100%", border: "1px solid var(--keisenM)", borderRadius: 5, padding: "3px 4px", fontSize: 10.5, marginTop: 6, textAlign: "center", background: "var(--washi)", color: "var(--nezumi)", outline: "none", boxSizing: "border-box" }}
+        className="wa-input"
+      />
     </div>
   );
 }
 
-function FlightForm({ init, onSave, onClose, t }) {
+/** 路線連接線：出發 ──✈──> 抵達 */
+function RouteConnector() {
+  return (
+    <div style={{ flex: "0 0 auto", width: 40, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 8 }}>
+      <span style={{ fontSize: 14, color: "var(--usunezumi)", lineHeight: 1 }}>✈</span>
+      <div style={{ width: "100%", height: 1, background: "var(--keisenM)", marginTop: 6, position: "relative" }}>
+        <span style={{ position: "absolute", right: -1, top: -3, width: 6, height: 6, borderTop: "1.5px solid var(--usunezumi)", borderRight: "1.5px solid var(--usunezumi)", transform: "rotate(45deg)", display: "block" }} />
+      </div>
+    </div>
+  );
+}
+
+/** 緊湊欄位：小標籤 + 輸入框，用於航班資訊一排 */
+function MiniField({ label, children, flex }) {
+  return (
+    <div style={{ flex: flex || "1 1 110px", minWidth: 0 }}>
+      <label style={{ display: "block", fontSize: 9, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+/** 行李藥丸標籤：圖示文字 + 內嵌輸入框 */
+function BaggageChip({ label, value, onChange }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, border: "1px solid var(--keisenM)", borderRadius: 20, padding: "5px 14px", fontSize: 11, color: "var(--nezumi)", flex: "1 1 auto", background: "var(--washi)" }}>
+      <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{label}</span>
+      <input value={value} onChange={onChange} style={{ border: "none", background: "transparent", width: "100%", fontSize: 11.5, color: "var(--sumi)", outline: "none", fontFamily: "inherit", minWidth: 0 }} className="wa-input" />
+    </div>
+  );
+}
+
+/** 單程航班卡片：彩色標題列（含日期）＋路線視覺化＋航班資訊＋行李 */
+function FlightLegFields({ title, prefix, f, set, t, lang, isReturn, flightRouteMemory }) {
+  const k = (name) => (prefix ? `${prefix}_${name}` : name);
+  const depDate = (f[k("dep_time")] || "").slice(0, 10);
+  const accent = isReturn ? "var(--asagi)" : "var(--moegi)";
+  const depPlaceholder = isReturn ? "TSA" : "HND";
+  const arrPlaceholder = isReturn ? "HND" : "TSA";
+  const handleFlightNoChange = (e) => {
+    const val = e.target.value;
+    set(k("flight_no"))(e);
+    const airline = lookupAirlineFromFlightNo(val, lang);
+    if (airline && !f[k("airline")]) set(k("airline"))({ target: { value: airline } });
+    const route = flightRouteMemory && flightRouteMemory.get(normFlightNo(val));
+    if (route) {
+      if (!f[k("dep_airport")]) set(k("dep_airport"))({ target: { value: route.dep } });
+      if (!f[k("arr_airport")]) set(k("arr_airport"))({ target: { value: route.arr } });
+    }
+  };
+  return (
+    <div style={{ border: "1px solid var(--keisenL)", borderRadius: 10, overflow: "hidden", background: "var(--shiro)" }}>
+      <div style={{ background: accent, color: "var(--washi)", padding: "9px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.06em" }}>{title}</span>
+        {depDate && <span style={{ fontSize: 11, opacity: 0.85, fontVariantNumeric: "tabular-nums" }}>{fmtMonthDay(depDate, lang)} ({fmtWeekday(depDate, lang)})</span>}
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-start", padding: "16px 14px 12px", gap: 8 }}>
+        <RouteEndField airportKey={k("dep_airport")} terminalKey={k("dep_terminal")} timeKey={k("dep_time")} f={f} set={set} placeholder={depPlaceholder} />
+        <RouteConnector />
+        <RouteEndField airportKey={k("arr_airport")} terminalKey={k("arr_terminal")} timeKey={k("arr_time")} f={f} set={set} placeholder={arrPlaceholder} />
+      </div>
+      <div style={{ display: "flex", gap: 8, padding: "0 14px 12px", flexWrap: "wrap" }}>
+        <MiniField label={t.airline} flex="2 1 140px">
+          <input style={miniInp} value={f[k("airline")] || ""} onChange={set(k("airline"))} className="wa-input" />
+        </MiniField>
+        <MiniField label={t.flightNo} flex="1 1 90px">
+          <input style={miniInp} value={f[k("flight_no")] || ""} onChange={handleFlightNoChange} className="wa-input" placeholder="CI701" />
+        </MiniField>
+        <MiniField label={t.cabin} flex="1 1 100px">
+          <select style={miniInp} value={f[k("cabin")] || "Economy"} onChange={set(k("cabin"))} className="wa-input">{CABIN.map((c) => <option key={c}>{c}</option>)}</select>
+        </MiniField>
+        <MiniField label={t.pnr} flex="1 1 90px">
+          <input style={miniInp} value={f[k("pnr")] || ""} onChange={set(k("pnr"))} className="wa-input" />
+        </MiniField>
+      </div>
+      <div style={{ display: "flex", gap: 8, padding: "0 14px 14px" }}>
+        <BaggageChip label={t.checkedBag} value={f[k("checked_bag")] || ""} onChange={set(k("checked_bag"))} />
+        <BaggageChip label={t.cabinBag} value={f[k("cabin_bag")] || ""} onChange={set(k("cabin_bag"))} />
+      </div>
+    </div>
+  );
+}
+
+function FlightForm({ init, onSave, onClose, t, lang, flightRouteMemory }) {
   const [f, setF] = useState(() => (init ? { ...FLIGHT_BLANK, ...flightFormInit(init) } : { ...FLIGHT_BLANK }));
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   return (
     <div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20, maxHeight: "70vh", overflowY: "auto", paddingRight: 4 }}>
-        <FlightLegFields title={t.flightOutbound} prefix="" f={f} set={set} t={t} />
-        <FlightLegFields title={t.flightReturn} prefix="ret" f={f} set={set} t={t} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, maxHeight: "70vh", overflowY: "auto", padding: "2px 4px 2px 2px" }}>
+        <FlightLegFields title={t.flightOutbound} prefix="" f={f} set={set} t={t} lang={lang} isReturn={false} flightRouteMemory={flightRouteMemory} />
+        <FlightLegFields title={t.flightReturn} prefix="ret" f={f} set={set} t={t} lang={lang} isReturn={true} flightRouteMemory={flightRouteMemory} />
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
         <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
         <button type="button" onClick={() => onSave(f)} style={pBtn(false)}>{t.save}</button>
       </div>
+    </div>
+  );
+}
+
+
+
+function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }) {
+  const DEFAULT_CHECKIN = "15:00";
+  const DEFAULT_CHECKOUT = "11:00";
+  const DEFAULT_CUTOFF = "09:00";
+
+  const [cutoff, setCutoff] = React.useState(() => {
+    try { return localStorage.getItem("flight_conflict_cutoff") || DEFAULT_CUTOFF; } catch { return DEFAULT_CUTOFF; }
+  });
+  const [open, setOpen] = React.useState(true);
+
+  const saveCutoff = (v) => {
+    setCutoff(v);
+    try { localStorage.setItem("flight_conflict_cutoff", v); } catch {}
+  };
+
+  const toMin = (hm) => {
+    if (!hm) return null;
+    const s = String(hm).slice(0, 5).split(":");
+    if (s.length < 2) return null;
+    const h = parseInt(s[0], 10), m = parseInt(s[1], 10);
+    return (isNaN(h) || isNaN(m)) ? null : h * 60 + m;
+  };
+  const fmtHM = (hm) => hm ? String(hm).slice(0, 5) : "—";
+
+  // 去程：取最早入住的飯店
+  const getCheckinHotel = (personId) => {
+    const ps = stays.filter((s) => s.person_id === personId && s.hotel_id);
+    if (!ps.length) return null;
+    const sorted = [...ps].sort((a, b) => (a.check_in || "").localeCompare(b.check_in || ""));
+    return hotels.find((h) => +h.id === +sorted[0].hotel_id) || null;
+  };
+
+  // 回程：取最晚退房的飯店
+  const getCheckoutHotel = (personId) => {
+    const ps = stays.filter((s) => s.person_id === personId && s.hotel_id);
+    if (!ps.length) return null;
+    const sorted = [...ps].sort((a, b) => (b.check_out || "").localeCompare(a.check_out || ""));
+    return hotels.find((h) => +h.id === +sorted[0].hotel_id) || null;
+  };
+
+  // 去程分兩級：🔴 需加訂前一晚 / 🟡 安排等候
+  const earlyCheckinRows = [], waitRows = [], checkoutRows = [];
+
+  persons.filter((p) => !p.hide_from_flights).forEach((p) => {
+    const fl = flights.find((x) => x.person_id === p.id);
+    if (!fl) return;
+    const checkinHotel = getCheckinHotel(p.id);
+    const checkoutHotel = getCheckoutHotel(p.id);
+    if (!checkinHotel && !checkoutHotel) return;
+    const ciTime = checkinHotel?.check_in_time || DEFAULT_CHECKIN;
+    const coTime = checkoutHotel?.check_out_time || DEFAULT_CHECKOUT;
+    const name = p.name_kanji || `${p.last_roman || ""} ${p.first_roman || ""}`.trim() || "—";
+
+    // ── 去程抵達判斷 ──
+    if (fl.arr_time) {
+      const d = parseLocalDateTime(fl.arr_time);
+      if (d) {
+        const hm = `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+        const arrMin = toMin(hm) ?? 9999;
+        const ciMin = toMin(ciTime) ?? 0;
+        const cutoffMin = toMin(cutoff) ?? toMin(DEFAULT_CUTOFF);
+        const dt = fmtFlightDateTime(fl.arr_time, lang);
+        const row = { id: p.id, name, dept: p.dept || "", hm, fullTime: dt ? `${dt.date} ${dt.time}` : hm, ciTime, hotelName: checkinHotel?.name || "—", airline: fl.airline || "", flightNo: fl.flight_no || "", arrAirport: fl.arr_airport || "" };
+        if (arrMin < ciMin) {
+          // 抵達早於入住時間 → 再看是否早於切點
+          if (arrMin < cutoffMin) {
+            earlyCheckinRows.push(row); // 🔴 建議加訂前一晚
+          } else {
+            waitRows.push(row); // 🟡 建議安排等候
+          }
+        }
+      }
+    }
+
+    // ── 回程出發判斷（出發晚於退房 → 需等候）──
+    if (fl.ret_dep_time) {
+      const d = parseLocalDateTime(fl.ret_dep_time);
+      if (d) {
+        const hm = `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+        if ((toMin(hm) ?? 0) > (toMin(coTime) ?? 9999)) {
+          const dt = fmtFlightDateTime(fl.ret_dep_time, lang);
+          checkoutRows.push({ id: p.id, name, dept: p.dept || "", hm, fullTime: dt ? `${dt.date} ${dt.time}` : hm, coTime, hotelName: checkoutHotel?.name || "—", retAirline: fl.ret_airline || "", retFlightNo: fl.ret_flight_no || "", retDepAirport: fl.ret_dep_airport || "" });
+        }
+      }
+    }
+  });
+
+  const totalConflict = earlyCheckinRows.length + waitRows.length + checkoutRows.length;
+  const hasAny = totalConflict > 0;
+
+  const hdBadge = (c, bg, fg) => (
+    <span style={{ display:"inline-block", padding:"2px 9px", borderRadius:20, fontSize:10.5, fontWeight:700, background:bg, color:fg, whiteSpace:"nowrap" }}>{c}</span>
+  );
+
+  const gridHdr = { display:"grid", gridTemplateColumns:"1.5fr 1fr 1fr 1.3fr 1fr", gap:"6px 12px", padding:"7px 0", borderBottom:"2px solid var(--keisenM)", fontSize:10, fontWeight:700, color:"var(--nezumi)", letterSpacing:"0.06em" };
+  const gridRow = { display:"grid", gridTemplateColumns:"1.5fr 1fr 1fr 1.3fr 1fr", gap:"6px 12px", padding:"9px 0", borderBottom:"1px solid var(--keisenL)", fontSize:12.5, alignItems:"center" };
+  const gridHdrCo = { display:"grid", gridTemplateColumns:"1.5fr 1fr 1fr 1.3fr", gap:"6px 12px", padding:"7px 0", borderBottom:"2px solid var(--keisenM)", fontSize:10, fontWeight:700, color:"var(--nezumi)", letterSpacing:"0.06em" };
+  const gridRowCo = { display:"grid", gridTemplateColumns:"1.5fr 1fr 1fr 1.3fr", gap:"6px 12px", padding:"9px 0", borderBottom:"1px solid var(--keisenL)", fontSize:12.5, alignItems:"center" };
+
+  const personCells = (r, isArr) => (<>
+    <div>
+      <div style={{ fontWeight:600 }}>{r.name}</div>
+      {r.dept && <div style={{ fontSize:10.5, color:"var(--nezumi)" }}>{r.dept}</div>}
+      {isArr
+        ? (r.airline || r.flightNo) && <div style={{ fontSize:10, color:"var(--nezumi)", marginTop:1 }}>{[r.airline, r.flightNo, r.arrAirport ? `→ ${r.arrAirport}` : ""].filter(Boolean).join(" ")}</div>
+        : (r.retAirline || r.retFlightNo) && <div style={{ fontSize:10, color:"var(--nezumi)", marginTop:1 }}>{[r.retAirline, r.retFlightNo, r.retDepAirport].filter(Boolean).join(" ")}</div>
+      }
+    </div>
+  </>);
+
+  return (
+    <div className="no-print" style={{ marginTop:24, background:"var(--shiro)", border:`1px solid ${hasAny ? "var(--kincha)" : "var(--keisenL)"}`, borderRadius:8, overflow:"hidden", boxShadow:"0 1px 4px rgba(0,0,0,.05)" }}>
+
+      {/* ── 標題列（與行李試算同結構） ── */}
+      <div onClick={() => setOpen((v) => !v)} style={{ padding:"11px 16px", background: hasAny ? "var(--kincha2)" : "var(--washi)", borderBottom: open ? "1px solid var(--keisenL)" : "none", display:"flex", alignItems:"center", gap:12, cursor:"pointer", userSelect:"none" }}>
+        <span style={{ fontSize:15, flexShrink:0 }}>{hasAny ? "⚠️" : "✅"}</span>
+        <span style={{ fontSize:13, fontWeight:700, color: hasAny ? "var(--kincha)" : "var(--moegi)", fontFamily:"'Noto Serif JP',serif", flex:1 }}>
+          {hasAny ? `${t.flightConflictTitle || "入住時間衝突提示"}（${totalConflict} 人）` : (t.flightConflictNone || "無入住衝突")}
+        </span>
+        <span style={{ fontSize:11, color:"var(--usunezumi)", whiteSpace:"nowrap", marginRight:8 }}>點擊展開／收起</span>
+        <span style={{ fontSize:11, color:"var(--usunezumi)", flexShrink:0, lineHeight:1 }}>{open ? "▲" : "▼"}</span>
+      </div>
+
+      {open && (
+        <div style={{ padding:"10px 16px", background:"var(--washi)", borderBottom:"1px solid var(--keisenL)", display:"flex", alignItems:"center", gap:8 }} onClick={(e) => e.stopPropagation()}>
+          <span style={{ fontSize:11, fontWeight:600, color:"var(--nezumi)", whiteSpace:"nowrap" }}>{t.flightConflictCutoffLabel || "前一晚切點"}</span>
+          <input
+            type="time"
+            value={cutoff}
+            onChange={(e) => saveCutoff(e.target.value)}
+            style={{ border:"1px solid var(--keisenM)", borderRadius:4, padding:"3px 7px", fontSize:12, fontWeight:700, color:"var(--shu)", background:"var(--shiro)", fontFamily:"'Noto Sans JP',sans-serif", width:86 }}
+          />
+          <span style={{ fontSize:10, color:"var(--usunezumi)", whiteSpace:"nowrap" }}>早於此時間 🔴 加訂前一晚 · 之後至入住前 🟡 安排等候</span>
+        </div>
+      )}
+
+      {open && !hasAny && <div style={{ padding:"16px 18px", fontSize:12, color:"var(--nezumi)" }}>所有人員的班機時間與飯店入住/退房時間無衝突。</div>}
+
+      {open && (<>
+      {/* ── 🔴 建議加訂前一晚 ── */}
+      {earlyCheckinRows.length > 0 && (
+        <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--shu)", background:"rgba(173,48,48,.04)" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+            <span style={{ fontSize:14 }}>🔴</span>
+            <div style={{ fontSize:11, fontWeight:700, color:"var(--shu)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
+              {t.flightConflictEarlyCheckin || "建議多預訂前一晚"} — {earlyCheckinRows.length} 人
+            </div>
+          </div>
+          <p style={{ fontSize:11.5, color:"var(--nezumi)", margin:"0 0 10px", lineHeight:1.6 }}>{t.flightConflictEarlyCheckinHint || "抵達時間過早，距飯店入住尚有很長時間，建議為該人員加訂前一晚。"}</p>
+          <div style={gridHdr}>
+            <span>姓名 / 部門</span>
+            <span>{t.flightConflictArrLabel || "班機抵達"}</span>
+            <span>{t.flightConflictCutoffLabel || "切點"}</span>
+            <span>{t.flightConflictCheckinLabel || "飯店入住"}</span>
+            <span>飯店</span>
+          </div>
+          {earlyCheckinRows.map((r) => (
+            <div key={r.id} style={gridRow}>
+              {personCells(r, true)}
+              <div>{hdBadge(r.hm, "rgba(173,48,48,.12)", "var(--shu)")}<div style={{ fontSize:10, color:"var(--nezumi)", marginTop:2 }}>{r.fullTime}</div></div>
+              <div>{hdBadge(fmtHM(cutoff), "rgba(173,48,48,.08)", "var(--shu)")}</div>
+              <div>{hdBadge(fmtHM(r.ciTime), "var(--kincha2)", "var(--kincha)")}</div>
+              <div style={{ fontWeight:500, fontSize:12 }}>{r.hotelName}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── 🟡 建議安排等候地點 ── */}
+      {waitRows.length > 0 && (
+        <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--kincha)", background:"rgba(143,99,24,.04)", borderTop: earlyCheckinRows.length > 0 ? "1px solid var(--keisenL)" : "none" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+            <span style={{ fontSize:14 }}>🟡</span>
+            <div style={{ fontSize:11, fontWeight:700, color:"var(--kincha)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
+              {t.flightConflictWait || "建議安排等候地點"} — {waitRows.length} 人
+            </div>
+          </div>
+          <p style={{ fontSize:11.5, color:"var(--nezumi)", margin:"0 0 10px", lineHeight:1.6 }}>{t.flightConflictWaitHint || "抵達時間早於飯店入住，但尚可等候，建議安排咖啡廳、大廳或行程緩衝。"}</p>
+          <div style={gridHdr}>
+            <span>姓名 / 部門</span>
+            <span>{t.flightConflictArrLabel || "班機抵達"}</span>
+            <span>{t.flightConflictCutoffLabel || "切點"}</span>
+            <span>{t.flightConflictCheckinLabel || "飯店入住"}</span>
+            <span>飯店</span>
+          </div>
+          {waitRows.map((r) => (
+            <div key={r.id} style={gridRow}>
+              {personCells(r, true)}
+              <div>{hdBadge(r.hm, "var(--kincha2)", "var(--kincha)")}<div style={{ fontSize:10, color:"var(--nezumi)", marginTop:2 }}>{r.fullTime}</div></div>
+              <div>{hdBadge(fmtHM(cutoff), "rgba(143,99,24,.08)", "var(--kincha)")}</div>
+              <div>{hdBadge(fmtHM(r.ciTime), "var(--kincha2)", "var(--kincha)")}</div>
+              <div style={{ fontWeight:500, fontSize:12 }}>{r.hotelName}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── 回程退房等候 ── */}
+      {checkoutRows.length > 0 && (
+        <div style={{ padding:"14px 18px", borderLeft:"3px solid var(--asagi)", background:"var(--asagi2)", borderTop: (earlyCheckinRows.length + waitRows.length) > 0 ? "1px solid var(--keisenL)" : "none" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+            <span style={{ fontSize:14 }}>🔵</span>
+            <div style={{ fontSize:11, fontWeight:700, color:"var(--asagi)", letterSpacing:"0.08em", textTransform:"uppercase" }}>
+              {t.flightConflictCheckout || "回程退房後需等候"} — {checkoutRows.length} 人
+            </div>
+          </div>
+          <p style={{ fontSize:11.5, color:"var(--nezumi)", margin:"0 0 10px", lineHeight:1.6 }}>{t.flightConflictCheckoutHint || "以下人員回程出發時間晚於飯店退房時間，退房後仍需等候，請確認是否安排等候地點或行李寄放。"}</p>
+          <div style={gridHdrCo}>
+            <span>姓名 / 部門</span>
+            <span>{t.flightConflictDepLabel || "班機出發"}</span>
+            <span>{t.flightConflictCheckoutLabel || "飯店退房"}</span>
+            <span>飯店</span>
+          </div>
+          {checkoutRows.map((r) => (
+            <div key={r.id} style={gridRowCo}>
+              {personCells(r, false)}
+              <div>{hdBadge(r.hm, "rgba(173,48,48,.1)", "var(--shu)")}<div style={{ fontSize:10, color:"var(--nezumi)", marginTop:2 }}>{r.fullTime}</div></div>
+              <div>{hdBadge(fmtHM(r.coTime), "var(--asagi2)", "var(--asagi)")}</div>
+              <div style={{ fontWeight:500, fontSize:12 }}>{r.hotelName}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      </>)}
     </div>
   );
 }
@@ -5858,8 +6400,27 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       const matches = legsToCheck.some((leg) => sd && sd[leg] === flightSameDiffFilter);
       if (!matches) return false;
     }
+    if (flightWarnFilters.length > 0) {
+      const personStays = stays.filter((s) => s.person_id === p.id && s.hotel_id && s.check_in && s.check_out);
+      const earliestCI = personStays.length ? personStays.reduce((a, b) => a.check_in <= b.check_in ? a : b).check_in : null;
+      const latestCO = personStays.length ? personStays.reduce((a, b) => a.check_out >= b.check_out ? a : b).check_out : null;
+      const arrDateStr = fl?.arr_time ? String(fl.arr_time).slice(0, 10) : null;
+      const retDepDateStr = fl?.ret_dep_time ? String(fl.ret_dep_time).slice(0, 10) : null;
+      const hasOut = fl && (fl.airline || fl.flight_no);
+      const hasRet = fl && (fl.ret_airline || fl.ret_flight_no);
+      const warnKeys = [];
+      if (arrDateStr && earliestCI) {
+        if (arrDateStr < earliestCI) warnKeys.push("arrBeforeCI");
+        else if (arrDateStr > earliestCI) warnKeys.push("arrAfterCI");
+      }
+      if (retDepDateStr && latestCO && retDepDateStr < latestCO) warnKeys.push("depBeforeCO");
+      if (latestCO && !retDepDateStr && fl) warnKeys.push("noDep");
+      if (!hasOut) warnKeys.push("missingOut");
+      if (!hasRet) warnKeys.push("missingRet");
+      if (!flightWarnFilters.some((k) => warnKeys.includes(k))) return false;
+    }
     return true;
-  }), [filteredFlightPersons, flights, flightLegFilter, flightSameDiffFilter, flightSameDiffMap]);
+  }), [filteredFlightPersons, flights, flightLegFilter, flightSameDiffFilter, flightSameDiffMap, flightWarnFilters, stays]);
 
   const flightTableSections = useMemo(
     () => buildFlightTableSections(displayFlightPersons, flights, flightLegFilter, t, lang),
@@ -5882,6 +6443,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     });
     return sorted.map((d) => ({ dept: d, persons: deptMap[d] }));
   }, [flightGroupByDept, displayFlightPersons]);
+
+  const flightRouteMemory = useMemo(() => buildFlightRouteMemory(flights), [flights]);
 
   const currentFlightSectionKeys = useMemo(() => {
     if (flightDeptGroups) return flightDeptGroups.map(({ dept }) => `flight:dept:${dept}`);
@@ -6528,7 +7091,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                     <option value="missing-ret">{t.missingRet_short}</option>
                     <option value="none">{t.unArranged_short}</option>
                   </select>
-                  <button type="button" style={dBtn} onClick={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); }}>{t.clearFilter}</button>
+                  <DeptFilter depts={allDepts} value={deptB} onChange={setDeptB} allLabel={t.allDept} />
+                  <button type="button" style={dBtn} onClick={() => { setSearchBRoman(""); setSearchBAirline(""); setSearchBStatus(""); setDeptB(""); }}>{t.clearFilter}</button>
                 </div>
               )}
               <div className="no-print">
@@ -6682,6 +7246,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                 </table>
               </div>
               <FlightBaggageCalc persons={displayFlightPersons} flights={flights} personIndex={personIndex} t={t} lang={lang} />
+              <FlightCheckinConflictPanel
+                persons={displayFlightPersons}
+                flights={flights}
+                stays={stays}
+                hotels={hotels}
+                t={t}
+                lang={lang}
+              />
             </div>
           )}
 
@@ -7399,7 +7971,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       )}
 
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
-      {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
+      {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} lang={lang} flightRouteMemory={flightRouteMemory} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
       {guideSection && (
         <GuidePanel
