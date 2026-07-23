@@ -1,0 +1,7 @@
+node_modules/
+.vite/
+dist/
+.DS_Store
+.cursor/
+.vscode/
+*.log
