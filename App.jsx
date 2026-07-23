@@ -366,6 +366,12 @@ const T = {
     invoiceSubtotal: "房費小計", invoiceRooms: "間", invoiceNights: "晚",
     invoiceDateRange: "至", invoicePrint: "列印對帳表",
     invoiceNoData: "尚無住宿資料可對帳", invoiceAvgRate: "均價",
+    invoiceShowAmount: "顯示金額", invoiceHideAmount: "隱藏金額",
+    invoiceShowAmountHint: "關閉後畫面與列印皆不顯示金額欄、小計與總計；計價欄僅保留間數與晚數。",
+    invoiceMarkSubmitted: "標記已交飯店", invoiceLastSubmitted: "最後交件", invoicePrintHistory: "列印紀錄",
+    invoiceKindPreview: "預覽列印", invoiceKindSubmitted: "已交飯店",
+    invoiceDataChangedWarning: "自上次交件後，住宿資料已有變更 — 請重新對帳後再交件",
+    invoiceWithAmount: "含金額", invoiceWithoutAmount: "不含金額", invoiceNoPrintHistory: "尚無列印紀錄",
     staffList: "工作人員列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "飯店清單",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配車", progressOf: "{done}/{total}",
     no: "編號", dept: "部門", jobTitle: "職稱", titleTopPh: "上排（自訂）", titleBottomPh: "下排（自訂）", titleTopCol: "職稱（上）", titleBottomCol: "職稱（下）",
@@ -477,7 +483,7 @@ const T = {
     guideBtn: "操作導覽", guideTitle: "操作導覽", guideClose: "關閉",
     guideShowLoc: "顯示此按鈕位置", guideGotIt: "了解了",
     guidePurpose: "這個區塊能做什麼", guideSteps: "操作步驟", guideRules: "輸入規則", guideNotes: "注意事項",
-    guideSecStaff: "工作人員", guideSecFlight: "航班", guideSecStay: "住宿", guideSecVehicle: "配車",
+    guideSecStaff: "工作人員", guideSecFlight: "航班", guideSecStay: "住宿", guideSecVehicle: "配車", guideSecInvoice: "請款對帳",
   },
   "zh-CN": {
     appName: "剧组交通住宿管理系统", logout: "登出", print: "打印", members: "成员管理", back: "返回", settings: "项目设定",
@@ -500,6 +506,12 @@ const T = {
     invoiceSubtotal: "房费小计", invoiceRooms: "间", invoiceNights: "晚",
     invoiceDateRange: "至", invoicePrint: "打印对账表",
     invoiceNoData: "暂无住宿数据可对账", invoiceAvgRate: "均价",
+    invoiceShowAmount: "显示金额", invoiceHideAmount: "隐藏金额",
+    invoiceShowAmountHint: "关闭后画面与打印皆不显示金额栏、小计与总计；计价栏仅保留间数与晚数。",
+    invoiceMarkSubmitted: "标记已交饭店", invoiceLastSubmitted: "最后交件", invoicePrintHistory: "打印记录",
+    invoiceKindPreview: "预览打印", invoiceKindSubmitted: "已交饭店",
+    invoiceDataChangedWarning: "自上次交件后，住宿数据已有变更 — 请重新对账后再交件",
+    invoiceWithAmount: "含金额", invoiceWithoutAmount: "不含金额", invoiceNoPrintHistory: "尚无打印记录",
     staffList: "工作人员列表", flightMgmt: "航班管理", hotelMgmt: "住宿管理", hotelList: "饭店列表",
     progressFlight: "航班", progressHotel: "住宿", progressVehicle: "未配车", progressOf: "{done}/{total}",
     no: "编号", dept: "部门", jobTitle: "职称", titleTopPh: "上排（自定义）", titleBottomPh: "下排（自定义）", titleTopCol: "职称（上）", titleBottomCol: "职称（下）",
@@ -611,7 +623,7 @@ const T = {
     guideBtn: "操作指南", guideTitle: "操作指南", guideClose: "关闭",
     guideShowLoc: "显示此按钮位置", guideGotIt: "了解了",
     guidePurpose: "这个区块能做什么", guideSteps: "操作步骤", guideRules: "输入规则", guideNotes: "注意事项",
-    guideSecStaff: "工作人员", guideSecFlight: "航班", guideSecStay: "住宿", guideSecVehicle: "配车",
+    guideSecStaff: "工作人员", guideSecFlight: "航班", guideSecStay: "住宿", guideSecVehicle: "配车", guideSecInvoice: "请款对账",
   },
   en: {
     appName: "Production Travel & Accommodation", logout: "Logout", print: "Print", members: "Members", back: "Back", settings: "Settings",
@@ -633,6 +645,12 @@ const T = {
     invoiceSubtotal: "Subtotal", invoiceRooms: "rm", invoiceNights: "nts",
     invoiceDateRange: "to", invoicePrint: "Print Invoice",
     invoiceNoData: "No stay data available for invoicing", invoiceAvgRate: "avg",
+    invoiceShowAmount: "Show amounts", invoiceHideAmount: "Hide amounts",
+    invoiceShowAmountHint: "When off, amount columns, subtotals and grand total are hidden on screen and in print; pricing shows room-nights only.",
+    invoiceMarkSubmitted: "Mark sent to hotel", invoiceLastSubmitted: "Last submission", invoicePrintHistory: "Print log",
+    invoiceKindPreview: "Preview print", invoiceKindSubmitted: "Sent to hotel",
+    invoiceDataChangedWarning: "Stay data changed since last submission — please reconcile again before resubmitting.",
+    invoiceWithAmount: "With amounts", invoiceWithoutAmount: "Without amounts", invoiceNoPrintHistory: "No print history yet",
     staffList: "Staff List", flightMgmt: "Flight Management", hotelMgmt: "Accommodation", hotelList: "Hotel List",
     progressFlight: "Flights", progressHotel: "Hotels", progressVehicle: "Unassigned", progressOf: "{done}/{total}",
     no: "No.", dept: "Dept", jobTitle: "Title", titleTopPh: "Top line (custom)", titleBottomPh: "Bottom line (custom)", titleTopCol: "Title (top)", titleBottomCol: "Title (bottom)",
@@ -742,7 +760,7 @@ const T = {
     guideBtn: "Guide", guideTitle: "How to Use", guideClose: "Close",
     guideShowLoc: "Show this button", guideGotIt: "Got it",
     guidePurpose: "What you can do here", guideSteps: "Steps", guideRules: "Input rules", guideNotes: "Notes",
-    guideSecStaff: "Staff", guideSecFlight: "Flights", guideSecStay: "Hotels", guideSecVehicle: "Vehicles",
+    guideSecStaff: "Staff", guideSecFlight: "Flights", guideSecStay: "Hotels", guideSecVehicle: "Vehicles", guideSecInvoice: "Invoice",
   },
   ko: {
     appName: "제작진 교통·숙박 관리", logout: "로그아웃", print: "인쇄", members: "멤버", back: "뒤로", settings: "설정",
@@ -764,6 +782,12 @@ const T = {
     invoiceSubtotal: "소계", invoiceRooms: "실", invoiceNights: "박",
     invoiceDateRange: "~", invoicePrint: "청구서 인쇄",
     invoiceNoData: "청구할 숙박 데이터가 없습니다", invoiceAvgRate: "평균",
+    invoiceShowAmount: "금액 표시", invoiceHideAmount: "금액 숨김",
+    invoiceShowAmountHint: "끄면 화면·인쇄 모두 금액 열·소계·합계가 숨겨지고, 요금栏에는 실수·박数만 표시됩니다.",
+    invoiceMarkSubmitted: "호텔 제출 표시", invoiceLastSubmitted: "마지막 제출", invoicePrintHistory: "인쇄 기록",
+    invoiceKindPreview: "미리보기 인쇄", invoiceKindSubmitted: "호텔 제출됨",
+    invoiceDataChangedWarning: "마지막 제출 이후 숙박 데이터가 변경되었습니다 — 재대조 후 다시 제출하세요.",
+    invoiceWithAmount: "금액 포함", invoiceWithoutAmount: "금액 미포함", invoiceNoPrintHistory: "인쇄 기록 없음",
     staffList: "스태프 목록", flightMgmt: "항공 관리", hotelMgmt: "숙박 관리", hotelList: "호텔 목록",
     progressFlight: "항공", progressHotel: "숙박", progressVehicle: "미배정", progressOf: "{done}/{total}",
     no: "번호", dept: "부서", jobTitle: "직함", titleTopPh: "상단 (직접 입력)", titleBottomPh: "하단 (직접 입력)", titleTopCol: "직함 (상)", titleBottomCol: "직함 (하)",
@@ -873,7 +897,7 @@ const T = {
     guideBtn: "가이드", guideTitle: "사용 가이드", guideClose: "닫기",
     guideShowLoc: "버튼 위치 표시", guideGotIt: "확인",
     guidePurpose: "이 화면에서 할 수 있는 일", guideSteps: "사용 단계", guideRules: "입력 규칙", guideNotes: "주의사항",
-    guideSecStaff: "스태프", guideSecFlight: "항공", guideSecStay: "숙박", guideSecVehicle: "차량",
+    guideSecStaff: "스태프", guideSecFlight: "항공", guideSecStay: "숙박", guideSecVehicle: "차량", guideSecInvoice: "청구서",
   },
   ja: {
     appName: "制作 交通・宿泊管理", logout: "ログアウト", print: "印刷", members: "メンバー", back: "戻る", settings: "設定",
@@ -895,6 +919,12 @@ const T = {
     invoiceSubtotal: "小計", invoiceRooms: "室", invoiceNights: "泊",
     invoiceDateRange: "〜", invoicePrint: "請求書を印刷",
     invoiceNoData: "請求できる宿泊データがありません", invoiceAvgRate: "平均",
+    invoiceShowAmount: "金額を表示", invoiceHideAmount: "金額を非表示",
+    invoiceShowAmountHint: "オフにすると画面・印刷とも金額列・小計・合計を非表示にし、料金栏は室数×泊数のみ表示します。",
+    invoiceMarkSubmitted: "ホテル提出済みにする", invoiceLastSubmitted: "最終提出", invoicePrintHistory: "印刷履歴",
+    invoiceKindPreview: "プレビュー印刷", invoiceKindSubmitted: "ホテル提出済",
+    invoiceDataChangedWarning: "最終提出以降、宿泊データが変更されています — 再照合のうえ再提出してください。",
+    invoiceWithAmount: "金額あり", invoiceWithoutAmount: "金額なし", invoiceNoPrintHistory: "印刷履歴はありません",
     staffList: "スタッフ", flightMgmt: "フライト管理", hotelMgmt: "宿泊管理", hotelList: "ホテル",
     progressFlight: "フライト", progressHotel: "宿泊", progressVehicle: "未配車", progressOf: "{done}/{total}",
     no: "No.", dept: "部署", jobTitle: "職名", titleTopPh: "上段（自由入力）", titleBottomPh: "下段（自由入力）", titleTopCol: "職名（上）", titleBottomCol: "職名（下）",
@@ -1004,11 +1034,11 @@ const T = {
     guideBtn: "操作ガイド", guideTitle: "操作ガイド", guideClose: "閉じる",
     guideShowLoc: "このボタンの場所を表示", guideGotIt: "了解",
     guidePurpose: "この画面でできること", guideSteps: "操作手順", guideRules: "入力ルール", guideNotes: "注意事項",
-    guideSecStaff: "スタッフ", guideSecFlight: "フライト", guideSecStay: "宿泊", guideSecVehicle: "配車",
+    guideSecStaff: "スタッフ", guideSecFlight: "フライト", guideSecStay: "宿泊", guideSecVehicle: "配車", guideSecInvoice: "請求明細",
   },
 };
 
-const GUIDE_SECTIONS = ["staff", "flight", "stay", "vehicle"];
+const GUIDE_SECTIONS = ["staff", "flight", "stay", "invoice", "vehicle"];
 
 const GUIDE_CONTENT = {
   "zh-TW": {
@@ -1028,12 +1058,23 @@ const GUIDE_CONTENT = {
     },
     stay: {
       purpose: "安排飯店住宿：個人宿泊段、專用空間、房號與未配房名單。",
-      steps: ["先於「飯店設定」新增飯店（若尚未建立）。", "在「住宿一覽」選人後點「新增住宿段」。", "選飯店、房型、入住／退房日期。", "需要器材間等請點「新增專用空間」（不綁個人）。", "在表格「房號」欄填入房號；同房號會自動分組。"],
-      rules: ["宿泊段＝個人的飯店住宿，一人可有多段。", "專用空間＝器材間、梳化間等，請填空間名稱而非個人名。", "底部「未配房人員」＝尚無任何住宿段；表格內「待分配房號」＝已有住宿但未填房號。"],
-      notes: ["可切換「拍攝區域」分頁，各區域獨立顯示未配房名單。", "點未配房人員名稱可快速新增住宿段。"],
+      steps: ["先於「飯店設定」新增飯店（若尚未建立）。", "第一次新增：底部「未配房人員」點名，或上方下拉選人 →「新增住宿段」。", "第二段起：同一人不會再出現在未配房；須上方下拉選同一人 →「新增住宿段」（例：台北 3 晚後加花蓮 2 晚）。", "選飯店、房型、入住／退房日期。", "需要器材間等請點「新增專用空間」（不綁個人）。", "在表格「房號」欄填入房號；同房號會自動分組。"],
+      rules: ["宿泊段＝個人的飯店住宿，一人可有多段，每段獨立選飯店與日期。", "專用空間＝器材間、梳化間等，請填空間名稱而非個人名。", "底部「未配房人員」＝尚無任何住宿段；表格內「待分配房號」＝已有住宿但未填房號。"],
+      notes: ["可切換「拍攝區域」分頁，各區域獨立顯示未配房名單。", "點未配房人員名稱可快速新增第一段住宿。"],
       highlights: [
         { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "新增住宿段" },
         { tour: "stay-special-room", tab: "C", accSub: "stays", label: "新增專用空間" },
+      ],
+    },
+    invoice: {
+      purpose: "彙整各飯店住宿費用，產出可與飯店帳單對照的請款表；可切換是否顯示金額。",
+      steps: ["開啟「住宿」分頁 →「請款對帳」。", "選「飯店合併」（對飯店帳單）或「逐間明細」（查單房／單人）。", "用「顯示／隱藏金額」調整畫面與列印內容。", "確認資料後按「列印對帳表」（預覽）或「標記已交飯店」（正式交件）。", "交件前請查看頂部紀錄，確認是否已有同事交過。"],
+      rules: ["與飯店對帳請用「飯店合併」。", "兩模式總額不一致時，先回住宿一覽補房號或修正日期。", "交件紀錄為全專案共用；列印內容＝按下當下的最新資料與設定。"],
+      notes: ["金額顯示偏好為個人設定，不影響他人。", "交件後若房表有變更，系統會提示需重新對帳。", "預覽列印也會寫入紀錄，方便知道誰曾列印過。"],
+      highlights: [
+        { tour: "invoice-panel", tab: "C", accSub: "invoice", label: "請款對帳分頁" },
+        { tour: "invoice-show-amount", tab: "C", accSub: "invoice", label: "顯示／隱藏金額" },
+        { tour: "invoice-submit", tab: "C", accSub: "invoice", label: "標記已交飯店" },
       ],
     },
     vehicle: {
@@ -1064,12 +1105,23 @@ const GUIDE_CONTENT = {
     },
     stay: {
       purpose: "安排饭店住宿：个人住宿段、专用空间、房号与未配房名单。",
-      steps: ["先于「饭店设定」新增饭店（若尚未建立）。", "在「住宿一览」选人后点「新增住宿段」。", "选饭店、房型、入住／退房日期。", "需要器材间等请点「新增专用空间」（不绑个人）。", "在表格「房号」栏填入房号；同房号会自动分组。"],
-      rules: ["住宿段＝个人的饭店住宿，一人可有多段。", "专用空间＝器材间、化妆间等，请填空间名称而非个人名。", "底部「未配房人员」＝尚无任何住宿段；表格内「待分配房号」＝已有住宿但未填房号。"],
-      notes: ["可切换「拍摄区域」分页，各区域独立显示未配房名单。", "点未配房人员名称可快速新增住宿段。"],
+      steps: ["先于「饭店设定」新增饭店（若尚未建立）。", "第一次新增：底部「未配房人员」点名，或上方下拉选人 →「新增住宿段」。", "第二段起：同一人不会再出现在未配房；须上方下拉选同一人 →「新增住宿段」（例：台北 3 晚后加花莲 2 晚）。", "选饭店、房型、入住／退房日期。", "需要器材间等请点「新增专用空间」（不绑个人）。", "在表格「房号」栏填入房号；同房号会自动分组。"],
+      rules: ["住宿段＝个人的饭店住宿，一人可有多段，每段独立选饭店与日期。", "专用空间＝器材间、化妆间等，请填空间名称而非个人名。", "底部「未配房人员」＝尚无任何住宿段；表格内「待分配房号」＝已有住宿但未填房号。"],
+      notes: ["可切换「拍摄区域」分页，各区域独立显示未配房名单。", "点未配房人员名称可快速新增第一段住宿。"],
       highlights: [
         { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "新增住宿段" },
         { tour: "stay-special-room", tab: "C", accSub: "stays", label: "新增专用空间" },
+      ],
+    },
+    invoice: {
+      purpose: "汇总各饭店住宿费用，产出可与饭店账单对照的请款表；可切换是否显示金额。",
+      steps: ["打开「住宿」分页 →「请款对账」。", "选「饭店合并」（对饭店账单）或「逐间明细」（查单房／单人）。", "用「显示／隐藏金额」调整画面与打印内容。", "确认资料后按「打印对账表」（预览）或「标记已交饭店」（正式交件）。", "交件前请查看顶部记录，确认是否已有同事交过。"],
+      rules: ["与饭店对账请用「饭店合并」。", "两模式总额不一致时，先回住宿一览补房号或修正日期。", "交件记录为全项目共用；打印内容＝按下当下的最新资料与设定。"],
+      notes: ["金额显示偏好为个人设定，不影响他人。", "交件后若房表有变更，系统会提示需重新对账。", "预览打印也会写入记录，方便知道谁曾打印过。"],
+      highlights: [
+        { tour: "invoice-panel", tab: "C", accSub: "invoice", label: "请款对账分页" },
+        { tour: "invoice-show-amount", tab: "C", accSub: "invoice", label: "显示／隐藏金额" },
+        { tour: "invoice-submit", tab: "C", accSub: "invoice", label: "标记已交饭店" },
       ],
     },
     vehicle: {
@@ -1100,12 +1152,23 @@ const GUIDE_CONTENT = {
     },
     stay: {
       purpose: "Manage hotel stays: personal segments, special spaces, room numbers.",
-      steps: ["Add hotels under Hotel Settings if needed.", "On Stay List, pick a person and Add Stay.", "Select hotel, room type, check-in/out.", "Use Add Special Space for equipment/makeup rooms (not tied to a person).", "Enter room numbers in the table; same number groups occupants."],
-      rules: ["Stay segment = personal hotel stay; multiple segments allowed.", "Special space = shared room name, not a person.", "Unassigned list = no stay yet; Room pending = stay exists but no room number."],
-      notes: ["Shooting phase tabs filter by location.", "Click unassigned names to add a stay quickly."],
+      steps: ["Add hotels under Hotel Settings if needed.", "First stay: click an unassigned name at the bottom, or pick a person above → Add Stay.", "Second segment onward: the person no longer appears as unassigned; pick the same person above → Add Stay (e.g. Taipei 3 nights then Hualien 2).", "Select hotel, room type, check-in/out.", "Use Add Special Space for equipment/makeup rooms (not tied to a person).", "Enter room numbers in the table; same number groups occupants."],
+      rules: ["Stay segment = personal hotel stay; multiple segments allowed, each with its own hotel and dates.", "Special space = shared room name, not a person.", "Unassigned list = no stay yet; Room pending = stay exists but no room number."],
+      notes: ["Shooting phase tabs filter by location.", "Click unassigned names to add the first stay quickly."],
       highlights: [
         { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "Add Stay" },
         { tour: "stay-special-room", tab: "C", accSub: "stays", label: "Add special space" },
+      ],
+    },
+    invoice: {
+      purpose: "Summarize hotel stay costs for reconciliation with hotel bills; toggle amount visibility.",
+      steps: ["Open Hotels tab → Invoice.", "Choose Hotel summary (for hotel bills) or Per room (for detail checks).", "Use Show/Hide amounts to adjust screen and print output.", "Click Print Invoice (preview) or Mark sent to hotel (official submission).", "Check the log at the top before submitting — a colleague may have already sent it."],
+      rules: ["Use Hotel summary when reconciling with the hotel.", "If totals differ between modes, fix room numbers or dates in Stay List first.", "Submission log is shared project-wide; print uses the latest data and settings at click time."],
+      notes: ["Amount display preference is personal and does not affect others.", "If stays change after submission, the system warns you to reconcile again.", "Preview prints are also logged so the team can see who printed."],
+      highlights: [
+        { tour: "invoice-panel", tab: "C", accSub: "invoice", label: "Invoice tab" },
+        { tour: "invoice-show-amount", tab: "C", accSub: "invoice", label: "Show/hide amounts" },
+        { tour: "invoice-submit", tab: "C", accSub: "invoice", label: "Mark sent to hotel" },
       ],
     },
     vehicle: {
@@ -1136,12 +1199,23 @@ const GUIDE_CONTENT = {
     },
     stay: {
       purpose: "호텔 숙박: 개인 구간, 전용 공간, 객실 번호를 관리합니다.",
-      steps: ["「호텔 설정」에서 호텔 추가.", "「숙박 목록」에서 인원 선택 후 「구간 추가」.", "호텔·객실 타입·입퇴실일 선택.", "장비실 등은 「전용 공간 추가」.", "표의 객실 번호栏에 입력."],
-      rules: ["숙박 구간 = 개인 숙박, 여러 구간 가능.", "전용 공간 = 공간 이름 (개인 아님).", "미배정 = 숙박 없음; 번호 미배정 = 숙박은 있으나 번호 없음."],
-      notes: ["촬영 구역 탭별로 미배정 목록이 다릅니다.", "미배정 이름 클릭으로 빠른 추가."],
+      steps: ["「호텔 설정」에서 호텔 추가.", "첫 구간: 하단 미배정 이름 클릭 또는 상단 드롭다운 → 「구간 추가」.", "두 번째 구간부터: 미배정에 안 나옴 — 같은 사람을 상단에서 선택 → 「구간 추가」(예: 타이베이 3박 후 화롄 2박).", "호텔·객실 타입·입퇴실일 선택.", "장비실 등은 「전용 공간 추가」.", "표의 객실 번호栏에 입력."],
+      rules: ["숙박 구간 = 개인 숙박, 여러 구간 가능, 구간마다 호텔·날짜 독립.", "전용 공간 = 공간 이름 (개인 아님).", "미배정 = 숙박 없음; 번호 미배정 = 숙박은 있으나 번호 없음."],
+      notes: ["촬영 구역 탭별로 미배정 목록이 다릅니다.", "미배정 이름 클릭으로 첫 구간을 빠르게 추가."],
       highlights: [
         { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "구간 추가" },
         { tour: "stay-special-room", tab: "C", accSub: "stays", label: "전용 공간 추가" },
+      ],
+    },
+    invoice: {
+      purpose: "호텔 숙박 비용을 모아 호텔 청구서와 대조할 수 있는 명세를 만듭니다. 금액 표시를 전환할 수 있습니다.",
+      steps: ["「숙박」탭 → 「청구서」.", "「호텔 합산」(호텔 청구용) 또는 「객실별」(상세 확인) 선택.", "「금액 표시/숨김」으로 화면·인쇄 조정.", "「청구서 인쇄」(미리보기) 또는 「호텔 제출 표시」(공식 제출).", "제출 전 상단 기록 확인 — 동료가 이미 제출했을 수 있음."],
+      rules: ["호텔과 대조할 때는 「호텔 합산」.", "합계 불일치 시 숙박 목록에서 객실 번호·날짜 수정.", "제출 기록은 프로젝트 공유; 인쇄 = 클릭 시점의 최신 데이터·설정."],
+      notes: ["금액 표시는 개인 설정.", "제출 후 숙박 변경 시 재대조 안내.", "미리보기 인쇄도 기록됨."],
+      highlights: [
+        { tour: "invoice-panel", tab: "C", accSub: "invoice", label: "청구서 탭" },
+        { tour: "invoice-show-amount", tab: "C", accSub: "invoice", label: "금액 표시/숨김" },
+        { tour: "invoice-submit", tab: "C", accSub: "invoice", label: "호텔 제출 표시" },
       ],
     },
     vehicle: {
@@ -1172,12 +1246,23 @@ const GUIDE_CONTENT = {
     },
     stay: {
       purpose: "ホテル宿泊を管理します。個人の宿泊区間・専用スペース・部屋番号・未配室スタッフ。",
-      steps: ["未登録なら「ホテル設定」でホテルを追加します。", "「宿泊一覧」でスタッフを選び「区間追加」をクリック。", "ホテル・部屋タイプ・チェックイン／アウトを入力。", "機材室・メイク室等は「専用スペースを追加」（個人名ではありません）。", "表の「部屋番号」栏に番号を入力。同じ番号は自動でグループ化されます。"],
-      rules: ["宿泊区間＝個人のホテル宿泊。一人に複数区間可能。", "専用スペース＝機材室など。空間名を入力（個人名ではない）。", "下部「未配室スタッフ」＝まだ宿泊区間がない人。「部屋番号未配」＝宿泊はあるが番号未入力。"],
-      notes: ["「撮影エリア」タブでエリア別に未配室を確認できます。", "未配室の名前をクリックすると宿泊区間を追加できます。"],
+      steps: ["未登録なら「ホテル設定」でホテルを追加します。", "初回：下部「未配室スタッフ」の名前をクリック、または上部ドロップダウン →「区間追加」。", "2区間目以降：未配室には出ません — 同じ人を上部で選び →「区間追加」（例：台北3泊のあと花蓮2泊）。", "ホテル・部屋タイプ・チェックイン／アウトを入力。", "機材室・メイク室等は「専用スペースを追加」（個人名ではありません）。", "表の「部屋番号」栏に番号を入力。同じ番号は自動でグループ化されます。"],
+      rules: ["宿泊区間＝個人のホテル宿泊。一人に複数区間可能。各区間でホテル・日付は独立。", "専用スペース＝機材室など。空間名を入力（個人名ではない）。", "下部「未配室スタッフ」＝まだ宿泊区間がない人。「部屋番号未配」＝宿泊はあるが番号未入力。"],
+      notes: ["「撮影エリア」タブでエリア別に未配室を確認できます。", "未配室の名前をクリックすると最初の宿泊区間を追加できます。"],
       highlights: [
         { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "区間追加" },
         { tour: "stay-special-room", tab: "C", accSub: "stays", label: "専用スペースを追加" },
+      ],
+    },
+    invoice: {
+      purpose: "各ホテルの宿泊費をまとめ、ホテル請求書と照合できる明細を出力します。金額の表示／非表示を切り替えられます。",
+      steps: ["「宿泊」タブ →「請求明細」。", "「ホテル合算」（ホテル請求向け）または「部屋別」（詳細確認）を選ぶ。", "「金額を表示／非表示」で画面・印刷を調整。", "「請求書を印刷」（プレビュー）または「ホテル提出済みにする」（正式提出）。", "提出前に上部の履歴を確認 — 同僚が既に提出している場合があります。"],
+      rules: ["ホテルとの照合は「ホテル合算」。", "合計がずれる場合は宿泊一覧で部屋番号・日付を修正。", "提出履歴はプロジェクト共通。印刷内容＝クリック時点の最新データと設定。"],
+      notes: ["金額表示は個人設定で、他のユーザーには影響しません。", "提出後に宿泊表が変更されると再照合の警告が出ます。", "プレビュー印刷も履歴に記録されます。"],
+      highlights: [
+        { tour: "invoice-panel", tab: "C", accSub: "invoice", label: "請求明細タブ" },
+        { tour: "invoice-show-amount", tab: "C", accSub: "invoice", label: "金額表示／非表示" },
+        { tour: "invoice-submit", tab: "C", accSub: "invoice", label: "ホテル提出済みにする" },
       ],
     },
     vehicle: {
@@ -2430,7 +2515,7 @@ function GuidePanel({ open, section, onSectionChange, onClose, lang, t, onHighli
   if (!open) return null;
   const content = getGuideContent(lang);
   const sec = content[section] || content.staff;
-  const secLabels = { staff: t.guideSecStaff, flight: t.guideSecFlight, stay: t.guideSecStay, vehicle: t.guideSecVehicle };
+  const secLabels = { staff: t.guideSecStaff, flight: t.guideSecFlight, stay: t.guideSecStay, invoice: t.guideSecInvoice, vehicle: t.guideSecVehicle };
   return (
     <div className="no-print" style={{ position: "fixed", inset: 0, zIndex: 120, pointerEvents: "none" }}>
       <div
@@ -3855,8 +3940,112 @@ function buildInvoiceBatchesPerRoom(stays, pricingRules, hotels) {
   return result;
 }
 
-function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t }) {
+function computeStaysFingerprint(stays) {
+  const parts = [...stays]
+    .sort((a, b) => a.id - b.id)
+    .map((s) => `${s.id}|${s.hotel_id}|${s.check_in}|${s.check_out}|${(s.room_number || "").trim()}|${Number(s.total_amount) || 0}`)
+    .join(";");
+  let h = 0;
+  for (let i = 0; i < parts.length; i++) {
+    h = ((h << 5) - h) + parts.charCodeAt(i);
+    h |= 0;
+  }
+  return String(h);
+}
+
+function invoiceFormulaParts(b, project, lang, t, showAmount) {
+  const roomPart = `${b.roomCount} ${t.invoiceRooms}`;
+  const nightPart = `${b.nights} ${t.invoiceNights}`;
+  if (!showAmount) return `${roomPart} × ${nightPart}`;
+  const price = formatMoney(convertMoney(b.unitPrice, project), project, lang);
+  return `${price} × ${roomPart} × ${nightPart}`;
+}
+
+function buildInvoicePrintHtml({ data, project, lang, t, showAmount, grandTotal }) {
+  const amtHeader = showAmount ? `<th style="padding:8px 12px;text-align:right;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceSubtotal}</th>` : "";
+  const rows = data.map((hd) => {
+    const batchRows = hd.batches.map((b) => {
+      const formula = invoiceFormulaParts(b, project, lang, t, showAmount);
+      const amtCell = showAmount
+        ? `<td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.batchTotal, project), project, lang)}</td>`
+        : "";
+      return `<tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.check_in} ${t.invoiceDateRange} ${b.check_out}<br><small style="color:#666;">(${t.nights || "共"} ${b.nights} ${t.invoiceNights})</small></td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}${b.subLabel ? `<br><small style="color:#666;">${b.subLabel}</small>` : ""}</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${formula}</td>
+          ${amtCell}
+        </tr>`;
+    }).join("");
+    const subtotalRow = showAmount
+      ? `<tr style="background:#eaf2ec;">
+                <td colspan="3" style="padding:10px 12px;font-weight:700;font-size:10pt;">${t.invoiceSubtotal}</td>
+                <td style="padding:10px 12px;text-align:right;font-weight:800;font-size:12pt;color:#1a3028;">${formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}</td>
+              </tr>`
+      : "";
+    return `
+        <div style="margin-bottom:28px;">
+          <div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:10px 16px;border-radius:6px 6px 0 0;font-size:13pt;font-family:'Noto Serif JP',serif;font-weight:600;">${hd.hotel?.name || "—"}</div>
+          <table style="width:100%;border-collapse:collapse;border:1px solid #e0ebe4;border-top:none;">
+            <thead>
+              <tr style="background:#f0f5f1;">
+                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.nights} / ${t.checkIn}〜${t.checkOut}</th>
+                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceRoomType}</th>
+                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceFormula}</th>
+                ${amtHeader}
+              </tr>
+            </thead>
+            <tbody>${batchRows}${subtotalRow}
+            </tbody>
+          </table>
+        </div>`;
+  }).join("");
+
+  const grandTotalBlock = showAmount
+    ? `<div style="margin-top:16px;padding:12px 16px;background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
+  <span style="font-size:12pt;font-weight:700;">${t.totalCost}</span>
+  <span style="font-size:18pt;font-family:'Noto Serif JP',serif;font-weight:600;">${formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
+</div>`
+    : "";
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t.invoiceTitle}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:10pt;color:#1a2820;padding:12mm;}
+@page{size:A4 portrait;margin:10mm 12mm;}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style>
+</head><body>
+<div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:14px 18px;border-radius:6px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
+  <div><div style="font-family:'Noto Serif JP',serif;font-size:15pt;font-weight:600;">${t.invoiceTitle}</div><div style="font-size:9pt;opacity:.75;margin-top:4px;">${project?.name || ""} · ${new Date().toLocaleDateString()}</div></div>
+  <div style="font-size:9pt;opacity:.75;text-align:right;">${t.invoiceSubtitle}</div>
+</div>
+${rows}
+${grandTotalBlock}
+</body></html>`;
+}
+
+function formatInvoiceLogTime(iso, lang) {
+  if (!iso) return "—";
+  const loc = lang === "ja" ? "ja-JP" : lang?.startsWith("en") ? "en-US" : lang === "ko" ? "ko-KR" : "zh-TW";
+  try {
+    return new Date(iso).toLocaleString(loc, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return iso.slice(0, 16).replace("T", " ");
+  }
+}
+
+function invoiceLogUserLabel(log) {
+  const email = log.user_email || "";
+  if (!email) return "—";
+  const local = email.split("@")[0];
+  return local || email;
+}
+
+function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, user, canEdit, showToast }) {
   const [invoiceMode, setInvoiceMode] = useState("merged");
+  const [showAmount, setShowAmount] = useState(true);
+  const [printLogs, setPrintLogs] = useState([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+
   const mergedData = useMemo(() => buildInvoiceBatchesMerged(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
   const perRoomData = useMemo(() => buildInvoiceBatchesPerRoom(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
   const data = invoiceMode === "merged" ? mergedData : perRoomData;
@@ -3865,6 +4054,79 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t 
   const perRoomTotal = perRoomData.reduce((s, h) => s + h.hotelTotal, 0);
   const totalsDiffer = Math.abs(mergedTotal - perRoomTotal) > 0.5;
   const modeHint = invoiceMode === "merged" ? t.invoiceModeMergedHint : t.invoiceModePerRoomHint;
+  const dataFingerprint = useMemo(() => computeStaysFingerprint(stays), [stays]);
+
+  const loadPrintLogs = useCallback(async () => {
+    if (!project?.id) return;
+    try {
+      const rows = await api.get("invoice_print_logs", `&project_id=eq.${project.id}&order=created_at.desc&limit=10`);
+      setPrintLogs(rows);
+    } catch {
+      setPrintLogs([]);
+    }
+  }, [project?.id]);
+
+  useEffect(() => {
+    if (!user?.id) { setPrefsLoaded(true); return; }
+    (async () => {
+      try {
+        const rows = await api.get("user_settings", `&user_id=eq.${user.id}`);
+        if (rows[0] && rows[0].invoice_show_amount != null) setShowAmount(!!rows[0].invoice_show_amount);
+      } catch (_) { /* ignore */ }
+      finally { setPrefsLoaded(true); }
+    })();
+  }, [user?.id]);
+
+  useEffect(() => { loadPrintLogs(); }, [loadPrintLogs]);
+
+  const saveShowAmount = async (val) => {
+    setShowAmount(val);
+    if (!user?.id) return;
+    try {
+      const body = { user_id: user.id, invoice_show_amount: val };
+      const langRow = await api.get("user_settings", `&user_id=eq.${user.id}`);
+      if (langRow[0]?.language) body.language = langRow[0].language;
+      await sb("user_settings", { method: "POST", prefer: "return=representation,resolution=merge-duplicates", body: JSON.stringify(body) });
+    } catch (_) { /* ignore */ }
+  };
+
+  const logPrint = async (kind) => {
+    if (!user?.id || !project?.id) return;
+    try {
+      await api.insert("invoice_print_logs", {
+        project_id: project.id,
+        user_id: user.id,
+        user_email: user.email || null,
+        kind,
+        invoice_mode: invoiceMode,
+        show_amount: showAmount,
+        grand_total: grandTotal,
+        data_fingerprint: dataFingerprint,
+      });
+      await loadPrintLogs();
+    } catch (e) {
+      showToast?.(e.message);
+    }
+  };
+
+  const openPrintPreview = () => {
+    const html = buildInvoicePrintHtml({ data, project, lang, t, showAmount, grandTotal });
+    openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
+  };
+
+  const handlePrint = async () => {
+    openPrintPreview();
+    if (canEdit) await logPrint("preview");
+  };
+
+  const handleMarkSubmitted = async () => {
+    openPrintPreview();
+    if (canEdit) await logPrint("submitted");
+  };
+
+  const lastSubmitted = printLogs.find((l) => l.kind === "submitted");
+  const dataChangedSinceSubmit = lastSubmitted && lastSubmitted.data_fingerprint !== dataFingerprint;
+
   const modeBtn = (mode, label) => (
     <button
       type="button"
@@ -3881,55 +4143,8 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t 
     >{label}</button>
   );
 
-  const handlePrint = () => {
-    const rows = data.map((hd) => {
-      const batchRows = hd.batches.map((b, i) => `
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.check_in} ${t.invoiceDateRange} ${b.check_out}<br><small style="color:#666;">(${t.nights || "共"} ${b.nights} ${t.invoiceNights})</small></td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.unitPrice, project), project, lang)} × ${b.roomCount} ${t.invoiceRooms} × ${b.nights} ${t.invoiceNights}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.batchTotal, project), project, lang)}</td>
-        </tr>`).join("");
-      return `
-        <div style="margin-bottom:28px;">
-          <div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:10px 16px;border-radius:6px 6px 0 0;font-size:13pt;font-family:'Noto Serif JP',serif;font-weight:600;">${hd.hotel?.name || "—"}</div>
-          <table style="width:100%;border-collapse:collapse;border:1px solid #e0ebe4;border-top:none;">
-            <thead>
-              <tr style="background:#f0f5f1;">
-                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.nights}數 / 日期</th>
-                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceRoomType}</th>
-                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceFormula}</th>
-                <th style="padding:8px 12px;text-align:right;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceSubtotal}</th>
-              </tr>
-            </thead>
-            <tbody>${batchRows}
-              <tr style="background:#eaf2ec;">
-                <td colspan="3" style="padding:10px 12px;font-weight:700;font-size:10pt;">${t.invoiceSubtotal}</td>
-                <td style="padding:10px 12px;text-align:right;font-weight:800;font-size:12pt;color:#1a3028;">${formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>`;
-    }).join("");
-
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t.invoiceTitle}</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:10pt;color:#1a2820;padding:12mm;}
-@page{size:A4 portrait;margin:10mm 12mm;}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style>
-</head><body>
-<div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:14px 18px;border-radius:6px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
-  <div><div style="font-family:'Noto Serif JP',serif;font-size:15pt;font-weight:600;">${t.invoiceTitle}</div><div style="font-size:9pt;opacity:.75;margin-top:4px;">${project?.name || ""} · ${new Date().toLocaleDateString()}</div></div>
-  <div style="font-size:9pt;opacity:.75;text-align:right;">${t.invoiceSubtitle}</div>
-</div>
-${rows}
-<div style="margin-top:16px;padding:12px 16px;background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
-  <span style="font-size:12pt;font-weight:700;">${t.totalCost}</span>
-  <span style="font-size:18pt;font-family:'Noto Serif JP',serif;font-weight:600;">${formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
-</div>
-</body></html>`;
-    openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
-  };
+  const logModeLabel = (mode) => (mode === "merged" ? t.invoiceModeMerged : t.invoiceModePerRoom);
+  const logAmountLabel = (val) => (val ? t.invoiceWithAmount : t.invoiceWithoutAmount);
 
   if (!data.length) {
     return (
@@ -3939,64 +4154,132 @@ ${rows}
     );
   }
 
+  const tableHeaders = [
+    t.nights + " / " + t.checkIn + "〜" + t.checkOut,
+    t.invoiceRoomType,
+    t.invoiceFormula,
+    ...(showAmount ? [t.invoiceSubtotal] : []),
+  ];
+
   return (
     <div>
-      {/* 模式切換 + 白話說明 */}
+      {/* 交件／列印紀錄 */}
+      <div style={{ marginBottom: 16, padding: "12px 16px", background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
+        {lastSubmitted && (
+          <div style={{ marginBottom: historyOpen ? 10 : 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.08em", marginBottom: 6 }}>{t.invoiceLastSubmitted}</div>
+            <div style={{ fontSize: 12.5, color: "var(--sumi)", lineHeight: 1.6 }}>
+              <strong>{invoiceLogUserLabel(lastSubmitted)}</strong>
+              <span style={{ color: "var(--usunezumi)", margin: "0 6px" }}>·</span>
+              {formatInvoiceLogTime(lastSubmitted.created_at, lang)}
+              <span style={{ color: "var(--usunezumi)", margin: "0 6px" }}>·</span>
+              {logModeLabel(lastSubmitted.invoice_mode)}
+              <span style={{ color: "var(--usunezumi)", margin: "0 6px" }}>·</span>
+              {logAmountLabel(lastSubmitted.show_amount)}
+            </div>
+            {dataChangedSinceSubmit && (
+              <p style={{ margin: "8px 0 0", fontSize: 11.5, color: "var(--shu)", lineHeight: 1.55, fontWeight: 600 }}>{t.invoiceDataChangedWarning}</p>
+            )}
+          </div>
+        )}
+        {!printLogs.length && (
+          <p style={{ margin: 0, fontSize: 12, color: "var(--nezumi)" }}>{t.invoiceNoPrintHistory}</p>
+        )}
+        {printLogs.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setHistoryOpen((o) => !o)}
+              style={{ marginTop: 10, background: "none", border: "none", padding: 0, fontSize: 11, color: "var(--asagi)", cursor: "pointer", fontWeight: 600 }}
+            >{t.invoicePrintHistory} {historyOpen ? "▾" : "▸"}</button>
+            {historyOpen && (
+              <ul style={{ margin: "8px 0 0", padding: "0 0 0 18px", fontSize: 11.5, color: "var(--sumi)", lineHeight: 1.85 }}>
+                {printLogs.slice(0, 5).map((log) => (
+                  <li key={log.id}>
+                    {formatInvoiceLogTime(log.created_at, lang)} — {invoiceLogUserLabel(log)}
+                    {" · "}{logModeLabel(log.invoice_mode)} · {logAmountLabel(log.show_amount)}
+                    {" · "}<span style={{ color: log.kind === "submitted" ? "var(--moegi)" : "var(--nezumi)", fontWeight: 600 }}>{log.kind === "submitted" ? t.invoiceKindSubmitted : t.invoiceKindPreview}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* 模式切換 + 金額開關 */}
       <div style={{ marginBottom: 16, padding: "12px 16px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
-        <div style={{ display: "inline-flex", gap: 4, padding: 3, background: "var(--keisenL)", borderRadius: 8, marginBottom: 10 }}>
-          {modeBtn("merged", t.invoiceModeMerged)}
-          {modeBtn("perRoom", t.invoiceModePerRoom)}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 10 }}>
+          <div style={{ display: "inline-flex", gap: 4, padding: 3, background: "var(--keisenL)", borderRadius: 8 }}>
+            {modeBtn("merged", t.invoiceModeMerged)}
+            {modeBtn("perRoom", t.invoiceModePerRoom)}
+          </div>
+          {prefsLoaded && (
+            <label data-tour="invoice-show-amount" style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 12, color: "var(--sumi)", userSelect: "none" }}>
+              <input
+                type="checkbox"
+                checked={showAmount}
+                onChange={(e) => saveShowAmount(e.target.checked)}
+                style={{ width: 15, height: 15, accentColor: "var(--moegi)" }}
+              />
+              {showAmount ? t.invoiceShowAmount : t.invoiceHideAmount}
+            </label>
+          )}
         </div>
         <p style={{ margin: 0, fontSize: 12, color: "var(--sumi)", lineHeight: 1.65 }}>{modeHint}</p>
+        {!showAmount && (
+          <p style={{ margin: "8px 0 0", fontSize: 11, color: "var(--nezumi)", lineHeight: 1.6 }}>{t.invoiceShowAmountHint}</p>
+        )}
         {totalsDiffer && (
           <p style={{ margin: "8px 0 0", fontSize: 11, color: "var(--kincha)", lineHeight: 1.6 }}>{t.invoiceModeDiffHint}</p>
         )}
       </div>
 
       {/* 頁首 Banner */}
-      <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", marginBottom: 20, borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
+      <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", marginBottom: 20, borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.04em" }}>{t.invoiceTitle}</div>
           <div style={{ fontSize: 10, opacity: 0.65, marginTop: 3 }}>{t.invoiceSubtitle}</div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, opacity: 0.65 }}>{t.totalCost}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</div>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          {showAmount && (
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 10, opacity: 0.65 }}>{t.totalCost}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</div>
+            </div>
+          )}
           <button type="button" onClick={handlePrint} style={{ background: "rgba(255,255,255,.12)", color: "var(--washi)", border: "1px solid rgba(255,255,255,.22)", borderRadius: 6, padding: "8px 16px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>🖨 {t.invoicePrint}</button>
+          {canEdit && (
+            <button type="button" data-tour="invoice-submit" onClick={handleMarkSubmitted} style={{ background: "var(--moegi)", color: "var(--shiro)", border: "none", borderRadius: 6, padding: "8px 16px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", fontWeight: 700 }}>{t.invoiceMarkSubmitted}</button>
+          )}
         </div>
       </div>
 
       {/* 各飯店表格 */}
       {data.map((hd) => (
         <section key={hd.hid} style={{ marginBottom: 32, background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
-          {/* 飯店標題列 */}
           <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--theadGrad)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{hd.hotel?.name || "—"}</h3>
             <span style={{ fontSize: 11, color: "var(--washi)", opacity: 0.75 }}>{hd.batches.length} {t.invoiceBatch}</span>
           </div>
-
-          {/* 批次表格 */}
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <colgroup>
-                <col style={{ width: "28%" }} />
-                <col style={{ width: "18%" }} />
-                <col style={{ width: "34%" }} />
-                <col style={{ width: "20%" }} />
+                <col style={{ width: showAmount ? "28%" : "34%" }} />
+                <col style={{ width: showAmount ? "18%" : "22%" }} />
+                <col style={{ width: showAmount ? "34%" : "44%" }} />
+                {showAmount && <col style={{ width: "20%" }} />}
               </colgroup>
               <thead>
                 <tr style={{ background: "var(--washi)", borderBottom: "2px solid var(--keisenM)" }}>
-                  {[t.nights + " / " + t.checkIn + "〜" + t.checkOut, t.invoiceRoomType, t.invoiceFormula, t.invoiceSubtotal].map((h, i) => (
-                    <th key={i} style={{ padding: "9px 14px", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "var(--nezumi)", textAlign: i === 3 ? "right" : "left", whiteSpace: "nowrap" }}>{h}</th>
+                  {tableHeaders.map((h, i) => (
+                    <th key={i} style={{ padding: "9px 14px", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "var(--nezumi)", textAlign: i === tableHeaders.length - 1 && showAmount ? "right" : "left", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {hd.batches.map((b, i) => (
                   <tr key={i} style={{ background: i % 2 === 0 ? "var(--shiro)" : "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
-                    {/* 日期 */}
                     <td style={{ padding: "11px 14px", verticalAlign: "top" }}>
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
                         {fmtDate(b.check_in, lang)} {t.invoiceDateRange} {fmtDate(b.check_out, lang)}
@@ -4005,43 +4288,50 @@ ${rows}
                         {t.nights ? "" : "共"} {b.nights} {t.invoiceNights}
                       </div>
                     </td>
-                    {/* 房型 */}
                     <td style={{ padding: "11px 14px", fontSize: 12.5, color: "var(--sumi)", verticalAlign: "top" }}>
                       {b.roomLabel}
                       {b.subLabel && <div style={{ fontSize: 10.5, color: "var(--nezumi)", marginTop: 3 }}>{b.subLabel}</div>}
                     </td>
-                    {/* 計價公式 */}
                     <td style={{ padding: "11px 14px", fontSize: 12, color: "var(--nezumi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
-                      <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
-                      <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
-                      <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
-                      <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
-                      <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.nights} {t.invoiceNights}</span>
+                      {showAmount ? (
+                        <>
+                          <span style={{ color: "var(--asagi)", fontWeight: 600 }}>{formatMoney(convertMoney(b.unitPrice, project), project, lang)}</span>
+                          <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
+                          <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms}</span>
+                          <span style={{ margin: "0 5px", color: "var(--usunezumi)" }}>×</span>
+                          <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.nights} {t.invoiceNights}</span>
+                        </>
+                      ) : (
+                        <span style={{ color: "var(--sumi)", fontWeight: 600 }}>{b.roomCount} {t.invoiceRooms} × {b.nights} {t.invoiceNights}</span>
+                      )}
                     </td>
-                    {/* 金額 */}
-                    <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, fontSize: 13, color: "var(--asagi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
-                      {formatMoney(convertMoney(b.batchTotal, project), project, lang)}
-                    </td>
+                    {showAmount && (
+                      <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, fontSize: 13, color: "var(--asagi)", fontVariantNumeric: "tabular-nums", verticalAlign: "top" }}>
+                        {formatMoney(convertMoney(b.batchTotal, project), project, lang)}
+                      </td>
+                    )}
                   </tr>
                 ))}
-                {/* 小計列 */}
-                <tr style={{ background: "var(--moegi3)", borderTop: "2px solid var(--moegi)" }}>
-                  <td colSpan={3} style={{ padding: "11px 14px", fontWeight: 700, fontSize: 12.5, color: "var(--moegi)" }}>{t.invoiceSubtotal}</td>
-                  <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 800, fontSize: 15, color: "var(--moegi)", fontFamily: "'Noto Serif JP',serif", fontVariantNumeric: "tabular-nums" }}>
-                    {formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}
-                  </td>
-                </tr>
+                {showAmount && (
+                  <tr style={{ background: "var(--moegi3)", borderTop: "2px solid var(--moegi)" }}>
+                    <td colSpan={3} style={{ padding: "11px 14px", fontWeight: 700, fontSize: 12.5, color: "var(--moegi)" }}>{t.invoiceSubtotal}</td>
+                    <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 800, fontSize: 15, color: "var(--moegi)", fontFamily: "'Noto Serif JP',serif", fontVariantNumeric: "tabular-nums" }}>
+                      {formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </section>
       ))}
 
-      {/* 全域總計 */}
-      <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
-        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.04em" }}>{t.totalCost}</span>
-        <span style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
-      </div>
+      {showAmount && (
+        <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.04em" }}>{t.totalCost}</span>
+          <span style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -6071,7 +6361,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
               </div>
               <div style={{ display: "flex", background: "var(--washi)", borderRadius: 8, padding: 4, marginBottom: 16, width: "fit-content", gap: 2 }}>
                 {[["stays", t.subStay], ["hotels", t.subHotels], ["invoice", t.subInvoice]].map(([k, lb]) => (
-                  <button key={k} type="button" onClick={() => setAccSub(k)} style={{
+                  <button key={k} type="button" data-tour={k === "invoice" ? "invoice-panel" : undefined} onClick={() => setAccSub(k)} style={{
                     padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12.5,
                     fontFamily: "'Noto Sans JP',sans-serif", letterSpacing: "0.02em",
                     fontWeight: accSub === k ? 600 : 400,
@@ -6493,6 +6783,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   project={project}
                   lang={lang}
                   t={t}
+                  user={user}
+                  canEdit={canEdit}
+                  showToast={showToast}
                 />
               )}
             </div>
