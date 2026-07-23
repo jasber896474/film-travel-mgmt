@@ -474,6 +474,10 @@ const T = {
     pickupTime: "乘車時間", pickupLocation: "乘車地點", vehicleArrivalTime: "抵達時間", vehicleArrivalLocation: "抵達地點", vehicleNote: "備註",
     routeSegment: "行程", addRouteSegment: "新增行程段", totalTravelDuration: "總移動時間",
     stayMgmt: "住宿分配清冊",
+    guideBtn: "操作導覽", guideTitle: "操作導覽", guideClose: "關閉",
+    guideShowLoc: "顯示此按鈕位置", guideGotIt: "了解了",
+    guidePurpose: "這個區塊能做什麼", guideSteps: "操作步驟", guideRules: "輸入規則", guideNotes: "注意事項",
+    guideSecStaff: "工作人員", guideSecFlight: "航班", guideSecStay: "住宿", guideSecVehicle: "配車",
   },
   "zh-CN": {
     appName: "剧组交通住宿管理系统", logout: "登出", print: "打印", members: "成员管理", back: "返回", settings: "项目设定",
@@ -604,6 +608,10 @@ const T = {
     pickupTime: "乘车时间", pickupLocation: "乘车地点", vehicleArrivalTime: "抵达时间", vehicleArrivalLocation: "抵达地点", vehicleNote: "备注",
     routeSegment: "行程", addRouteSegment: "新增行程段", totalTravelDuration: "总移动时间",
     stayMgmt: "住宿分配清册",
+    guideBtn: "操作指南", guideTitle: "操作指南", guideClose: "关闭",
+    guideShowLoc: "显示此按钮位置", guideGotIt: "了解了",
+    guidePurpose: "这个区块能做什么", guideSteps: "操作步骤", guideRules: "输入规则", guideNotes: "注意事项",
+    guideSecStaff: "工作人员", guideSecFlight: "航班", guideSecStay: "住宿", guideSecVehicle: "配车",
   },
   en: {
     appName: "Production Travel & Accommodation", logout: "Logout", print: "Print", members: "Members", back: "Back", settings: "Settings",
@@ -731,6 +739,10 @@ const T = {
     pickupTime: "Pickup Time", pickupLocation: "Pickup Location", vehicleArrivalTime: "Arrival Time", vehicleArrivalLocation: "Arrival Location", vehicleNote: "Note",
     routeSegment: "Route", addRouteSegment: "Add route leg", totalTravelDuration: "Total travel",
     stayMgmt: "Accommodation List",
+    guideBtn: "Guide", guideTitle: "How to Use", guideClose: "Close",
+    guideShowLoc: "Show this button", guideGotIt: "Got it",
+    guidePurpose: "What you can do here", guideSteps: "Steps", guideRules: "Input rules", guideNotes: "Notes",
+    guideSecStaff: "Staff", guideSecFlight: "Flights", guideSecStay: "Hotels", guideSecVehicle: "Vehicles",
   },
   ko: {
     appName: "제작진 교통·숙박 관리", logout: "로그아웃", print: "인쇄", members: "멤버", back: "뒤로", settings: "설정",
@@ -857,6 +869,11 @@ const T = {
     licensePlate: "번호판", vehicleNo: "차량 번호", driverPhone: "기사 전화", onboardDepts: "탑승 부서", travelDuration: "이동 시간",
     pickupTime: "탑승 시간", pickupLocation: "탑승 장소", vehicleArrivalTime: "도착 시간", vehicleArrivalLocation: "도착 장소", vehicleNote: "비고",
     routeSegment: "구간", addRouteSegment: "구간 추가", totalTravelDuration: "총 이동 시간",
+    stayMgmt: "숙박 배정 목록",
+    guideBtn: "가이드", guideTitle: "사용 가이드", guideClose: "닫기",
+    guideShowLoc: "버튼 위치 표시", guideGotIt: "확인",
+    guidePurpose: "이 화면에서 할 수 있는 일", guideSteps: "사용 단계", guideRules: "입력 규칙", guideNotes: "주의사항",
+    guideSecStaff: "스태프", guideSecFlight: "항공", guideSecStay: "숙박", guideSecVehicle: "차량",
   },
   ja: {
     appName: "制作 交通・宿泊管理", logout: "ログアウト", print: "印刷", members: "メンバー", back: "戻る", settings: "設定",
@@ -984,8 +1001,201 @@ const T = {
     pickupTime: "乗車時間", pickupLocation: "乗車地", vehicleArrivalTime: "到着時間", vehicleArrivalLocation: "到着地", vehicleNote: "備考",
     routeSegment: "行程", addRouteSegment: "行程を追加", totalTravelDuration: "移動時間合計",
     stayMgmt: "宿泊割当一覧",
+    guideBtn: "操作ガイド", guideTitle: "操作ガイド", guideClose: "閉じる",
+    guideShowLoc: "このボタンの場所を表示", guideGotIt: "了解",
+    guidePurpose: "この画面でできること", guideSteps: "操作手順", guideRules: "入力ルール", guideNotes: "注意事項",
+    guideSecStaff: "スタッフ", guideSecFlight: "フライト", guideSecStay: "宿泊", guideSecVehicle: "配車",
   },
 };
+
+const GUIDE_SECTIONS = ["staff", "flight", "stay", "vehicle"];
+
+const GUIDE_CONTENT = {
+  "zh-TW": {
+    staff: {
+      purpose: "登錄劇組工作人員名單，作為航班、住宿、配車的基礎資料。",
+      steps: ["開啟頂部「工作人員」分頁。", "點「新增工作人員」填寫部門、姓名、護照等。", "拖曳列可調整編號順序。", "編輯時可設定「隱藏於住宿／派車／航班名單」。"],
+      rules: ["至少填寫漢字名或英文姓名其一。", "不需安排機票／住宿／派車者，請開啟對應的隱藏選項。"],
+      notes: ["有編輯權限者可 CSV 匯入名單。", "所有人員資料會連動到其他三個分頁。"],
+      highlights: [{ tour: "staff-add", tab: "A", label: "新增工作人員" }],
+    },
+    flight: {
+      purpose: "為每位工作人員登錄去程、回程航班與接機資訊。",
+      steps: ["開啟「航班」分頁。", "在該人員列最右側點「輸入」。", "填寫航空公司、航班號、機場、時間等。", "「抵達時間 ↓接機」供現場接機安排參考。"],
+      rules: ["去程、回程分開填寫。", "不需機票者請在工作人員編輯中開啟「隱藏於航班名單」。"],
+      notes: ["可用上方篩選依航空公司、狀態查找。", "行李超重試算在表格下方。"],
+      highlights: [{ tour: "flight-mgmt", tab: "B", label: "航班管理區" }],
+    },
+    stay: {
+      purpose: "安排飯店住宿：個人宿泊段、專用空間、房號與未配房名單。",
+      steps: ["先於「飯店設定」新增飯店（若尚未建立）。", "在「住宿一覽」選人後點「新增住宿段」。", "選飯店、房型、入住／退房日期。", "需要器材間等請點「新增專用空間」（不綁個人）。", "在表格「房號」欄填入房號；同房號會自動分組。"],
+      rules: ["宿泊段＝個人的飯店住宿，一人可有多段。", "專用空間＝器材間、梳化間等，請填空間名稱而非個人名。", "底部「未配房人員」＝尚無任何住宿段；表格內「待分配房號」＝已有住宿但未填房號。"],
+      notes: ["可切換「拍攝區域」分頁，各區域獨立顯示未配房名單。", "點未配房人員名稱可快速新增住宿段。"],
+      highlights: [
+        { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "新增住宿段" },
+        { tour: "stay-special-room", tab: "C", accSub: "stays", label: "新增專用空間" },
+      ],
+    },
+    vehicle: {
+      purpose: "設定車輛與乘車人員，並產出每日配車單。",
+      steps: ["開啟「配車」分頁。", "在「車輛配置」新增車輛、設定容量與行程。", "將司機、乘客拖入或指派至各車。", "切換「每日配車單」選日期，可從配置帶入或手動調整。"],
+      rules: ["未出現在未配車名單者，表示已在某車段落中。", "關閉「隱藏於派車名單」者才會出現在配車選單。"],
+      notes: ["右側顯示未配車人員，可拖曳至車輛卡片。", "配車單可列印供現場使用。"],
+      highlights: [
+        { tour: "vehicle-config", tab: "D", vehicleSub: "config", label: "車輛配置" },
+        { tour: "vehicle-daily", tab: "D", vehicleSub: "daily", label: "每日配車單" },
+      ],
+    },
+  },
+  "zh-CN": {
+    staff: {
+      purpose: "登录剧组工作人员名单，作为航班、住宿、配车的基础资料。",
+      steps: ["打开顶部「工作人员」分页。", "点「新增工作人员」填写部门、姓名、护照等。", "拖曳行可调整编号顺序。", "编辑时可设定「隐藏于住宿／派车／航班名单」。"],
+      rules: ["至少填写汉字名或英文姓名其一。", "不需安排机票／住宿／配车者，请开启对应的隐藏选项。"],
+      notes: ["有编辑权限者可 CSV 导入名单。", "所有人员资料会联动到其他三个分页。"],
+      highlights: [{ tour: "staff-add", tab: "A", label: "新增工作人员" }],
+    },
+    flight: {
+      purpose: "为每位工作人员登录去程、回程航班与接机信息。",
+      steps: ["打开「航班」分页。", "在该人员列最右侧点「录入」。", "填写航空公司、航班号、机场、时间等。", "「抵达时间 ↓接机」供现场接机安排参考。"],
+      rules: ["去程、回程分开填写。", "不需机票者请在工作人员编辑中开启「隐藏于航班名单」。"],
+      notes: ["可用上方筛选依航空公司、状态查找。", "行李超重试算在表格下方。"],
+      highlights: [{ tour: "flight-mgmt", tab: "B", label: "航班管理区" }],
+    },
+    stay: {
+      purpose: "安排饭店住宿：个人住宿段、专用空间、房号与未配房名单。",
+      steps: ["先于「饭店设定」新增饭店（若尚未建立）。", "在「住宿一览」选人后点「新增住宿段」。", "选饭店、房型、入住／退房日期。", "需要器材间等请点「新增专用空间」（不绑个人）。", "在表格「房号」栏填入房号；同房号会自动分组。"],
+      rules: ["住宿段＝个人的饭店住宿，一人可有多段。", "专用空间＝器材间、化妆间等，请填空间名称而非个人名。", "底部「未配房人员」＝尚无任何住宿段；表格内「待分配房号」＝已有住宿但未填房号。"],
+      notes: ["可切换「拍摄区域」分页，各区域独立显示未配房名单。", "点未配房人员名称可快速新增住宿段。"],
+      highlights: [
+        { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "新增住宿段" },
+        { tour: "stay-special-room", tab: "C", accSub: "stays", label: "新增专用空间" },
+      ],
+    },
+    vehicle: {
+      purpose: "设定车辆与乘车人员，并产出每日配车单。",
+      steps: ["打开「配车」分页。", "在「车辆配置」新增车辆、设定容量与行程。", "将司机、乘客拖入或指派至各车。", "切换「每日配车单」选日期，可从配置带入或手动调整。"],
+      rules: ["未出现在未配车名单者，表示已在某车段落中。", "关闭「隐藏于派车名单」者才会出现在配车菜单。"],
+      notes: ["右侧显示未配车人员，可拖曳至车辆卡片。", "配车单可打印供现场使用。"],
+      highlights: [
+        { tour: "vehicle-config", tab: "D", vehicleSub: "config", label: "车辆配置" },
+        { tour: "vehicle-daily", tab: "D", vehicleSub: "daily", label: "每日配车单" },
+      ],
+    },
+  },
+  en: {
+    staff: {
+      purpose: "Register crew members used across flights, hotels, and vehicles.",
+      steps: ["Open the Staff tab.", "Click Add Staff and fill department, name, passport, etc.", "Drag rows to reorder staff numbers.", "When editing, use hide toggles for stays / vehicles / flights lists."],
+      rules: ["Enter at least kanji name or English name.", "Toggle hide options for people who do not need tickets, stays, or rides."],
+      notes: ["Editors can import CSV.", "Staff data feeds all other tabs."],
+      highlights: [{ tour: "staff-add", tab: "A", label: "Add Staff button" }],
+    },
+    flight: {
+      purpose: "Enter outbound/return flights and pickup times per person.",
+      steps: ["Open the Flights tab.", "Click Input on the person's row.", "Fill airline, flight no., airports, times.", "Arrival ↓ Pickup is for ground pickup planning."],
+      rules: ["Outbound and return are separate.", "Hide from flights list if no ticket is needed."],
+      notes: ["Use filters above the table.", "Baggage calculator is below the table."],
+      highlights: [{ tour: "flight-mgmt", tab: "B", label: "Flights area" }],
+    },
+    stay: {
+      purpose: "Manage hotel stays: personal segments, special spaces, room numbers.",
+      steps: ["Add hotels under Hotel Settings if needed.", "On Stay List, pick a person and Add Stay.", "Select hotel, room type, check-in/out.", "Use Add Special Space for equipment/makeup rooms (not tied to a person).", "Enter room numbers in the table; same number groups occupants."],
+      rules: ["Stay segment = personal hotel stay; multiple segments allowed.", "Special space = shared room name, not a person.", "Unassigned list = no stay yet; Room pending = stay exists but no room number."],
+      notes: ["Shooting phase tabs filter by location.", "Click unassigned names to add a stay quickly."],
+      highlights: [
+        { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "Add Stay" },
+        { tour: "stay-special-room", tab: "C", accSub: "stays", label: "Add special space" },
+      ],
+    },
+    vehicle: {
+      purpose: "Configure vehicles and daily dispatch sheets.",
+      steps: ["Open the Vehicles tab.", "Under Vehicle Config, add vehicles and routes.", "Assign driver and passengers.", "Switch to Daily Dispatch, pick a date, import from config or edit."],
+      rules: ["Not on the unassigned list = already on a trip segment.", "Only people not hidden from vehicles appear in pickers."],
+      notes: ["Unassigned panel on the right; drag to vehicle cards.", "Dispatch sheet is printable."],
+      highlights: [
+        { tour: "vehicle-config", tab: "D", vehicleSub: "config", label: "Vehicle config" },
+        { tour: "vehicle-daily", tab: "D", vehicleSub: "daily", label: "Daily dispatch" },
+      ],
+    },
+  },
+  ko: {
+    staff: {
+      purpose: "항공·숙박·배차의 기준이 되는 스태프 명단을 등록합니다.",
+      steps: ["상단 「스태프」 탭을 엽니다.", "「스태프 추가」로 부서·이름·여권 등을 입력합니다.", "행을 드래그해 번호 순서를 바꿉니다.", "편집 시 숙박/배차/항공 숨김 옵션을 설정할 수 있습니다."],
+      rules: ["한자 이름 또는 영문 이름 중 하나는 입력.", "티켓/숙박/배차가 필요 없는 사람은 해당 숨김을 켭니다."],
+      notes: ["편집 권한이 있으면 CSV 가져오기 가능.", "스태프 데이터는 다른 탭과 연동됩니다."],
+      highlights: [{ tour: "staff-add", tab: "A", label: "스태프 추가" }],
+    },
+    flight: {
+      purpose: "각 스태프의 출국·귀국 항공편과 픽업 정보를 입력합니다.",
+      steps: ["「항공」 탭을 엽니다.", "해당 인원 행 오른쪽 「입력」을 클릭합니다.", "항공사·편명·공항·시간을 입력합니다.", "「도착 ↓픽업」은 현지 픽업용입니다."],
+      rules: ["출국·귀국은 따로 입력.", "티켓 불필요 시 스태프 편집에서 항공 숨김."],
+      notes: ["상단 필터로 검색 가능.", "수하물 계산기는 표 아래."],
+      highlights: [{ tour: "flight-mgmt", tab: "B", label: "항공 관리" }],
+    },
+    stay: {
+      purpose: "호텔 숙박: 개인 구간, 전용 공간, 객실 번호를 관리합니다.",
+      steps: ["「호텔 설정」에서 호텔 추가.", "「숙박 목록」에서 인원 선택 후 「구간 추가」.", "호텔·객실 타입·입퇴실일 선택.", "장비실 등은 「전용 공간 추가」.", "표의 객실 번호栏에 입력."],
+      rules: ["숙박 구간 = 개인 숙박, 여러 구간 가능.", "전용 공간 = 공간 이름 (개인 아님).", "미배정 = 숙박 없음; 번호 미배정 = 숙박은 있으나 번호 없음."],
+      notes: ["촬영 구역 탭별로 미배정 목록이 다릅니다.", "미배정 이름 클릭으로 빠른 추가."],
+      highlights: [
+        { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "구간 추가" },
+        { tour: "stay-special-room", tab: "C", accSub: "stays", label: "전용 공간 추가" },
+      ],
+    },
+    vehicle: {
+      purpose: "차량 배치와 일일 배차표를 관리합니다.",
+      steps: ["「차량」 탭을 엽니다.", "「차량 배치」에서 차량·정원·경로 설정.", "운전기사·승객 배정.", "「일일 배차표」에서 날짜 선택·반영."],
+      rules: ["미배정 목록에 없으면 이미 배정됨.", "배차 숨김 해제된 사람만 선택 가능."],
+      notes: ["오른쪽 미배정 패널에서 드래그 가능.", "배차표 인쇄 가능."],
+      highlights: [
+        { tour: "vehicle-config", tab: "D", vehicleSub: "config", label: "차량 배치" },
+        { tour: "vehicle-daily", tab: "D", vehicleSub: "daily", label: "일일 배차표" },
+      ],
+    },
+  },
+  ja: {
+    staff: {
+      purpose: "スタッフ名簿を登録します。フライト・宿泊・配車のすべての起点になります。",
+      steps: ["上部の「スタッフ」タブを開きます。", "「スタッフ追加」で部署・氏名・パスポート等を入力します。", "行をドラッグして番号順を変更できます。", "編集画面で「宿泊／配車／フライトリストから非表示」を設定できます。"],
+      rules: ["漢字名または英語名のいずれかは必須です。", "チケット・宿泊・配車が不要な方は、該当する非表示をオンにしてください。"],
+      notes: ["編集権限があれば CSV インポートも可能です。", "ここで登録したスタッフが他のタブに連動します。"],
+      highlights: [{ tour: "staff-add", tab: "A", label: "スタッフ追加ボタン" }],
+    },
+    flight: {
+      purpose: "各スタッフの往路・復路フライトと送迎情報を入力します。",
+      steps: ["「フライト」タブを開きます。", "該当スタッフの行の右端「入力」をクリックします。", "航空会社・便名・空港・時刻等を入力します。", "「到着時間 ↓送迎」は現地ピックアップ用です。"],
+      rules: ["往路と復路は別々に入力します。", "チケット不要の方はスタッフ編集で「フライトリストから非表示」をオン。"],
+      notes: ["上部のフィルターで航空会社・状態で絞り込めます。", "手荷物超重計算は表の下にあります。"],
+      highlights: [{ tour: "flight-mgmt", tab: "B", label: "フライト管理エリア" }],
+    },
+    stay: {
+      purpose: "ホテル宿泊を管理します。個人の宿泊区間・専用スペース・部屋番号・未配室スタッフ。",
+      steps: ["未登録なら「ホテル設定」でホテルを追加します。", "「宿泊一覧」でスタッフを選び「区間追加」をクリック。", "ホテル・部屋タイプ・チェックイン／アウトを入力。", "機材室・メイク室等は「専用スペースを追加」（個人名ではありません）。", "表の「部屋番号」栏に番号を入力。同じ番号は自動でグループ化されます。"],
+      rules: ["宿泊区間＝個人のホテル宿泊。一人に複数区間可能。", "専用スペース＝機材室など。空間名を入力（個人名ではない）。", "下部「未配室スタッフ」＝まだ宿泊区間がない人。「部屋番号未配」＝宿泊はあるが番号未入力。"],
+      notes: ["「撮影エリア」タブでエリア別に未配室を確認できます。", "未配室の名前をクリックすると宿泊区間を追加できます。"],
+      highlights: [
+        { tour: "stay-add-segment", tab: "C", accSub: "stays", label: "区間追加" },
+        { tour: "stay-special-room", tab: "C", accSub: "stays", label: "専用スペースを追加" },
+      ],
+    },
+    vehicle: {
+      purpose: "車両配置と毎日の配車表を管理します。",
+      steps: ["「配車」タブを開きます。", "「車両配置」で車両追加・定員・行程を設定。", "運転手・同乗者を各車に割り当て。", "「毎日配車表」で日付を選び、配置から取り込むか手動編集。"],
+      rules: ["未配車リストにいない＝すでにどこかの区間に配車済み。", "「配車リストから非表示」をオフにしたスタッフのみ選択可能。"],
+      notes: ["右側の未配車パネルからドラッグで追加できます。", "配車表は印刷できます。"],
+      highlights: [
+        { tour: "vehicle-config", tab: "D", vehicleSub: "config", label: "車両配置" },
+        { tour: "vehicle-daily", tab: "D", vehicleSub: "daily", label: "毎日配車表" },
+      ],
+    },
+  },
+};
+
+function getGuideContent(lang) {
+  return GUIDE_CONTENT[lang] || GUIDE_CONTENT["zh-TW"];
+}
 
 const starLabel = (s) => (s === 3 ? "★★★" : s === 2 ? "★★" : s === 1 ? "★" : "");
 const IMPORTANCE = [3, 2, 1, 0];
@@ -2199,6 +2409,166 @@ function Modal({ title, onClose, children, wide }) {
         </div>
         <div style={{ padding: "26px 28px" }}>{children}</div>
       </div>
+    </div>
+  );
+}
+
+function GuideSectionBlock({ title, items, ordered = true }) {
+  if (!items?.length) return null;
+  const Tag = ordered ? "ol" : "ul";
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: "var(--moegi)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>{title}</div>
+      <Tag style={{ margin: 0, paddingLeft: ordered ? 18 : 16, fontSize: 13, color: "var(--sumi)", lineHeight: 1.75, listStyle: ordered ? "decimal" : "disc" }}>
+        {items.map((line, i) => <li key={i} style={{ marginBottom: 4 }}>{line}</li>)}
+      </Tag>
+    </div>
+  );
+}
+
+function GuidePanel({ open, section, onSectionChange, onClose, lang, t, onHighlight }) {
+  if (!open) return null;
+  const content = getGuideContent(lang);
+  const sec = content[section] || content.staff;
+  const secLabels = { staff: t.guideSecStaff, flight: t.guideSecFlight, stay: t.guideSecStay, vehicle: t.guideSecVehicle };
+  return (
+    <div className="no-print" style={{ position: "fixed", inset: 0, zIndex: 120, pointerEvents: "none" }}>
+      <div
+        role="presentation"
+        onClick={onClose}
+        style={{ position: "absolute", inset: 0, background: "rgba(10,10,14,0.35)", pointerEvents: "auto" }}
+      />
+      <aside
+        className="guide-panel"
+        style={{
+          position: "absolute", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)",
+          background: "var(--shiro)", borderLeft: "1px solid var(--keisenL)",
+          boxShadow: "-8px 0 32px rgba(0,0,0,.12)", pointerEvents: "auto",
+          display: "flex", flexDirection: "column", animation: "guideSlideIn .22s ease both",
+        }}
+      >
+        <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--keisenL)", background: "var(--washi)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif" }}>{t.guideTitle}</h2>
+            <button type="button" onClick={onClose} aria-label={t.guideClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "var(--usunezumi)", lineHeight: 1 }}>×</button>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {GUIDE_SECTIONS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onSectionChange(id)}
+                style={{
+                  padding: "6px 12px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 11.5,
+                  fontFamily: "'Noto Sans JP',sans-serif", fontWeight: section === id ? 700 : 500,
+                  background: section === id ? "var(--moegi)" : "var(--shiro)",
+                  color: section === id ? "var(--shiro)" : "var(--sumi)",
+                  boxShadow: section === id ? "0 1px 4px rgba(43,90,76,.25)" : "inset 0 0 0 1px var(--keisenL)",
+                }}
+              >{secLabels[id]}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "20px 22px 28px" }}>
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--moegi)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>{t.guidePurpose}</div>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--sumi)", lineHeight: 1.75 }}>{sec.purpose}</p>
+          </div>
+          <GuideSectionBlock title={t.guideSteps} items={sec.steps} ordered />
+          <GuideSectionBlock title={t.guideRules} items={sec.rules} ordered={false} />
+          <GuideSectionBlock title={t.guideNotes} items={sec.notes} ordered={false} />
+          {sec.highlights?.length > 0 && (
+            <div style={{ marginTop: 8, paddingTop: 16, borderTop: "1px dashed var(--keisenL)" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "var(--nezumi)", letterSpacing: "0.1em", marginBottom: 10 }}>{t.guideShowLoc}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {sec.highlights.map((h) => (
+                  <button
+                    key={h.tour}
+                    type="button"
+                    onClick={() => onHighlight(h)}
+                    style={{
+                      ...eBtn, width: "100%", textAlign: "left", padding: "10px 14px", fontSize: 12,
+                      background: "var(--washi)", borderColor: "var(--keisenM)",
+                    }}
+                  >→ {h.label}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function GuideSpotlight({ target, label, onDismiss, t }) {
+  const [rect, setRect] = useState(null);
+
+  useEffect(() => {
+    if (!target) { setRect(null); return undefined; }
+    const update = () => {
+      const r = target.getBoundingClientRect();
+      setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+    };
+    update();
+    target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    const t1 = setTimeout(update, 400);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      clearTimeout(t1);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [target]);
+
+  useEffect(() => {
+    if (!target) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") onDismiss(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [target, onDismiss]);
+
+  if (!target || !rect) return null;
+  const pad = 6;
+  return (
+    <div className="no-print" style={{ position: "fixed", inset: 0, zIndex: 130 }}>
+      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+        <defs>
+          <mask id="guide-spot-mask">
+            <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            <rect
+              x={rect.left - pad} y={rect.top - pad}
+              width={rect.width + pad * 2} height={rect.height + pad * 2}
+              rx="6" fill="black"
+            />
+          </mask>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="rgba(10,10,14,0.55)" mask="url(#guide-spot-mask)" />
+      </svg>
+      <div
+        style={{
+          position: "fixed",
+          top: rect.top - pad, left: rect.left - pad,
+          width: rect.width + pad * 2, height: rect.height + pad * 2,
+          borderRadius: 6, boxShadow: "0 0 0 3px var(--moegi), 0 0 0 6px rgba(43,90,76,.25)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "fixed",
+          top: Math.min(rect.top + rect.height + pad + 12, window.innerHeight - 120),
+          left: Math.max(12, Math.min(rect.left, window.innerWidth - 280)),
+          maxWidth: 280, background: "var(--sumiMid)", color: "var(--washi)",
+          padding: "12px 16px", borderRadius: 8, fontSize: 12.5, lineHeight: 1.6,
+          boxShadow: "0 4px 20px rgba(0,0,0,.25)", zIndex: 131,
+        }}
+      >
+        <div style={{ marginBottom: 10 }}>{label}</div>
+        <button type="button" onClick={onDismiss} style={{ ...pBtn(false), fontSize: 11, padding: "6px 16px" }}>{t.guideGotIt}</button>
+      </div>
+      <button type="button" aria-label={t.guideClose} onClick={onDismiss} style={{ position: "fixed", inset: 0, background: "transparent", border: "none", cursor: "pointer", zIndex: 129 }} />
     </div>
   );
 }
@@ -4663,6 +5033,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   const [showCurrency, setShowCurrency] = useState(false);
   const [addStayPerson, setAddStayPerson] = useState("");
   const [showReportExport, setShowReportExport] = useState(false);
+  const [guideSection, setGuideSection] = useState(null);
+  const [guideSpotlight, setGuideSpotlight] = useState(null);
+  const [spotlightTarget, setSpotlightTarget] = useState(null);
   const [addTripVehicle, setAddTripVehicle] = useState(null);
   const [tripPerson, setTripPerson] = useState("");
   const [tripRole, setTripRole] = useState("passenger");
@@ -4704,6 +5077,37 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       body.style.overflow = prevBodyOverflow;
     };
   }, [modalOpen]);
+
+  const runGuideHighlight = useCallback((spec) => {
+    setGuideSection(null);
+    if (spec.tab) setTab(spec.tab);
+    if (spec.accSub) setAccSub(spec.accSub);
+    if (spec.vehicleSub) setVehicleSub(spec.vehicleSub);
+    setGuideSpotlight(spec);
+  }, []);
+
+  useEffect(() => {
+    if (!guideSpotlight) {
+      setSpotlightTarget(null);
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      const el = document.querySelector(`[data-tour="${guideSpotlight.tour}"]`);
+      if (el) setSpotlightTarget(el);
+      else {
+        showToast(t.noData);
+        setGuideSpotlight(null);
+      }
+    }, 420);
+    return () => clearTimeout(timer);
+  }, [guideSpotlight, tab, accSub, vehicleSub, loading, t.noData, showToast]);
+
+  useEffect(() => {
+    if (!guideSection) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setGuideSection(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [guideSection]);
 
   const loadAll = useCallback(async () => {
     const isRefresh = firstLoadDone.current;
@@ -5390,6 +5794,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
   };
 
   const TABS = [{ id: "A", label: t.tabStaff }, { id: "B", label: t.tabFlight }, { id: "C", label: t.tabAccommodation }, { id: "D", label: t.tabVehicle }];
+  const TAB_TOUR = { A: "tab-staff", B: "tab-flight", C: "tab-stay", D: "tab-vehicle" };
+  const TAB_GUIDE = { A: "staff", B: "flight", C: "stay", D: "vehicle" };
 
   const handleDragEnd = async () => {
     if (dragItem.current === null || dragOver.current === null || dragItem.current === dragOver.current) { dragItem.current = null; dragOver.current = null; return; }
@@ -5445,6 +5851,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
               <button type="button" disabled={staffImporting} onClick={() => staffImportRef.current?.click()} style={hdrBtn2}>{staffImporting ? t.importing : t.importCSV}</button>
             </>
           )}
+          <button type="button" onClick={() => setGuideSection(TAB_GUIDE[tab] || "staff")} style={{ ...hdrBtn2, background: "rgba(255,255,255,.08)", borderColor: "rgba(255,255,255,.22)" }}>{t.guideBtn}</button>
           <button type="button" onClick={() => tabExportFn[tab]?.()} style={{ ...hdrBtn2, background: "var(--moegi3)", border: "1px solid rgba(43,90,76,.35)" }}>{t.exportCSV}</button>
           <ThemeToggle theme={theme} onChange={onThemeChange} t={t} />
           <LangSwitcher lang={lang} onChange={(l) => { localStorage.setItem("app_lang", l); onLangChange(l); }} />
@@ -5456,7 +5863,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         <div style={{ maxWidth: 1320, margin: "0 auto", padding: "0 20px" }}>
           <div style={{ display: "flex", overflowX: "auto", gap: 2 }}>
             {TABS.map((tb) => (
-              <button key={tb.id} type="button" onClick={() => setTab(tb.id)} style={{
+              <button key={tb.id} type="button" data-tour={TAB_TOUR[tb.id]} onClick={() => setTab(tb.id)} style={{
                 padding: "14px 22px", fontWeight: tab === tb.id ? 600 : 400,
                 color: tab === tb.id ? "var(--moegi)" : "var(--nezumi)",
                 border: "none",
@@ -5490,7 +5897,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   <DeptFilter depts={allDepts} value={deptA} onChange={setDeptA} allLabel={t.allDept} />
                   <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.resultsCount.replace("{n}", rowsA.length).replace("{total}", persons.length)}</span>
                   {canEdit && selectedIds.length > 0 && <button type="button" onClick={bulkDelete} style={dBtn}>{t.bulkDeleteBtn} ({selectedIds.length})</button>}
-                  {canEdit && <button type="button" onClick={() => setPersonModal({ mode: "add" })} style={pBtn(false)}>{t.addStaff}</button>}
+                  {canEdit && <button type="button" data-tour="staff-add" onClick={() => setPersonModal({ mode: "add" })} style={pBtn(false)}>{t.addStaff}</button>}
                   <button type="button" onClick={() => setShowReportExport(true)} style={{ ...pBtn(false), background: "var(--asagi2)", color: "var(--asagi)", border: "1px solid rgba(74,127,165,.3)", boxShadow: "none" }}>{t.exportReport}</button>
                 </div>
               </div>
@@ -5554,7 +5961,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
           {tab === "B" && (
             <div className="tab-content flight-tab">
               <div className="no-print" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }} data-tour="flight-mgmt">
                   <div style={{ width: 3, height: 18, background: "var(--asagi)", borderRadius: 2 }} />
                   <h2 style={{ fontSize: 14, fontWeight: 600, color: "var(--sumi)", margin: 0, letterSpacing: "0.03em", fontFamily: "'Noto Serif JP',serif" }}>{t.flightMgmt}</h2>
                 </div>
@@ -5704,10 +6111,10 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       </select>
                     )}
                     {canEdit && (
-                      <button type="button" style={{ ...pBtn(!addStayPerson), width: "100%" }} disabled={!addStayPerson} onClick={() => { openStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
+                      <button type="button" data-tour="stay-add-segment" style={{ ...pBtn(!addStayPerson), width: "100%" }} disabled={!addStayPerson} onClick={() => { openStayModal({ pid: +addStayPerson, stayId: null, data: null }); setAddStayPerson(""); }}>{t.addSegment}</button>
                     )}
                     {canEdit && (
-                      <button type="button" style={{ ...pBtn(false), width: "100%", background: "var(--asagi2)", color: "var(--asagi)", border: "1px solid rgba(74,127,165,.3)" }} onClick={() => showStayModal({ pid: null, stayId: null, data: { special_room_name: "" }, special: true })}>{t.addSpecialRoom}</button>
+                      <button type="button" data-tour="stay-special-room" style={{ ...pBtn(false), width: "100%", background: "var(--asagi2)", color: "var(--asagi)", border: "1px solid rgba(74,127,165,.3)" }} onClick={() => showStayModal({ pid: null, stayId: null, data: { special_room_name: "" }, special: true })}>{t.addSpecialRoom}</button>
                     )}
                     {/* 功能四：顯示篩選飯店的總金額 */}
                     {searchCHotel.trim() && (() => {
@@ -6117,7 +6524,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   {/* Vehicle sub-tabs */}
                   <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
                     {[["config", t.vehicleConfig], ["daily", t.dailyDispatch]].map(([k, lb]) => (
-                      <button key={k} type="button" onClick={() => setVehicleSub(k)} style={{ padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 20, fontFamily: "'Noto Sans JP',sans-serif", fontWeight: vehicleSub === k ? 700 : 400, color: vehicleSub === k ? "var(--shiro)" : "var(--sumi)", background: vehicleSub === k ? "var(--moegi)" : "var(--washi)" }}>{lb}</button>
+                      <button key={k} type="button" data-tour={k === "config" ? "vehicle-config" : "vehicle-daily"} onClick={() => setVehicleSub(k)} style={{ padding: "7px 18px", border: "none", cursor: "pointer", fontSize: 12, borderRadius: 20, fontFamily: "'Noto Sans JP',sans-serif", fontWeight: vehicleSub === k ? 700 : 400, color: vehicleSub === k ? "var(--shiro)" : "var(--sumi)", background: vehicleSub === k ? "var(--moegi)" : "var(--washi)" }}>{lb}</button>
                     ))}
                   </div>
                   {vehicleSub === "config" && (<>
@@ -6361,6 +6768,25 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       {personModal && <Modal title={personModal.mode === "add" ? t.addStaff : t.editStaff} onClose={() => setPersonModal(null)}><PersonForm init={personModal.data} onSave={savePerson} onClose={() => setPersonModal(null)} t={t} lang={lang} /></Modal>}
       {flightModal && <Modal title={t.flightMgmt} wide onClose={() => setFlightModal(null)}><FlightForm init={flightModal.data} onSave={async (f) => { try { const ex = flights.find((x) => x.person_id === flightModal.pid); const data = buildFlightPayload(f, flightModal.pid, pid); if (ex) { const [r] = await api.update("flights", ex.id, data); setFlights((fl) => fl.map((x) => x.id === ex.id ? r : x)); } else { const [r] = await api.insert("flights", data); setFlights((fl) => [...fl, r]); } showToast(t.saved); setFlightModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setFlightModal(null)} t={t} /></Modal>}
       {showReportExport && <ReportExportModal onClose={() => setShowReportExport(false)} t={t} lang={lang} project={project} persons={persons} flights={flights} stays={stays} hotels={hotels} pricingRules={pricingRules} vehicles={vehicles} vehicleAssignments={vehicleAssignments} personIndex={personIndex} stayDisplayTotals={stayDisplayTotals} />}
+      {guideSection && (
+        <GuidePanel
+          open
+          section={guideSection}
+          onSectionChange={setGuideSection}
+          onClose={() => setGuideSection(null)}
+          lang={lang}
+          t={t}
+          onHighlight={runGuideHighlight}
+        />
+      )}
+      {guideSpotlight && (
+        <GuideSpotlight
+          target={spotlightTarget}
+          label={guideSpotlight.label}
+          onDismiss={() => { setGuideSpotlight(null); setSpotlightTarget(null); }}
+          t={t}
+        />
+      )}
       {stayModal && <Modal title={t.hotelMgmt} onClose={closeStayModal}><HotelStayForm init={stayModal.data} hotels={hotels} pricingRules={pricingRules} onSave={saveStay} onClose={closeStayModal} t={t} project={project} lang={lang} isSpecialRoom={stayModal.special || stayModal.pid === null} defaultPhaseId={stayModal.defaultPhaseId} /></Modal>}
       {hotelModal && <Modal title={hotelModal.mode === "add" ? t.addHotel : t.hotelName} onClose={() => setHotelModal(null)}><HotelMasterForm init={hotelModal.data} shootPhases={shootPhases} onSave={async (f) => { try { if (hotelModal.mode === "add") { const [r] = await api.insert("hotels", { ...f, project_id: pid }); setHotels((h) => [...h, r]); } else { const [r] = await api.update("hotels", hotelModal.data.id, f); setHotels((h) => h.map((x) => x.id === hotelModal.data.id ? r : x)); } showToast(t.saved); setHotelModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setHotelModal(null)} t={t} /></Modal>}
       {priceModal && <Modal title={t.dateException} onClose={() => setPriceModal(null)}><PricingRuleForm init={priceModal.data} hotelId={priceModal.hotelId} hotelName={priceModal.hotelName} onSave={async (f) => { try { const data = { ...f, project_id: pid }; if (priceModal.mode === "add") { const [r] = await api.insert("pricing_rules", data); setPricingRules((rs) => [...rs, r]); } else { const [r] = await api.update("pricing_rules", priceModal.data.id, data); setPricingRules((rs) => rs.map((x) => x.id === priceModal.data.id ? r : x)); } showToast(t.saved); setPriceModal(null); } catch (e) { showToast(e.message); } }} onClose={() => setPriceModal(null)} t={t} project={project} lang={lang} /></Modal>}
@@ -6391,6 +6817,7 @@ function GlobalStyles() {
       @keyframes modalIn { from { opacity: 0; transform: scale(.97) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes guideSlideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
       .flight-table th, .flight-table td { text-align: center; }
       .flight-table-wrap { overflow-x: auto; border-radius: 10px; }
       .flight-table-rows { min-width: 0; width: 100%; }
