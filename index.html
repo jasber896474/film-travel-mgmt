@@ -39,10 +39,44 @@ const saveSession = (res) => {
     expires_at: Date.now() + (res.expires_in || 3600) * 1000,
   }));
 };
+const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
+
 const clearSession = () => {
   _token = null;
   localStorage.removeItem(SESSION_KEY);
 };
+
+function getStoredSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+async function tryRefreshSession() {
+  const sess = getStoredSession();
+  if (!sess?.refresh_token) return false;
+  if (sess.expires_at && Date.now() <= sess.expires_at - SESSION_REFRESH_BEFORE_MS) return true;
+  try {
+    const refreshed = await api.refresh(sess.refresh_token);
+    if (refreshed.access_token) {
+      saveSession(refreshed);
+      _token = refreshed.access_token;
+      return true;
+    }
+  } catch { /* ignore */ }
+  return false;
+}
+
+function formatSessionRemaining(ms) {
+  if (ms <= 0) return "0:00";
+  const totalSec = Math.ceil(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
 
 function parseApiError(raw, status) {
   if (!raw) return status === 401 || status === 403 ? "權限不足，請重新登入" : `請求失敗 (${status || "?"})`;
@@ -301,13 +335,13 @@ function readScrollPosition() {
   return window.scrollY || document.documentElement.scrollTop || 0;
 }
 
-// 航班時間：雙排顯示（無年份 / 12小時制）
+// 航班時間：雙排顯示（無年份 / 24小時制）
 const fmtFlightDateTime = (ts, lang) => {
   const d = parseLocalDateTime(ts);
   if (!d) return null;
   const loc = lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : lang === "ko" ? "ko-KR" : lang === "zh-CN" ? "zh-CN" : "zh-TW";
   const datePart = d.toLocaleDateString(loc, { month: "numeric", day: "numeric" });
-  const timePart = d.toLocaleTimeString(loc, { hour: "numeric", minute: "2-digit", hour12: true });
+  const timePart = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   return { date: datePart, time: timePart };
 };
 const passportWarning = (exp) => {
@@ -387,6 +421,8 @@ const T = {
     verifyTitle: "驗證信已發送", verifyHint: "管理員審核通過後即可存取專案。", verifyContact: "若有急件請聯絡系統管理員。", toLoginBtn: "返回登入",
     registerFailed: "申請送出失敗，請稍後再試或聯絡管理員。",
     sessionExpiredTitle: "登入已過期", sessionExpiredMsg: "請重新登入以繼續操作。", sessionExpiredBtn: "重新登入",
+    sessionRemaining: "登入剩餘 {time}", sessionRemainingHint: "登入階段即將到期，系統會自動續期；若失效請重新登入。",
+    bagCalcToggleHint: "點擊展開／收起試算工具",
     projects: "專案列表", newProject: "新增專案", openProject: "開啟", projectName: "專案名稱", projectDesc: "說明（選填）",
     create: "建立", creating: "建立中…", cancel: "取消", save: "儲存", edit: "編輯", delete: "刪除", add: "新增",
     saved: "已儲存", deleted: "已刪除", confirm: "確認",
@@ -544,6 +580,8 @@ const T = {
     registerTitle: "新账号申请", registerBtn: "申请登录", registerName: "姓名（选填）", registerMessage: "申请消息（选填）", registerMessagePh: "所属・职务等", registerPwConfirm: "确认密码",
     verifyTitle: "验证邮件已发送", verifyHint: "管理员审核通过后即可访问项目。", verifyContact: "如有急件请联系系统管理员。", toLoginBtn: "返回登录",
     sessionExpiredTitle: "登录已过期", sessionExpiredMsg: "请重新登录以继续操作。", sessionExpiredBtn: "重新登录",
+    sessionRemaining: "登录剩余 {time}", sessionRemainingHint: "登录即将到期，系统会自动续期；若失效请重新登录。",
+    bagCalcToggleHint: "点击展开／收起试算工具",
     projects: "项目列表", newProject: "新建项目", openProject: "打开", projectName: "项目名称", projectDesc: "说明（选填）",
     create: "创建", creating: "创建中…", cancel: "取消", save: "保存", edit: "编辑", delete: "删除", add: "新增",
     saved: "已保存", deleted: "已删除", confirm: "确认",
@@ -700,6 +738,8 @@ const T = {
     registerTitle: "Register Account", registerBtn: "Request Access", registerName: "Name (optional)", registerMessage: "Message (optional)", registerMessagePh: "Dept, role, etc.", registerPwConfirm: "Confirm password",
     verifyTitle: "Verification Email Sent", verifyHint: "You can access projects after admin approval.", verifyContact: "For urgent requests, contact your system administrator.", toLoginBtn: "Back to Login",
     sessionExpiredTitle: "Session Expired", sessionExpiredMsg: "Please sign in again to continue.", sessionExpiredBtn: "Sign In Again",
+    sessionRemaining: "Session {time}", sessionRemainingHint: "Session expiring soon; auto-refresh while active.",
+    bagCalcToggleHint: "Click to expand/collapse",
     projects: "Projects", newProject: "New Project", openProject: "Open", projectName: "Project Name", projectDesc: "Description (optional)",
     create: "Create", creating: "Creating…", cancel: "Cancel", save: "Save", edit: "Edit", delete: "Delete", add: "Add",
     saved: "Saved", deleted: "Deleted", confirm: "Confirm",
@@ -854,6 +894,8 @@ const T = {
     registerTitle: "계정 신청", registerBtn: "접근 요청", registerName: "이름 (선택)", registerMessage: "메시지 (선택)", registerMessagePh: "부서, 직무 등", registerPwConfirm: "비밀번호 확인",
     verifyTitle: "인증 메일 발송", verifyHint: "관리자 승인 후 프로젝트에 접근할 수 있습니다.", verifyContact: "긴급한 경우 시스템 관리자에게 연락하세요.", toLoginBtn: "로그인으로",
     sessionExpiredTitle: "세션 만료", sessionExpiredMsg: "계속하려면 다시 로그인하세요.", sessionExpiredBtn: "다시 로그인",
+    sessionRemaining: "로그인 {time}", sessionRemainingHint: "세션이 곧 만료됩니다. 활동 중 자동 갱신됩니다.",
+    bagCalcToggleHint: "펼치기/접기",
     projects: "프로젝트", newProject: "새 프로젝트", openProject: "열기", projectName: "프로젝트명", projectDesc: "설명 (선택)",
     create: "생성", creating: "생성 중…", cancel: "취소", save: "저장", edit: "편집", delete: "삭제", add: "추가",
     saved: "저장됨", deleted: "삭제됨", confirm: "확인",
@@ -1008,6 +1050,8 @@ const T = {
     registerTitle: "新規登録", registerBtn: "申請する", registerName: "お名前（任意）", registerMessage: "メッセージ（任意）", registerMessagePh: "所属・役職など", registerPwConfirm: "パスワード確認",
     verifyTitle: "確認メールを送信しました", verifyHint: "管理者の承認後にプロジェクトへアクセスできます。", verifyContact: "お急ぎの場合はシステム管理者へご連絡ください。", toLoginBtn: "ログインへ戻る",
     sessionExpiredTitle: "セッションの期限切れ", sessionExpiredMsg: "続行するには再度ログインしてください。", sessionExpiredBtn: "再ログイン",
+    sessionRemaining: "ログイン残り {time}", sessionRemainingHint: "まもなく期限切れ。使用中は自動更新されます。",
+    bagCalcToggleHint: "クリックで展開/折りたたみ",
     projects: "プロジェクト", newProject: "新規作成", openProject: "開く", projectName: "プロジェクト名", projectDesc: "説明（任意）",
     create: "作成", creating: "作成中…", cancel: "キャンセル", save: "保存", edit: "編集", delete: "削除", add: "追加",
     saved: "保存しました", deleted: "削除しました", confirm: "確定",
@@ -1429,6 +1473,91 @@ function CollapseAllButton({ sectionKeys, collapsedHotels, onToggle, t, dark }) 
   );
 }
 
+function HotelSectionHeader({ collapsed, onToggle, hotelName, dateRange, meta, displayCost, project, lang, t, extra }) {
+  return (
+    <div
+      onClick={onToggle}
+      style={{
+        display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8,
+        marginBottom: collapsed ? 0 : 12, paddingBottom: 10, borderBottom: "2px solid var(--moegi)",
+        cursor: "pointer", userSelect: "none",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+        <span style={{ width: 20, height: 20, border: "1px solid var(--keisenM)", borderRadius: 4, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--nezumi)", lineHeight: 1, flexShrink: 0 }}>
+          {collapsed ? "+" : "−"}
+        </span>
+        <div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--sumi)", margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
+            {hotelName}
+          </h3>
+          {dateRange && (
+            <div style={{ fontSize: 12, color: "var(--moegi)", marginTop: 4, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+              {dateRange}
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+        {meta?.guestCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.guestCount}</strong> {t.stayGuestCount}</span>}
+        {meta?.roomCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.roomCount}</strong> {t.stayRoomCount}</span>}
+        {meta?.roomNights > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.roomNights}: <strong style={{ color: "var(--sumi)" }}>{meta.roomNights}</strong></span>}
+        {displayCost != null && <span style={{ fontSize: 11, fontWeight: 600, color: "var(--asagi)" }}>{formatMoney(convertMoney(displayCost, project), project, lang)}</span>}
+        {extra}
+      </div>
+    </div>
+  );
+}
+
+function UnassignedRoomsPanel({ personsNoStay, activeStayPhase, activePhaseName, t, lang, personIndex, canEdit, openStayModal }) {
+  const [open, setOpen] = React.useState(true);
+  if (!personsNoStay.length) return null;
+  return (
+    <div className="pending-banner" style={{ marginTop: 8, border: "1.5px dashed var(--kincha)", borderRadius: 8, overflow: "hidden" }}>
+      <div onClick={() => setOpen((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 18px", cursor: "pointer" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)" }}>
+            {activeStayPhase ? t.unassignedPhaseRooms.replace("{phase}", activePhaseName) : t.unassignedRooms}
+          </span>
+          <span style={{ fontSize: 11, color: "var(--kincha)", opacity: 0.8 }}>({personsNoStay.length})</span>
+        </div>
+        <div style={{ width: 22, height: 22, border: "1px solid var(--kincha)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "var(--kincha)", lineHeight: 1, flexShrink: 0 }}>
+          {open ? "−" : "+"}
+        </div>
+      </div>
+      {open && (
+        <div style={{ padding: "0 18px 14px" }}>
+          <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>
+            {activeStayPhase ? t.unassignedPhaseRoomsHint : t.unassignedRoomsHint}
+          </p>
+          {groupByDeptLabel(personsNoStay, (p) => p.dept, lang, t.deptUnset).map((g) => (
+            <div key={g.label} className="unassigned-dept-group" style={{ marginBottom: 14 }}>
+              <div className="unassigned-dept-label" style={{ fontSize: 11, fontWeight: 700, color: "var(--sumi)", marginBottom: 8, letterSpacing: "0.04em", paddingBottom: 4, borderBottom: "1px solid var(--keisenL)" }}>
+                {g.label} ({g.items.length})
+              </div>
+              <div className="unassigned-tags">
+                {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => {
+                  const displayName = p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim();
+                  const openAdd = () => openStayModal({ pid: p.id, stayId: null, data: null });
+                  return canEdit ? (
+                    <button key={p.id} type="button" className="unassigned-tag unassigned-tag--clickable" title={displayName} onClick={openAdd}>
+                      <span className="tag-name">{displayName}</span>
+                    </button>
+                  ) : (
+                    <div key={p.id} className="unassigned-tag">
+                      <span className="tag-name" title={displayName}>{displayName}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function groupByDeptLabel(items, getDept, lang, emptyLabel) {
   const map = new Map();
   items.forEach((item) => {
@@ -1796,6 +1925,42 @@ function flightBaggageGroupKey(fl, leg) {
   return `ret|${(fl.ret_airline || "").trim()}|${(fl.ret_flight_no || "").trim()}|${d}`;
 }
 
+function flightLegSortMeta(fl, leg) {
+  if (!fl) return { airline: "", date: "", depTime: "", flightNo: "" };
+  const isOut = leg !== "ret";
+  const airline = ((isOut ? fl.airline : fl.ret_airline) || "").trim();
+  const flightNo = ((isOut ? fl.flight_no : fl.ret_flight_no) || "").trim();
+  const depTime = (isOut ? fl.dep_time : fl.ret_dep_time) || "";
+  const date = depTime ? String(depTime).slice(0, 10) : "";
+  return { airline, date, depTime, flightNo };
+}
+
+function compareFlightLegMeta(a, b) {
+  const ac = (a.airline || "").localeCompare(b.airline || "", "zh-TW");
+  if (ac) return ac;
+  const dc = (a.date || "").localeCompare(b.date || "");
+  if (dc) return dc;
+  const tc = (a.depTime || "").localeCompare(b.depTime || "");
+  if (tc) return tc;
+  return (a.flightNo || "").localeCompare(b.flightNo || "", "zh-TW");
+}
+
+function personFlightSortMeta(p, flights) {
+  const fl = flights.find((x) => x.person_id === p.id);
+  if (!fl) return { airline: "", date: "", depTime: "", flightNo: "" };
+  const outMeta = flightLegSortMeta(fl, "out");
+  if (outMeta.depTime || outMeta.airline || outMeta.flightNo) return outMeta;
+  return flightLegSortMeta(fl, "ret");
+}
+
+function sortPersonsByFlight(persons, flights) {
+  return persons.slice().sort((a, b) => {
+    const cmp = compareFlightLegMeta(personFlightSortMeta(a, flights), personFlightSortMeta(b, flights));
+    if (cmp) return cmp;
+    return (a.id || 0) - (b.id || 0);
+  });
+}
+
 function flightBaggageGroupLabel(fl, leg, t, lang) {
   const isOut = leg === "out";
   const airline = isOut ? fl.airline : fl.ret_airline;
@@ -1819,13 +1984,13 @@ function buildFlightBaggageGroups(persons, flights, t, lang) {
       const key = flightBaggageGroupKey(fl, leg);
       if (!key) return;
       if (!map.has(key)) {
-        map.set(key, { key, leg, label: flightBaggageGroupLabel(fl, leg, t, lang), personIds: [] });
+        map.set(key, { key, leg, label: flightBaggageGroupLabel(fl, leg, t, lang), sortMeta: flightLegSortMeta(fl, leg), personIds: [] });
       }
       const g = map.get(key);
       if (!g.personIds.includes(p.id)) g.personIds.push(p.id);
     });
   });
-  return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label, "zh-TW"));
+  return Array.from(map.values()).sort((a, b) => compareFlightLegMeta(a.sortMeta, b.sortMeta));
 }
 
 function personLegBaggage(fl, leg) {
@@ -1916,7 +2081,7 @@ function buildFlightTableSections(persons, flights, legFilter, t, lang) {
     return [{
       type: "personList",
       key: "all",
-      entries: persons.map((p) => {
+      entries: sortPersonsByFlight(persons, flights).map((p) => {
         const fl = flights.find((x) => x.person_id === p.id);
         return { personId: p.id, legs: getVisibleFlightLegs(fl, "all") };
       }),
@@ -1935,7 +2100,7 @@ function buildFlightTableSections(persons, flights, legFilter, t, lang) {
       const key = flightBaggageGroupKey(fl, leg);
       if (!key) return;
       if (!map.has(key)) {
-        map.set(key, { type: "group", key: `${leg}:${key}`, leg, label: flightBaggageGroupLabel(fl, leg, t, lang), personIds: [] });
+        map.set(key, { type: "group", key: `${leg}:${key}`, leg, label: flightBaggageGroupLabel(fl, leg, t, lang), sortMeta: flightLegSortMeta(fl, leg), personIds: [] });
       }
       const g = map.get(key);
       if (!g.personIds.includes(p.id)) {
@@ -1944,7 +2109,7 @@ function buildFlightTableSections(persons, flights, legFilter, t, lang) {
       }
     });
     Array.from(map.values())
-      .sort((a, b) => a.label.localeCompare(b.label, "zh-TW"))
+      .sort((a, b) => compareFlightLegMeta(a.sortMeta, b.sortMeta))
       .filter((g) => g.personIds.length > 0)
       .forEach((g) => sections.push(g));
   });
@@ -2409,13 +2574,20 @@ function HotelStatsByDatePanel({
   t, lang, project, statsDate, setStatsDate, statsHotelId, setStatsHotelId,
   stayNightDates, hotels, selectedHotelDayStats, hotelStatsDayCostFmt,
 }) {
+  const [open, setOpen] = React.useState(false);
   const hasSelection = statsDate && statsHotelId && selectedHotelDayStats;
   return (
-    <div style={{ marginTop: 24, marginBottom: 20, padding: "16px 18px", background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
-        <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStatsByDate}</h3>
+    <div style={{ marginTop: 24, marginBottom: 20, background: "var(--washi)", borderRadius: 8, border: "1px solid var(--keisenL)", overflow: "hidden" }}>
+      <div onClick={() => setOpen((v) => !v)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 18px", cursor: "pointer" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 3, height: 14, background: "var(--kincha)", borderRadius: 2 }} />
+          <h3 style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--sumi)", margin: 0 }}>{t.hotelStatsByDate}</h3>
+        </div>
+        <div style={{ width: 22, height: 22, border: "1px solid var(--keisenM)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "var(--nezumi)", lineHeight: 1, flexShrink: 0 }}>
+          {open ? "−" : "+"}
+        </div>
       </div>
+      {open && <div style={{ padding: "0 18px 16px" }}>
       <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 12px", lineHeight: 1.55 }}>{t.hotelStatsByDateHint}</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", marginBottom: 12 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -2476,6 +2648,7 @@ function HotelStatsByDatePanel({
           </p>
         </>
       )}
+      </div>}
     </div>
   );
 }
@@ -2878,6 +3051,35 @@ function SessionExpiredModal({ t, onRelogin }) {
         <button onClick={onRelogin} style={{ ...pBtn(false), width: "100%" }}>{t.sessionExpiredBtn}</button>
       </div>
     </div>
+  );
+}
+
+function SessionCountdown({ t }) {
+  const [remaining, setRemaining] = useState(() => {
+    const sess = getStoredSession();
+    return sess?.expires_at ? Math.max(0, sess.expires_at - Date.now()) : 0;
+  });
+  useEffect(() => {
+    const tick = () => {
+      const sess = getStoredSession();
+      const ms = sess?.expires_at ? sess.expires_at - Date.now() : 0;
+      if (ms <= 0) {
+        if (typeof window.__onSessionExpired === "function") window.__onSessionExpired();
+        return;
+      }
+      setRemaining(ms);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  const warn = remaining <= 5 * 60 * 1000;
+  const danger = remaining <= 60 * 1000;
+  const color = danger ? "#f07070" : warn ? "#d4a84a" : "rgba(253,252,249,.72)";
+  return (
+    <span className="no-print session-countdown" style={{ fontSize: 11, color, fontVariantNumeric: "tabular-nums", letterSpacing: "0.04em", whiteSpace: "nowrap", padding: "4px 10px", borderRadius: 4, border: "1px solid rgba(255,255,255,.15)", background: "rgba(255,255,255,.06)" }} title={t.sessionRemainingHint}>
+      {(t.sessionRemaining || "登入剩餘 {time}").replace("{time}", formatSessionRemaining(remaining))}
+    </span>
   );
 }
 
@@ -3766,6 +3968,7 @@ function FlightCheckinConflictPanel({ persons, flights, stays, hotels, t, lang }
 }
 
 function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
+  const [bagOpen, setBagOpen] = useState(false);
   const groups = useMemo(() => buildFlightBaggageGroups(persons, flights, t, lang), [persons, flights, t, lang]);
   const [mode, setMode] = useState("flight");
   const [leg, setLeg] = useState("out");
@@ -3836,12 +4039,14 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
   );
 
   return (
-    <div className="flight-bag-calc no-print" style={{ marginTop: 24, background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 10, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
-      <div style={{ padding: "12px 18px", background: "var(--washi)", borderBottom: "1px solid var(--keisenL)", display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif" }}>{t.bagCalcTitle}</span>
-        <span style={{ fontSize: 11, color: "var(--nezumi)" }}>— {t.bagCalcPickHint}</span>
+    <div className="flight-bag-calc no-print" style={{ marginTop: 24, background: "var(--shiro)", border: "1px solid var(--keisenL)", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+      <div onClick={() => setBagOpen((v) => !v)} style={{ padding: "11px 16px", background: "var(--washi)", borderBottom: bagOpen ? "1px solid var(--keisenL)" : "none", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", userSelect: "none" }}>
+        <span style={{ fontSize: 15, flexShrink: 0 }}>🧳</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif", flex: 1 }}>{t.bagCalcTitle}</span>
+        <span style={{ fontSize: 11, color: "var(--usunezumi)", whiteSpace: "nowrap", marginRight: 8 }}>{t.bagCalcToggleHint}</span>
+        <span style={{ fontSize: 11, color: "var(--usunezumi)", flexShrink: 0, lineHeight: 1 }}>{bagOpen ? "▲" : "▼"}</span>
       </div>
-      <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
+      {bagOpen && <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
           {modeBtn("flight", t.bagCalcByFlight)}
           {modeBtn("pick", t.bagCalcByPick)}
@@ -3933,7 +4138,7 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang }) {
         ) : (
           <p style={{ fontSize: 12, color: "var(--nezumi)", padding: "8px 0" }}>{t.bagCalcNoData}</p>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
@@ -4787,7 +4992,7 @@ function invoiceLogUserLabel(log) {
   return local || email;
 }
 
-function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, user, canEdit, showToast }) {
+function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t, user, canEdit, showToast, collapsedHotels, toggleHotelCollapsed, setManyCollapsed }) {
   const [invoiceMode, setInvoiceMode] = useState("merged");
   const [showAmount, setShowAmount] = useState(true);
   const [printLogs, setPrintLogs] = useState([]);
@@ -5004,13 +5209,34 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
       </div>
 
       {/* 各飯店表格 */}
-      {data.map((hd) => (
+      {data.length > 0 && collapsedHotels && setManyCollapsed && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+          <CollapseAllButton sectionKeys={data.map((hd) => `invoice:${hd.hid}`)} collapsedHotels={collapsedHotels} onToggle={setManyCollapsed} t={t} />
+        </div>
+      )}
+      {data.map((hd) => {
+        const sectionKey = `invoice:${hd.hid}`;
+        const isCollapsed = collapsedHotels?.has(sectionKey);
+        return (
         <section key={hd.hid} style={{ marginBottom: 32, background: "var(--shiro)", borderRadius: 8, border: "1px solid var(--keisenL)", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
-          <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--theadGrad)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{hd.hotel?.name || "—"}</h3>
-            <span style={{ fontSize: 11, color: "var(--washi)", opacity: 0.75 }}>{hd.batches.length} {t.invoiceBatch}</span>
+          <div
+            onClick={() => toggleHotelCollapsed?.(sectionKey)}
+            style={{ background: "var(--sumiMid)", backgroundImage: "var(--theadGrad)", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: toggleHotelCollapsed ? "pointer" : "default", userSelect: "none" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {toggleHotelCollapsed && (
+                <span style={{ width: 20, height: 20, border: "1px solid rgba(255,255,255,.3)", borderRadius: 4, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--washi)", lineHeight: 1, flexShrink: 0 }}>
+                  {isCollapsed ? "+" : "−"}
+                </span>
+              )}
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.03em" }}>{hd.hotel?.name || "—"}</h3>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ fontSize: 11, color: "var(--washi)", opacity: 0.75 }}>{hd.batches.length} {t.invoiceBatch}</span>
+              {showAmount && <span style={{ fontSize: 13, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}</span>}
+            </div>
           </div>
-          <div style={{ overflowX: "auto" }}>
+          {!isCollapsed && <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <colgroup>
                 <col style={{ width: showAmount ? "28%" : "34%" }} />
@@ -5070,9 +5296,10 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
                 )}
               </tbody>
             </table>
-          </div>
+          </div>}
         </section>
-      ))}
+        );
+      })}
 
       {showAmount && (
         <div style={{ background: "var(--sumiMid)", backgroundImage: "var(--headerGrad)", color: "var(--washi)", padding: "14px 20px", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 12px rgba(0,0,0,.1)" }}>
@@ -5892,6 +6119,7 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <SessionCountdown t={tSel} />
           <ThemeToggle theme={theme} onChange={onThemeChange} t={tSel} />
           <button type="button" onClick={() => { api.logout(); clearSession(); window.location.reload(); }} style={hdrBtn}>{t.logout}</button>
         </div>
@@ -6408,7 +6636,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     const kw = debSearchB.toLowerCase();
     const nameOk = !kw || [p.name_kanji, p.last_roman, p.first_roman, p.dept].some((v) => (v || "").toLowerCase().includes(kw));
     const romanOk = !searchBRoman || [p.last_roman, p.first_roman].some((v) => (v || "").toLowerCase().includes(searchBRoman.toLowerCase()));
-    const airlineOk = !searchBAirline || (fl?.airline || "").toLowerCase().includes(searchBAirline.toLowerCase());
+    const airlineOk = !searchBAirline || [fl?.airline, fl?.ret_airline].some((v) => (v || "").toLowerCase().includes(searchBAirline.toLowerCase()));
     const st = getFlightStatus(p.id);
     const statusOk = !searchBStatus || st === searchBStatus;
     return nameOk && romanOk && airlineOk && statusOk && (!deptB || p.dept === deptB);
@@ -6447,16 +6675,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
     return true;
   }), [filteredFlightPersons, flights, flightLegFilter, flightSameDiffFilter, flightSameDiffMap, flightWarnFilters, stays]);
 
+  const sortedDisplayFlightPersons = useMemo(
+    () => sortPersonsByFlight(displayFlightPersons, flights),
+    [displayFlightPersons, flights],
+  );
+
   const flightTableSections = useMemo(
-    () => buildFlightTableSections(displayFlightPersons, flights, flightLegFilter, t, lang),
-    [displayFlightPersons, flights, flightLegFilter, t, lang],
+    () => buildFlightTableSections(sortedDisplayFlightPersons, flights, flightLegFilter, t, lang),
+    [sortedDisplayFlightPersons, flights, flightLegFilter, t, lang],
   );
 
   const flightDeptGroups = useMemo(() => {
     if (!flightGroupByDept) return null;
     const deptOrder = [];
     const deptMap = {};
-    displayFlightPersons.forEach((p) => {
+    sortedDisplayFlightPersons.forEach((p) => {
       const d = p.dept || "";
       if (!deptMap[d]) { deptMap[d] = []; deptOrder.push(d); }
       deptMap[d].push(p);
@@ -6466,8 +6699,8 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       if (!b) return -1;
       return a.localeCompare(b, "zh-TW");
     });
-    return sorted.map((d) => ({ dept: d, persons: deptMap[d] }));
-  }, [flightGroupByDept, displayFlightPersons]);
+    return sorted.map((d) => ({ dept: d, persons: sortPersonsByFlight(deptMap[d], flights) }));
+  }, [flightGroupByDept, sortedDisplayFlightPersons, flights]);
 
   const flightRouteMemory = useMemo(() => buildFlightRouteMemory(flights), [flights]);
 
@@ -6976,6 +7209,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
           </div>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <SessionCountdown t={t} />
           {canManageMembers && <button type="button" onClick={() => setShowMembers(true)} style={hdrBtn2}>{t.members}</button>}
           {canEdit && <button type="button" onClick={() => setShowCurrency(true)} style={hdrBtn2}>{t.settings}</button>}
           {tab === "A" && canEdit && (
@@ -7133,7 +7367,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                 t={t}
               />
               <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 10, flexWrap: "wrap" }}>
-                <p style={{ fontSize: 11, color: "var(--nezumi)", letterSpacing: "0.03em", margin: 0 }}>{t.resultsCount.replace("{n}", displayFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
+                <p style={{ fontSize: 11, color: "var(--nezumi)", letterSpacing: "0.03em", margin: 0 }}>{t.resultsCount.replace("{n}", sortedDisplayFlightPersons.length).replace("{total}", persons.filter((p) => !p.hide_from_flights).length)}</p>
                 <CollapseAllButton sectionKeys={currentFlightSectionKeys} collapsedHotels={collapsedHotels} onToggle={setManyCollapsed} t={t} />
               </div>
               <div className="flight-print-title print-only">{project.name} — {t.flightMgmt}{flightLegFilter !== "all" ? ` · ${flightLegFilter === "out" ? t.flightOutbound : t.flightReturn}` : ""}</div>
@@ -7233,7 +7467,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           );
                           if (isCollapsed) return [banner];
                           const rows = section.entries.flatMap(({ personId, legs }) => {
-                            const p = displayFlightPersons.find((x) => x.id === personId);
+                            const p = sortedDisplayFlightPersons.find((x) => x.id === personId);
                             if (!p) return [];
                             const fl = flights.find((x) => x.person_id === personId);
                             return renderFlightPersonRows(p, fl, legs, ctx);
@@ -7253,13 +7487,13 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                         if (isCollapsed) return [banner];
                         const rows = section.type === "ungrouped"
                           ? section.entries.flatMap(({ personId, legs }) => {
-                              const p = displayFlightPersons.find((x) => x.id === personId);
+                              const p = sortedDisplayFlightPersons.find((x) => x.id === personId);
                               if (!p) return [];
                               const fl = flights.find((x) => x.person_id === personId);
                               return renderFlightPersonRows(p, fl, legs, ctx);
                             })
                           : section.personIds.flatMap((pid) => {
-                              const p = displayFlightPersons.find((x) => x.id === pid);
+                              const p = sortedDisplayFlightPersons.find((x) => x.id === pid);
                               if (!p) return [];
                               const fl = flights.find((x) => x.person_id === pid);
                               return renderFlightPersonRows(p, fl, [section.leg], ctx);
@@ -7270,9 +7504,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   </tbody>
                 </table>
               </div>
-              <FlightBaggageCalc persons={displayFlightPersons} flights={flights} personIndex={personIndex} t={t} lang={lang} />
+              <FlightBaggageCalc persons={sortedDisplayFlightPersons} flights={flights} personIndex={personIndex} t={t} lang={lang} />
               <FlightCheckinConflictPanel
-                persons={displayFlightPersons}
+                persons={sortedDisplayFlightPersons}
                 flights={flights}
                 stays={stays}
                 hotels={hotels}
@@ -7510,8 +7744,14 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                       return <p style={{ fontSize: 13, color: "var(--nezumi)", padding: "24px 0" }}>{t.noData}</p>;
                     }
 
+                    const allStaySectionKeys = hotelGroups.map((g) => `stay:hotel:${g.hotelId}`);
                     return (
                       <div>
+                        {hotelGroups.length > 0 && (
+                          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+                            <CollapseAllButton sectionKeys={allStaySectionKeys} collapsedHotels={collapsedHotels} onToggle={setManyCollapsed} t={t} />
+                          </div>
+                        )}
                         {hotelGroups.map((group) => {
                           const rows = sortStayRows(group.rows);
                           const assigned = rows.filter((r) => r.room_number);
@@ -7519,30 +7759,24 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                           const cs = hotelCumulativeStats[group.hotelId] || hotelCumulativeStats[+group.hotelId] || {};
                           const meta = computeHotelGroupMeta(rows);
                           const displayCost = cs.cost != null ? cs.cost : rows.reduce((s, r) => s + (stayDisplayTotals[r.id] || 0), 0);
+                          const sectionKey = `stay:hotel:${group.hotelId}`;
+                          const isCollapsed = collapsedHotels.has(sectionKey);
+                          const headerMeta = { ...meta, roomNights: cs.roomNights || 0 };
+                          const dateRange = meta.minIn && meta.maxOut ? `${fmtDate(meta.minIn, lang)} ～ ${fmtDate(meta.maxOut, lang)}` : null;
                           return (
                             <section key={String(group.hotelId)} style={{ marginBottom: 32 }}>
-                              <div style={{
-                                display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8,
-                                marginBottom: 12, paddingBottom: 10, borderBottom: `2px solid ${"var(--moegi)"}`,
-                              }}>
-                                <div>
-                                  <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--sumi)", margin: 0, fontFamily: "'Noto Serif JP',serif", letterSpacing: "0.02em" }}>
-                                    {group.hotelName}
-                                  </h3>
-                                  {meta.minIn && meta.maxOut && (
-                                    <div style={{ fontSize: 12, color: "var(--moegi)", marginTop: 4, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
-                                      {fmtDate(meta.minIn, lang)} ～ {fmtDate(meta.maxOut, lang)}
-                                    </div>
-                                  )}
-                                </div>
-                                <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-                                  {meta.guestCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.guestCount}</strong> {t.stayGuestCount}</span>}
-                                  {meta.roomCount > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}><strong style={{ color: "var(--sumi)" }}>{meta.roomCount}</strong> {t.stayRoomCount}</span>}
-                                  {cs.roomNights > 0 && <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{t.roomNights}: <strong style={{ color: "var(--sumi)" }}>{cs.roomNights}</strong></span>}
-                                  <span style={{ fontSize: 11, fontWeight: 600, color: "var(--asagi)" }}>{formatMoney(convertMoney(displayCost, project), project, lang)}</span>
-                                </div>
-                              </div>
-                              <div style={{ overflowX: "auto" }}>
+                              <HotelSectionHeader
+                                collapsed={isCollapsed}
+                                onToggle={() => toggleHotelCollapsed(sectionKey)}
+                                hotelName={group.hotelName}
+                                dateRange={dateRange}
+                                meta={headerMeta}
+                                displayCost={displayCost}
+                                project={project}
+                                lang={lang}
+                                t={t}
+                              />
+                              {!isCollapsed && <div style={{ overflowX: "auto" }}>
                                 <table style={tblW} className="data-table stay-table">
                                   <colgroup>
                                     {STAY_COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
@@ -7571,43 +7805,21 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                                     ))}
                                   </tbody>
                                 </table>
-                              </div>
+                              </div>}
                             </section>
                           );
                         })}
 
-                        {personsNoStay.length > 0 && (
-                          <div className="pending-banner" style={{ marginTop: 8, padding: "14px 18px", border: "1.5px dashed var(--kincha)", borderRadius: 8 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--kincha)", marginBottom: 8 }}>
-                              {activeStayPhase ? t.unassignedPhaseRooms.replace("{phase}", activePhaseName) : t.unassignedRooms}
-                            </div>
-                            <p style={{ fontSize: 11, color: "var(--nezumi)", margin: "0 0 10px" }}>
-                              {activeStayPhase ? t.unassignedPhaseRoomsHint : t.unassignedRoomsHint}
-                            </p>
-                            {groupByDeptLabel(personsNoStay, (p) => p.dept, lang, t.deptUnset).map((g) => (
-                              <div key={g.label} className="unassigned-dept-group" style={{ marginBottom: 14 }}>
-                                <div className="unassigned-dept-label" style={{ fontSize: 11, fontWeight: 700, color: "var(--sumi)", marginBottom: 8, letterSpacing: "0.04em", paddingBottom: 4, borderBottom: "1px solid var(--keisenL)" }}>
-                                  {g.label} ({g.items.length})
-                                </div>
-                                <div className="unassigned-tags">
-                                  {[...g.items].sort((a, b) => (personIndex[a.id] || 0) - (personIndex[b.id] || 0)).map((p) => {
-                                    const displayName = p.name_kanji || `${p.last_roman} ${p.first_roman}`.trim();
-                                    const openAdd = () => openStayModal({ pid: p.id, stayId: null, data: null });
-                                    return canEdit ? (
-                                      <button key={p.id} type="button" className="unassigned-tag unassigned-tag--clickable" title={displayName} onClick={openAdd}>
-                                        <span className="tag-name">{displayName}</span>
-                                      </button>
-                                    ) : (
-                                      <div key={p.id} className="unassigned-tag">
-                                        <span className="tag-name" title={displayName}>{displayName}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        <UnassignedRoomsPanel
+                          personsNoStay={personsNoStay}
+                          activeStayPhase={activeStayPhase}
+                          activePhaseName={activePhaseName}
+                          t={t}
+                          lang={lang}
+                          personIndex={personIndex}
+                          canEdit={canEdit}
+                          openStayModal={openStayModal}
+                        />
                       </div>
                     );
                   })()}
@@ -7723,6 +7935,9 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
                   user={user}
                   canEdit={canEdit}
                   showToast={showToast}
+                  collapsedHotels={collapsedHotels}
+                  toggleHotelCollapsed={toggleHotelCollapsed}
+                  setManyCollapsed={setManyCollapsed}
                 />
               )}
             </div>
@@ -8211,6 +8426,15 @@ function App() {
     return () => { window.__onSessionExpired = null; };
   }, []);
 
+  useEffect(() => {
+    if (!token) return;
+    const id = setInterval(async () => {
+      const ok = await tryRefreshSession();
+      if (!ok) setSessionExpired(true);
+    }, 60000);
+    return () => clearInterval(id);
+  }, [token]);
+
   const applyAuth = async (tk, u, loginLang) => {
     _token = tk;
     setToken(tk);
@@ -8230,15 +8454,16 @@ function App() {
       try {
         const raw = localStorage.getItem(SESSION_KEY);
         if (!raw) return;
-        const sess = JSON.parse(raw);
-        if (sess.expires_at && Date.now() > sess.expires_at - 120000 && sess.refresh_token) {
-          const refreshed = await api.refresh(sess.refresh_token);
-          if (refreshed.access_token) {
-            saveSession(refreshed);
-            sess.access_token = refreshed.access_token;
-          }
+        const ok = await tryRefreshSession();
+        const sess = getStoredSession();
+        if (!sess?.access_token) {
+          if (!ok) clearSession();
+          return;
         }
-        if (!sess.access_token) return;
+        if (!ok && sess.expires_at && Date.now() > sess.expires_at) {
+          clearSession();
+          return;
+        }
         _token = sess.access_token;
         const u = await api.getUser();
         if (u?.id) await applyAuth(sess.access_token, u);
