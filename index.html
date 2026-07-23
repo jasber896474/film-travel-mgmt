@@ -1535,6 +1535,14 @@ const FLIGHT_LEG_TABLE_COLS = [
   { field: "pnr", labelKey: "pnr", w: 56, type: "text", muted: true },
 ];
 
+const FLIGHT_TABLE_DATA_COL_WEIGHTS = [
+  ...FLIGHT_PERSON_COLS.map((c) => c.w),
+  52,
+  ...FLIGHT_LEG_TABLE_COLS.map((c) => c.w),
+  68,
+];
+const FLIGHT_TABLE_DATA_COL_TOTAL = FLIGHT_TABLE_DATA_COL_WEIGHTS.reduce((a, b) => a + b, 0);
+
 function parseBagKg(val) {
   if (val == null || String(val).trim() === "") return null;
   const m = String(val).trim().match(/(\d+(?:\.\d+)?)/);
@@ -6200,7 +6208,7 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
           <div style={{ fontSize: 11, letterSpacing: "0.16em", opacity: 0.6 }}>{t.loading}</div>
         </div>
       ) : (
-        <div style={{ padding: "28px 20px", maxWidth: 1320, margin: "0 auto" }}>
+        <div className="app-content" style={{ padding: "28px 20px", maxWidth: 1320, margin: "0 auto" }}>
 
           {tab === "A" && (
             <div className="tab-content">
@@ -6310,6 +6318,11 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
               <div className="flight-print-title print-only">{project.name} — {t.flightMgmt}{flightLegFilter !== "all" ? ` · ${flightLegFilter === "out" ? t.flightOutbound : t.flightReturn}` : ""}</div>
               <div className="flight-table-wrap">
                 <table style={tblW} className="flight-table flight-table-rows">
+                  <colgroup>
+                    {FLIGHT_TABLE_DATA_COL_WEIGHTS.map((w, i) => (
+                      <col key={i} style={{ width: `${(w / FLIGHT_TABLE_DATA_COL_TOTAL * 100).toFixed(3)}%` }} />
+                    ))}
+                  </colgroup>
                   <thead>
                     <tr style={thead}>
                       {FLIGHT_PERSON_COLS.map((c) => (
@@ -7175,27 +7188,44 @@ function GlobalStyles() {
       .print-only { display: none; }
       @media print {
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        body { background: #fff !important; }
+        @page { size: A4 landscape; margin: 10mm; }
+        @page flight-print { size: A4 landscape; margin: 10mm; }
+        body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
         .no-print { display: none !important; }
         .print-only { display: block !important; }
+        .app-content,
+        .flight-tab,
+        .flight-table-wrap {
+          width: 100% !important;
+          max-width: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          box-sizing: border-box !important;
+        }
+        div[style*="max-width: 1320"],
+        div[style*="maxWidth: 1320"] {
+          max-width: none !important;
+          width: 100% !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
         .flight-print-title { font-family: 'Noto Serif JP', serif; font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #252530; }
-        .flight-tab { padding: 0 !important; max-width: none !important; }
-        div[style*="maxWidth: 1320"] { max-width: none !important; padding: 8px !important; }
+        .flight-tab { page: flight-print; }
         .flight-table-wrap { overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; }
-        .flight-table { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; font-size: 9px; box-shadow: none !important; border: 1px solid #ccc !important; }
-        .flight-table th { font-size: 7.5px !important; padding: 5px 3px !important; letter-spacing: .06em !important; }
-        .flight-table td { font-size: 9.5px !important; padding: 5px 3px !important; }
+        .flight-table { min-width: 0 !important; width: 100% !important; max-width: 100% !important; table-layout: fixed !important; font-size: 9px; box-shadow: none !important; border: 1px solid #ccc !important; border-radius: 0 !important; }
+        .flight-table th, .flight-table td { min-width: 0 !important; max-width: none !important; width: auto !important; overflow: hidden !important; word-wrap: break-word !important; overflow-wrap: anywhere !important; }
+        .flight-table th { font-size: 7.5px !important; padding: 4px 2px !important; letter-spacing: .04em !important; white-space: normal !important; }
+        .flight-table td { font-size: 9px !important; padding: 4px 2px !important; white-space: normal !important; }
         .flight-table .flight-row-ret td { background: #f5f5f0 !important; }
         .flight-table .apt-code { font-size: 10px !important; }
         .flight-table .apt-term { font-size: 8px !important; }
         .flight-table .flight-dt-date, .flight-table .pickup-date { font-size: 8px !important; }
-        .flight-table .flight-dt-time { font-size: 9.5px !important; }
-        .flight-table .pickup-wrap { padding: 2px 4px !important; min-width: 0 !important; background: #d8eef5 !important; }
-        .flight-table .pickup-time { font-size: 10px !important; }
-        .flight-table .leg-tag { padding: 2px 6px !important; font-size: 8px !important; }
-        .flight-table .flight-muted { font-size: 8.5px !important; }
+        .flight-table .flight-dt-time { font-size: 9px !important; }
+        .flight-table .pickup-wrap { padding: 2px 4px !important; min-width: 0 !important; background: #d8eef5 !important; display: block !important; }
+        .flight-table .pickup-time { font-size: 9px !important; }
+        .flight-table .leg-tag { padding: 2px 4px !important; font-size: 7.5px !important; white-space: normal !important; }
+        .flight-table .flight-muted { font-size: 8px !important; }
         tbody tr:hover td { background: inherit !important; }
-        @page { size: A4 portrait; margin: 10mm; }
       }
       .td-num { color: var(--usunezumi); font-variant-numeric: tabular-nums; text-align: center; }
       .td-amt { font-weight: 600; color: var(--asagi); font-variant-numeric: tabular-nums; text-align: right; }
