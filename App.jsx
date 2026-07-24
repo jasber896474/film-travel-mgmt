@@ -398,6 +398,72 @@ const fmtFlightDateTime = (ts, lang) => {
   const timePart = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   return { date: datePart, time: timePart };
 };
+
+function fmtPrintDateNoYear(d, lang) {
+  if (!d) return "—";
+  const date = parseLocalDate(String(d).slice(0, 10));
+  if (!date || Number.isNaN(date.getTime())) return "—";
+  const m = date.getMonth() + 1;
+  const day = date.getDate();
+  if (lang === "ja") return `${m}月${day}日`;
+  if (lang === "en") {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[m - 1]} ${day}`;
+  }
+  if (lang === "ko") return `${m}월 ${day}일`;
+  if (lang === "zh-CN") return `${m}月${day}日`;
+  return `${m}/${day}`;
+}
+
+function fmtPrintDateRange(checkIn, checkOut, lang, t) {
+  return `${fmtPrintDateNoYear(checkIn, lang)} ${t.invoiceDateRange} ${fmtPrintDateNoYear(checkOut, lang)}`;
+}
+
+function buildPrintSeqFromIds(ids) {
+  const map = {};
+  ids.forEach((id, i) => { map[id] = i + 1; });
+  return map;
+}
+
+function buildPrintSeqForSections(sections) {
+  const ids = [];
+  const push = (id) => { if (id != null && !ids.includes(id)) ids.push(id); };
+  sections.forEach((s) => {
+    if (s.type === "personList") s.entries.forEach((e) => push(e.personId));
+    else if (s.type === "ungrouped") s.entries.forEach((e) => push(e.personId));
+    else if (s.personIds) s.personIds.forEach((id) => push(id));
+  });
+  return buildPrintSeqFromIds(ids);
+}
+
+const REPORT_COL_ALIGN = {
+  no: "num", dept: "text", kanji: "text", roman: "text", name_kanji: "text", name_roman: "text",
+  title: "text", name: "text", hotel: "text", room_type: "text", note: "text", vendor: "text",
+  check_in: "num", check_out: "num", nights: "num", room_no: "num", status: "num",
+  airline: "num", flight_no: "num", pnr: "num", dep_airport: "num", arr_airport: "num",
+  dep_time: "num", arr_time: "num", ret_airline: "num", ret_flight_no: "num",
+  ret_dep_airport: "num", ret_dep_time: "num", ret_arr_airport: "num", ret_arr_time: "num",
+  cabin: "num", checked_bag: "num", cabin_bag: "num", passport: "num", dob: "num", passport_exp: "num",
+  importance: "num", diet: "text", total_amt: "amt", stay_label: "text", special_room: "text",
+  vehicle: "text", role: "text",
+};
+
+function reportTdClass(key) {
+  const a = REPORT_COL_ALIGN[key] || "text";
+  if (a === "text") return "text";
+  if (a === "amt") return "amt";
+  return "num";
+}
+
+function baggageSummaryHtml({ t, totalOver, estFee, feeNum, allowanceNum }) {
+  const overCls = totalOver > 0 ? "over" : "ok";
+  const feeBlock = Number.isFinite(feeNum)
+    ? `<div class="summary-item"><span class="lbl">${escReportHtml(t.bagCalcEstFee)}</span><strong class="val ${totalOver > 0 ? "over" : "ok"}">${escReportHtml(estFee.toLocaleString())}</strong></div>`
+    : "";
+  const hint = `<div class="summary-hint">${escReportHtml(t.bagCalcAllowance)}：${allowanceNum} kg${Number.isFinite(feeNum) ? ` · ${escReportHtml(t.bagCalcFeeRate)}：${feeNum}` : ""}</div>`;
+  return `<div class="summary-line"><div class="summary-item"><span class="lbl">${escReportHtml(t.bagCalcTotalOver)}</span><strong class="val ${overCls}">${totalOver > 0 ? `${totalOver} kg` : "0 kg"}</strong></div>${feeBlock}</div>${hint}`;
+}
+
 const passportWarning = (exp) => {
   if (!exp) return false;
   const e = parseLocalDate(exp);
@@ -490,6 +556,8 @@ const T = {
     invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "計價明細",
     invoiceSubtotal: "房費小計", invoiceRooms: "間", invoiceNights: "晚",
     invoiceDateRange: "至", invoicePrint: "列印對帳表",
+    invoicePrintMenu: "列印", invoicePrintAll: "列印全部（{n} 間飯店）", invoicePrintThisHotel: "列印此間", invoicePrintCustom: "自訂列印…",
+    invoiceSelectHotels: "選擇飯店", invoiceSelectAll: "全選", invoiceSelectClear: "清除",
     invoiceNoData: "尚無住宿資料可對帳", invoiceAvgRate: "均價",
     invoiceShowAmount: "顯示金額", invoiceHideAmount: "隱藏金額",
     invoiceShowAmountHint: "關閉後畫面與列印皆不顯示金額欄、小計與總計；計價欄僅保留間數與晚數。",
@@ -671,6 +739,8 @@ const T = {
     invoiceBatch: "批次", invoiceRoomType: "房型", invoiceFormula: "计价明细",
     invoiceSubtotal: "房费小计", invoiceRooms: "间", invoiceNights: "晚",
     invoiceDateRange: "至", invoicePrint: "打印对账表",
+    invoicePrintMenu: "打印", invoicePrintAll: "打印全部（{n} 间饭店）", invoicePrintThisHotel: "打印此间", invoicePrintCustom: "自定义打印…",
+    invoiceSelectHotels: "选择饭店", invoiceSelectAll: "全选", invoiceSelectClear: "清除",
     invoiceNoData: "暂无住宿数据可对账", invoiceAvgRate: "均价",
     invoiceShowAmount: "显示金额", invoiceHideAmount: "隐藏金额",
     invoiceShowAmountHint: "关闭后画面与打印皆不显示金额栏、小计与总计；计价栏仅保留间数与晚数。",
@@ -851,6 +921,8 @@ const T = {
     invoiceBatch: "Batch", invoiceRoomType: "Room Type", invoiceFormula: "Pricing Detail",
     invoiceSubtotal: "Subtotal", invoiceRooms: "rm", invoiceNights: "nts",
     invoiceDateRange: "to", invoicePrint: "Print Invoice",
+    invoicePrintMenu: "Print", invoicePrintAll: "Print all ({n} hotels)", invoicePrintThisHotel: "Print this hotel", invoicePrintCustom: "Custom print…",
+    invoiceSelectHotels: "Select hotels", invoiceSelectAll: "Select all", invoiceSelectClear: "Clear",
     invoiceNoData: "No stay data available for invoicing", invoiceAvgRate: "avg",
     invoiceShowAmount: "Show amounts", invoiceHideAmount: "Hide amounts",
     invoiceShowAmountHint: "When off, amount columns, subtotals and grand total are hidden on screen and in print; pricing shows room-nights only.",
@@ -1029,6 +1101,8 @@ const T = {
     invoiceBatch: "일괄", invoiceRoomType: "객실 유형", invoiceFormula: "요금 내역",
     invoiceSubtotal: "소계", invoiceRooms: "실", invoiceNights: "박",
     invoiceDateRange: "~", invoicePrint: "청구서 인쇄",
+    invoicePrintMenu: "인쇄", invoicePrintAll: "전체 인쇄 ({n}개 호텔)", invoicePrintThisHotel: "이 호텔 인쇄", invoicePrintCustom: "맞춤 인쇄…",
+    invoiceSelectHotels: "호텔 선택", invoiceSelectAll: "전체 선택", invoiceSelectClear: "지우기",
     invoiceNoData: "청구할 숙박 데이터가 없습니다", invoiceAvgRate: "평균",
     invoiceShowAmount: "금액 표시", invoiceHideAmount: "금액 숨김",
     invoiceShowAmountHint: "끄면 화면·인쇄 모두 금액 열·소계·합계가 숨겨지고, 요금 내역에는 실수·박수만 표시됩니다.",
@@ -1207,6 +1281,8 @@ const T = {
     invoiceBatch: "件", invoiceRoomType: "部屋タイプ", invoiceFormula: "料金内訳",
     invoiceSubtotal: "小計", invoiceRooms: "室", invoiceNights: "泊",
     invoiceDateRange: "〜", invoicePrint: "請求書を印刷",
+    invoicePrintMenu: "印刷", invoicePrintAll: "すべて印刷（{n} 軒）", invoicePrintThisHotel: "このホテルを印刷", invoicePrintCustom: "カスタム印刷…",
+    invoiceSelectHotels: "ホテルを選択", invoiceSelectAll: "すべて選択", invoiceSelectClear: "クリア",
     invoiceNoData: "照合できる宿泊データがありません", invoiceAvgRate: "平均",
     invoiceShowAmount: "金額を表示", invoiceHideAmount: "金額を非表示",
     invoiceShowAmountHint: "オフにすると、画面・印刷とも金額列・小計・合計を隠し、料金内訳は室数×泊数のみ表示します。",
@@ -2359,6 +2435,7 @@ function buildFlightTableSections(persons, flights, legFilter, t, lang) {
 }
 
 const FLIGHT_TABLE_COL_SPAN = FLIGHT_PERSON_COLS.length + 1 + FLIGHT_LEG_TABLE_COLS.length + 2;
+const FLIGHT_PRINT_COL_SPAN = FLIGHT_PERSON_COLS.length + 1 + FLIGHT_LEG_TABLE_COLS.length + 1;
 
 function renderFlightPersonRows(p, fl, legs, ctx) {
   const { personIndex, lang, t, canEdit, setFlightModal, statusBadge, stays, activeWarnFilters } = ctx;
@@ -4368,13 +4445,23 @@ function FlightBaggageCalc({ persons, flights, personIndex, t, lang, allowance, 
               </tbody>
             </table>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 20, padding: "10px 12px", background: "var(--washi)", borderRadius: 8, alignItems: "baseline" }}>
-              <span style={{ fontSize: 12, color: "var(--nezumi)" }}>{t.bagCalcTotalOver}：</span>
-              <strong style={{ fontSize: 20, color: totalOver > 0 ? "var(--shu, #ad3030)" : "var(--moegi)", fontVariantNumeric: "tabular-nums" }}>{totalOver > 0 ? `${totalOver} kg` : "0 kg"}</strong>
+              <div style={{ display: "inline-flex", alignItems: "baseline", gap: 8 }}>
+                <span style={{ fontSize: 9, color: "var(--nezumi)", fontWeight: 600 }}>{t.bagCalcTotalOver}</span>
+                <strong style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: "tabular-nums", lineHeight: 1.2, color: totalOver > 0 ? "var(--shu, #ad3030)" : "var(--moegi)" }}>
+                  {totalOver > 0 ? `${totalOver} kg` : "0 kg"}
+                </strong>
+              </div>
               {Number.isFinite(feeNum) && (
-                <span style={{ fontSize: 12.5 }}>
-                  {t.bagCalcEstFee}：<strong style={{ color: totalOver > 0 ? "var(--shu, #ad3030)" : "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>{estFee.toLocaleString()}</strong>
-                </span>
+                <div style={{ display: "inline-flex", alignItems: "baseline", gap: 8 }}>
+                  <span style={{ fontSize: 9, color: "var(--nezumi)", fontWeight: 600 }}>{t.bagCalcEstFee}</span>
+                  <strong style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: "tabular-nums", lineHeight: 1.2, color: totalOver > 0 ? "var(--shu, #ad3030)" : "var(--moegi)" }}>
+                    {estFee.toLocaleString()}
+                  </strong>
+                </div>
               )}
+            </div>
+            <div style={{ fontSize: 8, color: "var(--usunezumi)", marginTop: -6, paddingLeft: 12 }}>
+              {t.bagCalcAllowance}：{allowanceNum} kg{Number.isFinite(feeNum) ? ` · ${t.bagCalcFeeRate}：${feeNum}` : ""}
             </div>
           </>
         ) : (
@@ -4520,32 +4607,28 @@ function FlightCostBatchModal({ persons, t, onSave, onClose }) {
 
 function generateFlightCostReportHTML({ project, lang, t, rows, grandTotal, deptTotals }) {
   const projectName = escReportHtml(project?.name || "");
-  const now = new Date().toLocaleDateString(lang === "ja" ? "ja-JP" : lang?.startsWith("zh") ? "zh-TW" : "en-US");
-  const headerGrad = "linear-gradient(135deg,#1a3028 0%,#2d4a36 60%,#1a3028 100%)";
+  const now = flightReportNowLabel(lang);
   const deptHtml = deptTotals.map((d) => `<span>${escReportHtml(d.dept || t.deptUnset)}: <strong>${escReportHtml(formatMoney(d.total, project, lang))}</strong></span>`).join('<span class="dot"> · </span>');
   const body = rows.map((block) => {
     const items = block.items.map((i) => `<tr>
-      <td>${escReportHtml(i.paid_at ? String(i.paid_at).slice(0, 10) : "—")}</td>
-      <td class="left">${escReportHtml(flightCostTypeLabel(i.cost_type, t))}</td>
-      <td>${escReportHtml(flightCostLegLabel(i.leg, t))}</td>
+      <td class="num">${escReportHtml(i.paid_at ? fmtPrintDateNoYear(String(i.paid_at).slice(0, 10), lang) : "—")}</td>
+      <td class="text">${escReportHtml(flightCostTypeLabel(i.cost_type, t))}</td>
+      <td class="num">${escReportHtml(flightCostLegLabel(i.leg, t))}</td>
       <td class="amt ${(+i.amount || 0) < 0 ? "neg" : ""}">${escReportHtml(formatMoney(convertMoney(+i.amount || 0, project), project, lang))}</td>
-      <td class="left">${escReportHtml(i.vendor || "—")}</td>
-      <td class="left">${escReportHtml(i.note || "—")}</td>
+      <td class="text">${escReportHtml(i.vendor || "—")}</td>
+      <td class="text">${escReportHtml(i.note || "—")}</td>
     </tr>`).join("");
     return `<tr class="person-hdr"><td colspan="6">${escReportHtml(block.name)} · ${escReportHtml(block.dept || t.deptUnset)} · ${escReportHtml(t.flightCostPersonTotal)} ${escReportHtml(formatMoney(block.total, project, lang))}</td></tr>${items}`;
   }).join("");
+  const extraCss = `.summary{margin-bottom:3mm;font-size:8.5pt;color:#444;display:flex;flex-wrap:wrap;gap:8px 16px}
+.summary .dot{opacity:.4}.person-hdr td{background:#eef4ef;font-weight:700;text-align:left;color:#2b5a4c}
+td.amt{font-weight:700;color:#2b5a4c}td.amt.neg{color:#ad3030}`;
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(t.flightCostTitle)} — ${projectName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-size:9pt;line-height:1.4}
-@page{size:A4 portrait;margin:12mm 14mm}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-.doc-hdr{background:${headerGrad};color:#fff;padding:4mm 5mm;border-radius:2mm;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm}
-.doc-hdr .title{font-family:'Noto Serif JP',serif;font-size:12pt;font-weight:600}.summary{margin-bottom:3mm;font-size:8.5pt;color:#444;display:flex;flex-wrap:wrap;gap:8px 16px}
-.summary .dot{opacity:.4}table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:2mm}
-th,td{border:.3pt solid #c8d4cc;padding:5px 7px;text-align:center}th{background:#1a3028;color:#fff;font-size:7.5pt}
-td.left{text-align:left}.amt{font-weight:700;color:#2b5a4c}.amt.neg{color:#ad3030}
-.person-hdr td{background:#eef4ef;font-weight:700;text-align:left;color:#2b5a4c}
-.footer{margin-top:3mm;font-size:6pt;color:#aaa;text-align:right;border-top:.3pt solid #d8e8dc;padding-top:1.5mm}</style></head><body>
-<div class="doc-hdr"><div><div class="type">${escReportHtml(t.flightCostTitle)}</div><div class="title">${projectName}</div></div><div class="meta">${escReportHtml(now)}</div></div>
+<style>${flightReportSharedCSS({ page: "portrait", bodySize: "9pt", tableSize: "8.5pt" })}
+${extraCss}
+</style></head><body>
+${flightReportDocHeader(t.flightCostTitle, project?.name || "", [now])}
 <div class="summary"><span>${escReportHtml(t.flightCostNetTotal)}: <strong>${escReportHtml(formatMoney(grandTotal, project, lang))}</strong></span>${deptHtml ? `<span class="dot">|</span>${deptHtml}` : ""}</div>
 <table><thead><tr><th>${escReportHtml(t.flightCostPaidAt)}</th><th>${escReportHtml(t.flightCostType)}</th><th>${escReportHtml(t.bagCalcLeg)}</th><th>${escReportHtml(t.flightCostAmount)}</th><th>${escReportHtml(t.flightCostVendor)}</th><th>${escReportHtml(t.flightCostNote)}</th></tr></thead><tbody>${body}</tbody></table>
 <div class="footer">${projectName} · ${escReportHtml(t.flightCostTitle)} · ${escReportHtml(now)}</div></body></html>`;
@@ -5068,7 +5151,17 @@ body{font-family:'Noto Sans JP',sans-serif;color:#1a2820;background:#fff;font-si
 table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:${tableSize}}
 th,td{border:.3pt solid #c8d4cc;padding:3px 4px;text-align:center;vertical-align:middle;word-wrap:break-word;overflow-wrap:anywhere}
 th{background:#1a3028;color:#fff;font-size:6pt;font-weight:600;letter-spacing:.04em}
+td.text{text-align:left}
+td.num{font-variant-numeric:tabular-nums}
+td.amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
 td.left{text-align:left}
+.summary-line{display:flex;flex-wrap:wrap;gap:20px;align-items:baseline;padding:10px 12px;background:#f5f8f5;border-radius:4px;margin-top:2mm}
+.summary-item{display:inline-flex;align-items:baseline;gap:8px}
+.summary-item .lbl{font-size:9pt;color:#555;font-weight:600}
+.summary-item .val{font-size:18pt;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.summary-item .val.over{color:#ad3030}
+.summary-item .val.ok{color:#2b5a4c}
+.summary-hint{font-size:8pt;color:#777;margin-top:2mm}
 .muted{color:#888}
 .apt-wrap,.dt-wrap{display:block;line-height:1.3}
 .apt-code,.dt-time{font-size:7.5pt;font-weight:700;color:#1a2820}
@@ -5129,7 +5222,7 @@ function flightPersonNamePlain(p) {
   return { kanji: kanji || "—", roman: roman || "—" };
 }
 
-function buildFlightMgmtReportRows(persons, flights, personIndex, legsFilter, lang, t) {
+function buildFlightMgmtReportRows(persons, flights, printSeq, legsFilter, lang, t) {
   const rows = [];
   persons.forEach((p) => {
     const fl = flights.find((x) => x.person_id === p.id);
@@ -5137,70 +5230,71 @@ function buildFlightMgmtReportRows(persons, flights, personIndex, legsFilter, la
     const displayLegs = legs.length ? legs : ["empty"];
     const names = flightPersonNamePlain(p);
     const st = flightStatusShort(fl, t);
+    const seq = printSeq[p.id] ?? "";
     displayLegs.forEach((leg, li) => {
       if (leg === "empty") {
         rows.push(`<tr>
-          <td>${escReportHtml(String(personIndex[p.id] ?? ""))}</td>
-          <td class="left">${escReportHtml(p.dept || "—")}</td>
-          <td class="left">${escReportHtml(names.kanji)}</td>
-          <td class="left">${escReportHtml(names.roman)}</td>
-          <td>—</td>
-          <td colspan="${FLIGHT_LEG_TABLE_COLS.length}" class="left muted">— ${escReportHtml(t.flightNone)} —</td>
-          <td>${escReportHtml(st)}</td>
+          <td class="num">${escReportHtml(String(seq))}</td>
+          <td class="text">${escReportHtml(p.dept || "—")}</td>
+          <td class="text">${escReportHtml(names.kanji)}</td>
+          <td class="text">${escReportHtml(names.roman)}</td>
+          <td class="num">—</td>
+          <td colspan="${FLIGHT_LEG_TABLE_COLS.length}" class="text muted">— ${escReportHtml(t.flightNone)} —</td>
+          <td class="num">${escReportHtml(st)}</td>
         </tr>`);
         return;
       }
       const legLabel = leg === "out" ? t.flightOutbound : t.flightReturn;
-      const cells = FLIGHT_LEG_TABLE_COLS.map((c) => `<td>${flightLegCellPlainText(fl, c, leg, lang, { stacked: true })}</td>`).join("");
+      const cells = FLIGHT_LEG_TABLE_COLS.map((c) => `<td class="num">${flightLegCellPlainText(fl, c, leg, lang, { stacked: true })}</td>`).join("");
       rows.push(`<tr class="leg-${leg}">
-        ${li === 0 ? `<td rowspan="${displayLegs.length}">${escReportHtml(String(personIndex[p.id] ?? ""))}</td>
-          <td rowspan="${displayLegs.length}" class="left">${escReportHtml(p.dept || "—")}</td>
-          <td rowspan="${displayLegs.length}" class="left">${escReportHtml(names.kanji)}</td>
-          <td rowspan="${displayLegs.length}" class="left">${escReportHtml(names.roman)}</td>` : ""}
-        <td><span class="leg-tag">${escReportHtml(legLabel)}</span></td>
+        ${li === 0 ? `<td rowspan="${displayLegs.length}" class="num">${escReportHtml(String(seq))}</td>
+          <td rowspan="${displayLegs.length}" class="text">${escReportHtml(p.dept || "—")}</td>
+          <td rowspan="${displayLegs.length}" class="text">${escReportHtml(names.kanji)}</td>
+          <td rowspan="${displayLegs.length}" class="text">${escReportHtml(names.roman)}</td>` : ""}
+        <td class="num"><span class="leg-tag">${escReportHtml(legLabel)}</span></td>
         ${cells}
-        ${li === 0 ? `<td rowspan="${displayLegs.length}">${escReportHtml(st)}</td>` : ""}
+        ${li === 0 ? `<td rowspan="${displayLegs.length}" class="num">${escReportHtml(st)}</td>` : ""}
       </tr>`);
     });
   });
   return rows.join("");
 }
 
-function buildFlightMgmtSectionRows(section, persons, flights, personIndex, flightLegFilter, lang, t) {
+function buildFlightMgmtSectionRows(section, persons, flights, printSeq, flightLegFilter, lang, t) {
   if (section.type === "personList") {
     const subset = section.entries.map((e) => persons.find((p) => p.id === e.personId)).filter(Boolean);
-    return `<tr class="section"><td colspan="${FLIGHT_TABLE_COL_SPAN}">${escReportHtml(t.flightMgmt)} · ${section.entries.length} ${escReportHtml(t.flightGroupPeople)}</td></tr>`
-      + buildFlightMgmtReportRows(subset, flights, personIndex, "all", lang, t);
+    return `<tr class="section"><td colspan="${FLIGHT_PRINT_COL_SPAN}">${escReportHtml(t.flightMgmt)} · ${section.entries.length} ${escReportHtml(t.flightGroupPeople)}</td></tr>`
+      + buildFlightMgmtReportRows(subset, flights, printSeq, "all", lang, t);
   }
   const bannerClass = section.type === "ungrouped" ? "section ungrouped" : `section leg-${section.leg}`;
-  const banner = `<tr class="${bannerClass}"><td colspan="${FLIGHT_TABLE_COL_SPAN}">${escReportHtml(section.label)} · ${section.personIds.length} ${escReportHtml(t.flightGroupPeople)}</td></tr>`;
+  const banner = `<tr class="${bannerClass}"><td colspan="${FLIGHT_PRINT_COL_SPAN}">${escReportHtml(section.label)} · ${section.personIds.length} ${escReportHtml(t.flightGroupPeople)}</td></tr>`;
   if (section.type === "ungrouped") {
     const subset = section.entries.map((e) => persons.find((p) => p.id === e.personId)).filter(Boolean);
-    return banner + buildFlightMgmtReportRows(subset, flights, personIndex, flightLegFilter, lang, t);
+    return banner + buildFlightMgmtReportRows(subset, flights, printSeq, flightLegFilter, lang, t);
   }
   const subset = section.personIds.map((id) => persons.find((p) => p.id === id)).filter(Boolean);
-  return banner + buildFlightMgmtReportRows(subset, flights, personIndex, section.leg, lang, t);
+  return banner + buildFlightMgmtReportRows(subset, flights, printSeq, section.leg, lang, t);
 }
 
-function buildFlightRosterReportRows(persons, flights, personIndex, legFilter, lang, t, { timeOnly = true } = {}) {
+function buildFlightRosterReportRows(persons, flights, printSeq, legFilter, lang, t, { timeOnly = true } = {}) {
   return persons.map((p) => {
     const fl = flights.find((x) => x.person_id === p.id);
     const leg = typeof legFilter === "string" && (legFilter === "out" || legFilter === "ret")
       ? legFilter
       : personRosterLeg(fl, legFilter);
     const names = flightPersonNamePlain(p);
-    const cells = FLIGHT_ROSTER_COLS.map((c) => `<td>${flightLegCellPlainText(fl, c, leg, lang, { timeOnly, stacked: true })}</td>`).join("");
+    const cells = FLIGHT_ROSTER_COLS.map((c) => `<td class="num">${flightLegCellPlainText(fl, c, leg, lang, { timeOnly, stacked: true })}</td>`).join("");
     return `<tr>
-      <td>${escReportHtml(String(personIndex[p.id] ?? ""))}</td>
-      <td class="left">${escReportHtml(p.dept || "—")}</td>
-      <td class="left">${escReportHtml(names.kanji)}</td>
-      <td class="left">${escReportHtml(names.roman)}</td>
+      <td class="num">${escReportHtml(String(printSeq[p.id] ?? ""))}</td>
+      <td class="text">${escReportHtml(p.dept || "—")}</td>
+      <td class="text">${escReportHtml(names.kanji)}</td>
+      <td class="text">${escReportHtml(names.roman)}</td>
       ${cells}
     </tr>`;
   }).join("");
 }
 
-function generateFlightRosterReportHTML({ project, lang, t, personIndex, persons, flights, groupLabel, groupLeg, personCount, legFilter }) {
+function generateFlightRosterReportHTML({ project, lang, t, persons, flights, groupLabel, groupLeg, personCount, legFilter }) {
   const projectName = escReportHtml(project?.name || "");
   const now = flightReportNowLabel(lang);
   const leg = groupLeg || (legFilter === "ret" ? "ret" : legFilter === "out" ? "out" : null);
@@ -5208,7 +5302,8 @@ function generateFlightRosterReportHTML({ project, lang, t, personIndex, persons
     ...FLIGHT_PERSON_COLS.map((c) => `<th>${escReportHtml(t[c.labelKey])}</th>`),
     ...FLIGHT_ROSTER_COLS.map((c) => `<th>${escReportHtml(c.highlight === "pickup" ? t.arrTimePickup : t[c.labelKey])}</th>`),
   ].join("");
-  const body = buildFlightRosterReportRows(persons, flights, personIndex, leg || legFilter || "out", lang, t, { timeOnly: true });
+  const printSeq = buildPrintSeqFromIds(persons.map((p) => p.id));
+  const body = buildFlightRosterReportRows(persons, flights, printSeq, leg || legFilter || "out", lang, t, { timeOnly: true });
   const count = personCount ?? persons.length;
   const metaLines = [now, `${count} ${t.flightGroupPeople}`];
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(t.flightPrintCompactTitle)} — ${projectName}</title>
@@ -5222,16 +5317,17 @@ ${groupLabel ? `<div class="group">${escReportHtml(groupLabel)}</div>` : ""}
 </body></html>`;
 }
 
-function generateFlightMgmtReportHTML({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter }) {
+function generateFlightMgmtReportHTML({ project, lang, t, persons, flights, sections, title, subtitle, flightLegFilter }) {
   const projectName = escReportHtml(project?.name || "");
   const now = flightReportNowLabel(lang);
+  const printSeq = buildPrintSeqForSections(sections);
   const headCols = [
     ...FLIGHT_PERSON_COLS.map((c) => `<th>${escReportHtml(t[c.labelKey])}</th>`),
     `<th>${escReportHtml(t.bagCalcLeg)}</th>`,
     ...FLIGHT_LEG_TABLE_COLS.map((c) => `<th>${escReportHtml(c.highlight === "pickup" ? t.arrTimePickup : t[c.labelKey])}</th>`),
     `<th>${escReportHtml(t.status)}</th>`,
   ].join("");
-  const body = sections.map((s) => buildFlightMgmtSectionRows(s, persons, flights, personIndex, flightLegFilter, lang, t)).join("");
+  const body = sections.map((s) => buildFlightMgmtSectionRows(s, persons, flights, printSeq, flightLegFilter, lang, t)).join("");
   const extraCss = `.section td{background:#eef4ef;font-weight:700;text-align:left;padding:4px 6px;color:#2b5a4c;font-size:7.5pt}
 .section.leg-out td{background:#e8f2ea;color:#2b5a4c}
 .section.leg-ret td{background:#e6eef4;color:#3a788c}
@@ -5253,6 +5349,7 @@ ${subtitle ? `<div class="sub">${escReportHtml(t.flightPrintFilterSummary)}：${
 }
 
 function buildBaggageCalcRows(personIds, persons, flights, calcLeg, allowanceNum, t) {
+  const printSeq = buildPrintSeqFromIds(personIds);
   return personIds.map((pid) => {
     const p = persons.find((x) => x.id === pid);
     const fl = flights.find((x) => x.person_id === pid);
@@ -5262,13 +5359,15 @@ function buildBaggageCalcRows(personIds, persons, flights, calcLeg, allowanceNum
     const checked = bag.checked;
     const over = checked != null && allowanceNum > 0 ? Math.max(0, checked - allowanceNum) : null;
     const names = flightPersonNamePlain(p);
+    const overCls = over > 0 ? "num over" : "num";
     return `<tr>
-      <td class="left">${escReportHtml(names.kanji)}</td>
-      <td class="left">${escReportHtml(names.roman)}</td>
-      <td class="left">${escReportHtml(p.dept || "—")}</td>
-      <td>${checked != null ? `${checked} kg` : "—"}</td>
-      <td>${allowanceNum > 0 ? `${allowanceNum} kg` : "—"}</td>
-      <td class="${over > 0 ? "over" : ""}">${over != null ? (over > 0 ? `${over} kg` : "—") : "—"}</td>
+      <td class="num">${escReportHtml(String(printSeq[pid] ?? ""))}</td>
+      <td class="text">${escReportHtml(names.kanji)}</td>
+      <td class="text">${escReportHtml(names.roman)}</td>
+      <td class="text">${escReportHtml(p.dept || "—")}</td>
+      <td class="num">${checked != null ? `${checked} kg` : "—"}</td>
+      <td class="num">${allowanceNum > 0 ? `${allowanceNum} kg` : "—"}</td>
+      <td class="${overCls}">${over != null ? (over > 0 ? `${over} kg` : "—") : "—"}</td>
     </tr>`;
   }).join("");
 }
@@ -5285,16 +5384,8 @@ function generateFlightBaggageReportHTML({ project, lang, t, persons, flights, p
     if (checked != null && allowanceNum > 0) totalOver += Math.max(0, checked - allowanceNum);
   });
   const estFee = Number.isFinite(feeNum) ? totalOver * feeNum : null;
-  const summaryParts = [
-    `<span>${escReportHtml(t.bagCalcTotalOver)}：<strong class="${totalOver > 0 ? "over" : "ok"}">${totalOver > 0 ? `${totalOver} kg` : "0 kg"}</strong></span>`,
-  ];
-  if (Number.isFinite(feeNum)) {
-    summaryParts.push(`<span>${escReportHtml(t.bagCalcEstFee)}：<strong class="over">${estFee.toLocaleString()}</strong></span>`);
-  }
-  summaryParts.push(`<span class="muted">${escReportHtml(t.bagCalcAllowance)}：${allowanceNum} kg${Number.isFinite(feeNum) ? ` · ${escReportHtml(t.bagCalcFeeRate)}：${feeNum}` : ""}</span>`);
-  const extraCss = `.over{color:#ad3030;font-weight:700}.ok{color:#2b5a4c;font-weight:700}
-.summary{display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;padding:10px 12px;background:#f5f8f5;border-radius:4px;font-size:9pt;margin-top:2mm}
-.summary .muted{color:#777;font-size:8pt}`;
+  const summaryHtml = baggageSummaryHtml({ t, totalOver, estFee, feeNum, allowanceNum });
+  const extraCss = `.over{color:#ad3030;font-weight:700}`;
   const metaLines = [now, groupLabel ? null : subtitle].filter(Boolean);
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(t.bagCalcTitle)} — ${projectName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
@@ -5305,26 +5396,27 @@ ${flightReportDocHeader(t.bagCalcTitle, project?.name || "", metaLines)}
 ${groupLabel ? `<div class="group">${escReportHtml(groupLabel)}</div>` : ""}
 ${!groupLabel && subtitle ? `<div class="sub">${escReportHtml(t.flightPrintFilterSummary)}：${escReportHtml(subtitle)}</div>` : ""}
 <table><thead><tr>
-<th class="left">${escReportHtml(t.nameKanji)}</th>
-<th class="left">${escReportHtml(t.nameEnglish)}</th>
-<th class="left">${escReportHtml(t.dept)}</th>
+<th>${escReportHtml(t.no)}</th>
+<th>${escReportHtml(t.nameKanji)}</th>
+<th>${escReportHtml(t.nameEnglish)}</th>
+<th>${escReportHtml(t.dept)}</th>
 <th>${escReportHtml(t.bagCalcChecked)}</th>
 <th>${escReportHtml(t.bagCalcAllow)}</th>
 <th>${escReportHtml(t.bagCalcOver)}</th>
 </tr></thead><tbody>${rows}</tbody></table>
-<div class="summary">${summaryParts.join("")}</div>
+${summaryHtml}
 <div class="footer">${projectName} · ${escReportHtml(t.bagCalcTitle)} · ${escReportHtml(now)}</div>
 </body></html>`;
 }
 
-function openFlightMgmtReportPrint({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter }) {
-  const html = generateFlightMgmtReportHTML({ project, lang, t, personIndex, persons, flights, sections, title, subtitle, flightLegFilter });
+function openFlightMgmtReportPrint({ project, lang, t, persons, flights, sections, title, subtitle, flightLegFilter }) {
+  const html = generateFlightMgmtReportHTML({ project, lang, t, persons, flights, sections, title, subtitle, flightLegFilter });
   openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
 }
 
-function openFlightRosterReportPrint({ project, lang, t, personIndex, persons, flights, groupLabel, groupLeg, legFilter, personCount }) {
+function openFlightRosterReportPrint({ project, lang, t, persons, flights, groupLabel, groupLeg, legFilter, personCount }) {
   const html = generateFlightRosterReportHTML({
-    project, lang, t, personIndex, persons, flights, groupLabel, groupLeg, legFilter, personCount,
+    project, lang, t, persons, flights, groupLabel, groupLeg, legFilter, personCount,
   });
   openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
 }
@@ -5500,13 +5592,17 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
   }
 
   // Generic table report (stay / flight / staff)
-  const thStyle = `padding:8px 12px;font-size:8pt;font-weight:700;letter-spacing:.07em;text-align:left;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;`;
-  const tdStyle = `padding:7px 12px;font-size:9pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #eaf0eb;vertical-align:top;line-height:1.7;`;
+  const thStyle = `padding:8px 12px;font-size:8pt;font-weight:700;letter-spacing:.07em;text-align:center;border-right:1px solid rgba(255,255,255,.15);white-space:nowrap;`;
+  const tdBase = `padding:7px 12px;font-size:9pt;border-bottom:1px solid #e0ebe4;border-right:1px solid #eaf0eb;vertical-align:top;line-height:1.7;`;
 
   const thead = `<tr style="background:${headerGrad};color:#fff;">${cols.map((c) => `<th style="${thStyle}">${c.label}</th>`).join("")}</tr>`;
   const rows = data.map((row, i) => {
     const bg = i % 2 === 0 ? "#ffffff" : "#f5faf6";
-    return `<tr>${cols.map((c) => `<td style="${tdStyle}background:${bg};">${row[c.key] ?? "—"}</td>`).join("")}</tr>`;
+    return `<tr>${cols.map((c) => {
+      const cls = reportTdClass(c.key);
+      const align = cls === "text" ? "left" : cls === "amt" ? "right" : "center";
+      return `<td class="${cls}" style="${tdBase}background:${bg};text-align:${align};">${row[c.key] ?? "—"}</td>`;
+    }).join("")}</tr>`;
   });
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${typeLabel} — ${projectName}</title>
@@ -5515,6 +5611,7 @@ function generateReportHTML({ type, cols, data, project, lang, t, vehicleCards }
 @page{size:A4 ${pageDir};margin:12mm 14mm;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
 .doc-header{background:${headerGrad};color:#fff;padding:14px 18px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
 table{width:100%;border-collapse:collapse;border-radius:4px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.09);}
+th,td{text-align:center}td.text{text-align:left}td.num{font-variant-numeric:tabular-nums}td.amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
 .footer{margin-top:14px;font-size:7pt;color:#aaa;text-align:right;border-top:1px solid #d8e8dc;padding-top:6px;}</style></head>
 <body style="padding:2mm;">
 <div class="doc-header"><div><div style="font-size:8pt;opacity:.7;letter-spacing:.1em;text-transform:uppercase;">${typeLabel}</div><div style="font-family:'Noto Serif JP',serif;font-size:13pt;font-weight:600;margin-top:3px;">${projectName}</div></div>
@@ -5593,21 +5690,21 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
   const buildData = () => {
     const sel = cols.filter((c) => selCols[c.key]);
     if (reportType === "stay") {
-      return stays.map((s) => {
+      return stays.map((s, idx) => {
         const p = s.person_id ? persons.find((x) => x.id === s.person_id) : null;
         const h = hotels.find((x) => x.id == s.hotel_id);
         const nights = diffDays(s.check_in, s.check_out);
         const amt = stayDisplayTotals ? stayDisplayTotals[s.id] : (s.total_amount || 0);
         return {
-          no: personIndex[s.person_id] || "—",
+          no: idx + 1,
           dept: p?.dept || "—",
           name_kanji: s.special_room_name ? `[${s.special_room_name}]` : (p?.name_kanji || "—"),
           name_roman: p ? `${p.last_roman || ""} ${p.first_roman || ""}`.trim() : "—",
           hotel: h?.name || "—",
           room_no: s.room_number || "—",
           room_type: s.room_type === "Custom" ? (s.room_custom || "Custom") : (s.room_type || "—"),
-          check_in: s.check_in || "—",
-          check_out: s.check_out || "—",
+          check_in: fmtPrintDateNoYear(s.check_in, lang),
+          check_out: fmtPrintDateNoYear(s.check_out, lang),
           nights: nights > 0 ? String(nights) : "—",
           total_amt: amt ? formatMoney(convertMoney(amt, project), project, lang) : "—",
           stay_label: s.stay_label || "—",
@@ -5616,11 +5713,11 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
       });
     }
     if (reportType === "flight") {
-      return persons.filter((p) => !p.hide_from_flights).map((p) => {
+      return persons.filter((p) => !p.hide_from_flights).map((p, idx) => {
         const fl = flights.find((x) => x.person_id === p.id);
         const fmtTs = (ts) => { const v = toDatetimeLocalValue(ts); return v ? v.replace("T", " ") : "—"; };
         return {
-          no: personIndex[p.id] || "",
+          no: idx + 1,
           dept: p.dept || "—",
           name_kanji: p.name_kanji || "—",
           name_roman: `${p.last_roman || ""} ${p.first_roman || ""}`.trim() || "—",
@@ -5644,8 +5741,8 @@ function ReportExportModal({ onClose, t, lang, project, persons, flights, stays,
     if (reportType === "staff") {
       return [...persons]
         .sort((a, b) => (personIndex[a.id] || 9999) - (personIndex[b.id] || 9999))
-        .map((p) => ({
-        no: personIndex[p.id] || "",
+        .map((p, idx) => ({
+        no: idx + 1,
         dept: p.dept || "—",
         title: [p.title_kanji, p.title_other].filter(Boolean).join(" / ") || "—",
         name_kanji: p.name_kanji || "—",
@@ -5896,64 +5993,103 @@ function invoiceFormulaParts(b, project, lang, t, showAmount) {
 }
 
 function buildInvoicePrintHtml({ data, project, lang, t, showAmount, grandTotal }) {
-  const amtHeader = showAmount ? `<th style="padding:8px 12px;text-align:right;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceSubtotal}</th>` : "";
-  const rows = data.map((hd) => {
+  const projectName = escReportHtml(project?.name || "");
+  const now = flightReportNowLabel(lang);
+  const computedGrand = data.reduce((s, h) => s + h.hotelTotal, 0);
+  const displayGrand = grandTotal != null ? grandTotal : computedGrand;
+  const amtHeader = showAmount ? `<th>${escReportHtml(t.invoiceSubtotal)}</th>` : "";
+  const hotelBlocks = data.map((hd) => {
     const batchRows = hd.batches.map((b) => {
       const formula = invoiceFormulaParts(b, project, lang, t, showAmount);
+      const dateRange = fmtPrintDateRange(b.check_in, b.check_out, lang, t);
       const amtCell = showAmount
-        ? `<td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">${formatMoney(convertMoney(b.batchTotal, project), project, lang)}</td>`
+        ? `<td class="amt">${escReportHtml(formatMoney(convertMoney(b.batchTotal, project), project, lang))}</td>`
         : "";
       return `<tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.check_in} ${t.invoiceDateRange} ${b.check_out}<br><small style="color:#666;">(${t.nights || "共"} ${b.nights} ${t.invoiceNights})</small></td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;">${b.roomLabel}${b.subLabel ? `<br><small style="color:#666;">${b.subLabel}</small>` : ""}</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #e0ebe4;font-variant-numeric:tabular-nums;">${formula}</td>
-          ${amtCell}
-        </tr>`;
+        <td class="num">${escReportHtml(dateRange)}<br><small class="muted">${escReportHtml(t.nights || "共")} ${b.nights} ${escReportHtml(t.invoiceNights)}</small></td>
+        <td class="text">${escReportHtml(b.roomLabel)}${b.subLabel ? `<br><small class="muted">${escReportHtml(b.subLabel)}</small>` : ""}</td>
+        <td class="num">${formula}</td>
+        ${amtCell}
+      </tr>`;
     }).join("");
     const subtotalRow = showAmount
-      ? `<tr style="background:#eaf2ec;">
-                <td colspan="3" style="padding:10px 12px;font-weight:700;font-size:10pt;">${t.invoiceSubtotal}</td>
-                <td style="padding:10px 12px;text-align:right;font-weight:800;font-size:12pt;color:#1a3028;">${formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}</td>
-              </tr>`
+      ? `<tr class="subtotal"><td colspan="3" class="text">${escReportHtml(t.invoiceSubtotal)}</td><td class="amt">${escReportHtml(formatMoney(convertMoney(hd.hotelTotal, project), project, lang))}</td></tr>`
       : "";
-    return `
-        <div style="margin-bottom:28px;">
-          <div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:10px 16px;border-radius:6px 6px 0 0;font-size:13pt;font-family:'Noto Serif JP',serif;font-weight:600;">${hd.hotel?.name || "—"}</div>
-          <table style="width:100%;border-collapse:collapse;border:1px solid #e0ebe4;border-top:none;">
-            <thead>
-              <tr style="background:#f0f5f1;">
-                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.nights} / ${t.checkIn}〜${t.checkOut}</th>
-                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceRoomType}</th>
-                <th style="padding:8px 12px;text-align:left;font-size:9pt;font-weight:700;letter-spacing:.06em;">${t.invoiceFormula}</th>
-                ${amtHeader}
-              </tr>
-            </thead>
-            <tbody>${batchRows}${subtotalRow}
-            </tbody>
-          </table>
-        </div>`;
+    return `<div class="hotel-block">
+      <div class="hotel-hdr">${escReportHtml(hd.hotel?.name || "—")}</div>
+      <table><thead><tr>
+        <th>${escReportHtml(t.nights)} / ${escReportHtml(t.checkIn)}〜${escReportHtml(t.checkOut)}</th>
+        <th>${escReportHtml(t.invoiceRoomType)}</th>
+        <th>${escReportHtml(t.invoiceFormula)}</th>
+        ${amtHeader}
+      </tr></thead><tbody>${batchRows}${subtotalRow}</tbody></table>
+    </div>`;
   }).join("");
 
-  const grandTotalBlock = showAmount
-    ? `<div style="margin-top:16px;padding:12px 16px;background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;border-radius:6px;display:flex;justify-content:space-between;align-items:center;">
-  <span style="font-size:12pt;font-weight:700;">${t.totalCost}</span>
-  <span style="font-size:18pt;font-family:'Noto Serif JP',serif;font-weight:600;">${formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
-</div>`
+  const grandTotalBlock = showAmount && data.length > 1
+    ? `<div class="grand-total"><span>${escReportHtml(t.totalCost)}</span><strong>${escReportHtml(formatMoney(convertMoney(displayGrand, project), project, lang))}</strong></div>`
     : "";
 
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${t.invoiceTitle}</title>
+  const metaLines = [now, `${data.length} ${t.invoiceBatch}`];
+  const extraCss = `.hotel-block{margin-bottom:5mm;break-inside:avoid}
+.hotel-hdr{background:#1a3028;color:#fff;padding:2.5mm 4mm;font-family:'Noto Serif JP',serif;font-size:9pt;font-weight:600;border-radius:1.5mm 1.5mm 0 0}
+.hotel-block table{border-top:none;margin-bottom:0}
+.subtotal td{background:#eaf2ec;font-weight:700}
+.grand-total{margin-top:4mm;padding:3mm 4mm;background:#1a3028;color:#fff;border-radius:2mm;display:flex;justify-content:space-between;align-items:center;font-size:10pt}
+.grand-total strong{font-family:'Noto Serif JP',serif;font-size:14pt;font-weight:600}
+.muted{color:#666;font-size:7pt;font-weight:400}`;
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escReportHtml(t.invoiceTitle)} — ${projectName}</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Noto Sans JP',sans-serif;font-size:10pt;color:#1a2820;padding:12mm;}
-@page{size:A4 portrait;margin:10mm 12mm;}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style>
-</head><body>
-<div style="background:linear-gradient(135deg,#1a3028,#2d4a36);color:#fff;padding:14px 18px;border-radius:6px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
-  <div><div style="font-family:'Noto Serif JP',serif;font-size:15pt;font-weight:600;">${t.invoiceTitle}</div><div style="font-size:9pt;opacity:.75;margin-top:4px;">${project?.name || ""} · ${new Date().toLocaleDateString()}</div></div>
-  <div style="font-size:9pt;opacity:.75;text-align:right;">${t.invoiceSubtitle}</div>
-</div>
-${rows}
+<style>${flightReportSharedCSS({ page: "portrait", bodySize: "9pt", tableSize: "8.5pt" })}
+${extraCss}
+</style></head><body>
+${flightReportDocHeader(t.invoiceTitle, project?.name || "", metaLines)}
+${hotelBlocks}
 ${grandTotalBlock}
+<div class="footer">${projectName} · ${escReportHtml(t.invoiceTitle)} · ${escReportHtml(now)}</div>
 </body></html>`;
+}
+
+function InvoicePrintSelectModal({ onClose, onPreview, hotels, t }) {
+  const [picked, setPicked] = useState(() => new Set(hotels.map((h) => h.hid)));
+  const toggle = (hid) => setPicked((prev) => {
+    const next = new Set(prev);
+    if (next.has(hid)) next.delete(hid); else next.add(hid);
+    return next;
+  });
+  const pill = (active) => ({
+    padding: "6px 14px", fontSize: 12, borderRadius: 20, cursor: "pointer", border: "1px solid var(--keisenM)",
+    background: active ? "var(--moegi)" : "var(--shiro)", color: active ? "var(--shiro)" : "var(--sumi)",
+    fontWeight: active ? 600 : 400,
+  });
+  const previewDisabled = picked.size === 0;
+  return (
+    <Modal title={t.invoicePrintCustom} onClose={onClose}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--nezumi)", marginBottom: 10 }}>{t.invoiceSelectHotels}</div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <button type="button" onClick={() => setPicked(new Set(hotels.map((h) => h.hid)))} style={pill(true)}>{t.invoiceSelectAll}</button>
+        <button type="button" onClick={() => setPicked(new Set())} style={pill(false)}>{t.invoiceSelectClear}</button>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 280, overflowY: "auto", marginBottom: 16 }}>
+        {hotels.map((h) => (
+          <label key={h.hid} style={{
+            display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, cursor: "pointer",
+            border: `1px solid ${picked.has(h.hid) ? "var(--moegi)" : "var(--keisenL)"}`,
+            background: picked.has(h.hid) ? "var(--moegi3)" : "var(--shiro)", fontSize: 12.5,
+          }}>
+            <input type="checkbox" checked={picked.has(h.hid)} onChange={() => toggle(h.hid)} />
+            <span style={{ flex: 1 }}>{h.hotel?.name || "—"}</span>
+            <span style={{ fontSize: 11, color: "var(--nezumi)" }}>{h.batches.length} {t.invoiceBatch}</span>
+          </label>
+        ))}
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <button type="button" onClick={onClose} style={{ padding: "8px 16px", border: "1px solid var(--keisenM)", background: "var(--shiro)", cursor: "pointer" }}>{t.cancel}</button>
+        <button type="button" disabled={previewDisabled} onClick={() => onPreview([...picked])} style={pBtn(previewDisabled)}>{t.previewReport}</button>
+      </div>
+    </Modal>
+  );
 }
 
 function formatInvoiceLogTime(iso, lang) {
@@ -5979,6 +6115,9 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
   const [printLogs, setPrintLogs] = useState([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
+  const [showInvoicePrintMenu, setShowInvoicePrintMenu] = useState(false);
+  const [showInvoicePrintModal, setShowInvoicePrintModal] = useState(false);
+  const invoicePrintMenuRef = useRef(null);
 
   const mergedData = useMemo(() => buildInvoiceBatchesMerged(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
   const perRoomData = useMemo(() => buildInvoiceBatchesPerRoom(stays, pricingRules, hotels), [stays, pricingRules, hotels]);
@@ -6013,6 +6152,15 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
 
   useEffect(() => { loadPrintLogs(); }, [loadPrintLogs]);
 
+  useEffect(() => {
+    if (!showInvoicePrintMenu) return;
+    const close = (e) => {
+      if (invoicePrintMenuRef.current && !invoicePrintMenuRef.current.contains(e.target)) setShowInvoicePrintMenu(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [showInvoicePrintMenu]);
+
   const saveShowAmount = async (val) => {
     setShowAmount(val);
     if (!user?.id) return;
@@ -6043,19 +6191,37 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
     }
   };
 
-  const openPrintPreview = () => {
-    const html = buildInvoicePrintHtml({ data, project, lang, t, showAmount, grandTotal });
+  const openPrintPreview = (subset) => {
+    const printData = subset || data;
+    const printGrand = printData.reduce((s, h) => s + h.hotelTotal, 0);
+    const html = buildInvoicePrintHtml({ data: printData, project, lang, t, showAmount, grandTotal: printGrand });
     openReportPreviewWindow(html, { printLabel: t.print, closeLabel: t.cancel });
   };
 
-  const handlePrint = async () => {
-    openPrintPreview();
+  const handlePrint = async (subset) => {
+    openPrintPreview(subset);
     if (canEdit) await logPrint("preview");
   };
 
   const handleMarkSubmitted = async () => {
     openPrintPreview();
     if (canEdit) await logPrint("submitted");
+  };
+
+  const printAllHotels = () => {
+    setShowInvoicePrintMenu(false);
+    handlePrint();
+  };
+
+  const printSingleHotel = (hd, e) => {
+    e?.stopPropagation();
+    handlePrint([hd]);
+  };
+
+  const handleCustomPrint = (hids) => {
+    setShowInvoicePrintModal(false);
+    const subset = data.filter((h) => hids.includes(h.hid));
+    if (subset.length) handlePrint(subset);
   };
 
   const lastSubmitted = printLogs.find((l) => l.kind === "submitted");
@@ -6182,7 +6348,16 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
               <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</div>
             </div>
           )}
-          <button type="button" onClick={handlePrint} style={{ background: "rgba(255,255,255,.12)", color: "var(--washi)", border: "1px solid rgba(255,255,255,.22)", borderRadius: 6, padding: "8px 16px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>🖨 {t.invoicePrint}</button>
+          <div ref={invoicePrintMenuRef} style={{ position: "relative" }}>
+            <button type="button" onClick={() => setShowInvoicePrintMenu((v) => !v)} style={{ background: "rgba(255,255,255,.12)", color: "var(--washi)", border: "1px solid rgba(255,255,255,.22)", borderRadius: 6, padding: "8px 16px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap" }}>🖨 {t.invoicePrintMenu} ▾</button>
+            {showInvoicePrintMenu && (
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 120, background: "var(--shiro)", border: "1px solid var(--keisenM)", borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,.12)", minWidth: 220, overflow: "hidden" }}>
+                <button type="button" onClick={printAllHotels} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.invoicePrintAll.replace("{n}", data.length)}</button>
+                <div style={{ borderTop: "1px solid var(--keisenL)", margin: "4px 0" }} />
+                <button type="button" onClick={() => { setShowInvoicePrintMenu(false); setShowInvoicePrintModal(true); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 14px", border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--sumi)" }}>{t.invoicePrintCustom}</button>
+              </div>
+            )}
+          </div>
           {canEdit && (
             <button type="button" data-tour="invoice-submit" onClick={handleMarkSubmitted} style={{ background: "var(--moegi)", color: "var(--shiro)", border: "none", borderRadius: 6, padding: "8px 16px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", fontWeight: 700 }}>{t.invoiceMarkSubmitted}</button>
           )}
@@ -6215,6 +6390,7 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <span style={{ fontSize: 11, color: "var(--washi)", opacity: 0.75 }}>{hd.batches.length} {t.invoiceBatch}</span>
               {showAmount && <span style={{ fontSize: 13, fontWeight: 700, color: "var(--washi)", fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(hd.hotelTotal, project), project, lang)}</span>}
+              <button type="button" onClick={(e) => printSingleHotel(hd, e)} style={{ background: "rgba(255,255,255,.12)", color: "var(--washi)", border: "1px solid rgba(255,255,255,.22)", borderRadius: 5, padding: "5px 12px", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>🖨 {t.invoicePrintThisHotel}</button>
             </div>
           </div>
           {!isCollapsed && <div style={{ overflowX: "auto" }}>
@@ -6237,7 +6413,7 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
                   <tr key={i} style={{ background: i % 2 === 0 ? "var(--shiro)" : "var(--washi)", borderBottom: "1px solid var(--keisenL)" }}>
                     <td style={{ padding: "11px 14px", verticalAlign: "top" }}>
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--sumi)", fontVariantNumeric: "tabular-nums" }}>
-                        {fmtDate(b.check_in, lang)} {t.invoiceDateRange} {fmtDate(b.check_out, lang)}
+                        {fmtPrintDateNoYear(b.check_in, lang)} {t.invoiceDateRange} {fmtPrintDateNoYear(b.check_out, lang)}
                       </div>
                       <div style={{ fontSize: 10.5, color: "var(--moegi)", marginTop: 3, fontWeight: 600 }}>
                         {t.nights ? "" : "共"} {b.nights} {t.invoiceNights}
@@ -6287,6 +6463,14 @@ function HotelGroupInvoicePanel({ stays, pricingRules, hotels, project, lang, t,
           <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.04em" }}>{t.totalCost}</span>
           <span style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Noto Serif JP',serif" }}>{formatMoney(convertMoney(grandTotal, project), project, lang)}</span>
         </div>
+      )}
+      {showInvoicePrintModal && (
+        <InvoicePrintSelectModal
+          onClose={() => setShowInvoicePrintModal(false)}
+          onPreview={handleCustomPrint}
+          hotels={data}
+          t={t}
+        />
       )}
     </div>
   );
@@ -7758,7 +7942,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
         project,
         lang,
         t,
-        personIndex,
         persons: targetPersons,
         flights,
         groupLabel,
@@ -7773,7 +7956,6 @@ function ProjectApp({ project, userRole, user, isSystemOwner, lang, theme, onThe
       project,
       lang,
       t,
-      personIndex,
       persons: sortedDisplayFlightPersons,
       flights,
       sections,
