@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勘景資料系統</title>
+<link rel="stylesheet" href="/scouting/css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <h1 class="app-title" data-i18n="appName">勘景資料系統</h1>
+      <p class="app-sub" id="projectName">載入中…</p>
+      <select id="langSelect" class="lang-select" aria-label="Language"></select>
+    </div>
+
+    <button id="btnNewEntry" class="btn btn-primary btn-block">
+      <span class="btn-plus">+</span> <span data-i18n="newEntry">新增場景</span>
+    </button>
+
+    <div id="categoryList" class="category-list"></div>
+
+    <button id="btnNewCategory" class="btn btn-ghost btn-block">+ <span data-i18n="newCategory">新增類型</span></button>
+
+    <div class="sidebar-foot">
+      <span id="entryCount">0 筆資料</span>
+      <button id="btnPrint" class="link-btn" data-i18n="print">列印此場景</button>
+      <button id="btnPrintAll" class="link-btn" data-i18n="printAll">列印全部</button>
+      <button id="btnCopyLink" class="link-btn" data-i18n="copyLink" data-i18n-title="copyLink">複製專案連結</button>
+      <span id="copyStatus"></span>
+      <button id="btnExportJson" class="link-btn" data-i18n="exportBackup">匯出備份</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div id="emptyState" class="empty-state">
+      <div class="empty-mark">A1</div>
+      <p data-i18n="emptyHint">先填場景類型（A、B、C），再點類型標題或「新增場景」建檔。</p>
+    </div>
+
+    <form id="entryForm" class="entry-form" hidden>
+
+      <div class="entry-header" id="entryHeaderColor">
+        <span id="entryTag" class="entry-tag">A1</span>
+        <input type="text" id="fieldName" class="entry-name-input" data-i18n-placeholder="fieldName" placeholder="場景名稱" autocomplete="off">
+        <select id="fieldCategory" class="category-select"></select>
+        <select id="fieldStatus" class="status-select"></select>
+        <button type="button" id="btnDeleteEntry" class="btn btn-danger-ghost" data-i18n="deleteEntry">刪除</button>
+      </div>
+
+      <div class="field-block">
+        <label class="field-label" data-accent data-i18n="fieldAddress">地址</label>
+        <p class="field-hint" data-i18n="fieldAddressHint">完整地址，獨立一行</p>
+        <input type="text" id="fieldAddress" data-i18n-placeholder="fieldAddressPh" placeholder="例：新北市板橋區某某路 12 號" autocomplete="off">
+      </div>
+
+      <div class="field-row">
+        <div class="field-block">
+          <label class="field-label" data-accent data-i18n="fieldAccess">交通／停車／卸貨</label>
+          <p class="field-hint" data-i18n="fieldAccessHint">捷運 · 貨車停靠 · 電梯</p>
+          <textarea id="fieldAccess" rows="2" data-i18n-placeholder="fieldAccessPh" placeholder="例：捷運板橋站步行 8 分鐘｜巷口可停 3.5 噸｜無電梯，器材需爬 3 樓"></textarea>
+        </div>
+        <div class="field-block">
+          <label class="field-label" data-accent data-i18n="fieldHours">可拍時段</label>
+          <p class="field-hint" data-i18n="fieldHoursHint">平日／假日 · 幾點後不能吵</p>
+          <input type="text" id="fieldHours" data-i18n-placeholder="fieldHoursPh" placeholder="例：平日 09–18｜假日不可｜21:00 後禁噪音" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-block">
+          <label class="field-label" data-accent data-i18n="fieldCondition">場地現況</label>
+          <p class="field-hint" data-i18n="fieldConditionHint">室內外 · 層高 · 能動的牆／家具</p>
+          <textarea id="fieldCondition" rows="2" data-i18n-placeholder="fieldConditionPh" placeholder="例：透天 1F 客廳｜層高約 2.8m｜家具可移、牆不可釘"></textarea>
+        </div>
+        <div class="field-block">
+          <label class="field-label" data-accent data-i18n="fieldContact">聯絡人</label>
+          <p class="field-hint" data-i18n="fieldContactHint">場主／管委 · 電話</p>
+          <input type="text" id="fieldContact" data-i18n-placeholder="fieldContactPh" placeholder="例：王先生 09xx-xxx-xxx（管委）" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-block">
+          <label class="field-label" data-accent data-i18n="fieldFee">收費標準</label>
+          <p class="field-hint" data-i18n="fieldFeeHint">拍攝日 · 搭拆日 · 電費 · 押金</p>
+          <textarea id="fieldFee" rows="3" data-i18n-placeholder="fieldFeePh" placeholder="例：拍攝日 NT$xx,xxx｜搭景日半價｜電費另計｜押金 NT$x,xxx"></textarea>
+        </div>
+        <div class="field-block">
+          <label class="field-label" data-accent data-i18n="fieldRules">拍攝限制</label>
+          <p class="field-hint" data-i18n="fieldRulesHint">火 · 釘 · 煙 · 空拍 · 噪音</p>
+          <textarea id="fieldRules" rows="3" data-i18n-placeholder="fieldRulesPh" placeholder="例：禁止明火｜不可釘牆｜煙霧需報備｜不可空拍"></textarea>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-block">
+          <label class="field-label" data-accent data-i18n="fieldMap">Google Map 連結</label>
+          <input type="url" id="fieldMapLink" placeholder="https://maps.google.com/⋯">
+        </div>
+        <div class="field-block">
+          <label class="field-label" data-accent data-i18n="fieldPhotoLink">照片連結</label>
+          <input type="url" id="fieldPhotoLink" data-i18n-placeholder="fieldPhotoLinkPh" placeholder="雲端相簿連結（選填）">
+        </div>
+      </div>
+
+      <div class="field-block">
+        <label class="field-label" data-accent data-i18n="fieldPhotos">照片</label>
+        <p class="field-hint" data-i18n="fieldPhotosHint">橫式 16:9。第 1 頁 2 張，之後每頁最多 4 張</p>
+        <div id="photoGrid" class="photo-grid">
+          <label class="photo-add">
+            <input type="file" id="photoInput" accept="image/*" multiple hidden>
+            <span class="photo-add-icon">+</span>
+            <span class="photo-add-text" data-i18n="addPhoto">新增照片</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="save-bar">
+        <span id="saveStatus" class="save-status"></span>
+      </div>
+
+    </form>
+
+  </main>
+
+</div>
+
+<div id="categoryModal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 data-i18n="modalCategoryTitle">新增類型</h2>
+    <p class="modal-hint" data-i18n="modalCategoryHint">同一場戲的備選放同一類型。例如 A＝男主老家，底下 A1 主推、A2 備案。</p>
+    <input type="text" id="newCategoryName" data-i18n-placeholder="categoryNamePh" placeholder="類型名稱" autocomplete="off">
+    <div class="modal-actions">
+      <button type="button" id="btnCancelCategory" class="btn btn-ghost" data-i18n="cancel">取消</button>
+      <button type="button" id="btnConfirmCategory" class="btn btn-primary" data-i18n="confirmAdd">新增</button>
+    </div>
+  </div>
+</div>
+
+<div id="entryModal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 data-i18n="modalEntryTitle">新增場景</h2>
+    <p class="modal-hint" data-i18n="modalEntryHint">選已有類型，或自己填一個新類型。</p>
+    <label class="modal-label" for="entryTypeSelect" data-i18n="pickType">選擇類型</label>
+    <select id="entryTypeSelect" class="modal-select"></select>
+    <input type="text" id="entryTypeCustom" data-i18n-placeholder="newTypePh" placeholder="或填寫新類型" autocomplete="off">
+    <div class="modal-actions">
+      <button type="button" id="btnCancelEntry" class="btn btn-ghost" data-i18n="cancel">取消</button>
+      <button type="button" id="btnConfirmEntry" class="btn btn-primary" data-i18n="confirmAdd">新增</button>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox" class="lightbox" hidden>
+  <img id="lightboxImg" src="" alt="">
+  <button id="lightboxClose" class="lightbox-close" data-i18n="close">關閉</button>
+</div>
+
+<div id="printRoot" class="print-root" hidden></div>
+
+<script src="/scouting/js/i18n.js"></script>
+<script src="/scouting/js/db.js"></script>
+<script src="/scouting/js/app.js"></script>
+</body>
+</html>

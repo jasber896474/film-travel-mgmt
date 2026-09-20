@@ -6,15 +6,21 @@ const OWNER_ID = "006bf3d7-934c-4a86-a14c-17757334b618";
 let _token = null;
 
 const SESSION_KEY = "sb_session";
+const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
+let _refreshInFlight = null;
 
-const saveSession = (res) => {
+const saveSession = (res, prev = null) => {
+  if (!res?.access_token) return;
+  const prevSess = prev || getStoredSession();
+  const expiresAt = res.expires_at
+    ? (String(res.expires_at).length < 13 ? Number(res.expires_at) * 1000 : Number(res.expires_at))
+    : Date.now() + (Number(res.expires_in) || 3600) * 1000;
   localStorage.setItem(SESSION_KEY, JSON.stringify({
     access_token: res.access_token,
-    refresh_token: res.refresh_token,
-    expires_at: Date.now() + (res.expires_in || 3600) * 1000,
+    refresh_token: res.refresh_token || prevSess?.refresh_token || null,
+    expires_at: expiresAt,
   }));
 };
-const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
 const clearSession = () => {
   _token = null;
@@ -28,19 +34,31 @@ function getStoredSession() {
   } catch { return null; }
 }
 
-async function tryRefreshSession() {
+async function refreshSessionNow() {
   const sess = getStoredSession();
   if (!sess?.refresh_token) return false;
-  if (sess.expires_at && Date.now() <= sess.expires_at - SESSION_REFRESH_BEFORE_MS) return true;
   try {
     const refreshed = await api.refresh(sess.refresh_token);
-    if (refreshed.access_token) {
-      saveSession(refreshed);
+    if (refreshed?.access_token) {
+      saveSession(refreshed, sess);
       _token = refreshed.access_token;
       return true;
     }
   } catch { /* ignore */ }
   return false;
+}
+
+async function tryRefreshSession(force = false) {
+  const sess = getStoredSession();
+  if (!sess?.refresh_token && !sess?.access_token) return false;
+  if (!force && sess?.expires_at && Date.now() <= sess.expires_at - SESSION_REFRESH_BEFORE_MS) {
+    if (sess.access_token) _token = sess.access_token;
+    return true;
+  }
+  if (!sess?.refresh_token) return !!(sess?.access_token && Date.now() < (sess.expires_at || 0));
+  if (_refreshInFlight) return _refreshInFlight;
+  _refreshInFlight = refreshSessionNow().finally(() => { _refreshInFlight = null; });
+  return _refreshInFlight;
 }
 
 function formatSessionRemaining(ms) {
@@ -67,7 +85,7 @@ function parseApiError(raw, status) {
   return s.length > 240 ? `${s.slice(0, 240)}…` : s;
 }
 
-const sb = async (path, opts = {}) => {
+const sb = async (path, opts = {}, _retried = false) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
       apikey: SUPABASE_KEY,
@@ -78,6 +96,10 @@ const sb = async (path, opts = {}) => {
     ...opts,
   });
   if (res.status === 401) {
+    if (!_retried) {
+      const ok = await tryRefreshSession(true);
+      if (ok) return sb(path, opts, true);
+    }
     clearSession();
     if (typeof window.__onSessionExpired === "function") window.__onSessionExpired();
     return [];
@@ -90,17 +112,38 @@ const sb = async (path, opts = {}) => {
   return txt ? JSON.parse(txt) : [];
 };
 
-const authFetch = (path, body) =>
-  fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
+const authFetch = async (path, body) => {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
     method: "POST",
     headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  }).then((r) => r.json());
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const err = new Error(data.error_description || data.msg || data.error || `Auth failed (${r.status})`);
+    err.status = r.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+};
 
 const api = {
   login: (email, pw) => authFetch("token?grant_type=password", { email, password: pw }),
-  signup: (email, pw) => authFetch("signup", { email, password: pw }),
-  refresh: (refresh_token) => authFetch("token?grant_type=refresh_token", { refresh_token }),
+  signup: async (email, pw) => {
+    try {
+      return await authFetch("signup", { email, password: pw });
+    } catch (e) {
+      return e.data || { error: e.message, message: e.message };
+    }
+  },
+  refresh: async (refresh_token) => {
+    try {
+      return await authFetch("token?grant_type=refresh_token", { refresh_token });
+    } catch {
+      return {};
+    }
+  },
   recoverPw: (email) => fetch(`${SUPABASE_URL}/auth/v1/recover`, {
     method: "POST", headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
@@ -115,10 +158,20 @@ const api = {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${_token}` },
     }),
-  getUser: () =>
-    fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${_token}` },
-    }).then((r) => (r.ok ? r.json() : null)),
+  getUser: async (accessToken) => {
+    const tk = accessToken || _token;
+    if (!tk) return null;
+    try {
+      const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${tk}` },
+      });
+      if (!r.ok) return null;
+      const data = await r.json();
+      return data?.id ? data : (data?.user?.id ? data.user : null);
+    } catch {
+      return null;
+    }
+  },
   get: (table, filter) => sb(`${table}?select=*${filter || ""}`),
   rpc: (fn, params) => sb(`rpc/${fn}`, { method: "POST", body: JSON.stringify(params || {}) }),
   insert: (table, data) => sb(table, { method: "POST", body: JSON.stringify(data) }),
@@ -3355,18 +3408,34 @@ function SessionCountdown({ t }) {
     return sess?.expires_at ? Math.max(0, sess.expires_at - Date.now()) : 0;
   });
   useEffect(() => {
-    const tick = () => {
+    let stopped = false;
+    let lastRefreshAttempt = 0;
+    const tick = async () => {
       const sess = getStoredSession();
-      const ms = sess?.expires_at ? sess.expires_at - Date.now() : 0;
-      if (ms <= 0) {
-        if (typeof window.__onSessionExpired === "function") window.__onSessionExpired();
-        return;
+      let ms = sess?.expires_at ? sess.expires_at - Date.now() : 0;
+      if (ms <= SESSION_REFRESH_BEFORE_MS) {
+        const now = Date.now();
+        if (now - lastRefreshAttempt > 15000) {
+          lastRefreshAttempt = now;
+          const ok = await tryRefreshSession(ms <= 0);
+          if (stopped) return;
+          if (!ok && ms <= 0) {
+            if (typeof window.__onSessionExpired === "function") window.__onSessionExpired();
+            return;
+          }
+          const next = getStoredSession();
+          ms = next?.expires_at ? next.expires_at - Date.now() : 0;
+        } else if (ms <= 0) {
+          if (typeof window.__onSessionExpired === "function") window.__onSessionExpired();
+          return;
+        }
       }
-      setRemaining(ms);
+      if (stopped) return;
+      setRemaining(Math.max(0, ms));
     };
     tick();
     const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
+    return () => { stopped = true; clearInterval(id); };
   }, []);
   const warn = remaining <= 5 * 60 * 1000;
   const danger = remaining <= 60 * 1000;
@@ -9946,8 +10015,13 @@ function App() {
   useEffect(() => {
     if (!token) return;
     const id = setInterval(async () => {
-      const ok = await tryRefreshSession();
-      if (!ok) setSessionExpired(true);
+      const ok = await tryRefreshSession(false);
+      if (!ok) {
+        const sess = getStoredSession();
+        if (!sess?.access_token || (sess.expires_at && Date.now() > sess.expires_at)) {
+          setSessionExpired(true);
+        }
+      }
     }, 60000);
     return () => clearInterval(id);
   }, [token]);
@@ -9971,22 +10045,37 @@ function App() {
       try {
         const raw = localStorage.getItem(SESSION_KEY);
         if (!raw) return;
-        const ok = await tryRefreshSession();
-        const sess = getStoredSession();
-        if (!sess?.access_token) {
-          if (!ok) clearSession();
-          return;
-        }
-        if (!ok && sess.expires_at && Date.now() > sess.expires_at) {
+        let sess = getStoredSession();
+        if (!sess?.access_token && !sess?.refresh_token) {
           clearSession();
           return;
         }
+
+        // Prefer restoring with existing access token; refresh only when needed.
+        await tryRefreshSession(false);
+        sess = getStoredSession();
+        if (!sess?.access_token) {
+          clearSession();
+          return;
+        }
+
         _token = sess.access_token;
-        const u = await api.getUser();
+        let u = await api.getUser(sess.access_token);
+        if (!u?.id) {
+          const ok = await tryRefreshSession(true);
+          sess = getStoredSession();
+          if (!ok || !sess?.access_token) {
+            clearSession();
+            return;
+          }
+          _token = sess.access_token;
+          u = await api.getUser(sess.access_token);
+        }
         if (u?.id) await applyAuth(sess.access_token, u);
         else clearSession();
-      } catch {
-        clearSession();
+      } catch (e) {
+        console.error("session restore failed", e);
+        // Keep stored session on transient errors so a reload can retry.
       } finally {
         setBooting(false);
       }

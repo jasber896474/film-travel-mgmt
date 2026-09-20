@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/scouting/p/:token", "destination": "/scouting/index.html" },
+    { "source": "/scouting/new", "destination": "/scouting/new.html" },
+    { "source": "/scouting", "destination": "/scouting/index.html" }
+  ]
+}
