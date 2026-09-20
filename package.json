@@ -5,7 +5,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "sync:pages": "node scripts/sync-index.mjs"
+    "sync:pages": "node scripts/sync-index.mjs",
+    "dev:scouting": "vite --open /scouting/new"
   },
   "dependencies": {
     "react": "^18.2.0",

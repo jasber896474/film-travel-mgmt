@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>開新勘景專案</title>
+<link rel="stylesheet" href="/scouting/css/style.css">
+</head>
+<body>
+<div class="admin-wrap">
+  <h1>開新勘景專案</h1>
+  <p class="admin-lead">只有知道開專案密鑰的人能建立新劇。建好後把連結丟給該組，他們不用登入就能編輯。</p>
+
+  <form id="createForm" class="admin-form">
+    <label class="field-label" data-accent>開專案密鑰</label>
+    <input type="password" id="adminKey" autocomplete="current-password" required>
+
+    <label class="field-label" data-accent>劇名</label>
+    <input type="text" id="projectName" placeholder="例如：日劇 XX 台灣勘景" autocomplete="off" required>
+
+    <p id="formError" class="admin-error"></p>
+    <button type="submit" id="btnCreate" class="btn btn-primary btn-block">建立專案</button>
+  </form>
+
+  <div id="resultBox" class="admin-result" hidden>
+    <label class="field-label" data-accent>專案連結</label>
+    <input type="text" id="resultUrl" readonly>
+    <p id="resultHint" class="admin-lead"></p>
+    <div class="admin-actions">
+      <button type="button" id="copyBtn" class="btn btn-primary">複製連結</button>
+      <a id="openLink" class="btn btn-ghost" href="#">打開專案</a>
+    </div>
+  </div>
+</div>
+<script src="/scouting/js/admin.js"></script>
+</body>
+</html>
