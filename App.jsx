@@ -755,7 +755,8 @@ const T = {
     langSelectLabel: "選擇語言（登入後鎖定）", langLockHint: "登入後語系將固定，如需切換請重新登入",
     errEmailPw: "請輸入電子郵件和密碼", errPwMatch: "密碼不一致", errPwLen: "密碼請輸入6位以上",
     memberAdd: "新增成員", memberCurrent: "目前成員（{n} 人）", memberAlready: "此用戶已是成員", memberSelf: "無法移除自己",
-    memberUidHint: "請輸入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查詢 User ID", memberUidInfo: "→ Authentication → Users → 複製 UUID", memberAddBtn: "加入",
+    memberEmailHint: "請輸入對方已註冊並完成信箱驗證的電子郵件。", memberEmailNotFound: "找不到這個 email 的帳號", memberEmailUnknown: "（無法顯示 email）",
+    memberEmailFooter: "對方須先「申請帳號」並完成信箱驗證，批准後即可在此加入專案。", memberAddBtn: "加入",
     stayRequired: "請選擇飯店並填寫入住/退房日期", syncRoommateTitle: "同步同室者住宿", syncRoommateMsg: "是否同步更新同室者的飯店、房型與日期？",
     syncRoommateOpt: "一併同步同室者（{names}）的飯店、房型與日期",
     currencySettings: "幣別設定", baseCurrency: "計價幣別", displayCurrency: "顯示幣別", exchangeRate: "匯率", exchangeRateHint: "1 單位計價幣 = ? 顯示幣",
@@ -938,7 +939,8 @@ const T = {
     langSelectLabel: "选择语言（登录后锁定）", langLockHint: "登录后语言将固定，如需切换请重新登录",
     errEmailPw: "请输入电子邮件和密码", errPwMatch: "密码不一致", errPwLen: "密码请输入6位以上",
     memberAdd: "新增成员", memberCurrent: "当前成员（{n} 人）", memberAlready: "该用户已是成员", memberSelf: "无法移除自己",
-    memberUidHint: "请输入 Supabase Authentication 的 User ID。", memberUidLabel: "如何查询 User ID", memberUidInfo: "→ Authentication → Users → 复制 UUID", memberAddBtn: "加入",
+    memberEmailHint: "请输入对方已注册并完成邮箱验证的电子邮箱。", memberEmailNotFound: "找不到这个 email 的账号", memberEmailUnknown: "（无法显示 email）",
+    memberEmailFooter: "对方须先「申请账号」并完成邮箱验证，批准后即可在此加入项目。", memberAddBtn: "加入",
     stayRequired: "请选择饭店并填写入住/退房日期", syncRoommateTitle: "同步同住者住宿", syncRoommateMsg: "是否同步更新同住者的饭店、房型与日期？",
     syncRoommateOpt: "一并同步同住者（{names}）的饭店、房型与日期",
     currencySettings: "币别设定", baseCurrency: "计价币别", displayCurrency: "显示币别", exchangeRate: "汇率", exchangeRateHint: "1 单位计价币 = ? 显示币",
@@ -1119,7 +1121,8 @@ const T = {
     langSelectLabel: "Language (locked after login)", langLockHint: "Language is fixed after login. Sign out to change.",
     errEmailPw: "Enter email and password", errPwMatch: "Passwords do not match", errPwLen: "Password must be at least 6 characters",
     memberAdd: "Add Member", memberCurrent: "Members ({n})", memberAlready: "Already a member", memberSelf: "Cannot remove yourself",
-    memberUidHint: "Enter User ID from Supabase Auth.", memberUidLabel: "Find User ID", memberUidInfo: "→ Authentication → Users → copy UUID", memberAddBtn: "Add",
+    memberEmailHint: "Enter their registered, verified email address.", memberEmailNotFound: "No account found for this email", memberEmailUnknown: "(email unavailable)",
+    memberEmailFooter: "They must register and verify email first; approve the request, then add them here.", memberAddBtn: "Add",
     stayRequired: "Select hotel and dates", syncRoommateTitle: "Sync roommates", syncRoommateMsg: "Sync hotel, room type and dates for roommates?",
     currencySettings: "Currency", baseCurrency: "Base currency", displayCurrency: "Display currency", exchangeRate: "Rate", exchangeRateHint: "1 base = ? display",
     currencyTWD: "TWD", currencyJPY: "JPY", optional: "Optional", loading: "Loading…", resultsCount: "Showing {n} / {total}", activeFilters: "Active filters",
@@ -1299,7 +1302,8 @@ const T = {
     langSelectLabel: "언어 선택 (로그인 후 고정)", langLockHint: "로그인 후 언어가 고정됩니다. 변경하려면 다시 로그인하세요.",
     errEmailPw: "이메일과 비밀번호를 입력하세요", errPwMatch: "비밀번호가 일치하지 않습니다", errPwLen: "6자 이상 입력하세요",
     memberAdd: "멤버 추가", memberCurrent: "현재 멤버 ({n}명)", memberAlready: "이미 멤버입니다", memberSelf: "본인은 삭제할 수 없습니다",
-    memberUidHint: "Supabase Authentication의 User ID를 입력하세요.", memberUidLabel: "User ID 확인 방법", memberUidInfo: "→ Authentication → Users → UUID 복사", memberAddBtn: "추가",
+    memberEmailHint: "등록 및 이메일 인증이 완료된 주소를 입력하세요.", memberEmailNotFound: "이 이메일 계정을 찾을 수 없습니다", memberEmailUnknown: "(이메일 표시 불가)",
+    memberEmailFooter: "먼저 계정 신청 및 이메일 인증 후, 승인하여 프로젝트에 추가하세요.", memberAddBtn: "추가",
     stayRequired: "호텔과 날짜를 입력하세요", syncRoommateTitle: "룸메이트 동기화", syncRoommateMsg: "룸메이트의 호텔·객실·날짜를 동기화하시겠습니까?",
     currencySettings: "통화 설정", baseCurrency: "기준 통화", displayCurrency: "표시 통화", exchangeRate: "환율", exchangeRateHint: "1 기준 = ? 표시",
     currencyTWD: "대만 달러 TWD", currencyJPY: "일본 엔 JPY", optional: "선택사항", loading: "로딩 중…", resultsCount: "{n} / {total}명", activeFilters: "활성 필터",
@@ -1480,7 +1484,8 @@ const T = {
     langSelectLabel: "言語（ログイン後は固定）", langLockHint: "ログイン後は言語が固定されます。変更するにはログアウトしてください。",
     errEmailPw: "メールとパスワードを入力してください", errPwMatch: "パスワードが一致しません", errPwLen: "6文字以上にしてください",
     memberAdd: "メンバー追加", memberCurrent: "現在のメンバー（{n}）", memberAlready: "すでにメンバーです", memberSelf: "自分自身は削除できません",
-    memberUidHint: "User ID", memberUidLabel: "User ID", memberUidInfo: "→ Authentication → Users", memberAddBtn: "追加",
+    memberEmailHint: "登録済みでメール確認が完了したアドレスを入力してください。", memberEmailNotFound: "このメールのアカウントが見つかりません", memberEmailUnknown: "（メール表示不可）",
+    memberEmailFooter: "先にアカウント申請とメール確認を行い、承認後にここで追加してください。", memberAddBtn: "追加",
     stayRequired: "ホテルとチェックイン／アウト日を入力してください", syncRoommateTitle: "同室者の同期", syncRoommateMsg: "同室者のホテル・部屋タイプ・日付も同期しますか？",
     syncRoommateOpt: "同室者（{names}）のホテル・部屋タイプ・日付も同期する",
     currencySettings: "通貨", baseCurrency: "基準通貨", displayCurrency: "表示通貨", exchangeRate: "レート", exchangeRateHint: "基準通貨 1 ＝ 表示通貨 ?",
@@ -6897,26 +6902,56 @@ function SyncRoommateModal({ names, onConfirm, onClose, t }) {
   );
 }
 
+function resolveUserIdFromRpcResult(found) {
+  if (typeof found === "string") return found;
+  if (Array.isArray(found)) return found[0] || null;
+  return found?.id || found?.user_id || null;
+}
+
 function MemberManager({ project, user, canManage, onClose, t }) {
   const [members, setMembers] = useState([]);
+  const [memberLabels, setMemberLabels] = useState({});
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState("");
+  const [email, setEmail] = useState("");
   const [role, setRole] = useState("editor");
   const [saving, setSaving] = useState(false);
   const [toastMsg, showToast] = useToast();
   const load = async () => {
     setLoading(true);
-    try { setMembers(await api.get("user_projects", `&project_id=eq.${project.id}`)); } catch (e) { showToast(e.message); }
+    try {
+      const [rows, labels] = await Promise.all([
+        api.get("user_projects", `&project_id=eq.${project.id}`),
+        api.rpc("list_project_member_labels", { p_project_id: project.id }).catch(() => []),
+      ]);
+      setMembers(rows);
+      const map = {};
+      (Array.isArray(labels) ? labels : []).forEach((row) => {
+        if (row?.user_id) map[row.user_id] = row;
+      });
+      setMemberLabels(map);
+    } catch (e) { showToast(e.message); }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  const resolveUserIdByEmail = async (addr) => {
+    const found = await api.rpc("find_user_id_by_email", { p_email: addr.trim() });
+    const uid = resolveUserIdFromRpcResult(found);
+    if (!uid) throw new Error(t.memberEmailNotFound);
+    return uid;
+  };
+  const memberEmail = (m) => {
+    if (m.user_id === user.id && user.email) return user.email;
+    return (memberLabels[m.user_id]?.email || "").trim() || t.memberEmailUnknown;
+  };
   const addMember = async () => {
-    if (!userId.trim()) return;
+    const addr = email.trim();
+    if (!addr) return;
     setSaving(true);
     try {
-      if (members.find((m) => m.user_id === userId.trim())) { showToast(t.memberAlready); return; }
-      await api.insert("user_projects", { user_id: userId.trim(), project_id: project.id, role });
-      showToast(t.saved); setUserId(""); load();
+      const uid = await resolveUserIdByEmail(addr);
+      if (members.find((m) => m.user_id === uid)) { showToast(t.memberAlready); return; }
+      await api.insert("user_projects", { user_id: uid, project_id: project.id, role });
+      showToast(t.saved); setEmail(""); load();
     } catch (e) { showToast(e.message); } finally { setSaving(false); }
   };
   return (
@@ -6924,15 +6959,15 @@ function MemberManager({ project, user, canManage, onClose, t }) {
       <Toast msg={toastMsg} />
       <div style={{ background: "var(--washi)", padding: 18, marginBottom: 20, border: "1px solid var(--keisenL)" }}>
         <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 8 }}>{t.memberAdd}</div>
-        <p style={{ fontSize: 12, color: "var(--nezumi)", marginBottom: 10 }}>{t.memberUidHint}</p>
+        <p style={{ fontSize: 12, color: "var(--nezumi)", marginBottom: 10 }}>{t.memberEmailHint}</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <input style={{ ...inpStyle, flex: 2, minWidth: 200 }} value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="UUID" />
+          <input type="email" style={{ ...inpStyle, flex: 2, minWidth: 200 }} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
           <select value={role} onChange={(e) => setRole(e.target.value)} style={inpStyle}>
             <option value="admin">{t.role_admin}</option>
             <option value="editor">{t.role_editor}</option>
             <option value="viewer">{t.role_viewer}</option>
           </select>
-          <button type="button" onClick={addMember} disabled={saving || !userId.trim()} style={pBtn(saving || !userId.trim())}>{t.memberAddBtn}</button>
+          <button type="button" onClick={addMember} disabled={saving || !email.trim()} style={pBtn(saving || !email.trim())}>{t.memberAddBtn}</button>
         </div>
       </div>
       <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 12 }}>{t.memberCurrent.replace("{n}", members.length)}</div>
@@ -6944,7 +6979,7 @@ function MemberManager({ project, user, canManage, onClose, t }) {
             <div>
               <span style={{ fontSize: 11, padding: "2px 8px", ...(ROLE_COLORS[m.role] || ROLE_COLORS.viewer) }}>{t[`role_${m.role}`] || m.role}</span>
               {isMe && <span style={{ fontSize: 9, marginLeft: 6, color: "var(--moegi)" }}>{t.me}</span>}
-              <div style={{ fontSize: 11, color: "var(--usunezumi)", fontFamily: "monospace", marginTop: 4 }}>{m.user_id}</div>
+              <div style={{ fontSize: 12.5, color: "var(--sumi)", marginTop: 4 }}>{memberEmail(m)}</div>
             </div>
             {canModify && (
               <div style={{ display: "flex", gap: 8 }}>
@@ -6959,7 +6994,7 @@ function MemberManager({ project, user, canManage, onClose, t }) {
           </div>
         );
       })}
-      <p style={{ fontSize: 11, color: "var(--kincha)", marginTop: 12 }}>{t.memberUidLabel}: {t.memberUidInfo}</p>
+      <p style={{ fontSize: 11, color: "var(--kincha)", marginTop: 12 }}>{t.memberEmailFooter}</p>
     </Modal>
   );
 }
@@ -7317,7 +7352,7 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
       let uid = req.user_id;
       if (!uid && req.email) {
         const found = await api.rpc("find_user_id_by_email", { p_email: req.email.trim() });
-        uid = typeof found === "string" ? found : (Array.isArray(found) ? found[0] : found?.id || null);
+        uid = resolveUserIdFromRpcResult(found);
       }
       if (uid) {
         const existing = await api.get("user_projects", `&user_id=eq.${uid}&project_id=eq.${projectId}`);

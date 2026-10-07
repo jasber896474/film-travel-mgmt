@@ -429,10 +429,10 @@ function renderPhotoGrid(entryId) {
     const cell = document.createElement("div");
     cell.className = "photo-cell";
     cell.innerHTML = `
-      <img src="${escapeAttr(photo.url)}" alt="場景照片">
+      <img src="${escapeAttr(photoSrc(photo))}" alt="場景照片">
       <button type="button" class="photo-remove" title="${escapeAttr(t("deletePhoto"))}">×</button>
     `;
-    cell.querySelector("img").addEventListener("click", () => openLightbox(photo.url));
+    cell.querySelector("img").addEventListener("click", () => openLightbox(photoSrc(photo)));
     cell.querySelector(".photo-remove").addEventListener("click", async (ev) => {
       ev.stopPropagation();
       try {
@@ -538,25 +538,55 @@ function entryPhotos(entryId) {
     .sort((a, b) => a.order - b.order);
 }
 
-function printField(label, hint, value) {
+function photoSrc(photo) {
+  if (!photo || !photo.id || !DB.token) return photo && photo.url ? photo.url : "";
+  return `/api/scouting-photo?token=${encodeURIComponent(DB.token)}&id=${encodeURIComponent(photo.id)}`;
+}
+
+function printField(label, value) {
   const text = (value || "").trim();
+  if (!text) return "";
   return `
     <div class="print-field">
       <div class="print-label">${escapeHtml(label)}</div>
-      ${hint ? `<div class="print-hint">${escapeHtml(hint)}</div>` : ""}
-      <div class="print-value">${text ? escapeHtml(text).replaceAll("\n", "<br>") : "—"}</div>
+      <div class="print-value">${escapeHtml(text).replaceAll("\n", "<br>")}</div>
     </div>
   `;
 }
 
-function printPhotoCells(photos, size) {
-  const cells = photos.slice();
-  while (cells.length && cells.length < size) cells.push(null);
-  return cells.map((p) => (
-    p
-      ? `<div class="print-photo"><img src="${escapeAttr(p.url)}" alt=""></div>`
-      : `<div class="print-photo print-photo-empty"></div>`
+function printRow(left, right) {
+  if (!left && !right) return "";
+  if (!left || !right) return left || right;
+  return `<div class="print-row">${left}${right}</div>`;
+}
+
+function filledPrintFieldCount(entry) {
+  return [
+    entry.address,
+    entry.access,
+    entry.hours,
+    entry.condition || entry.background,
+    entry.contact,
+    entry.fee,
+    entry.rules,
+    entry.mapLink,
+    entry.photoLink,
+  ].filter((value) => String(value || "").trim()).length;
+}
+
+function page1PhotoCount(filled, total) {
+  if (total === 0) return 0;
+  if (filled <= 4) return Math.min(4, total);
+  return Math.min(2, total);
+}
+
+function printPhotoGrid(photos) {
+  if (!photos.length) return "";
+  const n = photos.length;
+  const cells = photos.map((p) => (
+    `<div class="print-photo"><img src="${escapeAttr(photoSrc(p))}" alt=""></div>`
   )).join("");
+  return `<div class="print-photos count-${n}">${cells}</div>`;
 }
 
 function chunkPhotos(photos, size) {
@@ -565,15 +595,24 @@ function chunkPhotos(photos, size) {
   return chunks;
 }
 
-function buildPrintPages(entry) {
-  const tag = `${entry.categoryLetter}${entry.sequence}`;
+function entryPrintName(entry) {
   const typeName = (state.categories.find((c) => c.letter === entry.categoryLetter) || {}).name || "";
   const placeName = entry.name || t("untitled");
-  const name = typeName ? `${typeName}・${placeName}` : placeName;
+  return typeName ? `${typeName}・${placeName}` : placeName;
+}
+
+function entryPrintTag(entry) {
+  return `${entry.categoryLetter}${entry.sequence}`;
+}
+
+function buildPrintPages(entry) {
+  const tag = entryPrintTag(entry);
+  const name = entryPrintName(entry);
   const project = (DB.project && DB.project.name) || "";
   const photos = entryPhotos(entry.id);
-  const first = photos.slice(0, 2);
-  const rest = photos.slice(2);
+  const firstCount = page1PhotoCount(filledPrintFieldCount(entry), photos.length);
+  const first = photos.slice(0, firstCount);
+  const rest = photos.slice(firstCount);
 
   const infoPage = `
     <section class="print-page print-page-info">
@@ -584,24 +623,24 @@ function buildPrintPages(entry) {
           <p>${escapeHtml(project)} · ${escapeHtml(statusLabel(entry.status))} · ${escapeHtml(t("printFooter"))}</p>
         </div>
       </header>
-      ${printField(t("fieldAddress"), "", entry.address)}
-      <div class="print-row">
-        ${printField(t("fieldAccess"), t("fieldAccessHint"), entry.access)}
-        ${printField(t("fieldHours"), t("fieldHoursHint"), entry.hours)}
-      </div>
-      <div class="print-row">
-        ${printField(t("fieldCondition"), t("fieldConditionHint"), entry.condition || entry.background)}
-        ${printField(t("fieldContact"), t("fieldContactHint"), entry.contact)}
-      </div>
-      <div class="print-row">
-        ${printField(t("fieldFee"), t("fieldFeeHint"), entry.fee)}
-        ${printField(t("fieldRules"), t("fieldRulesHint"), entry.rules)}
-      </div>
-      <div class="print-row">
-        ${printField(t("fieldMap"), "", entry.mapLink)}
-        ${printField(t("fieldPhotoLink"), "", entry.photoLink)}
-      </div>
-      ${first.length ? `<div class="print-photos-2">${printPhotoCells(first, 2)}</div>` : ""}
+      ${printField(t("fieldAddress"), entry.address)}
+      ${printRow(
+        printField(t("fieldAccess"), entry.access),
+        printField(t("fieldHours"), entry.hours)
+      )}
+      ${printRow(
+        printField(t("fieldCondition"), entry.condition || entry.background),
+        printField(t("fieldContact"), entry.contact)
+      )}
+      ${printRow(
+        printField(t("fieldFee"), entry.fee),
+        printField(t("fieldRules"), entry.rules)
+      )}
+      ${printRow(
+        printField(t("fieldMap"), entry.mapLink),
+        printField(t("fieldPhotoLink"), entry.photoLink)
+      )}
+      ${printPhotoGrid(first)}
     </section>
   `;
 
@@ -611,21 +650,56 @@ function buildPrintPages(entry) {
         <span class="print-tag">${escapeHtml(tag)}</span>
         <h1>${escapeHtml(name)}</h1>
       </header>
-      <div class="print-photos-4">${printPhotoCells(group, 4)}</div>
+      ${printPhotoGrid(group)}
     </section>
   `).join("");
 
   return infoPage + photoPages;
 }
 
+function localDateStamp() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}${m}${day}`;
+}
+
+function safeFilename(name) {
+  return String(name || "")
+    .replace(/[\\/:*?"<>|]+/g, "_")
+    .replace(/\s+/g, " ")
+    .trim() || "勘景資料";
+}
+
+function printDocumentTitle(entries) {
+  if (entries.length === 1) {
+    const entry = entries[0];
+    return `${entryPrintTag(entry)}_${entryPrintName(entry)}`;
+  }
+  const project = (DB.project && DB.project.name) || "勘景資料";
+  return `${localDateStamp()}_${project}`;
+}
+
 async function waitPrintImages(root) {
-  const imgs = [...root.querySelectorAll("img")];
-  await Promise.all(imgs.map((img) => (
-    img.complete ? Promise.resolve() : new Promise((resolve) => {
-      img.onload = resolve;
-      img.onerror = resolve;
-    })
-  )));
+  const imgs = [...root.querySelectorAll("img[src]")];
+  await Promise.all(imgs.map(async (img) => {
+    try {
+      const res = await fetch(img.getAttribute("src"));
+      if (!res.ok) throw new Error("bad photo");
+      const blob = await res.blob();
+      img.src = await blobToDataUrl(blob);
+      if (img.complete) return;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    } catch {
+      const cell = img.closest(".print-photo");
+      if (cell) cell.remove();
+      else img.remove();
+    }
+  }));
 }
 
 async function printEntries(entries) {
@@ -640,7 +714,10 @@ async function printEntries(entries) {
   });
   root.innerHTML = list.map(buildPrintPages).join("");
   await waitPrintImages(root);
+  const previousTitle = document.title;
+  document.title = safeFilename(printDocumentTitle(list));
   const cleanup = () => {
+    document.title = previousTitle;
     root.innerHTML = "";
     window.removeEventListener("afterprint", cleanup);
   };

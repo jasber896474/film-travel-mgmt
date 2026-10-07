@@ -641,9 +641,10 @@ textarea::placeholder, input::placeholder { color: var(--ink-faint); }
     margin: 10mm;
   }
 
-  html, body {
+  html, body, .print-root {
     background: #fff !important;
     height: auto !important;
+    font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -673,23 +674,23 @@ textarea::placeholder, input::placeholder { color: var(--ink-faint); }
     display: flex;
     flex-direction: column;
   }
-  .print-page-photos .print-photos-4 {
+  .print-page-info .print-field { margin-bottom: 3px; }
+  .print-photos {
+    display: grid;
+    gap: 4mm;
+    margin-top: 5mm;
     flex: 1;
-    height: auto;
     min-height: 0;
   }
-  .print-page-info .print-field { margin-bottom: 3px; }
-  .print-photos-2 {
-    display: grid;
+  .print-photos.count-1 { grid-template-columns: 1fr; }
+  .print-photos.count-2 { grid-template-columns: 1fr 1fr; }
+  .print-photos.count-3,
+  .print-photos.count-4 {
     grid-template-columns: 1fr 1fr;
-    gap: 4mm;
-    margin-top: auto;
-    padding-top: 3mm;
-    max-height: 58mm;
+    grid-template-rows: 1fr 1fr;
   }
-  .print-photos-2 .print-photo {
-    aspect-ratio: 16 / 9;
-    max-height: 58mm;
+  .print-photos.count-3 .print-photo:last-child {
+    grid-column: 1 / -1;
   }
 
   .print-head {
@@ -724,8 +725,9 @@ textarea::placeholder, input::placeholder { color: var(--ink-faint); }
     border-radius: 3px;
   }
 
-  .print-field { margin-bottom: 5px; flex: 1; min-width: 0; }
+  .print-field { margin-bottom: 5px; min-width: 0; }
   .print-row { display: flex; gap: 14px; }
+  .print-row .print-field { flex: 1; }
   .print-label {
     font-size: 11px;
     font-weight: 600;
@@ -744,18 +746,12 @@ textarea::placeholder, input::placeholder { color: var(--ink-faint); }
     min-height: 1.2em;
   }
 
-  .print-photos-4 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 5mm;
-    height: 158mm;
-  }
   .print-photo {
     overflow: hidden;
     border: 1px solid #DDD4C2;
     background: #F6F3EC;
     min-height: 0;
+    height: 100%;
   }
   .print-photo img {
     width: 100%;
