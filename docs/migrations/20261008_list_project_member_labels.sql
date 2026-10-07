@@ -1,7 +1,7 @@
 -- List project members with email (for Member Manager UI).
 -- Apply in Supabase SQL Editor (project knoudnzjnfkfhiizgcna).
 
-CREATE OR REPLACE FUNCTION public.list_project_member_labels(p_project_id uuid)
+CREATE OR REPLACE FUNCTION public.list_project_member_labels(p_project_id integer)
 RETURNS TABLE(user_id uuid, email text, display_name text)
 LANGUAGE sql
 STABLE
@@ -15,7 +15,7 @@ AS $$
     AND private.can_read_project(p_project_id);
 $$;
 
-REVOKE ALL ON FUNCTION public.list_project_member_labels(uuid) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.list_project_member_labels(uuid) FROM anon;
-GRANT EXECUTE ON FUNCTION public.list_project_member_labels(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.list_project_member_labels(uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.list_project_member_labels(integer) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.list_project_member_labels(integer) FROM anon;
+GRANT EXECUTE ON FUNCTION public.list_project_member_labels(integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.list_project_member_labels(integer) TO service_role;
