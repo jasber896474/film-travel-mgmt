@@ -44,6 +44,17 @@ function serveScouting() {
       loadDotEnv()
       server.middlewares.use(async (req, res, next) => {
         const url = (req.url || '').split('?')[0]
+        if (url === '/api/scouting-photo') {
+          const handlerPath = require.resolve('./api/scouting-photo.js')
+          const libPath = require.resolve('./lib/scouting.js')
+          const pcloudPath = require.resolve('./lib/scouting-pcloud.js')
+          delete require.cache[handlerPath]
+          delete require.cache[libPath]
+          delete require.cache[pcloudPath]
+          const handler = require('./api/scouting-photo.js')
+          await handler(req, res)
+          return
+        }
         if (url === '/api/scouting') {
           const handlerPath = require.resolve('./api/scouting.js')
           const libPath = require.resolve('./lib/scouting.js')
