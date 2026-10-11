@@ -638,10 +638,16 @@ function entryPrintTag(entry) {
   return `${entry.categoryLetter}${entry.sequence}`;
 }
 
+function printSubtitle(entry) {
+  const project = (DB.project && DB.project.name) || "";
+  const status = entry.status && entry.status !== "pending" ? statusLabel(entry.status) : "";
+  return [project, status].filter(Boolean).join(" · ");
+}
+
 function buildPrintPages(entry) {
   const tag = entryPrintTag(entry);
   const name = entryPrintName(entry);
-  const project = (DB.project && DB.project.name) || "";
+  const subtitle = printSubtitle(entry);
   const photos = entryPhotos(entry.id);
   const firstCount = page1PhotoCount(filledPrintFieldCount(entry), photos.length);
   const first = photos.slice(0, firstCount);
@@ -653,7 +659,7 @@ function buildPrintPages(entry) {
         <span class="print-tag">${escapeHtml(tag)}</span>
         <div>
           <h1>${escapeHtml(name)}</h1>
-          <p>${escapeHtml(project)} · ${escapeHtml(statusLabel(entry.status))} · ${escapeHtml(t("printFooter"))}</p>
+          ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ""}
         </div>
       </header>
       ${printField(t("fieldAddress"), entry.address)}
