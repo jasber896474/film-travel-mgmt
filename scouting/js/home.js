@@ -72,7 +72,10 @@ function renderProjects(projects) {
     card.innerHTML = `
       <div class="home-card-band role-${p.role || "viewer"}"></div>
       <div class="home-card-body">
-        <h3>${escapeHtml(p.name)}</h3>
+        <div class="home-card-title">
+          <h3>${escapeHtml(p.name)}</h3>
+          ${["owner", "admin", "editor"].includes(p.role) ? `<button type="button" class="home-icon-btn" data-rename="${p.id}" data-name="${escapeAttr(p.name)}" title="${escapeAttr(t("renameProject"))}">✎</button>` : ""}
+        </div>
         <span class="home-role">${roleLabel(p.role)}</span>
         <div class="home-card-actions">
           <a class="btn btn-primary" href="${p.path}">${t("openProject")}</a>
@@ -257,9 +260,36 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   el("projectGrid").addEventListener("click", (ev) => {
+    const renameBtn = ev.target.closest("[data-rename]");
+    if (renameBtn) {
+      el("renameProjectId").value = renameBtn.dataset.rename;
+      el("renameProjectName").value = renameBtn.dataset.name || "";
+      el("renameError").textContent = "";
+      show("renameModal", true);
+      el("renameProjectName").focus();
+      el("renameProjectName").select();
+      return;
+    }
     const btn = ev.target.closest("[data-members]");
     if (!btn) return;
     openMembers(btn.dataset.members, btn.dataset.name).catch((err) => alert(err.message));
+  });
+
+  el("btnCancelRename").addEventListener("click", () => show("renameModal", false));
+  el("btnConfirmRename").addEventListener("click", async () => {
+    try {
+      await Auth.api("renameProject", {
+        projectId: el("renameProjectId").value,
+        name: el("renameProjectName").value.trim(),
+      });
+      show("renameModal", false);
+      await loadList();
+    } catch (err) {
+      el("renameError").textContent = err.message;
+    }
+  });
+  el("renameProjectName").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") el("btnConfirmRename").click();
   });
 
   el("btnCloseMembers").addEventListener("click", () => show("memberModal", false));

@@ -94,6 +94,27 @@ button, input, textarea, select {
   margin: 0;
 }
 
+.project-name-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 4px 0;
+  margin: 2px 0 0;
+  outline: none;
+}
+.project-name-input:not(:disabled):hover,
+.project-name-input:focus {
+  border-bottom-color: var(--accent);
+}
+.project-name-input:disabled {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
 .lang-select {
   margin-top: 10px;
   width: 100%;
@@ -893,7 +914,22 @@ textarea::placeholder, input::placeholder { color: var(--ink-faint); }
 .home-card-band.role-admin { background: var(--accent); }
 .home-card-band.role-editor { background: var(--cat-1); }
 .home-card-body { padding: 18px 18px 16px; }
-.home-card-body h3 { margin: 0 0 8px; font-size: 16px; }
+.home-card-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.home-card-body h3 { flex: 1; min-width: 0; margin: 0 0 8px; font-size: 16px; word-break: break-word; }
+.home-icon-btn {
+  background: none;
+  border: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 13px;
+  line-height: 1;
+}
+.home-icon-btn:hover { color: var(--accent); }
 .home-role {
   display: inline-block;
   font-size: 11px;
@@ -939,6 +975,23 @@ textarea::placeholder, input::placeholder { color: var(--ink-faint); }
 .home-add-member input { flex: 2; min-width: 180px; width: auto; }
 .home-add-member select { width: auto; min-width: 100px; }
 .modal-wide { width: min(640px, 92vw); }
+.trash-count {
+  font-size: 11px;
+  color: var(--accent);
+}
+.trash-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.trash-item:last-child { border-bottom: none; }
+.trash-item strong { display: block; font-size: 14px; }
+.trash-item span { color: var(--ink-soft); font-size: 12px; }
+.trash-item .btn { margin-top: 0; flex: 0 0 auto; }
 .is-readonly .photo-add,
 .is-readonly .photo-remove,
-.is-readonly .category-actions { display: none !important; }
+.is-readonly .category-actions,
+.is-readonly #btnEmptyTrash { display: none !important; }

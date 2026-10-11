@@ -5,7 +5,10 @@ const {
   newToken,
   readBody,
   loadProjectBundle,
+  loadProjectRows,
+  buildTrashList,
   rewriteCategoryLetters,
+  TRASH_DAYS,
   sb,
   mapEntry,
   mapPhoto,
@@ -28,7 +31,54 @@ const { uploadScoutingPhoto, deleteScoutingPhoto } = require("../lib/scouting-pc
 const WRITE_ACTIONS = new Set([
   "addCategory", "updateCategory", "moveCategory", "deleteCategory",
   "addEntry", "updateEntry", "deleteEntry", "addPhoto", "deletePhoto",
+  "renameProject", "restoreTrash", "emptyTrash",
 ]);
+
+function stamp() {
+  return new Date().toISOString();
+}
+
+function cutoffIso() {
+  return new Date(Date.now() - TRASH_DAYS * 24 * 60 * 60 * 1000).toISOString();
+}
+
+async function hardDeletePhotos(photos) {
+  await Promise.all((photos || []).map((p) => deleteScoutingPhoto(p.pcloud_file_id || p.pcloudFileId)));
+  const ids = (photos || []).map((p) => p.id).filter(Boolean);
+  if (!ids.length) return;
+  await sb("scouting_photos", {
+    method: "DELETE",
+    query: `id=in.(${ids.join(",")})`,
+  });
+}
+
+async function purgeExpiredTrash(projectId) {
+  const cut = cutoffIso();
+  const rows = await loadProjectRows(projectId);
+  const expiredCats = rows.categories.filter((c) => c.deleted_at && c.deleted_at < cut);
+  const expiredCatLetters = new Set(expiredCats.map((c) => c.letter));
+  const expiredEntries = rows.entries.filter((e) =>
+    (e.deleted_at && e.deleted_at < cut) || expiredCatLetters.has(e.category_letter)
+  );
+  const expiredEntryIds = new Set(expiredEntries.map((e) => e.id));
+  const expiredPhotos = rows.photos.filter((p) =>
+    (p.deleted_at && p.deleted_at < cut) || expiredEntryIds.has(p.entry_id)
+  );
+  if (!expiredPhotos.length && !expiredEntries.length && !expiredCats.length) return;
+  await hardDeletePhotos(expiredPhotos);
+  if (expiredEntries.length) {
+    await sb("scouting_entries", {
+      method: "DELETE",
+      query: `id=in.(${expiredEntries.map((e) => e.id).join(",")})`,
+    });
+  }
+  for (const cat of expiredCats) {
+    await sb("scouting_categories", {
+      method: "DELETE",
+      query: `project_id=eq.${projectId}&letter=eq.${encodeURIComponent(cat.letter)}`,
+    });
+  }
+}
 
 function mapMember(row, profile) {
   return {
@@ -130,6 +180,24 @@ module.exports = async function handler(req, res) {
         project: { id: project.id, name: project.name, token: project.token, role: creatorRole },
         path: `/scouting/p/${project.token}`,
       });
+      return;
+    }
+
+    if (action === "renameProject" && body.projectId) {
+      const name = String(body.name || "").trim();
+      if (!name) {
+        json(res, 400, { error: "請輸入劇名" });
+        return;
+      }
+      const user = await requireUser(req, body);
+      const projectId = String(body.projectId).trim();
+      await assertProjectRole(projectId, user, "edit");
+      const [row] = await sb("scouting_projects", {
+        method: "PATCH",
+        query: `id=eq.${projectId}`,
+        body: { name },
+      });
+      json(res, 200, { project: { id: row.id, name: row.name, token: row.token } });
       return;
     }
 
@@ -267,8 +335,10 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    const preview = await loadProjectBundle(body.token);
+    const projectId = preview.project.id;
+    await purgeExpiredTrash(projectId);
     const bundle = await loadProjectBundle(body.token);
-    const projectId = bundle.project.id;
     const sessionUser = await optionalUser(req, body);
     if (sessionUser) {
       const role = await membershipRole(projectId, sessionUser);
@@ -286,13 +356,35 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    if (action === "listTrash") {
+      const rows = await loadProjectRows(projectId);
+      const items = buildTrashList(rows);
+      json(res, 200, { items, trashCount: items.length });
+      return;
+    }
+
+    if (action === "renameProject") {
+      const name = String(body.name || "").trim();
+      if (!name) {
+        json(res, 400, { error: "請輸入劇名" });
+        return;
+      }
+      const [row] = await sb("scouting_projects", {
+        method: "PATCH",
+        query: `id=eq.${projectId}`,
+        body: { name },
+      });
+      json(res, 200, { project: { id: row.id, name: row.name, token: row.token } });
+      return;
+    }
+
     if (action === "addCategory") {
       const name = String(body.name || "").trim();
       if (!name) {
         json(res, 400, { error: "請輸入類型名稱" });
         return;
       }
-      const used = new Set(bundle.categories.map((c) => c.letter));
+      const used = new Set(bundle.usedLetters || bundle.categories.map((c) => c.letter));
       let nextLetter = "";
       for (let i = 0; i < 26; i += 1) {
         const letter = String.fromCharCode(65 + i);
@@ -359,22 +451,26 @@ module.exports = async function handler(req, res) {
         json(res, 404, { error: "找不到這個類型" });
         return;
       }
+      const now = stamp();
       const doomed = bundle.entries.filter((e) => e.categoryLetter === letter);
-      const doomedIds = new Set(doomed.map((e) => e.id));
-      const photos = bundle.photos.filter((p) => doomedIds.has(p.entryId));
-      await Promise.all(photos.map((p) => deleteScoutingPhoto(p.pcloudFileId)));
-      if (doomed.length) {
+      const doomedIds = doomed.map((e) => e.id);
+      await sb("scouting_categories", {
+        method: "PATCH",
+        query: `project_id=eq.${projectId}&letter=eq.${encodeURIComponent(letter)}`,
+        body: { deleted_at: now },
+      });
+      if (doomedIds.length) {
         await sb("scouting_entries", {
-          method: "DELETE",
+          method: "PATCH",
           query: `project_id=eq.${projectId}&category_letter=eq.${encodeURIComponent(letter)}`,
+          body: { deleted_at: now },
+        });
+        await sb("scouting_photos", {
+          method: "PATCH",
+          query: `project_id=eq.${projectId}&entry_id=in.(${doomedIds.join(",")})`,
+          body: { deleted_at: now },
         });
       }
-      await sb("scouting_categories", {
-        method: "DELETE",
-        query: `project_id=eq.${projectId}&letter=eq.${encodeURIComponent(letter)}`,
-      });
-      const remaining = bundle.categories.filter((c) => c.letter !== letter);
-      await rewriteCategoryLetters(projectId, remaining);
       json(res, 200, await loadProjectBundle(body.token));
       return;
     }
@@ -457,11 +553,16 @@ module.exports = async function handler(req, res) {
         json(res, 404, { error: "找不到這個場景" });
         return;
       }
-      const photos = bundle.photos.filter((p) => p.entryId === id);
-      await Promise.all(photos.map((p) => deleteScoutingPhoto(p.pcloudFileId)));
+      const now = stamp();
       await sb("scouting_entries", {
-        method: "DELETE",
+        method: "PATCH",
         query: `id=eq.${id}&project_id=eq.${projectId}`,
+        body: { deleted_at: now },
+      });
+      await sb("scouting_photos", {
+        method: "PATCH",
+        query: `project_id=eq.${projectId}&entry_id=eq.${id}`,
+        body: { deleted_at: now },
       });
       json(res, 200, { ok: true });
       return;
@@ -515,12 +616,124 @@ module.exports = async function handler(req, res) {
         json(res, 404, { error: "找不到這張照片" });
         return;
       }
-      await deleteScoutingPhoto(existing.pcloudFileId);
       await sb("scouting_photos", {
-        method: "DELETE",
+        method: "PATCH",
         query: `id=eq.${id}&project_id=eq.${projectId}`,
+        body: { deleted_at: stamp() },
       });
       json(res, 200, { ok: true });
+      return;
+    }
+
+    if (action === "restoreTrash") {
+      const kind = String(body.kind || "");
+      const rows = await loadProjectRows(projectId);
+      if (kind === "category") {
+        const letter = String(body.letter || "").trim().toUpperCase();
+        const cat = rows.categories.find((c) => c.letter === letter && c.deleted_at);
+        if (!cat) {
+          json(res, 404, { error: "回收桶沒有這個類型" });
+          return;
+        }
+        const kids = rows.entries.filter((e) => e.category_letter === letter);
+        await sb("scouting_categories", {
+          method: "PATCH",
+          query: `project_id=eq.${projectId}&letter=eq.${encodeURIComponent(letter)}`,
+          body: { deleted_at: null },
+        });
+        if (kids.length) {
+          await sb("scouting_entries", {
+            method: "PATCH",
+            query: `project_id=eq.${projectId}&category_letter=eq.${encodeURIComponent(letter)}`,
+            body: { deleted_at: null },
+          });
+          await sb("scouting_photos", {
+            method: "PATCH",
+            query: `project_id=eq.${projectId}&entry_id=in.(${kids.map((e) => e.id).join(",")})`,
+            body: { deleted_at: null },
+          });
+        }
+      } else if (kind === "entry") {
+        const id = Number(body.id);
+        const entry = rows.entries.find((e) => e.id === id && e.deleted_at);
+        if (!entry) {
+          json(res, 404, { error: "回收桶沒有這個場景" });
+          return;
+        }
+        const cat = rows.categories.find((c) => c.letter === entry.category_letter);
+        if (cat && cat.deleted_at) {
+          await sb("scouting_categories", {
+            method: "PATCH",
+            query: `project_id=eq.${projectId}&letter=eq.${encodeURIComponent(entry.category_letter)}`,
+            body: { deleted_at: null },
+          });
+        }
+        await sb("scouting_entries", {
+          method: "PATCH",
+          query: `id=eq.${id}&project_id=eq.${projectId}`,
+          body: { deleted_at: null },
+        });
+        await sb("scouting_photos", {
+          method: "PATCH",
+          query: `project_id=eq.${projectId}&entry_id=eq.${id}`,
+          body: { deleted_at: null },
+        });
+      } else if (kind === "photo") {
+        const id = Number(body.id);
+        const photo = rows.photos.find((p) => p.id === id && p.deleted_at);
+        if (!photo) {
+          json(res, 404, { error: "回收桶沒有這張照片" });
+          return;
+        }
+        const entry = rows.entries.find((e) => e.id === photo.entry_id);
+        if (entry && entry.deleted_at) {
+          const cat = rows.categories.find((c) => c.letter === entry.category_letter);
+          if (cat && cat.deleted_at) {
+            await sb("scouting_categories", {
+              method: "PATCH",
+              query: `project_id=eq.${projectId}&letter=eq.${encodeURIComponent(entry.category_letter)}`,
+              body: { deleted_at: null },
+            });
+          }
+          await sb("scouting_entries", {
+            method: "PATCH",
+            query: `id=eq.${entry.id}&project_id=eq.${projectId}`,
+            body: { deleted_at: null },
+          });
+        }
+        await sb("scouting_photos", {
+          method: "PATCH",
+          query: `id=eq.${id}&project_id=eq.${projectId}`,
+          body: { deleted_at: null },
+        });
+      } else {
+        json(res, 400, { error: "無法還原這個項目" });
+        return;
+      }
+      json(res, 200, await loadProjectBundle(body.token));
+      return;
+    }
+
+    if (action === "emptyTrash") {
+      const rows = await loadProjectRows(projectId);
+      const entries = rows.entries.filter((e) => e.deleted_at);
+      const cats = rows.categories.filter((c) => c.deleted_at);
+      const deletedEntryIds = new Set(entries.map((e) => e.id));
+      const photos = rows.photos.filter((p) => p.deleted_at || deletedEntryIds.has(p.entry_id));
+      await hardDeletePhotos(photos);
+      if (entries.length) {
+        await sb("scouting_entries", {
+          method: "DELETE",
+          query: `id=in.(${entries.map((e) => e.id).join(",")})`,
+        });
+      }
+      for (const cat of cats) {
+        await sb("scouting_categories", {
+          method: "DELETE",
+          query: `project_id=eq.${projectId}&letter=eq.${encodeURIComponent(cat.letter)}`,
+        });
+      }
+      json(res, 200, await loadProjectBundle(body.token));
       return;
     }
 

@@ -31,6 +31,12 @@ const DB = {
     return data;
   },
 
+  async renameProject(name) {
+    const data = await this.request("renameProject", { name });
+    if (data.project) this.project = { ...this.project, ...data.project };
+    return data.project;
+  },
+
   async addCategory(name) {
     const data = await this.request("addCategory", { name });
     return data.category;
@@ -84,6 +90,18 @@ const DB = {
 
   async deletePhoto(id) {
     await this.request("deletePhoto", { id });
+  },
+
+  async listTrash() {
+    return this.request("listTrash");
+  },
+
+  async restoreTrash(item) {
+    return this.request("restoreTrash", { kind: item.kind, id: item.id, letter: item.letter });
+  },
+
+  async emptyTrash() {
+    return this.request("emptyTrash");
   },
 
   async exportAll(categories, entries, photos) {

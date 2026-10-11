@@ -10,6 +10,7 @@ let state = {
   photos: [],
   currentEntryId: null,
   role: "",
+  trashCount: 0,
 };
 
 const el = (id) => document.getElementById(id);
@@ -61,7 +62,7 @@ async function init() {
   setupLangSelect();
   applyI18n();
   populateStatusSelect("pending");
-  el("projectName").textContent = t("loading");
+  el("projectName").value = t("loading");
 
   const token = parseProjectToken();
   if (!token) {
@@ -90,10 +91,12 @@ function applyProjectData(data) {
   state.photos = data.photos || [];
   if (data.project) {
     DB.project = data.project;
-    el("projectName").textContent = data.project.name;
+    el("projectName").value = data.project.name;
   }
   state.role = data.role || "";
+  state.trashCount = data.trashCount || 0;
   applyRoleUI();
+  updateTrashBadge();
   if (state.currentEntryId && !state.entries.some((e) => e.id === state.currentEntryId)) {
     state.currentEntryId = null;
     el("entryForm").hidden = true;
@@ -118,6 +121,8 @@ function applyRoleUI() {
   document.querySelectorAll("#entryForm input, #entryForm textarea, #entryForm select").forEach((node) => {
     if (node.id === "fieldName" || node.closest("#entryForm")) node.disabled = readonly;
   });
+  if (el("projectName")) el("projectName").disabled = readonly;
+  if (el("btnEmptyTrash")) el("btnEmptyTrash").hidden = readonly;
 }
 
 function catColor(letter) {
@@ -430,6 +435,8 @@ async function deleteCurrentEntry() {
     await DB.deleteEntry(state.currentEntryId);
     state.photos = state.photos.filter((p) => p.entryId !== state.currentEntryId);
     state.entries = state.entries.filter((e) => e.id !== state.currentEntryId);
+    state.trashCount += 1;
+    updateTrashBadge();
     state.currentEntryId = null;
     renderSidebar();
     el("entryForm").hidden = true;
@@ -457,9 +464,12 @@ function renderPhotoGrid(entryId) {
     cell.querySelector("img").addEventListener("click", () => openLightbox(photoSrc(photo)));
     cell.querySelector(".photo-remove").addEventListener("click", async (ev) => {
       ev.stopPropagation();
+      if (!confirm(t("confirmDelete", { name: t("trashKindPhoto") }))) return;
       try {
         await DB.deletePhoto(photo.id);
         state.photos = state.photos.filter((p) => p.id !== photo.id);
+        state.trashCount += 1;
+        updateTrashBadge();
         renderPhotoGrid(entryId);
       } catch (err) {
         alertError(err, t("failDeletePhoto"));
@@ -748,6 +758,89 @@ async function printEntries(entries) {
   window.print();
 }
 
+function updateTrashBadge() {
+  const badge = el("trashCount");
+  if (!badge) return;
+  const n = state.trashCount || 0;
+  badge.hidden = !n;
+  badge.textContent = n ? String(n) : "";
+}
+
+function trashKindLabel(kind) {
+  if (kind === "category") return t("trashKindCategory");
+  if (kind === "entry") return t("trashKindEntry");
+  return t("trashKindPhoto");
+}
+
+async function openTrash() {
+  el("trashModal").hidden = false;
+  el("trashList").innerHTML = "";
+  try {
+    const data = await DB.listTrash();
+    state.trashCount = data.trashCount || (data.items || []).length;
+    updateTrashBadge();
+    renderTrash(data.items || []);
+  } catch (err) {
+    alertError(err, t("trash"));
+  }
+}
+
+function renderTrash(items) {
+  const list = el("trashList");
+  const empty = el("trashEmpty");
+  list.innerHTML = "";
+  empty.hidden = items.length > 0;
+  if (el("btnEmptyTrash")) el("btnEmptyTrash").hidden = !items.length || !canEditProject();
+  items.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "trash-item";
+    const title = [trashKindLabel(item.kind), item.letter, item.name].filter(Boolean).join(" ");
+    row.innerHTML = `
+      <div>
+        <strong>${escapeHtml(title)}</strong>
+        <span>${escapeHtml(t("trashDays", { n: item.daysLeft }))}</span>
+      </div>
+    `;
+    if (canEditProject()) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-ghost";
+      btn.textContent = t("restore");
+      btn.addEventListener("click", () => restoreTrashItem(item));
+      row.appendChild(btn);
+    }
+    list.appendChild(row);
+  });
+}
+
+async function restoreTrashItem(item) {
+  try {
+    const data = await DB.restoreTrash(item);
+    applyProjectData(data);
+    const again = await DB.listTrash();
+    state.trashCount = again.trashCount || (again.items || []).length;
+    updateTrashBadge();
+    renderTrash(again.items || []);
+  } catch (err) {
+    alertError(err, t("restore"));
+  }
+}
+
+async function emptyTrash() {
+  if (!confirm(t("confirmEmptyTrash"))) return;
+  try {
+    const data = await DB.emptyTrash();
+    applyProjectData(data);
+    renderTrash([]);
+  } catch (err) {
+    alertError(err, t("emptyTrash"));
+  }
+}
+
+function closeTrash() {
+  el("trashModal").hidden = true;
+}
+
 async function exportBackup() {
   const data = await DB.exportAll(state.categories, state.entries, state.photos);
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -792,7 +885,37 @@ function bindStaticEvents() {
 
   el("lightboxClose").addEventListener("click", () => { el("lightbox").hidden = true; });
   el("lightbox").addEventListener("click", (e) => { if (e.target === el("lightbox")) el("lightbox").hidden = true; });
+  el("btnTrash").addEventListener("click", openTrash);
+  el("btnCloseTrash").addEventListener("click", closeTrash);
+  el("trashModal").addEventListener("click", (e) => { if (e.target === el("trashModal")) closeTrash(); });
+  el("btnEmptyTrash").addEventListener("click", emptyTrash);
   el("btnExportJson").addEventListener("click", exportBackup);
+  el("projectName").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.target.blur();
+    }
+  });
+  el("projectName").addEventListener("blur", saveProjectName);
+}
+
+async function saveProjectName() {
+  if (!canEditProject()) return;
+  const input = el("projectName");
+  const name = input.value.trim();
+  const current = (DB.project && DB.project.name) || "";
+  if (!name) {
+    input.value = current;
+    return;
+  }
+  if (name === current) return;
+  try {
+    const project = await DB.renameProject(name);
+    input.value = project.name;
+  } catch (err) {
+    input.value = current;
+    alertError(err, t("failSave"));
+  }
 }
 
 function escapeHtml(str) {

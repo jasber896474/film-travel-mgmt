@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>勘景資料系統</title>
-<link rel="stylesheet" href="/scouting/css/style.css?v=20261012b">
+<link rel="stylesheet" href="/scouting/css/style.css?v=20261012c">
 </head>
 <body class="home-body">
 
@@ -108,6 +108,19 @@
   </div>
 </div>
 
+<div id="renameModal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 data-i18n="renameProjectTitle">重新命名專案</h2>
+    <input type="hidden" id="renameProjectId">
+    <input type="text" id="renameProjectName" data-i18n-placeholder="projectNamePh" placeholder="劇名" autocomplete="off">
+    <p id="renameError" class="admin-error"></p>
+    <div class="modal-actions">
+      <button type="button" id="btnCancelRename" class="btn btn-ghost" data-i18n="cancel">取消</button>
+      <button type="button" id="btnConfirmRename" class="btn btn-primary" data-i18n="save">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div id="memberModal" class="modal-overlay" hidden>
   <div class="modal modal-wide">
     <h2 id="memberTitle">成員管理</h2>
@@ -148,8 +161,8 @@
   </div>
 </div>
 
-<script src="/scouting/js/i18n.js?v=20261012b"></script>
-<script src="/scouting/js/auth.js?v=20261012b"></script>
-<script src="/scouting/js/home.js?v=20261012b"></script>
+<script src="/scouting/js/i18n.js?v=20261012c"></script>
+<script src="/scouting/js/auth.js?v=20261012c"></script>
+<script src="/scouting/js/home.js?v=20261012c"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>勘景資料系統</title>
-<link rel="stylesheet" href="/scouting/css/style.css?v=20261012b">
+<link rel="stylesheet" href="/scouting/css/style.css?v=20261012d">
 </head>
 <body>
 
@@ -14,7 +14,7 @@
     <a href="/scouting" class="back-list" id="btnBackList" data-i18n="backList">← 專案列表</a>
     <div class="sidebar-head">
       <h1 class="app-title" data-i18n="appName">勘景資料系統</h1>
-      <p class="app-sub" id="projectName">載入中…</p>
+      <input type="text" class="project-name-input" id="projectName" value="" autocomplete="off">
       <select id="langSelect" class="lang-select" aria-label="Language"></select>
     </div>
 
@@ -32,6 +32,8 @@
       <button id="btnPrintAll" class="link-btn" data-i18n="printAll">列印全部</button>
       <button id="btnCopyLink" class="link-btn" data-i18n="copyLink" data-i18n-title="copyLink">複製專案連結</button>
       <span id="copyStatus"></span>
+      <button id="btnTrash" class="link-btn" data-i18n="trash">回收桶</button>
+      <span id="trashCount" class="trash-count" hidden></span>
       <button id="btnExportJson" class="link-btn" data-i18n="exportBackup">匯出備份</button>
     </div>
   </aside>
@@ -162,11 +164,24 @@
   <button id="lightboxClose" class="lightbox-close" data-i18n="close">關閉</button>
 </div>
 
+<div id="trashModal" class="modal-overlay" hidden>
+  <div class="modal modal-wide">
+    <h2 data-i18n="trash">回收桶</h2>
+    <p class="modal-hint" data-i18n="trashHint">刪除的項目會留 30 天，之後自動清除。</p>
+    <p id="trashEmpty" class="admin-lead" hidden data-i18n="trashEmpty">回收桶是空的</p>
+    <div id="trashList"></div>
+    <div class="modal-actions">
+      <button type="button" id="btnEmptyTrash" class="btn btn-ghost" data-i18n="emptyTrash">清空回收桶</button>
+      <button type="button" id="btnCloseTrash" class="btn btn-primary" data-i18n="close">關閉</button>
+    </div>
+  </div>
+</div>
+
 <div id="printRoot" class="print-root" hidden></div>
 
-<script src="/scouting/js/auth.js?v=20261012b"></script>
-<script src="/scouting/js/i18n.js?v=20261012b"></script>
-<script src="/scouting/js/db.js?v=20261012b"></script>
-<script src="/scouting/js/app.js?v=20261012b"></script>
+<script src="/scouting/js/auth.js?v=20261012d"></script>
+<script src="/scouting/js/i18n.js?v=20261012d"></script>
+<script src="/scouting/js/db.js?v=20261012d"></script>
+<script src="/scouting/js/app.js?v=20261012d"></script>
 </body>
 </html>
