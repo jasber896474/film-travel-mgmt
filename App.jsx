@@ -7101,6 +7101,21 @@ function ResetPasswordScreen({ recoveryToken, lang }) {
   );
 }
 
+function SiteCopy({ tone = "light" }) {
+  return (
+    <footer style={{
+      textAlign: "center",
+      fontSize: 11,
+      color: tone === "dark" ? "rgba(246,243,236,.42)" : "var(--usunezumi)",
+      padding: "16px 20px 18px",
+      marginTop: "auto",
+      lineHeight: 1.65,
+    }}>
+      版權所有 © 2026 井風國際娛樂有限公司 (Maria Entertainment Ltd.) 保留所有權利
+    </footer>
+  );
+}
+
 function LoginScreen({ onLogin }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -7125,9 +7140,18 @@ function LoginScreen({ onLogin }) {
       "radial-gradient(ellipse 80% 60% at 20% 80%, rgba(43,90,76,.22) 0%, transparent 60%)",
       "radial-gradient(ellipse 60% 40% at 80% 20%, rgba(42,94,128,.16) 0%, transparent 55%)",
     ].join(","),
-    display: "flex", alignItems: "center", justifyContent: "center",
+    display: "flex",
+    flexDirection: "column",
     fontFamily: "'Noto Sans JP',sans-serif",
   };
+  const loginShell = (inner) => (
+    <div style={wrap}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "32px 16px" }}>
+        {inner}
+      </div>
+      <SiteCopy tone="dark" />
+    </div>
+  );
 
   const handleLogin = async () => {
     if (!email.trim() || !pw.trim()) { setError(t.errEmailPw); return; }
@@ -7172,8 +7196,8 @@ function LoginScreen({ onLogin }) {
     } catch (e) { setError(String(e.message) || t.registerFailed); } finally { setLoading(false); }
   };
 
-  if (mode === "verify") return (
-    <div style={wrap}><div style={card}>
+  if (mode === "verify") return loginShell(
+    <div style={card}>
       <div style={{ textAlign: "center", marginBottom: 28 }}>
         <div style={{ fontSize: 40, lineHeight: 1, color: "var(--moegi2)", marginBottom: 12, fontFamily: "'Noto Serif JP',serif" }}>映</div>
         <h2 style={{ fontSize: 18, color: "var(--sumi)", fontFamily: "'Noto Serif JP',serif", fontWeight: 600, marginBottom: 0 }}>{t.verifyTitle}</h2>
@@ -7184,11 +7208,11 @@ function LoginScreen({ onLogin }) {
       </div>
       <p style={{ fontSize: 11, color: "var(--nezumi)", marginBottom: 20, lineHeight: 1.6 }}>{t.verifyContact}</p>
       <button type="button" onClick={() => setMode("login")} style={{ ...pBtn(false), width: "100%" }}>{t.toLoginBtn}</button>
-    </div></div>
+    </div>
   );
 
-  return (
-    <div style={wrap}><div style={card}>
+  return loginShell(
+    <div style={card}>
       {/* ── Brand Mark ── */}
       <div style={{ textAlign: "center", marginBottom: 28 }}>
         <div style={{ fontSize: 42, lineHeight: 1, color: "var(--moegi)", marginBottom: 10, fontFamily: "'Noto Serif JP',serif", letterSpacing: "-0.02em" }}>映</div>
@@ -7250,7 +7274,7 @@ function LoginScreen({ onLogin }) {
           <p style={{ fontSize: 11, color: "var(--usunezumi)", textAlign: "center", marginTop: 14, lineHeight: 1.6 }}>{t.verifyContact}</p>
         </>
       )}
-    </div></div>
+    </div>
   );
 }
 
@@ -7367,7 +7391,7 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
   const hdrBtn = { background: "var(--hdrBtnBg)", color: "var(--hdrText)", border: "1px solid var(--hdrBtnBorder)", padding: "7px 14px", cursor: "pointer", fontSize: 11.5, borderRadius: 4, fontFamily: "'Noto Sans JP',sans-serif", transition: "background .15s" };
   const tSel = T[lang];
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Noto Sans JP',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Noto Sans JP',sans-serif", display: "flex", flexDirection: "column" }}>
       <Toast msg={toastMsg} />
       {/* ── Header ── */}
       <header style={{
@@ -7500,6 +7524,7 @@ function ProjectSelector({ user, isSystemOwner, lang, theme, onThemeChange, onLa
           </div>
         </Modal>
       )}
+      <SiteCopy />
     </div>
   );
 }

@@ -11,9 +11,12 @@ const DB = {
   },
 
   async request(action, extra = {}) {
+    const headers = { "Content-Type": "application/json" };
+    const accessToken = (typeof Auth !== "undefined" && Auth.getAccessToken && Auth.getAccessToken()) || "";
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     const res = await fetch("/api/scouting", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ action, token: this.token, ...extra }),
     });
     let data = {};

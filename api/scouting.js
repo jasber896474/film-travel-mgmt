@@ -10,7 +10,35 @@ const {
   mapEntry,
   mapPhoto,
 } = require("../lib/scouting");
+const {
+  OWNER_ID,
+  isSystemOwner,
+  optionalUser,
+  requireUser,
+  canCreateProject,
+  membershipRole,
+  canEditRole,
+  assertProjectRole,
+  addMember,
+  findUserIdByEmail,
+  getUserProfile,
+} = require("../lib/scouting-auth");
 const { uploadScoutingPhoto, deleteScoutingPhoto } = require("../lib/scouting-pcloud");
+
+const WRITE_ACTIONS = new Set([
+  "addCategory", "updateCategory", "moveCategory", "deleteCategory",
+  "addEntry", "updateEntry", "deleteEntry", "addPhoto", "deletePhoto",
+]);
+
+function mapMember(row, profile) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    role: row.role,
+    email: (profile && profile.email) || "",
+    name: (profile && profile.name) || "",
+  };
+}
 
 module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") {
@@ -31,18 +59,61 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    if (action === "session") {
+      const user = await requireUser(req, body);
+      json(res, 200, {
+        user: { id: user.id, email: user.email || "" },
+        isSystemOwner: isSystemOwner(user.id),
+        canCreate: await canCreateProject(user),
+      });
+      return;
+    }
+
+    if (action === "listProjects") {
+      const user = await requireUser(req, body);
+      const owner = isSystemOwner(user.id);
+      const projects = await sb("scouting_projects", { query: "select=id,name,token,created_at&order=created_at.desc" });
+      const members = await sb("scouting_members", {
+        query: owner
+          ? "select=*"
+          : `user_id=eq.${encodeURIComponent(user.id)}&select=*`,
+      });
+      const mine = new Map((members || []).filter((m) => m.user_id === user.id).map((m) => [m.project_id, m.role]));
+      const list = (projects || [])
+        .filter((p) => owner || mine.has(p.id))
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          token: p.token,
+          createdAt: p.created_at,
+          role: owner ? (mine.get(p.id) || "owner") : mine.get(p.id),
+          path: `/scouting/p/${p.token}`,
+        }));
+      json(res, 200, {
+        user: { id: user.id, email: user.email || "" },
+        isSystemOwner: owner,
+        canCreate: await canCreateProject(user),
+        projects: list,
+      });
+      return;
+    }
+
     if (action === "createProject") {
-      if (!adminKey()) {
-        json(res, 503, { error: "尚未設定 SCOUTING_ADMIN_KEY" });
-        return;
-      }
-      if (!safeEqual(body.adminKey, adminKey())) {
-        json(res, 403, { error: "開專案密鑰不正確" });
-        return;
-      }
       const name = String(body.name || "").trim();
       if (!name) {
         json(res, 400, { error: "請輸入劇名" });
+        return;
+      }
+      let user = await optionalUser(req, body);
+      if (!user && body.adminKey && adminKey() && safeEqual(body.adminKey, adminKey())) {
+        user = { id: OWNER_ID, email: "" };
+      }
+      if (!user) {
+        json(res, 401, { error: "請先登入" });
+        return;
+      }
+      if (!await canCreateProject(user)) {
+        json(res, 403, { error: "帳號尚未核准，無法開新劇" });
         return;
       }
       const token = newToken();
@@ -50,15 +121,165 @@ module.exports = async function handler(req, res) {
         method: "POST",
         body: { name, token },
       });
+      const creatorRole = isSystemOwner(user.id) ? "owner" : "admin";
+      await addMember(project.id, user.id, creatorRole);
+      if (!isSystemOwner(user.id) && OWNER_ID) {
+        await addMember(project.id, OWNER_ID, "owner");
+      }
       json(res, 200, {
-        project: { id: project.id, name: project.name, token: project.token },
+        project: { id: project.id, name: project.name, token: project.token, role: creatorRole },
         path: `/scouting/p/${project.token}`,
       });
       return;
     }
 
+    if (action === "listRequests") {
+      const user = await requireUser(req, body);
+      if (!isSystemOwner(user.id)) {
+        json(res, 403, { error: "只有系統擁有者能審核申請" });
+        return;
+      }
+      const requests = await sb("user_requests", {
+        query: "status=eq.pending&select=*&order=created_at.desc",
+      });
+      json(res, 200, { requests: requests || [] });
+      return;
+    }
+
+    if (action === "approveRequest") {
+      const user = await requireUser(req, body);
+      if (!isSystemOwner(user.id)) {
+        json(res, 403, { error: "只有系統擁有者能審核申請" });
+        return;
+      }
+      const reqId = Number(body.id);
+      const projectId = String(body.projectId || "").trim();
+      const role = String(body.role || "editor");
+      const rows = await sb("user_requests", { query: `id=eq.${reqId}&select=*` });
+      const request = rows && rows[0];
+      if (!request) {
+        json(res, 404, { error: "找不到這筆申請" });
+        return;
+      }
+      await sb("user_requests", {
+        method: "PATCH",
+        query: `id=eq.${reqId}`,
+        body: { status: "approved" },
+      });
+      let uid = request.user_id;
+      if (!uid && request.email) uid = await findUserIdByEmail(request.email);
+      if (uid && projectId) await addMember(projectId, uid, role);
+      json(res, 200, { ok: true });
+      return;
+    }
+
+    if (action === "rejectRequest") {
+      const user = await requireUser(req, body);
+      if (!isSystemOwner(user.id)) {
+        json(res, 403, { error: "只有系統擁有者能審核申請" });
+        return;
+      }
+      const reqId = Number(body.id);
+      await sb("user_requests", {
+        method: "PATCH",
+        query: `id=eq.${reqId}`,
+        body: { status: "rejected" },
+      });
+      json(res, 200, { ok: true });
+      return;
+    }
+
+    if (action === "listMembers") {
+      const user = await requireUser(req, body);
+      const projectId = String(body.projectId || "").trim();
+      await assertProjectRole(projectId, user, "view");
+      const rows = await sb("scouting_members", {
+        query: `project_id=eq.${projectId}&select=*&order=created_at.asc`,
+      });
+      const profiles = await Promise.all((rows || []).map((row) => getUserProfile(row.user_id)));
+      json(res, 200, {
+        members: (rows || []).map((row, i) => mapMember(row, profiles[i])),
+      });
+      return;
+    }
+
+    if (action === "addMember") {
+      const user = await requireUser(req, body);
+      const projectId = String(body.projectId || "").trim();
+      await assertProjectRole(projectId, user, "manage");
+      const email = String(body.email || "").trim();
+      const uid = await findUserIdByEmail(email);
+      if (!uid) {
+        json(res, 404, { error: "找不到這個 email 的帳號，對方需先申請並完成驗證" });
+        return;
+      }
+      const row = await addMember(projectId, uid, body.role || "editor");
+      const profile = await getUserProfile(uid);
+      json(res, 200, { member: mapMember(row, profile) });
+      return;
+    }
+
+    if (action === "updateMember") {
+      const user = await requireUser(req, body);
+      const projectId = String(body.projectId || "").trim();
+      await assertProjectRole(projectId, user, "manage");
+      const id = Number(body.id);
+      const rows = await sb("scouting_members", { query: `id=eq.${id}&project_id=eq.${projectId}&select=*` });
+      const existing = rows && rows[0];
+      if (!existing) {
+        json(res, 404, { error: "找不到這位成員" });
+        return;
+      }
+      if (existing.role === "owner") {
+        json(res, 403, { error: "不能更改擁有者" });
+        return;
+      }
+      if (existing.user_id === user.id) {
+        json(res, 403, { error: "不能更改自己的角色" });
+        return;
+      }
+      const [row] = await sb("scouting_members", {
+        method: "PATCH",
+        query: `id=eq.${id}`,
+        body: { role: String(body.role || existing.role) },
+      });
+      json(res, 200, { member: mapMember(row) });
+      return;
+    }
+
+    if (action === "removeMember") {
+      const user = await requireUser(req, body);
+      const projectId = String(body.projectId || "").trim();
+      await assertProjectRole(projectId, user, "manage");
+      const id = Number(body.id);
+      const rows = await sb("scouting_members", { query: `id=eq.${id}&project_id=eq.${projectId}&select=*` });
+      const existing = rows && rows[0];
+      if (!existing) {
+        json(res, 404, { error: "找不到這位成員" });
+        return;
+      }
+      if (existing.role === "owner" || existing.user_id === user.id) {
+        json(res, 403, { error: "不能移除擁有者或自己" });
+        return;
+      }
+      await sb("scouting_members", { method: "DELETE", query: `id=eq.${id}` });
+      json(res, 200, { ok: true });
+      return;
+    }
+
     const bundle = await loadProjectBundle(body.token);
     const projectId = bundle.project.id;
+    const sessionUser = await optionalUser(req, body);
+    if (sessionUser) {
+      const role = await membershipRole(projectId, sessionUser);
+      if (role) {
+        bundle.role = role;
+        if (WRITE_ACTIONS.has(action) && !canEditRole(role)) {
+          json(res, 403, { error: "這個帳號是唯讀，不能修改" });
+          return;
+        }
+      }
+    }
 
     if (action === "getProject") {
       json(res, 200, bundle);

@@ -9,6 +9,7 @@ let state = {
   entries: [],
   photos: [],
   currentEntryId: null,
+  role: "",
 };
 
 const el = (id) => document.getElementById(id);
@@ -64,7 +65,7 @@ async function init() {
 
   const token = parseProjectToken();
   if (!token) {
-    showGate(t("needLinkTitle"), t("needLinkBody"));
+    window.location.replace("/scouting");
     return;
   }
 
@@ -91,6 +92,8 @@ function applyProjectData(data) {
     DB.project = data.project;
     el("projectName").textContent = data.project.name;
   }
+  state.role = data.role || "";
+  applyRoleUI();
   if (state.currentEntryId && !state.entries.some((e) => e.id === state.currentEntryId)) {
     state.currentEntryId = null;
     el("entryForm").hidden = true;
@@ -99,6 +102,22 @@ function applyProjectData(data) {
   renderSidebar();
   populateCategorySelect();
   if (state.currentEntryId) selectEntry(state.currentEntryId);
+}
+
+function canEditProject() {
+  return !state.role || ["owner", "admin", "editor"].includes(state.role);
+}
+
+function applyRoleUI() {
+  const readonly = !canEditProject();
+  document.body.classList.toggle("is-readonly", readonly);
+  ["btnNewEntry", "btnNewCategory", "btnDeleteEntry"].forEach((id) => {
+    const node = el(id);
+    if (node) node.hidden = readonly;
+  });
+  document.querySelectorAll("#entryForm input, #entryForm textarea, #entryForm select").forEach((node) => {
+    if (node.id === "fieldName" || node.closest("#entryForm")) node.disabled = readonly;
+  });
 }
 
 function catColor(letter) {
@@ -320,6 +339,7 @@ function closeEntryModal() {
 }
 
 async function createNewEntry() {
+  if (!canEditProject()) return;
   openEntryModal();
 }
 
@@ -357,6 +377,7 @@ async function confirmNewEntry() {
 
 let saveTimer = null;
 function scheduleSave() {
+  if (!canEditProject()) return;
   el("saveStatus").textContent = t("editing");
   el("saveStatus").className = "save-status";
   clearTimeout(saveTimer);
@@ -399,6 +420,7 @@ async function saveCurrentEntry() {
 }
 
 async function deleteCurrentEntry() {
+  if (!canEditProject()) return;
   if (!state.currentEntryId) return;
   const entry = currentEntry();
   const label = entry ? (entry.name || `${entry.categoryLetter}${entry.sequence}`) : t("thisEntry");
@@ -448,6 +470,7 @@ function renderPhotoGrid(entryId) {
 }
 
 async function handlePhotoFiles(files) {
+  if (!canEditProject()) return;
   if (!state.currentEntryId) return;
   try {
     for (const file of Array.from(files)) {

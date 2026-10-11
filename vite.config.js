@@ -59,9 +59,11 @@ function serveScouting() {
           const handlerPath = require.resolve('./api/scouting.js')
           const libPath = require.resolve('./lib/scouting.js')
           const pcloudPath = require.resolve('./lib/scouting-pcloud.js')
+          const authPath = require.resolve('./lib/scouting-auth.js')
           delete require.cache[handlerPath]
           delete require.cache[libPath]
           delete require.cache[pcloudPath]
+          delete require.cache[authPath]
           const handler = require('./api/scouting.js')
           const chunks = []
           for await (const chunk of req) chunks.push(chunk)
@@ -72,10 +74,10 @@ function serveScouting() {
         }
 
         let path = url
-        if (path === '/scouting' || path === '/scouting/' || path.startsWith('/scouting/p/')) {
+        if (path.startsWith('/scouting/p/')) {
+          path = '/scouting/project.html'
+        } else if (path === '/scouting' || path === '/scouting/' || path === '/scouting/new' || path === '/scouting/new/') {
           path = '/scouting/index.html'
-        } else if (path === '/scouting/new' || path === '/scouting/new/') {
-          path = '/scouting/new.html'
         }
         if (!path.startsWith('/scouting/')) return next()
 
